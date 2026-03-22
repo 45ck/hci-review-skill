@@ -8,10 +8,11 @@ Define the information architecture for this scope:
 
 $ARGUMENTS
 
-Work from the repo, routes, navigation components, page layouts, menus, and any existing sitemap or docs. Infer missing structure conservatively and mark assumptions.
+Use ultrathink. Work from the repo, routes, navigation components, page layouts, menus, and any existing sitemap or docs. Infer missing structure conservatively and mark assumptions.
 
 ## Output
 Write `docs/hci/information-architecture.md` unless the user asked for another path.
+Create the directory if it does not exist.
 
 ## Required sections
 
@@ -103,3 +104,10 @@ End with:
 - Reference actual routes, file paths, and component names.
 - The IA should make it obvious where everything lives and how to get there.
 - If a user would need to memorize a path, the architecture has a problem.
+
+## Deliverable style
+- Clear headings
+- Markdown tables
+- Mermaid diagrams where useful
+- Direct language
+- No filler

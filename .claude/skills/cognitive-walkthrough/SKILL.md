@@ -8,10 +8,11 @@ Run a cognitive walkthrough for this task or flow:
 
 $ARGUMENTS
 
-Act like a plausible first-time user with only the cues available in the interface. Use the actual prototype and codebase context.
+Use ultrathink. Act like a plausible first-time user with only the cues available in the interface. Use the actual prototype and codebase context.
 
 ## Output
 Write `docs/hci/cognitive-walkthrough.md` unless the user asked for another path.
+Create the directory if it does not exist.
 
 ## Required questions at every step
 1. Will the user form the right goal here?
@@ -43,3 +44,10 @@ End with:
 - steps most likely to fail
 - reasons first-time users may hesitate
 - design changes most likely to improve task completion
+
+## Deliverable style
+- Clear headings
+- Markdown tables
+- Mermaid diagrams where useful
+- Direct language
+- No filler

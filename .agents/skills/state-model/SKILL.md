@@ -8,10 +8,11 @@ Define the state machines and lifecycles for this scope:
 
 $ARGUMENTS
 
-Work from the repo, routes, components, database schemas, API endpoints, and visible UI states. If details are missing, infer conservatively and mark assumptions.
+Use ultrathink. Work from the repo, routes, components, database schemas, API endpoints, and visible UI states. If details are missing, infer conservatively and mark assumptions.
 
 ## Output
 Write `docs/hci/state-model.md` unless the user asked for another path.
+Create the directory if it does not exist.
 
 ## Required process
 
@@ -72,3 +73,10 @@ End with:
 - Be specific. Reference actual database fields, API statuses, component props, or CSS classes where possible.
 - Distinguish between backend state and user-perceived state. Both matter.
 - A well-defined state model should make it impossible to ask "what state is this in?" while looking at the screen.
+
+## Deliverable style
+- Clear headings
+- Markdown tables
+- Mermaid diagrams where useful
+- Direct language
+- No filler

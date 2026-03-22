@@ -8,10 +8,11 @@ Audit consistency for this scope:
 
 $ARGUMENTS
 
-Review the interface as a system, not as isolated screens.
+Use ultrathink. Review the interface as a system, not as isolated screens.
 
 ## Output
 Write `docs/hci/consistency-audit.md` unless the user asked for another path.
+Create the directory if it does not exist.
 
 ## Check these invariants
 - navigation location and behavior
@@ -42,3 +43,10 @@ Conclude with:
 
 ## Quality bar
 Do not confuse deliberate variation with accidental inconsistency. Explain the difference.
+
+## Deliverable style
+- Clear headings
+- Markdown tables
+- Mermaid diagrams where useful
+- Direct language
+- No filler

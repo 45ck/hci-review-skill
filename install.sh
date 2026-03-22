@@ -8,15 +8,24 @@ install_skill() {
 
   # Claude Code: install to ~/.claude/skills/
   local claude_dir="$HOME/.claude/skills/$skill"
+  if [ ! -f "$SCRIPT_DIR/.claude/skills/$skill/SKILL.md" ]; then
+    echo "ERROR: Missing source file: $SCRIPT_DIR/.claude/skills/$skill/SKILL.md" >&2
+    exit 1
+  fi
   mkdir -p "$claude_dir"
   cp "$SCRIPT_DIR/.claude/skills/$skill/SKILL.md" "$claude_dir/SKILL.md"
   echo "  Claude Code -> $claude_dir/SKILL.md"
 
   # Codex CLI: install to ~/.agents/skills/
   local codex_dir="$HOME/.agents/skills/$skill"
-  mkdir -p "$codex_dir/agents"
+  if [ ! -f "$SCRIPT_DIR/.agents/skills/$skill/SKILL.md" ]; then
+    echo "ERROR: Missing source file: $SCRIPT_DIR/.agents/skills/$skill/SKILL.md" >&2
+    exit 1
+  fi
+  mkdir -p "$codex_dir"
   cp "$SCRIPT_DIR/.agents/skills/$skill/SKILL.md" "$codex_dir/SKILL.md"
   if [ -f "$SCRIPT_DIR/.agents/skills/$skill/agents/openai.yaml" ]; then
+    mkdir -p "$codex_dir/agents"
     cp "$SCRIPT_DIR/.agents/skills/$skill/agents/openai.yaml" "$codex_dir/agents/openai.yaml"
   fi
   echo "  Codex CLI   -> $codex_dir/"

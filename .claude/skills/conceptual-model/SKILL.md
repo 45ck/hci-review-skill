@@ -8,10 +8,11 @@ Create a conceptual model for this scope:
 
 $ARGUMENTS
 
-Work from the repo, prototype, docs, screenshots, routes, components, and visible states. If details are missing, infer cautiously and mark assumptions.
+Use ultrathink. Work from the repo, prototype, docs, screenshots, routes, components, and visible states. If details are missing, infer cautiously and mark assumptions.
 
 ## Output
 Write `docs/hci/conceptual-model.md` unless the user asked for another path.
+Create the directory if it does not exist.
 
 ## Required sections
 1. Purpose of the system or feature
@@ -36,10 +37,12 @@ Write `docs/hci/conceptual-model.md` unless the user asked for another path.
 ### States
 | Object | State | Meaning | Entered by | Exited by |
 
+Note: keep this state table high-level (name and one-line meaning only). Full lifecycle definition belongs in the state-model artifact. If a state-model artifact already exists, reference it rather than repeating it.
+
 ## Diagrams
-Where useful, add Mermaid:
+Add Mermaid diagrams:
 - state diagrams for major objects
-- simple relationship diagrams for object relationships
+- entity relationship diagrams for object relationships
 
 ## Evaluation lens
 A strong conceptual model should make these obvious:
@@ -49,3 +52,10 @@ A strong conceptual model should make these obvious:
 - what will happen next
 
 Flag anything that breaks these expectations.
+
+## Deliverable style
+- Clear headings
+- Markdown tables
+- Mermaid diagrams where useful
+- Direct language
+- No filler

@@ -1,12 +1,12 @@
 ---
 name: prototype-hci-pack
-description: Create a full HCI review pack for a prototype: conceptual model, state model, journeys, glossary, information architecture, consistency audit, failure path audit, heuristic evaluation, cognitive walkthrough, and scorecard.
+description: Create a full HCI review pack for a prototype: conceptual model, state model, journeys, glossary, information architecture, consistency audit, failure path audit, heuristic evaluation, cognitive walkthrough, scorecard, and summary.
 disable-model-invocation: true
 ---
 
-Build a full solo-review pack for this prototype or interface area.
+Build a full solo-review pack for this prototype or interface area:
 
-Scope: $ARGUMENTS
+$ARGUMENTS
 
 Use ultrathink. Work from the current repository, current files, current screenshots, current docs, and current prototype state. Do not wait for user research unless absolutely blocked. If something is unknown, make the smallest reasonable assumption and label it clearly.
 
@@ -17,19 +17,19 @@ Use ultrathink. Work from the current repository, current files, current screens
 - Leave durable artifacts that can guide implementation.
 
 ## Produce these outputs
-Write them to `docs/hci/` unless the user requested a different path.
+Write them to `docs/hci/` unless the user asked for another path.
 
-1. `conceptual-model.md`
-2. `state-model.md`
-3. `user-journeys.md`
-4. `glossary.md`
-5. `information-architecture.md`
-6. `consistency-audit.md`
-7. `failure-path-audit.md`
-8. `heuristic-evaluation.md`
-9. `cognitive-walkthrough.md`
-10. `hci-scorecard.md`
-11. `hci-summary.md`
+1. `docs/hci/conceptual-model.md`
+2. `docs/hci/state-model.md`
+3. `docs/hci/user-journeys.md`
+4. `docs/hci/glossary.md`
+5. `docs/hci/information-architecture.md`
+6. `docs/hci/consistency-audit.md`
+7. `docs/hci/failure-path-audit.md`
+8. `docs/hci/heuristic-evaluation.md`
+9. `docs/hci/cognitive-walkthrough.md`
+10. `docs/hci/hci-scorecard.md`
+11. `docs/hci/hci-summary.md`
 
 Create the directory if it does not exist.
 
@@ -149,10 +149,10 @@ Output a severity-ranked issues table:
 
 ### 9) Run a cognitive walkthrough
 For each critical journey, step through the interface and answer:
-1. Will the user know what goal they are trying to achieve here?
-2. Will they notice the correct action?
-3. Will they understand that it leads toward their goal?
-4. Will feedback after the action make sense?
+1. Will the user form the right goal here?
+2. Will the user notice the correct action?
+3. Will the user understand that the action leads toward the goal?
+4. After acting, will the feedback make sense?
 
 Log breakdowns with exact step references.
 

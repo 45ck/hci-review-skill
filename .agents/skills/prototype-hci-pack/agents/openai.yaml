@@ -3,5 +3,5 @@ policy:
 
 interface:
   display_name: "HCI Prototype Review Pack"
-  short_description: "Full HCI review pack: conceptual model, journeys, glossary, consistency, heuristics, and walkthrough."
+  short_description: "Full HCI review pack: conceptual model, state model, journeys, glossary, IA, consistency, failure paths, heuristics, walkthrough, scorecard, and summary."
   default_prompt: "Run a full HCI prototype review pack on the current project."

@@ -3,5 +3,5 @@ policy:
 
 interface:
   display_name: "Conceptual Model"
-  short_description: "Build a conceptual model: actors, objects, actions, states, and rules."
+  short_description: "Build a conceptual model: actors, objects, actions, states, rules, and transitions."
   default_prompt: "Create a conceptual model for the current project."

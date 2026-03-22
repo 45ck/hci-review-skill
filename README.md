@@ -8,7 +8,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License" /></a>
   <img src="https://img.shields.io/badge/skills-10-6366f1" alt="10 skills" />
   <img src="https://img.shields.io/badge/platform-Claude%20Code%20%7C%20Codex%20CLI-8b5cf6" alt="Claude Code | Codex CLI" />
-  <img src="https://img.shields.io/badge/templates-8-a78bfa" alt="8 templates" />
+  <img src="https://img.shields.io/badge/templates-11-a78bfa" alt="11 templates" />
 </p>
 
 <p align="center">
@@ -32,7 +32,7 @@ Ten skills. Each one runs a specific evaluation method against your actual codeb
 | **Vocabulary Audit** | `/vocabulary-audit` | Normalize nouns, verbs, statuses, and labels into a canonical glossary. Catches terminology drift. |
 | **Information Architecture** | `/information-architecture` | Sitemap, navigation model, grouping logic, label audit, and action placement. |
 | **Consistency Audit** | `/consistency-audit` | Audit cross-screen invariants: navigation, actions, states, modals, forms, and interaction rules. |
-| **Failure Path Audit** | `/failure-path-audit` | Audit empty states, loading, validation errors, permission failures, network errors, undo, and recovery. |
+| **Failure Path Audit** | `/failure-path-audit` | Audit empty states, loading, validation errors, permission failures, network errors, undo, recovery, and concurrent conflicts. |
 | **Heuristic Evaluation** | `/heuristic-eval` | Nielsen-style structured evaluation with severity ranking (0-4) and fix recommendations. |
 | **Cognitive Walkthrough** | `/cognitive-walkthrough` | Step through a task as a first-time user. Tests intent, discoverability, feedback, and interpretation at every step. |
 
@@ -99,6 +99,24 @@ bash uninstall.sh
 ```
 
 ## What you get
+
+### Prototype HCI Pack
+
+Runs all nine standalone methods in one pass and produces 11 artifacts:
+
+| Output file | Contents |
+|---|---|
+| `conceptual-model.md` | Actors, objects, actions, states, rules, transitions |
+| `state-model.md` | State machines, lifecycles, Mermaid diagrams, UI coverage |
+| `user-journeys.md` | 3-7 user flows with branches, errors, recovery |
+| `glossary.md` | Canonical terms, merges, status model, naming problems |
+| `information-architecture.md` | Sitemap, navigation, grouping, labels, action placement |
+| `consistency-audit.md` | Cross-screen invariants, screen inventory, breaks |
+| `failure-path-audit.md` | Empty, loading, validation, permissions, network, undo, concurrent |
+| `heuristic-evaluation.md` | Nielsen 10 heuristics, severity-ranked issues |
+| `cognitive-walkthrough.md` | Step-by-step first-time user analysis |
+| `hci-scorecard.md` | 8-dimension score out of 40 with rating band |
+| `hci-summary.md` | Top risks, invariants, priorities, open assumptions |
 
 ### Conceptual Model
 
@@ -170,6 +188,7 @@ bash uninstall.sh
 | Network | Failure behavior, retry, data preservation |
 | Partial completion | Auto-save, resumability, progress preservation |
 | Undo/recovery | Reversibility, confirmation, time limits |
+| Concurrent/conflict | Simultaneous edits, stale state, optimistic update conflicts |
 
 ### Heuristic Evaluation
 
@@ -195,20 +214,25 @@ bash uninstall.sh
 | Total | Score out of 40 with rating band |
 | Comparison | Delta against previous iteration (if available) |
 
+Note: the scorecard is produced by `/prototype-hci-pack`; there is no standalone `/hci-scorecard` skill.
+
 ## Templates
 
 Reusable blank templates are included under `docs/hci/templates/` to keep output structure consistent across reviews:
 
 ```
 docs/hci/templates/
+  cognitive-walkthrough.md
   conceptual-model.md
-  state-model.md
-  journey-map.md
-  glossary.md
-  information-architecture.md
-  heuristic-review.md
+  consistency-audit.md
   failure-path-audit.md
+  glossary.md
   hci-scorecard.md
+  hci-summary.md
+  heuristic-evaluation.md
+  information-architecture.md
+  state-model.md
+  user-journeys.md
 ```
 
 ## Recommended workflow
@@ -245,7 +269,7 @@ That order matters. It keeps structure ahead of polish:
 
 These skills encode established HCI evaluation methods as AI-executable instructions:
 
-**Conceptual modeling** (Norman, 1988) forces the designer to articulate what exists in the system, what users can do, and what state things are in. If the conceptual model is unclear, the interface will be unclear.
+**Conceptual modeling** (Norman, *The Design of Everyday Things*, 1988) forces the designer to articulate what exists in the system, what users can do, and what state things are in. If the conceptual model is unclear, the interface will be unclear.
 
 **State modeling** defines the lifecycles that underpin every interactive system. When states are implicit rather than explicit, users encounter mystery conditions, silent transitions, and dead ends.
 
@@ -259,9 +283,9 @@ These skills encode established HCI evaluation methods as AI-executable instruct
 
 **Failure path auditing** forces attention to the states that happy-path prototyping skips: empty screens, loading delays, validation errors, permission denials, and recovery flows. These are where real users spend a disproportionate amount of time.
 
-**Heuristic evaluation** (Nielsen & Molich, 1990) is the most widely used discount usability method. Each issue is rated on a 0-4 severity scale so you can prioritize what to fix first.
+**Heuristic evaluation** (Nielsen & Molich, 1990; revised heuristics: Nielsen, 1994) is the most widely used discount usability method. The 10 heuristics used here are from Nielsen's 1994 revision. Each issue is rated on a 0-4 severity scale so you can prioritize what to fix first.
 
-**Cognitive walkthroughs** (Wharton et al., 1994) simulate a first-time user at every step. For each action, the evaluator asks: will the user form the right goal? Notice the action? Understand the result? This catches problems that heuristic evaluation misses.
+**Cognitive walkthroughs** (Wharton et al., *The Cognitive Walkthrough Method: A Practitioner's Guide*, 1994) simulate a first-time user at every step. For each action, the evaluator asks: will the user form the right goal? Notice the action? Understand the result? This catches problems that heuristic evaluation misses.
 
 ## Repo structure
 
@@ -280,19 +304,23 @@ These skills encode established HCI evaluation methods as AI-executable instruct
 .agents/skills/
   [same structure with agents/openai.yaml for Codex CLI]
 docs/hci/
-  templates/                           # Reusable blank templates
+  templates/                           # Reusable blank templates (11 files)
+    cognitive-walkthrough.md
     conceptual-model.md
-    state-model.md
-    journey-map.md
-    glossary.md
-    information-architecture.md
-    heuristic-review.md
+    consistency-audit.md
     failure-path-audit.md
+    glossary.md
     hci-scorecard.md
+    hci-summary.md
+    heuristic-evaluation.md
+    information-architecture.md
+    state-model.md
+    user-journeys.md
   reviews/                             # Your review outputs go here
   flows/                               # Flow diagrams
   models/                              # Conceptual and state models
   glossary/                            # Glossary artifacts
+banner.svg                             # README banner
 install.sh                             # Global install (both platforms)
 uninstall.sh                           # Global uninstall
 LICENSE                                # MIT

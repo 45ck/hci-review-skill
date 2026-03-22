@@ -4,21 +4,23 @@
 
 ## Empty states
 
-| Screen/component | What is empty | Treatment | Has guidance? | Has CTA? | Rating |
-|-----------------|--------------|-----------|--------------|----------|--------|
-|                 |              |           |              |          |        |
+| Screen/component | What is empty | Current empty state treatment | Has illustration/guidance? | Has call to action? | Rating |
+|-----------------|--------------|-------------------------------|---------------------------|--------------------|---------
+|                 |              |                               |                           |                    |        |
+
+Rating: OK = handled well; PARTIAL = present but incomplete; MISSING = no handling.
 
 ## Loading states
 
-| Operation | Loading indicator | Location | Blocks interaction? | Timeout handling? |
-|-----------|------------------|----------|--------------------|--------------------|
-|           |                  |          |                    |                    |
+| Operation | Current loading indicator | Location | Blocks interaction? | Has timeout handling? |
+|-----------|--------------------------|----------|--------------------|-----------------------|
+|           |                          |          |                    |                       |
 
 ## Validation errors
 
-| Form/input | Rules | When validated | Error message | Placement | Recovery |
-|-----------|-------|---------------|---------------|-----------|----------|
-|           |       |               |               |           |          |
+| Form/input | Validation rules | When validation runs | Error message | Error placement | Recovery path |
+|-----------|-----------------|---------------------|---------------|-----------------|---------------|
+|           |                 |                     |               |                 |               |
 
 ## Permission failures
 
@@ -44,17 +46,24 @@
 |--------|------------|-----------|--------------|------------|
 |        |            |           |              |            |
 
+## Concurrent and conflict states
+
+| Scenario | Current handling | User feedback |
+|----------|-----------------|---------------|
+|          |                 |               |
+
 ## Summary
 
-| Category | Audited | Well handled | Partial | Not handled | Critical |
-|----------|---------|-------------|---------|-------------|----------|
-| Empty states |   |             |         |             |          |
-| Loading |        |             |         |             |          |
-| Validation |    |             |         |             |          |
-| Permissions |   |             |         |             |          |
-| Network |       |             |         |             |          |
-| Partial completion | |        |         |             |          |
-| Undo/recovery |  |            |         |             |          |
+| Category | Items audited | Handled well | Partially handled | Not handled | Critical gaps |
+|----------|--------------|-------------|-------------------|-------------|---------------|
+| Empty states |          |             |                   |             |               |
+| Loading |              |             |                   |             |               |
+| Validation |           |             |                   |             |               |
+| Permissions |          |             |                   |             |               |
+| Network |              |             |                   |             |               |
+| Partial completion |   |             |                   |             |               |
+| Undo/recovery |        |             |                   |             |               |
+| Concurrent states |    |             |                   |             |               |
 
 ## Synthesis
 <!-- Top failure scenarios, missing states, systematic gaps, quickest wins -->

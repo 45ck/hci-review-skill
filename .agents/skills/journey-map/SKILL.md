@@ -8,10 +8,11 @@ Map the key user journeys for this scope:
 
 $ARGUMENTS
 
-Work from the current prototype, routes, components, docs, screenshots, and any existing flows. Infer missing pieces conservatively.
+Use ultrathink. Work from the current prototype, routes, components, docs, screenshots, and any existing flows. Infer missing pieces conservatively.
 
 ## Output
 Write `docs/hci/user-journeys.md` unless the user asked for another path.
+Create the directory if it does not exist.
 
 ## Required process
 1. Identify the 3 to 7 most important journeys.
@@ -40,7 +41,21 @@ For each journey use:
 - Confusion risks
 - Design recommendation(s)
 
+## Synthesis
+End with:
+- journeys most likely to fail for first-time users
+- shared friction points across multiple journeys
+- dead ends and missing recovery paths
+- design changes with the highest impact on task completion
+
 ## Quality bar
 - Keep the flow specific to the actual prototype.
 - Focus on what the user must perceive and decide, not just backend events.
 - Flag hidden dependencies, missing feedback, dead ends, and branch explosions.
+
+## Deliverable style
+- Clear headings
+- Markdown tables
+- Mermaid diagrams where useful
+- Direct language
+- No filler

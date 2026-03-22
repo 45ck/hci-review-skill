@@ -8,16 +8,19 @@ Audit failure paths and edge cases for this scope:
 
 $ARGUMENTS
 
-Happy paths make prototypes look coherent. Failure paths reveal whether they actually are. Review the actual codebase, components, error handling, and UI states.
+Use ultrathink. Happy paths make prototypes look coherent. Failure paths reveal whether they actually are. Review the actual codebase, components, error handling, and UI states.
 
 ## Output
 Write `docs/hci/failure-path-audit.md` unless the user asked for another path.
+Create the directory if it does not exist.
 
 ## Required categories
 
 ### 1) Empty states
 For every screen or list that can be empty:
 | Screen/component | What is empty | Current empty state treatment | Has illustration/guidance? | Has call to action? | Rating |
+
+Rating: OK = empty state is handled well; PARTIAL = present but incomplete; MISSING = no empty state handling.
 
 Check:
 - Does the empty state explain why it is empty?
@@ -107,3 +110,10 @@ End with:
 - Reference actual components, error boundaries, API error handling, and UI states.
 - Every happy path implies at least 3-5 failure paths. If you find fewer, look harder.
 - A good failure path audit should make the developer uncomfortable. That is the point.
+
+## Deliverable style
+- Clear headings
+- Markdown tables
+- Mermaid diagrams where useful
+- Direct language
+- No filler

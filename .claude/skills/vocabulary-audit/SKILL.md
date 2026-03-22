@@ -8,10 +8,11 @@ Audit and normalize interface language for this scope:
 
 $ARGUMENTS
 
-Use the current prototype, components, routes, docs, and visible copy. Extract all important terms that affect understanding.
+Use ultrathink. Use the current prototype, components, routes, docs, and visible copy. Extract all important terms that affect understanding.
 
 ## Output
 Write `docs/hci/glossary.md` unless the user asked for another path.
+Create the directory if it does not exist.
 
 ## Required sections
 1. Canonical glossary
@@ -37,9 +38,22 @@ Write `docs/hci/glossary.md` unless the user asked for another path.
 - labels that require domain knowledge the user may not have
 - UI copy that does not match the underlying conceptual model
 
+## Synthesis
+End with:
+- the five most damaging terminology inconsistencies
+- concepts that are overloaded or ambiguous across the system
+- priority terms to standardize before next implementation cycle
+
 ## Quality bar
 Prefer language that is:
 - concrete
 - consistent
 - distinguishable from nearby concepts
 - aligned with the user’s mental model
+
+## Deliverable style
+- Clear headings
+- Markdown tables
+- Mermaid diagrams where useful
+- Direct language
+- No filler

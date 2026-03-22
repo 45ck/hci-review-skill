@@ -8,10 +8,11 @@ Run a heuristic evaluation for this scope:
 
 $ARGUMENTS
 
-Use the actual prototype, repo, screenshots, routes, components, and docs. Do not give generic advice. Anchor every issue to a real part of the system where possible.
+Use ultrathink. Use the actual prototype, repo, screenshots, routes, components, and docs. Do not give generic advice. Anchor every issue to a real part of the system where possible.
 
 ## Output
 Write `docs/hci/heuristic-evaluation.md` unless the user asked for another path.
+Create the directory if it does not exist.
 
 ## Heuristics to apply
 1. Visibility of system status
@@ -40,3 +41,12 @@ End with:
 - top 5 highest-severity problems
 - quickest wins
 - structural issues that need redesign rather than visual tweaks
+
+Note: if a consistency-audit artifact exists for this scope, reference it for heuristic #4 rather than re-auditing consistency in full. Apply heuristic #4 only to findings not already covered.
+
+## Deliverable style
+- Clear headings
+- Markdown tables
+- Mermaid diagrams where useful
+- Direct language
+- No filler

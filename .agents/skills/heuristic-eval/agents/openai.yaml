@@ -1,0 +1,7 @@
+policy:
+  allow_implicit_invocation: false
+
+interface:
+  display_name: "Heuristic Evaluation"
+  short_description: "Nielsen-style heuristic evaluation with severity-ranked issues and fix recommendations."
+  default_prompt: "Run a heuristic evaluation on the current project."

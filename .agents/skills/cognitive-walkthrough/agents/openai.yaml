@@ -1,0 +1,7 @@
+policy:
+  allow_implicit_invocation: false
+
+interface:
+  display_name: "Cognitive Walkthrough"
+  short_description: "Step through a task as a first-time user to identify discoverability and feedback breakdowns."
+  default_prompt: "Run a cognitive walkthrough on the primary user flow."

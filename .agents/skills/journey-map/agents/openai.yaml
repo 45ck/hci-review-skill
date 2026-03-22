@@ -1,0 +1,7 @@
+policy:
+  allow_implicit_invocation: false
+
+interface:
+  display_name: "Journey Map"
+  short_description: "Map key user journeys including happy paths, edge cases, and recovery flows."
+  default_prompt: "Map the key user journeys for the current project."

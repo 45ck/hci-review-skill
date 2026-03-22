@@ -1,0 +1,7 @@
+policy:
+  allow_implicit_invocation: false
+
+interface:
+  display_name: "HCI Prototype Review Pack"
+  short_description: "Full HCI review pack: conceptual model, journeys, glossary, consistency, heuristics, and walkthrough."
+  default_prompt: "Run a full HCI prototype review pack on the current project."

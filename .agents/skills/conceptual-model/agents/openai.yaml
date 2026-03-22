@@ -1,0 +1,7 @@
+policy:
+  allow_implicit_invocation: false
+
+interface:
+  display_name: "Conceptual Model"
+  short_description: "Build a conceptual model: actors, objects, actions, states, and rules."
+  default_prompt: "Create a conceptual model for the current project."

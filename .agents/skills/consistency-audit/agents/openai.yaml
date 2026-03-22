@@ -1,0 +1,7 @@
+policy:
+  allow_implicit_invocation: false
+
+interface:
+  display_name: "Consistency Audit"
+  short_description: "Audit cross-screen consistency in navigation, actions, states, and interaction patterns."
+  default_prompt: "Audit consistency across the current project interface."

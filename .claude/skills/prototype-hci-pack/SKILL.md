@@ -1,0 +1,148 @@
+---
+name: prototype-hci-pack
+description: Create a full HCI review pack for a prototype: conceptual model, journeys, glossary, consistency audit, heuristic evaluation, and cognitive walkthrough.
+disable-model-invocation: true
+---
+
+Build a full solo-review pack for this prototype or interface area.
+
+Scope: $ARGUMENTS
+
+Use ultrathink. Work from the current repository, current files, current screenshots, current docs, and current prototype state. Do not wait for user research unless absolutely blocked. If something is unknown, make the smallest reasonable assumption and label it clearly.
+
+## Goals
+- Reduce confusion before user testing.
+- Ensure conceptual coherence across screens, flows, actions, and language.
+- Surface the highest-risk UX/HCI problems early.
+- Leave durable artifacts that can guide implementation.
+
+## Produce these outputs
+Write them to `docs/hci/` unless the user requested a different path.
+
+1. `conceptual-model.md`
+2. `user-journeys.md`
+3. `glossary.md`
+4. `consistency-audit.md`
+5. `heuristic-evaluation.md`
+6. `cognitive-walkthrough.md`
+7. `hci-summary.md`
+
+Create the directory if it does not exist.
+
+## Required process
+
+### 1) Understand the system
+Extract and document:
+- primary user types or actors
+- primary objects/entities in the interface
+- major actions users can take
+- states for each important object
+- system rules, permissions, and transitions
+
+Use the `conceptual-model` skill logic:
+- define users, objects, actions, states, rules
+- create a compact state model in markdown or Mermaid if useful
+- identify unclear or overloaded concepts
+
+### 2) Map the main journeys
+Identify the 3 to 7 most important journeys for the scope.
+For each journey document:
+- user goal
+- entry point
+- steps
+- decision points
+- error paths
+- exit state
+- likely confusion points
+
+Include Mermaid flowcharts where useful.
+Prioritize:
+- first-time user path
+- core happy path
+- edit/undo path
+- failure/recovery path
+- returning user path
+
+### 3) Normalize language
+Create a glossary of canonical nouns, verbs, statuses, and labels.
+For each term include:
+- canonical term
+- exact meaning
+- where it appears
+- terms to avoid or merge
+
+Flag any concept drift such as one thing being called different names in different places.
+
+### 4) Audit consistency
+Review consistency across screens and flows:
+- navigation placement
+- page titles
+- primary vs secondary actions
+- destructive actions
+- status presentation
+- empty/loading/error/success states
+- form layout and validation
+- icon meaning
+- modal, drawer, popover, and toast usage
+- back/cancel/close behavior
+
+Create a table with:
+- item
+- expected invariant
+- observed variants
+- risk
+- recommendation
+
+### 5) Run heuristic evaluation
+Apply Nielsen-style heuristics rigorously:
+- visibility of system status
+- match between system and real world
+- user control and freedom
+- consistency and standards
+- error prevention
+- recognition rather than recall
+- flexibility and efficiency of use
+- aesthetic and minimalist design
+- error recovery
+- help/documentation
+
+Output a severity-ranked issues table:
+- ID
+- heuristic violated
+- where
+- evidence
+- why it matters
+- severity (0 to 4)
+- recommended fix
+
+### 6) Run a cognitive walkthrough
+For each critical journey, step through the interface and answer:
+1. Will the user know what goal they are trying to achieve here?
+2. Will they notice the correct action?
+3. Will they understand that it leads toward their goal?
+4. Will feedback after the action make sense?
+
+Log breakdowns with exact step references.
+
+### 7) Synthesize
+Create `hci-summary.md` with:
+- one-paragraph context recap
+- top 5 confusion risks
+- top 5 design invariants to enforce
+- top 5 implementation priorities
+- open assumptions and unknowns
+
+## Quality bar
+- Be concrete, not generic.
+- Refer to actual files, screens, components, routes, or flows where possible.
+- Prefer recognition over recall.
+- Prefer stable conceptual models over screen-by-screen patching.
+- Distinguish structural issues from visual polish issues.
+- If the prototype is incomplete, still evaluate the structure that exists.
+
+## Deliverable style
+- Clear headings
+- Markdown tables
+- Mermaid diagrams where useful
+- Direct language
+- No filler

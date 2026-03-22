@@ -1,0 +1,7 @@
+policy:
+  allow_implicit_invocation: false
+
+interface:
+  display_name: "Vocabulary Audit"
+  short_description: "Normalize UI terminology with a canonical glossary of nouns, verbs, statuses, and labels."
+  default_prompt: "Audit and normalize interface vocabulary for the current project."

@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4f46e5"/>
+      <stop offset="100%" style="stop-color:#7c3aed"/>
+    </linearGradient>
+    <linearGradient id="screen" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#e0e7ff"/>
+      <stop offset="100%" style="stop-color:#c7d2fe"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded square background -->
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+
+  <!-- Magnifying glass body (the review/inspection metaphor) -->
+  <circle cx="232" cy="224" r="120" stroke="#e0e7ff" stroke-width="24" fill="none" opacity="0.95"/>
+  <line x1="316" y1="308" x2="408" y2="400" stroke="#e0e7ff" stroke-width="28" stroke-linecap="round" opacity="0.95"/>
+
+  <!-- Screen wireframe inside magnifying glass -->
+  <rect x="172" y="172" width="120" height="88" rx="8" fill="url(#screen)" opacity="0.9"/>
+
+  <!-- Wireframe header bar -->
+  <rect x="180" y="180" width="48" height="6" rx="3" fill="#6366f1" opacity="0.8"/>
+
+  <!-- Wireframe content lines -->
+  <rect x="180" y="194" width="104" height="4" rx="2" fill="#818cf8" opacity="0.5"/>
+  <rect x="180" y="204" width="104" height="4" rx="2" fill="#818cf8" opacity="0.5"/>
+  <rect x="180" y="214" width="72" height="4" rx="2" fill="#818cf8" opacity="0.5"/>
+
+  <!-- Wireframe button -->
+  <rect x="180" y="228" width="40" height="14" rx="4" fill="#4f46e5" opacity="0.7"/>
+
+  <!-- Wireframe checkbox/checklist items (audit metaphor) -->
+  <rect x="236" y="226" width="10" height="10" rx="2" fill="none" stroke="#4f46e5" stroke-width="2" opacity="0.6"/>
+  <rect x="252" y="226" width="10" height="10" rx="2" fill="none" stroke="#4f46e5" stroke-width="2" opacity="0.6"/>
+  <rect x="268" y="226" width="10" height="10" rx="2" fill="none" stroke="#4f46e5" stroke-width="2" opacity="0.6"/>
+
+  <!-- Checkmark in first checkbox -->
+  <path d="M238 231 L241 234 L244 228" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+
+  <!-- Small flow arrow on the right (journey/flow metaphor) -->
+  <g transform="translate(360, 120)" opacity="0.8">
+    <circle cx="0" cy="0" r="14" fill="#c4b5fd" opacity="0.6"/>
+    <line x1="0" y1="14" x2="0" y2="40" stroke="#c4b5fd" stroke-width="3" opacity="0.6"/>
+    <circle cx="0" cy="54" r="14" fill="#c4b5fd" opacity="0.6"/>
+    <line x1="0" y1="68" x2="0" y2="94" stroke="#c4b5fd" stroke-width="3" opacity="0.6"/>
+    <circle cx="0" cy="108" r="14" fill="#c4b5fd" opacity="0.6"/>
+  </g>
+
+  <!-- Small state dots on the left (state model metaphor) -->
+  <g transform="translate(96, 320)" opacity="0.7">
+    <circle cx="0" cy="0" r="10" fill="#a5b4fc"/>
+    <line x1="10" y1="0" x2="40" y2="0" stroke="#a5b4fc" stroke-width="2.5"/>
+    <circle cx="50" cy="0" r="10" fill="#a5b4fc"/>
+    <line x1="60" y1="0" x2="90" y2="0" stroke="#a5b4fc" stroke-width="2.5"/>
+    <circle cx="100" cy="0" r="10" stroke="#a5b4fc" stroke-width="2.5" fill="none"/>
+  </g>
+</svg>

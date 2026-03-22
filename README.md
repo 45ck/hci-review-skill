@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="logo.svg" alt="hci-review-skill logo" width="128" height="128" />
+</p>
+
 # hci-review-skill
 
 <p align="center">
@@ -321,6 +325,7 @@ docs/hci/
   models/                              # Conceptual and state models
   glossary/                            # Glossary artifacts
 banner.svg                             # README banner
+logo.svg                               # Project logo (512x512)
 install.sh                             # Global install (both platforms)
 uninstall.sh                           # Global uninstall
 LICENSE                                # MIT

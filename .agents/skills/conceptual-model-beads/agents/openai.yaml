@@ -1,0 +1,7 @@
+policy:
+  allow_implicit_invocation: false
+
+interface:
+  display_name: "Conceptual Model + Beads"
+  short_description: "Build a conceptual model and create Beads issues from findings."
+  default_prompt: "Build a conceptual model on the current project and create Beads issues from findings."

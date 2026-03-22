@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License" /></a>
-  <img src="https://img.shields.io/badge/skills-10-6366f1" alt="10 skills" />
+  <img src="https://img.shields.io/badge/skills-20-6366f1" alt="20 skills" />
   <img src="https://img.shields.io/badge/platform-Claude%20Code%20%7C%20Codex%20CLI-8b5cf6" alt="Claude Code | Codex CLI" />
   <img src="https://img.shields.io/badge/templates-11-a78bfa" alt="11 templates" />
 </p>
@@ -23,7 +23,7 @@
 
 Most confusing prototypes happen when each screen is designed locally, but user journeys, terminology, states, and interaction patterns are never defined globally. These skills force you to treat the UI as a **system with rules** -- not a set of disconnected screens -- by running the same evaluation methods used in university-level HCI courses and professional usability practice.
 
-Ten skills. Each one runs a specific evaluation method against your actual codebase, routes, components, and screenshots. No generic advice -- every finding is anchored to real files.
+Twenty skills (10 core + 10 Beads variants). Each one runs a specific evaluation method against your actual codebase, routes, components, and screenshots. No generic advice -- every finding is anchored to real files. The Beads variants add trackable issue creation via [Beads](https://github.com/steveyegge/beads).
 
 ## Skills included
 
@@ -40,6 +40,25 @@ Ten skills. Each one runs a specific evaluation method against your actual codeb
 | **Heuristic Evaluation** | `/heuristic-eval` | Nielsen-style structured evaluation with severity ranking (0-4) and fix recommendations. |
 | **Cognitive Walkthrough** | `/cognitive-walkthrough` | Step through a task as a first-time user. Tests intent, discoverability, feedback, and interpretation at every step. |
 
+### Beads variants
+
+Each core skill has a `-beads` variant that runs the full review, then creates [Beads](https://github.com/steveyegge/beads) issues from the findings so they become trackable tasks with priorities and parent-child dependencies.
+
+| Skill | Command | Adds |
+|---|---|---|
+| **HCI Pack + Beads** | `/prototype-hci-pack-beads` | Creates issues from scorecard weaknesses and confusion risks |
+| **Conceptual Model + Beads** | `/conceptual-model-beads` | Creates issues from ambiguities and overloaded concepts |
+| **State Model + Beads** | `/state-model-beads` | Creates issues from undefined states and silent transitions |
+| **Journey Map + Beads** | `/journey-map-beads` | Creates issues from dead ends and missing recovery paths |
+| **Vocabulary Audit + Beads** | `/vocabulary-audit-beads` | Creates issues from terminology drift and vague labels |
+| **IA + Beads** | `/information-architecture-beads` | Creates issues from orphan screens and mislabeled navigation |
+| **Consistency Audit + Beads** | `/consistency-audit-beads` | Creates issues from cross-screen invariant violations |
+| **Failure Path + Beads** | `/failure-path-audit-beads` | Creates issues from unhandled failure states |
+| **Heuristic Eval + Beads** | `/heuristic-eval-beads` | Creates issues from severity 3-4 heuristic violations |
+| **Cognitive Walkthrough + Beads** | `/cognitive-walkthrough-beads` | Creates issues from walkthrough breakdowns (Q1-Q4 failures) |
+
+Beads variants gracefully degrade: if `bd` is not installed, they output the full review and print install instructions instead of failing. Pass `--include-minor` to also create issues for minor findings.
+
 ## Features
 
 - Works from your actual codebase: routes, components, screenshots, docs
@@ -50,6 +69,7 @@ Ten skills. Each one runs a specific evaluation method against your actual codeb
 - HCI scorecard for comparing reviews across iterations
 - Explicit-only invocation (no accidental triggers)
 - Dual platform: Claude Code and Codex CLI
+- **Beads add-on:** findings become trackable issues with priority mapping (MAJOR->P0, MINOR->P2), parent-child linking, and structured acceptance criteria
 
 ## Install
 
@@ -93,6 +113,11 @@ bash uninstall.sh
 /failure-path-audit checkout flow
 /heuristic-eval approval dashboard
 /cognitive-walkthrough create-new-agent flow
+
+# Beads variants (creates trackable issues)
+/heuristic-eval-beads approval dashboard
+/heuristic-eval-beads approval dashboard --include-minor
+/prototype-hci-pack-beads onboarding flow
 ```
 
 ### Codex CLI
@@ -291,6 +316,16 @@ These skills encode established HCI evaluation methods as AI-executable instruct
 
 **Cognitive walkthroughs** (Wharton et al., *The Cognitive Walkthrough Method: A Practitioner's Guide*, 1994) simulate a first-time user at every step. For each action, the evaluator asks: will the user form the right goal? Notice the action? Understand the result? This catches problems that heuristic evaluation misses.
 
+### Beads integration
+
+[Beads](https://github.com/steveyegge/beads) provides persistent, structured memory for coding agents. Each `-beads` variant maps findings to Beads issues:
+
+- One **parent issue** per review run (groups all findings)
+- One **child issue** per finding (linked via `bd dep add`)
+- MAJOR findings get P0 priority, MINOR findings get P2 (opt-in with `--include-minor`)
+- Each issue gets structured fields: description (what/why), notes (location/evidence), acceptance criteria (fix recommendation)
+- Initializes Beads in `--stealth` mode by default so it doesn't commit metadata to your repo
+
 ## Repo structure
 
 ```
@@ -305,6 +340,7 @@ These skills encode established HCI evaluation methods as AI-executable instruct
   failure-path-audit/SKILL.md          # Failure path audit
   heuristic-eval/SKILL.md              # Heuristic evaluation
   cognitive-walkthrough/SKILL.md       # Cognitive walkthrough
+  *-beads/SKILL.md                     # Beads variants (10 skills)
 .agents/skills/
   [same structure with agents/openai.yaml for Codex CLI]
 docs/hci/

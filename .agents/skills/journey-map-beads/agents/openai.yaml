@@ -1,0 +1,7 @@
+policy:
+  allow_implicit_invocation: false
+
+interface:
+  display_name: "Journey Map + Beads"
+  short_description: "Map user journeys and create Beads issues from findings."
+  default_prompt: "Map user journeys on the current project and create Beads issues from findings."

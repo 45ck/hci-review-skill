@@ -1,0 +1,7 @@
+policy:
+  allow_implicit_invocation: false
+
+interface:
+  display_name: "Vocabulary Audit + Beads"
+  short_description: "Audit UI terminology and create Beads issues from findings."
+  default_prompt: "Audit UI terminology on the current project and create Beads issues from findings."

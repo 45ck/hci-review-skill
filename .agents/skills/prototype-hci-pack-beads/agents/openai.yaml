@@ -1,0 +1,7 @@
+policy:
+  allow_implicit_invocation: false
+
+interface:
+  display_name: "HCI Review Pack + Beads"
+  short_description: "Run full HCI review pack and create Beads issues from findings."
+  default_prompt: "Run a full HCI review pack on the current project and create Beads issues from findings."

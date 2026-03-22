@@ -1,0 +1,7 @@
+policy:
+  allow_implicit_invocation: false
+
+interface:
+  display_name: "Cognitive Walkthrough + Beads"
+  short_description: "Run a cognitive walkthrough and create Beads issues from findings."
+  default_prompt: "Run a cognitive walkthrough on the current project and create Beads issues from findings."

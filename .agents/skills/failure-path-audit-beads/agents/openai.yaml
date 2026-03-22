@@ -1,0 +1,7 @@
+policy:
+  allow_implicit_invocation: false
+
+interface:
+  display_name: "Failure Path Audit + Beads"
+  short_description: "Audit failure paths and create Beads issues from findings."
+  default_prompt: "Audit failure paths on the current project and create Beads issues from findings."

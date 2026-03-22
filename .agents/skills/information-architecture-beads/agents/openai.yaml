@@ -1,0 +1,7 @@
+policy:
+  allow_implicit_invocation: false
+
+interface:
+  display_name: "Information Architecture + Beads"
+  short_description: "Review information architecture and create Beads issues from findings."
+  default_prompt: "Review information architecture on the current project and create Beads issues from findings."

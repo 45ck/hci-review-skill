@@ -42,6 +42,16 @@ SKILLS=(
   state-model
   information-architecture
   failure-path-audit
+  prototype-hci-pack-beads
+  conceptual-model-beads
+  journey-map-beads
+  vocabulary-audit-beads
+  heuristic-eval-beads
+  cognitive-walkthrough-beads
+  consistency-audit-beads
+  state-model-beads
+  information-architecture-beads
+  failure-path-audit-beads
 )
 
 for skill in "${SKILLS[@]}"; do
@@ -51,13 +61,27 @@ for skill in "${SKILLS[@]}"; do
 done
 
 echo "Done. Available skills:"
-echo "  /prototype-hci-pack         Full review pack"
-echo "  /conceptual-model           Actors, objects, actions, states, rules"
-echo "  /journey-map                User flow mapping"
-echo "  /vocabulary-audit           UI terminology normalization"
-echo "  /heuristic-eval             Nielsen heuristic evaluation"
-echo "  /cognitive-walkthrough      First-time user step-through"
-echo "  /consistency-audit          Cross-screen consistency"
-echo "  /state-model                State machines and lifecycles"
-echo "  /information-architecture   Sitemap, navigation, grouping"
-echo "  /failure-path-audit         Empty, error, loading, and edge cases"
+echo ""
+echo "  Core skills:"
+echo "  /prototype-hci-pack               Full review pack"
+echo "  /conceptual-model                 Actors, objects, actions, states, rules"
+echo "  /journey-map                      User flow mapping"
+echo "  /vocabulary-audit                 UI terminology normalization"
+echo "  /heuristic-eval                   Nielsen heuristic evaluation"
+echo "  /cognitive-walkthrough            First-time user step-through"
+echo "  /consistency-audit                Cross-screen consistency"
+echo "  /state-model                      State machines and lifecycles"
+echo "  /information-architecture         Sitemap, navigation, grouping"
+echo "  /failure-path-audit               Empty, error, loading, and edge cases"
+echo ""
+echo "  Beads variants (core + trackable issues):"
+echo "  /prototype-hci-pack-beads         Full review pack + Beads issues"
+echo "  /conceptual-model-beads           Conceptual model + Beads issues"
+echo "  /journey-map-beads                Journey map + Beads issues"
+echo "  /vocabulary-audit-beads           Vocabulary audit + Beads issues"
+echo "  /heuristic-eval-beads             Heuristic eval + Beads issues"
+echo "  /cognitive-walkthrough-beads      Cognitive walkthrough + Beads issues"
+echo "  /consistency-audit-beads          Consistency audit + Beads issues"
+echo "  /state-model-beads                State model + Beads issues"
+echo "  /information-architecture-beads   IA review + Beads issues"
+echo "  /failure-path-audit-beads         Failure path audit + Beads issues"

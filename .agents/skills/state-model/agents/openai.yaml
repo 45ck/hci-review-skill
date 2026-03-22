@@ -1,0 +1,7 @@
+policy:
+  allow_implicit_invocation: false
+
+interface:
+  display_name: "State Model"
+  short_description: "Define state machines and lifecycles for all key entities with transitions and user-visible cues."
+  default_prompt: "Define the state machines and lifecycles for the current project."

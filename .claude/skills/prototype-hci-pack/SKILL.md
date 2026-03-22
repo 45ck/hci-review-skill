@@ -1,6 +1,6 @@
 ---
 name: prototype-hci-pack
-description: Create a full HCI review pack for a prototype: conceptual model, journeys, glossary, consistency audit, heuristic evaluation, and cognitive walkthrough.
+description: Create a full HCI review pack for a prototype: conceptual model, state model, journeys, glossary, information architecture, consistency audit, failure path audit, heuristic evaluation, cognitive walkthrough, and scorecard.
 disable-model-invocation: true
 ---
 
@@ -20,12 +20,16 @@ Use ultrathink. Work from the current repository, current files, current screens
 Write them to `docs/hci/` unless the user requested a different path.
 
 1. `conceptual-model.md`
-2. `user-journeys.md`
-3. `glossary.md`
-4. `consistency-audit.md`
-5. `heuristic-evaluation.md`
-6. `cognitive-walkthrough.md`
-7. `hci-summary.md`
+2. `state-model.md`
+3. `user-journeys.md`
+4. `glossary.md`
+5. `information-architecture.md`
+6. `consistency-audit.md`
+7. `failure-path-audit.md`
+8. `heuristic-evaluation.md`
+9. `cognitive-walkthrough.md`
+10. `hci-scorecard.md`
+11. `hci-summary.md`
 
 Create the directory if it does not exist.
 
@@ -44,7 +48,16 @@ Use the `conceptual-model` skill logic:
 - create a compact state model in markdown or Mermaid if useful
 - identify unclear or overloaded concepts
 
-### 2) Map the main journeys
+### 2) Define state models
+For every stateful entity in the system:
+- list all states with meaning and user-visible cue
+- list allowed transitions with trigger, actor, and side effects
+- list invalid transitions with explanation
+- create Mermaid state diagrams
+- check UI state coverage: does every state have a distinct visual treatment?
+- flag ambiguous states, silent transitions, and undefined exits
+
+### 3) Map the main journeys
 Identify the 3 to 7 most important journeys for the scope.
 For each journey document:
 - user goal
@@ -63,7 +76,7 @@ Prioritize:
 - failure/recovery path
 - returning user path
 
-### 3) Normalize language
+### 4) Normalize language
 Create a glossary of canonical nouns, verbs, statuses, and labels.
 For each term include:
 - canonical term
@@ -73,7 +86,14 @@ For each term include:
 
 Flag any concept drift such as one thing being called different names in different places.
 
-### 4) Audit consistency
+### 5) Define information architecture
+- Create a hierarchical sitemap of all screens/pages/views
+- Document the navigation model: global, secondary, tertiary, escape hatches
+- Analyze grouping logic and label clarity
+- Check action placement: is each action near the objects it acts on?
+- Measure depth and breadth: flag paths that are too deep or orphaned screens
+
+### 6) Audit consistency
 Review consistency across screens and flows:
 - navigation placement
 - page titles
@@ -93,7 +113,19 @@ Create a table with:
 - risk
 - recommendation
 
-### 5) Run heuristic evaluation
+### 7) Audit failure paths
+Review every non-happy-path state:
+- empty states: does each empty screen explain why and offer a next step?
+- loading states: is there always a loading indicator? timeout handling?
+- validation errors: inline or summary? specific or vague? data preserved?
+- permission failures: hidden, disabled, or error? explains how to fix?
+- network failures: retry available? data preserved?
+- partial completion: auto-saved? resumable?
+- undo/cancel/recovery: confirmation dialogs? soft delete?
+
+Create a summary table: category, items audited, handled, partial, not handled, critical gaps.
+
+### 8) Run heuristic evaluation
 Apply Nielsen-style heuristics rigorously:
 - visibility of system status
 - match between system and real world
@@ -115,7 +147,7 @@ Output a severity-ranked issues table:
 - severity (0 to 4)
 - recommended fix
 
-### 6) Run a cognitive walkthrough
+### 9) Run a cognitive walkthrough
 For each critical journey, step through the interface and answer:
 1. Will the user know what goal they are trying to achieve here?
 2. Will they notice the correct action?
@@ -124,7 +156,20 @@ For each critical journey, step through the interface and answer:
 
 Log breakdowns with exact step references.
 
-### 7) Synthesize
+### 10) Score
+Create `hci-scorecard.md` rating the prototype 1-5 on each dimension:
+1. Clarity of purpose
+2. Navigation clarity
+3. Terminology consistency
+4. State visibility
+5. Error prevention and recovery
+6. Recognition over recall
+7. Cross-screen consistency
+8. Failure path coverage
+
+Include total score out of 40, top 3 strengths, top 3 weaknesses, and priority fixes.
+
+### 11) Synthesize
 Create `hci-summary.md` with:
 - one-paragraph context recap
 - top 5 confusion risks

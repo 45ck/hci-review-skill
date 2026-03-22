@@ -1,0 +1,7 @@
+policy:
+  allow_implicit_invocation: false
+
+interface:
+  display_name: "Information Architecture"
+  short_description: "Define sitemap, navigation model, grouping logic, labeling, and action placement."
+  default_prompt: "Define the information architecture for the current project."

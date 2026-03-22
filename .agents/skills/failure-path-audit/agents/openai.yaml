@@ -1,0 +1,7 @@
+policy:
+  allow_implicit_invocation: false
+
+interface:
+  display_name: "Failure Path Audit"
+  short_description: "Audit empty states, validation errors, permission failures, loading, undo, and recovery paths."
+  default_prompt: "Audit all failure paths and edge cases in the current project."

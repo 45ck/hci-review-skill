@@ -30,6 +30,9 @@ SKILLS=(
   heuristic-eval
   cognitive-walkthrough
   consistency-audit
+  state-model
+  information-architecture
+  failure-path-audit
 )
 
 for skill in "${SKILLS[@]}"; do
@@ -39,10 +42,13 @@ for skill in "${SKILLS[@]}"; do
 done
 
 echo "Done. Available skills:"
-echo "  /prototype-hci-pack      Full review pack"
-echo "  /conceptual-model        Actors, objects, actions, states, rules"
-echo "  /journey-map             User flow mapping"
-echo "  /vocabulary-audit        UI terminology normalization"
-echo "  /heuristic-eval          Nielsen heuristic evaluation"
-echo "  /cognitive-walkthrough   First-time user step-through"
-echo "  /consistency-audit       Cross-screen consistency"
+echo "  /prototype-hci-pack         Full review pack"
+echo "  /conceptual-model           Actors, objects, actions, states, rules"
+echo "  /journey-map                User flow mapping"
+echo "  /vocabulary-audit           UI terminology normalization"
+echo "  /heuristic-eval             Nielsen heuristic evaluation"
+echo "  /cognitive-walkthrough      First-time user step-through"
+echo "  /consistency-audit          Cross-screen consistency"
+echo "  /state-model                State machines and lifecycles"
+echo "  /information-architecture   Sitemap, navigation, grouping"
+echo "  /failure-path-audit         Empty, error, loading, and edge cases"

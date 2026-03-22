@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-for skill in prototype-hci-pack conceptual-model journey-map vocabulary-audit heuristic-eval cognitive-walkthrough consistency-audit; do
+for skill in prototype-hci-pack conceptual-model journey-map vocabulary-audit heuristic-eval cognitive-walkthrough consistency-audit state-model information-architecture failure-path-audit; do
   rm -rf "$HOME/.claude/skills/$skill"
   echo "Removed Claude Code skill: ~/.claude/skills/$skill"
 

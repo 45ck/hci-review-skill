@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a"/>
+      <stop offset="50%" style="stop-color:#1e293b"/>
+      <stop offset="100%" style="stop-color:#0f172a"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#6366f1"/>
+      <stop offset="100%" style="stop-color:#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:0.3"/>
+      <stop offset="50%" style="stop-color:#8b5cf6;stop-opacity:0.1"/>
+      <stop offset="100%" style="stop-color:#6366f1;stop-opacity:0.3"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="300" fill="url(#bg)"/>
+
+  <!-- Subtle grid pattern -->
+  <g opacity="0.05" stroke="#94a3b8" stroke-width="0.5">
+    <line x1="0" y1="60" x2="1200" y2="60"/>
+    <line x1="0" y1="120" x2="1200" y2="120"/>
+    <line x1="0" y1="180" x2="1200" y2="180"/>
+    <line x1="0" y1="240" x2="1200" y2="240"/>
+    <line x1="120" y1="0" x2="120" y2="300"/>
+    <line x1="240" y1="0" x2="240" y2="300"/>
+    <line x1="360" y1="0" x2="360" y2="300"/>
+    <line x1="480" y1="0" x2="480" y2="300"/>
+    <line x1="600" y1="0" x2="600" y2="300"/>
+    <line x1="720" y1="0" x2="720" y2="300"/>
+    <line x1="840" y1="0" x2="840" y2="300"/>
+    <line x1="960" y1="0" x2="960" y2="300"/>
+    <line x1="1080" y1="0" x2="1080" y2="300"/>
+  </g>
+
+  <!-- Accent line top -->
+  <rect x="0" y="0" width="1200" height="3" fill="url(#accent)"/>
+
+  <!-- Left icon cluster: simplified wireframe/flow diagram -->
+  <g transform="translate(80, 90)" opacity="0.6">
+    <!-- Screen wireframe 1 -->
+    <rect x="0" y="0" width="56" height="40" rx="4" stroke="#6366f1" stroke-width="1.5" fill="none"/>
+    <rect x="6" y="6" width="20" height="3" rx="1" fill="#6366f1" opacity="0.5"/>
+    <rect x="6" y="13" width="44" height="2" rx="1" fill="#475569" opacity="0.4"/>
+    <rect x="6" y="19" width="44" height="2" rx="1" fill="#475569" opacity="0.4"/>
+    <rect x="6" y="25" width="30" height="2" rx="1" fill="#475569" opacity="0.4"/>
+    <rect x="6" y="32" width="16" height="5" rx="2" fill="#6366f1" opacity="0.4"/>
+
+    <!-- Arrow -->
+    <line x1="62" y1="20" x2="78" y2="20" stroke="#6366f1" stroke-width="1" opacity="0.4"/>
+    <polygon points="78,17 84,20 78,23" fill="#6366f1" opacity="0.4"/>
+
+    <!-- Screen wireframe 2 -->
+    <rect x="88" y="0" width="56" height="40" rx="4" stroke="#8b5cf6" stroke-width="1.5" fill="none"/>
+    <rect x="94" y="6" width="20" height="3" rx="1" fill="#8b5cf6" opacity="0.5"/>
+    <rect x="94" y="13" width="44" height="2" rx="1" fill="#475569" opacity="0.4"/>
+    <rect x="94" y="19" width="44" height="2" rx="1" fill="#475569" opacity="0.4"/>
+    <rect x="94" y="25" width="30" height="2" rx="1" fill="#475569" opacity="0.4"/>
+    <rect x="94" y="32" width="16" height="5" rx="2" fill="#8b5cf6" opacity="0.4"/>
+
+    <!-- State circles below -->
+    <circle cx="28" cy="70" r="8" stroke="#6366f1" stroke-width="1.2" fill="none" opacity="0.4"/>
+    <circle cx="28" cy="70" r="3" fill="#6366f1" opacity="0.3"/>
+    <line x1="36" y1="70" x2="52" y2="70" stroke="#6366f1" stroke-width="1" opacity="0.3"/>
+    <circle cx="60" cy="70" r="8" stroke="#8b5cf6" stroke-width="1.2" fill="none" opacity="0.4"/>
+    <line x1="68" y1="70" x2="84" y2="70" stroke="#8b5cf6" stroke-width="1" opacity="0.3"/>
+    <circle cx="92" cy="70" r="8" stroke="#8b5cf6" stroke-width="1.2" fill="none" opacity="0.4"/>
+    <circle cx="92" cy="70" r="5" stroke="#8b5cf6" stroke-width="1.2" fill="none" opacity="0.3"/>
+  </g>
+
+  <!-- Title -->
+  <text x="600" y="120" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="48" font-weight="700" fill="#f8fafc" letter-spacing="-1">hci-review-skill</text>
+
+  <!-- Subtitle -->
+  <text x="600" y="158" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="18" fill="#94a3b8" letter-spacing="0.5">Structured HCI &amp; UX prototype review for Claude Code and Codex CLI</text>
+
+  <!-- Skill badges -->
+  <g transform="translate(600, 195)" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500">
+    <g transform="translate(-440, 0)">
+      <rect x="-52" y="-12" width="104" height="24" rx="12" fill="#6366f1" opacity="0.15" stroke="#6366f1" stroke-width="0.5" opacity="0.3"/>
+      <text fill="#a5b4fc">conceptual-model</text>
+    </g>
+    <g transform="translate(-300, 0)">
+      <rect x="-46" y="-12" width="92" height="24" rx="12" fill="#6366f1" opacity="0.15" stroke="#6366f1" stroke-width="0.5" opacity="0.3"/>
+      <text fill="#a5b4fc">journey-map</text>
+    </g>
+    <g transform="translate(-175, 0)">
+      <rect x="-52" y="-12" width="104" height="24" rx="12" fill="#6366f1" opacity="0.15" stroke="#6366f1" stroke-width="0.5" opacity="0.3"/>
+      <text fill="#a5b4fc">vocabulary-audit</text>
+    </g>
+    <g transform="translate(-40, 0)">
+      <rect x="-56" y="-12" width="112" height="24" rx="12" fill="#8b5cf6" opacity="0.15" stroke="#8b5cf6" stroke-width="0.5" opacity="0.3"/>
+      <text fill="#c4b5fd">consistency-audit</text>
+    </g>
+    <g transform="translate(105, 0)">
+      <rect x="-42" y="-12" width="84" height="24" rx="12" fill="#8b5cf6" opacity="0.15" stroke="#8b5cf6" stroke-width="0.5" opacity="0.3"/>
+      <text fill="#c4b5fd">state-model</text>
+    </g>
+    <g transform="translate(230, 0)">
+      <rect x="-48" y="-12" width="96" height="24" rx="12" fill="#8b5cf6" opacity="0.15" stroke="#8b5cf6" stroke-width="0.5" opacity="0.3"/>
+      <text fill="#c4b5fd">heuristic-eval</text>
+    </g>
+    <g transform="translate(375, 0)">
+      <rect x="-62" y="-12" width="124" height="24" rx="12" fill="#8b5cf6" opacity="0.15" stroke="#8b5cf6" stroke-width="0.5" opacity="0.3"/>
+      <text fill="#c4b5fd">cognitive-walkthrough</text>
+    </g>
+  </g>
+
+  <!-- Bottom row badges -->
+  <g transform="translate(600, 235)" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500">
+    <g transform="translate(-175, 0)">
+      <rect x="-72" y="-12" width="144" height="24" rx="12" fill="#6366f1" opacity="0.15" stroke="#6366f1" stroke-width="0.5" opacity="0.3"/>
+      <text fill="#a5b4fc">information-architecture</text>
+    </g>
+    <g transform="translate(0, 0)">
+      <rect x="-56" y="-12" width="112" height="24" rx="12" fill="#6366f1" opacity="0.15" stroke="#6366f1" stroke-width="0.5" opacity="0.3"/>
+      <text fill="#a5b4fc">failure-path-audit</text>
+    </g>
+    <g transform="translate(175, 0)">
+      <rect x="-62" y="-12" width="124" height="24" rx="12" fill="#a78bfa" opacity="0.15" stroke="#a78bfa" stroke-width="0.5" opacity="0.3"/>
+      <text fill="#ddd6fe">prototype-hci-pack</text>
+    </g>
+  </g>
+
+  <!-- Bottom accent line -->
+  <rect x="0" y="297" width="1200" height="3" fill="url(#accent)"/>
+</svg>

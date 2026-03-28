@@ -42,6 +42,20 @@ SKILLS=(
   state-model
   information-architecture
   failure-path-audit
+  accessibility-precheck
+  cognitive-friction-detector
+  error-and-time-metrics-analyzer
+  field-study-planner
+  high-fidelity-prototype-planner
+  interaction-type-selector
+  low-fidelity-prototype-planner
+  mental-model-checker
+  persona-synthesizer
+  representative-task-writer
+  satisfaction-questionnaire-writer
+  task-analysis-writer
+  usability-test-planner
+  wireframe-critic
   prototype-hci-pack-beads
   conceptual-model-beads
   journey-map-beads
@@ -73,6 +87,20 @@ echo "  /consistency-audit                Cross-screen consistency"
 echo "  /state-model                      State machines and lifecycles"
 echo "  /information-architecture         Sitemap, navigation, grouping"
 echo "  /failure-path-audit               Empty, error, loading, and edge cases"
+echo "  /persona-synthesizer              Persona synthesis from evidence"
+echo "  /task-analysis-writer             Hierarchical task analysis"
+echo "  /mental-model-checker             Mental model and mismatch analysis"
+echo "  /accessibility-precheck           Accessibility risk precheck"
+echo "  /low-fidelity-prototype-planner   Low-fidelity prototype planning"
+echo "  /high-fidelity-prototype-planner  High-fidelity prototype planning"
+echo "  /wireframe-critic                 Wireframe critique"
+echo "  /usability-test-planner           Usability test plan"
+echo "  /field-study-planner              Field study planning"
+echo "  /representative-task-writer       Representative task design"
+echo "  /satisfaction-questionnaire-writer Satisfaction questionnaire drafting"
+echo "  /cognitive-friction-detector      Cognitive friction analysis"
+echo "  /error-and-time-metrics-analyzer  Error/time metrics analysis"
+echo "  /interaction-type-selector        Interaction type selection"
 echo ""
 echo "  Beads variants (core + trackable issues):"
 echo "  /prototype-hci-pack-beads         Full review pack + Beads issues"

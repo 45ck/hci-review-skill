@@ -10,12 +10,12 @@
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License" /></a>
-  <img src="https://img.shields.io/badge/skills-20-6366f1" alt="20 skills" />
-  <img src="https://img.shields.io/badge/core-10-8b5cf6" alt="10 core skills" />
+  <img src="https://img.shields.io/badge/skills-34-6366f1" alt="34 skills" />
+  <img src="https://img.shields.io/badge/core-24-8b5cf6" alt="24 core skills" />
   <img src="https://img.shields.io/badge/beads-10-a78bfa" alt="10 beads variants" />
 </p>
 
-A structured HCI and UX review skill pack for prototypes, flows, and interface systems. It focuses on models, journeys, terminology, state handling, consistency, failure paths, heuristics, and cognitive walkthroughs.
+A structured HCI and UX review skill pack for prototypes, flows, interface systems, research planning, and usability evaluation. It focuses on models, journeys, terminology, state handling, consistency, failure paths, heuristics, cognitive walkthroughs, personas, task analysis, prototype planning, and usability studies.
 
 ## Included skills
 
@@ -31,6 +31,23 @@ A structured HCI and UX review skill pack for prototypes, flows, and interface s
 - `failure-path-audit`
 - `heuristic-eval`
 - `cognitive-walkthrough`
+
+### Research and prototyping skills
+
+- `accessibility-precheck`
+- `cognitive-friction-detector`
+- `error-and-time-metrics-analyzer`
+- `field-study-planner`
+- `high-fidelity-prototype-planner`
+- `interaction-type-selector`
+- `low-fidelity-prototype-planner`
+- `mental-model-checker`
+- `persona-synthesizer`
+- `representative-task-writer`
+- `satisfaction-questionnaire-writer`
+- `task-analysis-writer`
+- `usability-test-planner`
+- `wireframe-critic`
 
 ### Beads variants
 
@@ -50,6 +67,7 @@ A structured HCI and UX review skill pack for prototypes, flows, and interface s
 - Reviews real interfaces as systems, not isolated screens
 - Produces durable markdown artifacts under `docs/hci/`
 - Includes diagrams, scorecards, summaries, and structured review outputs
+- Adds research-planning and prototyping skills for personas, task analysis, testing, accessibility, and wireframe critique
 - Ships both core review skills and Beads-backed issue-generation variants
 - Mirrors packaged skills into both `.claude/skills/` and `.agents/skills/`
 
@@ -94,6 +112,13 @@ bash uninstall.sh
 /failure-path-audit checkout flow
 /heuristic-eval approval dashboard
 /cognitive-walkthrough create-new-agent flow
+/persona-synthesizer interview notes for student onboarding
+/task-analysis-writer submit expense claim
+/mental-model-checker current dashboard concepts
+/accessibility-precheck account setup flow
+/low-fidelity-prototype-planner early concept for scheduling flow
+/wireframe-critic checkout wireframes
+/usability-test-planner prototype validation session
 
 /heuristic-eval-beads approval dashboard
 /prototype-hci-pack-beads onboarding flow

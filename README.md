@@ -135,6 +135,11 @@ uninstall.sh                         global uninstaller
 LICENSE                              MIT
 ```
 
+## Related workflow agents
+
+- [ux-researcher](https://github.com/45ck/workflow-agents) - Plan and critique UX research, usability work, and prototype evaluation
+- [system-modeler](https://github.com/45ck/workflow-agents) - Formalize user flows and behavioral models where needed
+
 ## Related skill packs
 
 - [business-analysis-skills](https://github.com/45ck/business-analysis-skills) - Business analysis techniques, workflows, and quality checks

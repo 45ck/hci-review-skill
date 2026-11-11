@@ -33,6 +33,8 @@ Use the [evaluation protocol](docs/hci/models/evaluation-protocol.md) to collect
 python3 -B docs/hci/models/compare.py docs/hci/models/example-comparison.json
 ```
 
+The [Chromium benchmark](docs/hci/models/browser-benchmark.md) captures real browser measurements for 11 models across desktop, mobile and reduced-motion fixtures.
+
 ## Included skills
 
 ### Core review skills

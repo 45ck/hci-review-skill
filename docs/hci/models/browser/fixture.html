@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quantitative HCI browser benchmark</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0 auto; padding: 20px; max-width: 52rem; font: 16px/1.5 Arial, sans-serif; color: #152033; background: #f6f8fb; }
+    h1 { font-size: 1.5rem; }
+    section { padding: 16px; margin-bottom: 12px; border: 1px solid #bac3ce; border-radius: 8px; background: white; }
+    h2 { font-size: 1.125rem; margin: 0 0 8px; }
+    button { font: inherit; padding: 6px 12px; border: 1px solid #274867; border-radius: 4px; color: #fff; background: #274867; }
+    button:disabled { opacity: .65; }
+    #late-content { overflow: hidden; height: 0; }
+    #late-content[data-loaded], [data-variant="candidate"] #late-content { height: 64px; }
+    #late-content p { padding: 8px; margin: 4px 0; background: #e8f1fd; }
+    #shift-target { display: block; }
+    canvas { display: block; border-radius: 50%; background: #e8f1fd; }
+    #type-label { font: 700 20px/1.2 Arial, sans-serif; letter-spacing: .02em; }
+    #amounts { display: grid; max-width: 9rem; font-family: "DejaVu Sans", Arial, sans-serif; }
+    #digit-gauge { position: absolute; visibility: hidden; white-space: nowrap; font: inherit; }
+    [data-variant="candidate"] #amounts { text-align: right; font-variant-numeric: tabular-nums; }
+    .prose { font: 18px/1.3 Arial, sans-serif; }
+    .prose p { margin: 0 0 12px; }
+    [data-variant="candidate"] .prose { max-width: 62ch; line-height: 1.5; }
+    [data-variant="candidate"] .prose p { text-wrap: pretty; }
+    #stagger-items { padding: 0; list-style: none; display: grid; gap: 6px; }
+    #stagger-items button { width: 100%; text-align: left; }
+    pre { overflow: auto; }
+  </style>
+  <script src="measure.js" defer></script>
+</head>
+<body>
+  <h1>Quantitative HCI browser benchmark</h1>
+  <p>Fixture variant <strong id="variant"></strong></p>
+  <section aria-labelledby="layout-heading">
+    <h2 id="layout-heading">Layout stability</h2>
+    <div id="late-content"></div>
+    <button id="shift-target" type="button">Continue</button>
+  </section>
+
+  <section aria-labelledby="type-heading">
+    <h2 id="type-heading">Type and alignment</h2>
+    <p id="type-label">AV · SETTINGS</p>
+    <canvas id="play-icon" width="32" height="32" role="img" aria-label="Play icon"></canvas>
+    <div id="amounts">
+      <span>1,145<span class="decimal">.</span>47</span>
+      <span>5,020<span class="decimal">.</span>26</span>
+      <span>11,109<span class="decimal">.</span>39</span>
+      <span id="digit-gauge" aria-hidden="true"></span>
+    </div>
+    <div class="prose">
+      <p>Check the details before you submit the order. You can return to this page to review the items and update your delivery address.</p>
+      <p>If a delivery window changes, the order page shows the revised date and explains what you can do next.</p>
+      <p>Keep your receipt somewhere you can find it. Your order number helps the support team find the right purchase.</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="feedback-heading">
+    <h2 id="feedback-heading">Mutation feedback</h2>
+    <button id="like" type="button" aria-pressed="false">Like</button>
+    <output id="like-status" for="like"></output>
+  </section>
+
+  <section aria-labelledby="motion-heading">
+    <h2 id="motion-heading">Staggered reveal</h2>
+    <ul id="stagger-items">
+      <li><button type="button">Open first result</button></li>
+      <li><button type="button">Open second result</button></li>
+      <li><button type="button">Open third result</button></li>
+      <li><button type="button">Open fourth result</button></li>
+    </ul>
+    <output id="stagger-status"></output>
+  </section>
+
+  <button id="run" type="button">Run this fixture</button>
+  <pre id="result" aria-label="Measurements"></pre>
+</body>
+</html>

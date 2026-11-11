@@ -1,6 +1,6 @@
 # Comparing interface designs with quantitative HCI
 
-Use this protocol to evaluate a specific change against the version people use today. The [model catalogue](interface-design-models.md) defines the inputs and formulas for each metric. The calculator consumes observations collected in a browser trace, a rendered fixture or a usability study.
+Use this protocol to evaluate a specific change against the version people use today. The [model catalogue](interface-design-models.md) defines the inputs and formulas for each metric. The calculator consumes observations collected in a browser trace, a rendered fixture or a usability study. Start with the [Chromium benchmark](browser-benchmark.md) for a repeatable fixture and raw inputs that can feed the comparison tool.
 
 ## Plan the comparison
 

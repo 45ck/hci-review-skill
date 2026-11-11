@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Audit the spotlight glass reference in Chromium and emit evidence as JSON."""
+"""Audit the spotlight glass Liquid Glass reference in Chromium and emit evidence as JSON."""
 
 import argparse
 from functools import lru_cache
@@ -14,7 +14,7 @@ from measure import contrast_ratio
 
 
 EXAMPLE = Path(__file__).resolve().parent.parent / "examples" / "spotlight-glass.html"
-DESKTOP = {"viewport": {"width": 1280, "height": 850}, "color_scheme": "dark"}
+DESKTOP = {"viewport": {"width": 1280, "height": 850}, "color_scheme": "light"}
 MOBILE = {
     "viewport": {"width": 320, "height": 740},
     "device_scale_factor": 2,
@@ -137,40 +137,40 @@ def sample_contrast(page, image_class, selector="main"):
     }
 
 
-def card_geometry(page):
-    return page.locator(".spotlight").evaluate_all(
-        "cards => cards.map(card => card.getBoundingClientRect().toJSON())"
+def layout_geometry(page):
+    return page.locator(".surface-switch, .measure, .detail").evaluate_all(
+        "elements => elements.map(element => element.getBoundingClientRect().toJSON())"
     )
 
 
-def pointer_position(card):
-    return card.evaluate(
-        "card => ['--pointer-x', '--pointer-y'].map(name => card.style.getPropertyValue(name))"
+def pointer_position(toolbar):
+    return toolbar.evaluate(
+        "toolbar => ['--spot-x', '--spot-y'].map(name => toolbar.style.getPropertyValue(name))"
     )
 
 
-def move_over_card(page, card, dx=18, dy=10):
-    bounds = card.bounding_box()
+def move_over_toolbar(page, toolbar, dx=18, dy=10):
+    bounds = toolbar.bounding_box()
     page.mouse.move(bounds["x"] + dx, bounds["y"] + dy)
     page.evaluate(FRAMES)
 
 
-def burst_pointer_events(card):
-    return card.evaluate(
-        """async card => {
-          const rect = card.getBoundingClientRect();
+def burst_pointer_events(toolbar):
+    return toolbar.evaluate(
+        """async toolbar => {
+          const rect = toolbar.getBoundingClientRect();
           let styleMutations = 0;
           const observer = new MutationObserver(records => { styleMutations += records.length; });
-          observer.observe(card, {attributes: true, attributeFilter: ["style"]});
+          observer.observe(toolbar, {attributes: true, attributeFilter: ["style"]});
           try {
             for (let i = 0; i < 24; i++) {
-              card.dispatchEvent(new PointerEvent("pointermove", {
+              toolbar.dispatchEvent(new PointerEvent("pointermove", {
                 pointerType: "mouse", clientX: rect.left + 25 + i, clientY: rect.top + 15,
               }));
             }
             await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-            const x = parseFloat(card.style.getPropertyValue("--pointer-x"));
-            const y = parseFloat(card.style.getPropertyValue("--pointer-y"));
+            const x = parseFloat(toolbar.style.getPropertyValue("--spot-x"));
+            const y = parseFloat(toolbar.style.getPropertyValue("--spot-y"));
             return {
               events: 24,
               style_mutations: styleMutations,
@@ -184,19 +184,19 @@ def burst_pointer_events(card):
 
 
 def audit_desktop(page, image_class):
-    card = page.locator(".spotlight").first
+    toolbar = page.locator(".surface-switch")
     glass = page.get_by_role("radio", name="Glass")
     solid = page.get_by_role("radio", name="Solid")
     default_glass = glass.is_checked()
-    base_geometry = card_geometry(page)
+    base_geometry = layout_geometry(page)
     contrast = {"glass_idle": sample_contrast(page, image_class)}
 
-    move_over_card(page, card)
-    pointer_active = pointer_position(card) != ["", ""]
+    move_over_toolbar(page, toolbar)
+    pointer_active = pointer_position(toolbar) != ["", ""]
     contrast["glass_pointer"] = sample_contrast(page, image_class)
-    burst = burst_pointer_events(card)
+    burst = burst_pointer_events(toolbar)
 
-    # Keep the mouse over the card while changing the radio with the keyboard.
+    # Keep the mouse over the toolbar while changing the radio with the keyboard.
     page.keyboard.press("Tab")
     keyboard_glass = glass.evaluate("input => input === document.activeElement")
     page.keyboard.press("ArrowRight")
@@ -207,27 +207,27 @@ def audit_desktop(page, image_class):
           return {width_px: parseFloat(style.outlineWidth), style: style.outlineStyle};
         }"""
     )
-    reset_in_solid = pointer_position(card) == ["", ""]
-    solid_geometry = card_geometry(page)
+    reset_in_solid = pointer_position(toolbar) == ["", ""]
+    solid_geometry = layout_geometry(page)
     contrast["solid"] = sample_contrast(page, image_class)
     page.keyboard.press("ArrowLeft")
     keyboard_returns_to_glass = glass.is_checked()
 
-    backdrop = page.add_style_tag(content=f".scorecard {{ background: {BRIGHT_BACKDROP}; }}")
+    backdrop = page.add_style_tag(content=f".toolbar::before {{ background: {BRIGHT_BACKDROP}; filter: none; }}")
     try:
-        contrast["glass_bright_backdrop"] = sample_contrast(page, image_class, ".spotlight")
+        contrast["glass_bright_backdrop"] = sample_contrast(page, image_class, ".surface-switch")
     finally:
         backdrop.evaluate("element => element.remove()")
 
     opaque = page.add_style_tag(content="""
-        main:has(#glass:checked) .spotlight {
-          background: var(--surface);
+        .surface-switch:has(#glass:checked) {
+          background: var(--chrome-solid);
           -webkit-backdrop-filter: none;
           backdrop-filter: none;
         }
     """)
     try:
-        contrast["opaque_fallback_simulation"] = sample_contrast(page, image_class, ".spotlight")
+        contrast["opaque_fallback_simulation"] = sample_contrast(page, image_class, ".surface-switch")
     finally:
         opaque.evaluate("element => element.remove()")
 
@@ -240,7 +240,7 @@ def audit_desktop(page, image_class):
             "keyboard_switches_both_directions": keyboard_glass and keyboard_solid and keyboard_returns_to_glass,
             "keyboard_focus_outline_present": focus_ring["width_px"] >= 2 and focus_ring["style"] != "none",
             "switch_clears_pointer_state": reset_in_solid,
-            "surface_switch_preserves_card_geometry": base_geometry == solid_geometry,
+            "surface_switch_preserves_geometry": base_geometry == solid_geometry,
         },
         "pointer_burst": burst,
         "focus_outline": focus_ring,
@@ -248,7 +248,7 @@ def audit_desktop(page, image_class):
 
 
 def audit_mobile(page, image_class):
-    target_sizes = page.locator(".modes label").evaluate_all(
+    target_sizes = page.locator(".surface-switch label").evaluate_all(
         "labels => labels.map(label => { const r = label.getBoundingClientRect(); return [r.width, r.height]; })"
     )
     viewport_width, document_width = page.evaluate(
@@ -259,43 +259,68 @@ def audit_mobile(page, image_class):
     switched_to_solid = page.get_by_role("radio", name="Solid").is_checked()
     page.locator('label:has(#glass)').tap()
     switched_to_glass = page.get_by_role("radio", name="Glass").is_checked()
-    card = page.locator(".spotlight").first
-    card.tap()
+    toolbar = page.locator(".surface-switch")
+    toolbar.tap()
     return {
         "contrast": contrast,
         "checks": {
             "no_horizontal_overflow": document_width <= viewport_width,
             "touch_targets_meet_fixture_minimum": all(min(size) >= TARGET_MINIMUM_PX for size in target_sizes),
             "touch_switches_both_directions": switched_to_solid and switched_to_glass,
-            "touch_leaves_border_static": pointer_position(card) == ["", ""],
+            "touch_leaves_border_static": pointer_position(toolbar) == ["", ""],
         },
         "target_sizes_css_px": target_sizes,
     }
 
 
 def audit_reduced_motion(page, image_class):
-    card = page.locator(".spotlight").first
-    move_over_card(page, card)
+    toolbar = page.locator(".surface-switch")
+    move_over_toolbar(page, toolbar)
     return {
         "contrast": {"glass_static": sample_contrast(page, image_class)},
         "checks": {
             "fine_pointer_available": page.evaluate("() => matchMedia('(hover: hover) and (pointer: fine)').matches"),
-            "reduced_motion_leaves_border_static": pointer_position(card) == ["", ""],
+            "reduced_motion_leaves_border_static": pointer_position(toolbar) == ["", ""],
         },
     }
 
 
+def audit_reduced_transparency(page, image_class):
+    toolbar = page.locator(".surface-switch")
+    session = page.context.new_cdp_session(page)
+    try:
+        session.send("Emulation.setEmulatedMedia", {
+            "features": [{"name": "prefers-reduced-transparency", "value": "reduce"}],
+        })
+        move_over_toolbar(page, toolbar)
+        return {
+            "contrast": {"opaque_surface": sample_contrast(page, image_class)},
+            "checks": {
+                "preference_is_active": page.evaluate(
+                    "() => matchMedia('(prefers-reduced-transparency: reduce)').matches"
+                ),
+                "reduced_transparency_disables_glow_and_blur": toolbar.evaluate(
+                    """toolbar => getComputedStyle(toolbar, "::before").display === "none"
+                        && getComputedStyle(toolbar).backdropFilter === "none" """
+                ),
+                "reduced_transparency_leaves_border_static": pointer_position(toolbar) == ["", ""],
+            },
+        }
+    finally:
+        session.detach()
+
+
 def audit_forced_colors(page, image_class):
-    card = page.locator(".spotlight").first
-    move_over_card(page, card)
+    toolbar = page.locator(".surface-switch")
+    move_over_toolbar(page, toolbar)
     return {
         "contrast": {"system_colors": sample_contrast(page, image_class)},
         "checks": {
-            "forced_colors_disables_glow_and_blur": card.evaluate(
-                """card => getComputedStyle(card, "::before").display === "none"
-                    && getComputedStyle(card).backdropFilter === "none" """
+            "forced_colors_disables_glow_and_blur": toolbar.evaluate(
+                """toolbar => getComputedStyle(toolbar, "::before").display === "none"
+                    && getComputedStyle(toolbar).backdropFilter === "none" """
             ),
-            "metric_text_remains_visible": page.locator(".metric:visible").count() == 3,
+            "metric_text_remains_visible": page.locator(".value:visible").count() == 3,
         },
     }
 
@@ -304,7 +329,7 @@ def run_profile(browser, settings, audit, image_class):
     context = browser.new_context(**settings)
     try:
         page = context.new_page()
-        page.goto(EXAMPLE.as_uri(), wait_until="load")
+        page.set_content(EXAMPLE.read_text(encoding="utf-8"), wait_until="load")
         page.evaluate("() => document.fonts.ready")
         return audit(page, image_class)
     finally:
@@ -312,27 +337,31 @@ def run_profile(browser, settings, audit, image_class):
 
 
 def main():
+    profiles = {
+        "desktop_light": (DESKTOP, audit_desktop),
+        "desktop_dark": ({**DESKTOP, "color_scheme": "dark"}, audit_desktop),
+        "touch_320px": (MOBILE, audit_mobile),
+        "reduced_motion": ({**DESKTOP, "reduced_motion": "reduce"}, audit_reduced_motion),
+        "reduced_transparency": (DESKTOP, audit_reduced_transparency),
+        "forced_colors": ({**DESKTOP, "forced_colors": "active"}, audit_forced_colors),
+    }
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--executable", help="path to a system Chromium executable")
+    parser.add_argument("--profile", choices=["all", *profiles], default="all")
     args = parser.parse_args()
+    selected = profiles if args.profile == "all" else {args.profile: profiles[args.profile]}
     try:
         from PIL import Image
         from playwright.sync_api import sync_playwright
     except ModuleNotFoundError:
         parser.exit(2, "Install the playwright and pillow packages and Chromium first.\n")
 
-    profiles = {
-        "desktop": (DESKTOP, audit_desktop),
-        "touch_320px": (MOBILE, audit_mobile),
-        "reduced_motion": ({**DESKTOP, "reduced_motion": "reduce"}, audit_reduced_motion),
-        "forced_colors": ({**DESKTOP, "forced_colors": "active"}, audit_forced_colors),
-    }
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(executable_path=args.executable)
         try:
             results = {
                 name: run_profile(browser, settings, audit, Image)
-                for name, (settings, audit) in profiles.items()
+                for name, (settings, audit) in selected.items()
             }
             report = {
                 "chromium": browser.version,

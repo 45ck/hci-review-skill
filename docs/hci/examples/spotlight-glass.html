@@ -3,338 +3,434 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="dark">
-  <title>Spotlight glass · Quantitative HCI</title>
+  <meta name="color-scheme" content="light dark">
+  <title>Liquid Glass · Quantitative HCI</title>
   <style>
     :root {
-      color-scheme: dark;
-      --canvas: #0a0e1c;
-      --surface: #151e33;
-      --text: #f3f6ff;
-      --muted: #b5c4db;
-      --accent: #a5daff;
-      --line: #435371;
-      --gutter: clamp(1rem, 5vw, 4rem);
+      color-scheme: light dark;
+      --canvas: #edf1f8;
+      --ink: #171f35;
+      --muted: #4a5671;
+      --accent: #285ba8;
+      --line: #c1cce0;
+      --paper: #f7f9fe;
+      --rail: #e9effa;
+      --track: #dce5f5;
+      --range-start: #6485dc;
+      --range-end: #365cb9;
+      --point: #253f84;
+      --chrome-solid: #e5ebf8;
+      --chrome-tint: #e1e9ff9e;
+      --rim: #ffffffd9;
+      --selection: #f9fbffe8;
+      --focus: #144fa7;
+      --shadow: #21365e25;
+      --glow-1: #b6d1f9;
+      --glow-2: #dacbf5;
+      --glow-3: #d2e8fa;
       font: 100%/1.5 system-ui, sans-serif;
     }
 
     *, *::before, *::after { box-sizing: border-box; }
-    body { margin: 0; background: var(--canvas); color: var(--text); }
-
+    body { margin: 0; background: var(--canvas); color: var(--ink); }
+    h1, h2, p, dl, dd { margin: 0; }
     main {
-      position: relative;
-      isolation: isolate;
-      min-block-size: 100svh;
-      padding: clamp(1.75rem, 5.5vw, 4.5rem) var(--gutter);
+      min-height: 100vh;
+      min-height: 100svh;
+      padding: clamp(2.25rem, 5vw, 4.25rem) clamp(1rem, 6vw, 5rem) 3rem;
       background:
-        radial-gradient(ellipse at 74% 16%, #202859, transparent 52%),
-        radial-gradient(ellipse at 11% 64%, #132e4b, transparent 57%),
+        radial-gradient(ellipse at 92% 31%, var(--glow-2), transparent 41%),
+        radial-gradient(ellipse at 66% 15%, var(--glow-1), transparent 42%),
+        radial-gradient(ellipse at 10% 87%, var(--glow-3), transparent 54%),
         var(--canvas);
     }
 
-    main::before {
-      position: absolute;
-      z-index: -1;
-      inset: 0;
-      pointer-events: none;
-      background-image:
-        linear-gradient(#8cadfa0c 1px, transparent 1px),
-        linear-gradient(90deg, #8cadfa0c 1px, transparent 1px);
-      background-size: 44px 44px;
-      mask-image: linear-gradient(#000, transparent 92%);
+    .shell { width: min(100%, 68rem); margin-inline: auto; }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: .65rem;
+      color: var(--muted);
+      font-size: .85rem;
+      font-weight: 690;
+    }
+
+    .brand-icon {
+      display: grid;
+      place-items: center;
+      width: 1.65rem;
+      height: 1.65rem;
+      border-radius: .58rem;
+      background: var(--point);
+    }
+
+    .brand-icon::before {
+      width: .65rem;
+      height: .65rem;
+      border: 2px solid #fff;
+      border-radius: 3px;
+      transform: rotate(45deg);
       content: "";
     }
 
-    .frame { max-inline-size: 70rem; margin-inline: auto; }
-    .heading { margin-block-end: clamp(1.75rem, 4vw, 3rem); }
-    .eyebrow {
-      margin: 0;
-      color: var(--accent);
-      font-size: .77rem;
-      font-weight: 700;
-      letter-spacing: .15em;
-      text-transform: uppercase;
-    }
-
     h1 {
-      margin: .28em 0 .22em;
-      font-size: clamp(2.7rem, 7vw, 5.5rem);
-      font-weight: 680;
-      letter-spacing: -.072em;
+      margin: .22em 0 .18em;
+      font-size: clamp(2.8rem, 7vw, 5.85rem);
+      font-weight: 670;
       line-height: .96;
+      letter-spacing: -.073em;
     }
 
-    .intro { max-inline-size: 48ch; margin: 0; color: var(--muted); }
-    .preview-toolbar {
+    .intro {
+      max-width: 48ch;
+      color: var(--muted);
+      font-size: clamp(1rem, 1.6vw, 1.25rem);
+    }
+
+    .comparison {
+      margin-top: clamp(1.85rem, 5vw, 3.5rem);
+      padding: clamp(1rem, 3vw, 2rem);
+      border: 1px solid var(--rim);
+      border-radius: clamp(1.4rem, 4vw, 2.3rem);
+      background: var(--paper);
+      box-shadow: 0 24px 60px -36px var(--shadow), 0 3px 9px var(--shadow);
+    }
+
+    .toolbar {
+      position: relative;
+      isolation: isolate;
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
-      gap: .85rem 1.5rem;
-      margin-block-end: .9rem;
+      gap: .75rem 1rem;
+      margin-bottom: clamp(1rem, 3vw, 1.65rem);
     }
 
-    .preview-toolbar h2 {
-      margin: 0;
-      font-size: .875rem;
-      font-weight: 600;
-      color: var(--muted);
+    .toolbar::before {
+      position: absolute;
+      z-index: -1;
+      inset: -.75rem -.75rem -.5rem auto;
+      width: min(100%, 12rem);
+      border-radius: 999px;
+      filter: blur(12px);
+      background:
+        radial-gradient(ellipse at 74% 60%, var(--glow-2), transparent 68%),
+        radial-gradient(ellipse at 27% 38%, var(--glow-1), transparent 62%);
+      pointer-events: none;
+      content: "";
     }
 
-    .modes {
-      display: flex;
-      flex-wrap: wrap;
-      gap: .3rem;
+    h2 { font-size: 1.05rem; font-weight: 700; letter-spacing: -.025em; }
+    .provenance { margin-top: .12rem; color: var(--muted); font-size: .84rem; }
+
+    .surface-switch {
+      --spot-x: 24%;
+      --spot-y: 0%;
+      position: relative;
+      isolation: isolate;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .22rem;
       margin: 0;
       min-inline-size: 0;
-      border: 1px solid #7084a8;
-      border-radius: .85rem;
-      padding: .22rem;
-      background: #10182a;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: .24rem;
+      background: var(--chrome-solid);
+    }
+
+    .surface-switch label {
+      position: relative;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .surface-switch span {
+      display: grid;
+      min-height: 2.75rem;
+      place-items: center;
+      border-radius: 999px;
+      padding: .2rem 1rem;
+      color: var(--ink);
+      font-size: .875rem;
+      font-weight: 680;
+    }
+
+    .surface-switch input:checked + span {
+      background: var(--selection);
+      box-shadow: inset 0 1px 0 var(--rim), 0 2px 7px var(--shadow);
+    }
+
+    .surface-switch input:focus-visible + span {
+      outline: 2px solid var(--focus);
+      outline-offset: 2px;
     }
 
     .visually-hidden {
       position: absolute;
-      inline-size: 1px;
-      block-size: 1px;
+      width: 1px;
+      height: 1px;
       overflow: hidden;
       clip-path: inset(50%);
       white-space: nowrap;
     }
 
-    .modes label { position: relative; cursor: pointer; }
-    .modes span {
-      display: grid;
-      min-block-size: 2.75rem;
-      place-items: center;
-      padding: .25rem .95rem;
-      border-radius: .6rem;
-      color: var(--text);
-      font-size: .85rem;
-      font-weight: 650;
-    }
-
-    .modes input:checked + span { background: #bddeff; color: #0b213a; }
-    .modes input:focus-visible + span { outline: 2px solid #fff; outline-offset: 2px; }
-
-    .scorecard {
-      display: grid;
-      grid-template-columns: minmax(0, 1.72fr) minmax(0, 1fr);
-      gap: .85rem;
-    }
-
-    .spotlight {
-      --pointer-x: 70%;
-      --pointer-y: 0%;
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      min-inline-size: 0;
-      padding: clamp(1.15rem, 3vw, 2.2rem);
-      border: 1px solid var(--line);
-      border-radius: 1.25rem;
-      background: var(--surface);
+    @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+      .surface-switch:has(#glass:checked) {
+        background: linear-gradient(143deg, var(--rim), transparent 52%), var(--chrome-tint);
+        -webkit-backdrop-filter: blur(18px) saturate(160%);
+        backdrop-filter: blur(18px) saturate(160%);
+        box-shadow: inset 0 -1px 1px var(--rim), 0 6px 17px -6px var(--shadow);
+      }
     }
 
     @supports (mask-composite: exclude) {
-      .spotlight::before {
+      .surface-switch:has(#glass:checked)::before {
         position: absolute;
+        z-index: -1;
         inset: -1px;
-        pointer-events: none;
-        border-radius: inherit;
         padding: 1px;
-        background: radial-gradient(14rem circle at var(--pointer-x) var(--pointer-y),
-          #ddf1ff, #8db0ff 24%, transparent 76%);
+        border-radius: inherit;
+        background: radial-gradient(5.5rem circle at var(--spot-x) var(--spot-y), #fff, #a6c3ff 36%, transparent 80%);
         mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
         mask-composite: exclude;
+        pointer-events: none;
         content: "";
       }
     }
 
-    @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
-      main:has(#glass:checked) .spotlight {
-        background: linear-gradient(145deg, #3c4e7444, #10182888), #152039c4;
-        -webkit-backdrop-filter: blur(18px);
-        backdrop-filter: blur(18px);
+    @media (prefers-reduced-transparency: reduce) {
+      .surface-switch:has(#glass:checked) {
+        background: var(--chrome-solid);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+        box-shadow: none;
       }
+
+      .surface-switch:has(#glass:checked)::before { display: none; }
     }
 
-    main:has(#solid:checked) .spotlight::before { display: none; }
+    .results {
+      display: grid;
+      grid-template-columns: minmax(0, 1.8fr) minmax(13rem, 1fr);
+      gap: 1rem;
+    }
 
-    .primary { grid-row: span 2; justify-content: start; }
-    .spotlight h3 { margin: 0; font-size: 1rem; font-weight: 640; }
-    .metric {
-      margin: .2em 0 0;
-      color: var(--text);
-      font-size: clamp(1.75rem, 4vw, 3rem);
-      font-weight: 650;
-      line-height: 1.07;
-      letter-spacing: -.055em;
+    .measure {
+      min-width: 0;
+      padding: clamp(1rem, 3vw, 1.85rem);
+      border: 1px solid var(--line);
+      border-radius: 1.45rem;
+      background: var(--rail);
+    }
+
+    .label { color: var(--muted); font-weight: 620; }
+    .value {
+      margin-top: .2rem;
+      color: var(--ink);
+      font-weight: 675;
+      line-height: 1.04;
+      letter-spacing: -.065em;
       font-variant-numeric: tabular-nums;
     }
 
-    .primary .metric { font-size: clamp(3.5rem, 9vw, 6rem); }
-    .unit { font-size: .46em; letter-spacing: -.02em; color: var(--accent); }
-    .explanation { margin: .45rem 0 0; color: var(--muted); font-size: .9rem; }
-
-    .plot {
-      display: grid;
-      gap: .55rem;
-      margin-block-start: auto;
-      padding-block-start: 1.85rem;
-    }
-
-    .track {
-      position: relative;
-      block-size: .48rem;
-      border-radius: 1rem;
-      background: #293a57;
-    }
-
-    .interval {
+    .measure .value { font-size: clamp(3.3rem, 9vw, 6.5rem); }
+    .unit { color: var(--accent); font-size: .46em; letter-spacing: -.02em; }
+    .description { margin-top: .38rem; color: var(--muted); font-size: .9rem; }
+    .plot { margin-top: 1.65rem; }
+    .track { position: relative; height: .55rem; border-radius: 1rem; background: var(--track); }
+    .range {
       position: absolute;
-      inset-block: 0;
-      inset-inline: 45.8333% 8.3333%;
+      inset: 0 8.3333% 0 45.8333%;
       border-radius: inherit;
-      background: linear-gradient(90deg, #6d9ded, #ade2ff);
+      background: linear-gradient(90deg, var(--range-start), var(--range-end));
     }
 
     .marker {
       position: absolute;
-      inset-block-start: 50%;
+      top: 50%;
       transform: translate(-50%, -50%);
     }
 
-    .marker.goal { inset-inline-start: 33.3333%; block-size: 1.05rem; border-inline-start: 2px dashed #e7effc; }
-    .marker.median {
-      inset-inline-start: 79.1667%;
-      inline-size: .85rem;
-      block-size: .85rem;
-      border: 2px solid #263d68;
+    .goal { left: 33.3333%; height: 1.05rem; border-left: 2px dashed var(--muted); }
+    .median {
+      left: 79.1667%;
+      width: .95rem;
+      height: .95rem;
+      border: 3px solid var(--point);
       border-radius: 50%;
-      background: #e5f6ff;
+      background: #fff;
     }
 
     .axis {
       position: relative;
       display: flex;
       justify-content: space-between;
+      margin-top: .55rem;
       color: var(--muted);
-      font-size: .75rem;
+      font-size: .76rem;
     }
 
-    .axis-goal { position: absolute; inset-inline-start: 33.3333%; transform: translateX(-50%); }
-    .footnote { margin: 1.15rem 0 0; color: var(--muted); font-size: .83rem; }
+    .axis-goal { position: absolute; left: 33.3333%; transform: translateX(-50%); }
+    .detail {
+      display: grid;
+      align-content: center;
+      border: 1px solid var(--line);
+      border-radius: 1.45rem;
+      padding: 0 clamp(1rem, 2vw, 1.45rem);
+    }
 
-    @media (max-width: 43rem) {
-      .scorecard { grid-template-columns: 1fr; }
-      .primary { grid-row: auto; }
+    .detail > div { padding: 1rem 0; }
+    .detail > div + div { border-top: 1px solid var(--line); }
+    .detail .label { font-size: .83rem; }
+    .detail .value { font-size: clamp(1.6rem, 3vw, 2.25rem); }
+    .caption { margin-top: .9rem; color: var(--muted); font-size: .84rem; }
+
+    @media (max-width: 42rem) {
+      .toolbar::before { inset-inline: -.5rem auto; }
+      .results { grid-template-columns: minmax(0, 1fr); }
+      .detail { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; }
+      .detail .value { font-size: 1.4rem; }
+      .detail > div + div { border-top: 0; border-left: 1px solid var(--line); padding-left: .8rem; }
+    }
+
+    @media (max-width: 23rem) {
+      .detail { grid-template-columns: minmax(0, 1fr); gap: 0; }
+      .detail > div + div { border-top: 1px solid var(--line); border-left: 0; padding-left: 0; }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --canvas: #101828;
+        --ink: #eef3ff;
+        --muted: #b6c5df;
+        --accent: #a9cbff;
+        --line: #405473;
+        --paper: #17243c;
+        --rail: #202f4c;
+        --track: #3a4b69;
+        --range-start: #82a9f8;
+        --range-end: #a2c5ff;
+        --point: #2c56a8;
+        --chrome-solid: #233751;
+        --chrome-tint: #243753dc;
+        --rim: #9ab6ed55;
+        --selection: #364f77;
+        --focus: #a7d4ff;
+        --shadow: #05091470;
+        --glow-1: #29466a;
+        --glow-2: #352d58;
+        --glow-3: #193650;
+      }
     }
 
     @media (forced-colors: active) {
-      main, .spotlight, main:has(#glass:checked) .spotlight {
+      main, .comparison, .measure, .detail, .surface-switch:has(#glass:checked) {
         background: Canvas;
         border-color: CanvasText;
+        box-shadow: none;
         -webkit-backdrop-filter: none;
         backdrop-filter: none;
       }
-      .spotlight::before, .plot { display: none; }
-      .modes input:checked + span {
-        outline: 2px solid Highlight;
-        outline-offset: -2px;
-      }
-      .modes input:focus-visible + span { outline-color: Highlight; outline-offset: 2px; }
+
+      .toolbar::before, .surface-switch:has(#glass:checked)::before, .plot { display: none; }
+      .surface-switch input:checked + span { outline: 2px solid Highlight; outline-offset: -2px; }
+      .surface-switch input:focus-visible + span { outline-color: Highlight; outline-offset: 2px; }
     }
   </style>
 </head>
 <body>
   <main>
-    <div class="frame">
-      <header class="heading">
-        <p class="eyebrow">Quantitative HCI</p>
-        <h1>Spotlight glass</h1>
-        <p class="intro">Frosted cards with light at the edge. Compare glass and solid surfaces using the same HCI scorecard.</p>
+    <div class="shell">
+      <header>
+        <p class="brand"><span class="brand-icon" aria-hidden="true"></span> Quantitative HCI</p>
+        <h1>Measure the difference.</h1>
+        <p class="intro">Compare a redesign with its baseline using a target set before testing.</p>
       </header>
 
-      <section aria-labelledby="example-heading">
-        <div class="preview-toolbar">
-          <h2 id="example-heading">Motion evaluation · Synthetic example</h2>
-          <fieldset class="modes">
-            <legend class="visually-hidden">Card surface</legend>
+      <section class="comparison" aria-labelledby="comparison-title">
+        <div class="toolbar">
+          <div>
+            <h2 id="comparison-title">Interruptible animation</h2>
+            <p class="provenance">Synthetic example · Six matched observations</p>
+          </div>
+
+          <fieldset class="surface-switch">
+            <legend class="visually-hidden">Toolbar surface</legend>
             <label><input class="visually-hidden" type="radio" name="surface" id="glass" checked><span>Glass</span></label>
             <label><input class="visually-hidden" type="radio" name="surface" id="solid"><span>Solid</span></label>
           </fieldset>
         </div>
 
-        <div class="scorecard">
-          <article class="spotlight primary">
-            <h3>Median improvement</h3>
-            <p class="metric">19 <span class="unit">ms</span></p>
-            <p class="explanation">Faster response to a change of direction</p>
+        <div class="results">
+          <div class="measure">
+            <p class="label">Median improvement</p>
+            <p class="value">19 <span class="unit">ms</span></p>
+            <p class="description">Faster response to a change of direction</p>
             <div class="plot" aria-hidden="true">
               <div class="track">
-                <div class="interval"></div>
+                <div class="range"></div>
                 <div class="marker goal"></div>
                 <div class="marker median"></div>
               </div>
               <div class="axis"><span>0 ms</span><span class="axis-goal">8 ms target</span><span>24 ms</span></div>
             </div>
-          </article>
+          </div>
 
-          <article class="spotlight">
-            <h3>95% confidence interval</h3>
-            <p class="metric">11–22 <span class="unit">ms</span></p>
-            <p class="explanation">From six matched observations</p>
-          </article>
-
-          <article class="spotlight">
-            <h3>Decision</h3>
-            <p class="metric">Target met</p>
-            <p class="explanation">The lower bound clears the 8 ms target.</p>
-          </article>
+          <dl class="detail">
+            <div>
+              <dt class="label">95% confidence interval</dt>
+              <dd class="value">11–22 <span class="unit">ms</span></dd>
+            </div>
+            <div>
+              <dt class="label">Decision</dt>
+              <dd class="value">Target met</dd>
+              <dd class="description">Lower bound clears 8 ms.</dd>
+            </div>
+          </dl>
         </div>
-        <p class="footnote">Move a mouse along the card edges to see the spotlight. The surface switch also works by keyboard and touch.</p>
+        <p class="caption">Switch surfaces to compare the toolbar.</p>
       </section>
     </div>
   </main>
   <script>
-    const finePointer = matchMedia("(hover: hover) and (pointer: fine)");
-    const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
-    const forcedColors = matchMedia("(forced-colors: active)");
+    const toolbar = document.querySelector(".surface-switch");
     const glass = document.querySelector("#glass");
-    const surfaceControl = document.querySelector(".modes");
+    const finePointer = matchMedia("(hover: hover) and (pointer: fine)");
+    const preferences = [
+      matchMedia("(prefers-reduced-motion: reduce)"),
+      matchMedia("(prefers-reduced-transparency: reduce)"),
+      matchMedia("(forced-colors: active)"),
+    ];
 
-    for (const card of document.querySelectorAll(".spotlight")) {
-      let frame = 0;
-      let pointer;
+    let frame = 0;
+    let pointer;
 
-      function resetSpotlight() {
-        if (frame) cancelAnimationFrame(frame);
+    function resetSpotlight() {
+      if (frame) cancelAnimationFrame(frame);
+      frame = 0;
+      toolbar.style.removeProperty("--spot-x");
+      toolbar.style.removeProperty("--spot-y");
+    }
+
+    toolbar.addEventListener("pointermove", (event) => {
+      if (event.pointerType !== "mouse" || !finePointer.matches || !glass.checked ||
+          preferences.some((preference) => preference.matches)) return;
+      pointer = { x: event.clientX, y: event.clientY };
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
         frame = 0;
-        card.style.removeProperty("--pointer-x");
-        card.style.removeProperty("--pointer-y");
-      }
-
-      card.addEventListener("pointermove", (event) => {
-        if (event.pointerType !== "mouse" || !finePointer.matches ||
-            reducedMotion.matches || forcedColors.matches || !glass.checked) return;
-        pointer = {x: event.clientX, y: event.clientY};
-        if (frame) return;
-
-        frame = requestAnimationFrame(() => {
-          frame = 0;
-          const rect = card.getBoundingClientRect();
-          card.style.setProperty("--pointer-x", `${pointer.x - rect.left}px`);
-          card.style.setProperty("--pointer-y", `${pointer.y - rect.top}px`);
-        });
+        const bounds = toolbar.getBoundingClientRect();
+        toolbar.style.setProperty("--spot-x", `${pointer.x - bounds.left}px`);
+        toolbar.style.setProperty("--spot-y", `${pointer.y - bounds.top}px`);
       });
-      card.addEventListener("pointerleave", resetSpotlight);
-      card.addEventListener("pointercancel", resetSpotlight);
-      surfaceControl.addEventListener("change", resetSpotlight);
-      reducedMotion.addEventListener("change", resetSpotlight);
-      finePointer.addEventListener("change", resetSpotlight);
-      forcedColors.addEventListener("change", resetSpotlight);
+    });
+    toolbar.addEventListener("pointerleave", resetSpotlight);
+    toolbar.addEventListener("pointercancel", resetSpotlight);
+    toolbar.addEventListener("change", resetSpotlight);
+    for (const preference of [finePointer, ...preferences]) {
+      preference.addEventListener("change", resetSpotlight);
     }
   </script>
 </body>

@@ -17,13 +17,13 @@
 
 A structured HCI and UX review skill pack for prototypes, flows, interface systems, research planning, and usability evaluation. It focuses on models, journeys, terminology, state handling, consistency, failure paths, heuristics, cognitive walkthroughs, personas, task analysis, prototype planning, and usability studies.
 
-## Default UI · Spotlight glass
+## Default UI · Liquid Glass
 
-Spotlight glass is the default for new high-fidelity Quantitative HCI examples and prototypes without an established design system. Cards use a frosted surface and a spotlight that follows the pointer along the border. Text, data and keyboard focus stay clear in both glass and solid modes.
+Apple-inspired Liquid Glass is the default for new high-fidelity Quantitative HCI examples and prototypes without an established design system. Use frosted glass and a subtle border spotlight on controls. Use solid, quiet surfaces for charts, tables and reading.
 
-![Quantitative HCI scorecard using the default spotlight glass cards, with a Glass and Solid switch and a synthetic motion result](assets/spotlight-glass-preview.webp)
+![Quantitative HCI example with a Liquid Glass toolbar and an opaque scorecard showing a 19 ms median improvement](assets/spotlight-glass-preview.webp)
 
-Open [the example HTML](docs/hci/examples/spotlight-glass.html) locally to switch surfaces and try the border effect. The [design guidance](docs/hci/examples/README.md) covers when to use the solid fallback and how to run the Chromium audit for rendered contrast, keyboard, touch, and motion behaviour. [21st.dev border-only Spotlight reference](https://21st.dev/?q=spotlight+card&preview=%2F%40ibelick%2Fcomponents%2Fspotlight%2Fborder-only)
+Open [the example HTML](docs/hci/examples/spotlight-glass.html) locally to compare Glass and Solid on the same toolbar. The [design guidance](docs/hci/examples/README.md) covers surface selection, what to measure and how to run the browser audit. [Apple materials](https://developer.apple.com/design/human-interface-guidelines/materials) · [21st.dev border-only Spotlight](https://21st.dev/?q=spotlight+card&preview=%2F%40ibelick%2Fcomponents%2Fspotlight%2Fborder-only)
 
 ## Quantitative models
 

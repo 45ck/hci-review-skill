@@ -33,7 +33,7 @@ Use `--profile desktop_dark` to run one profile or `--executable /path/to/chromi
 
 | Check | Chromium 153 result |
 | --- | --- |
-| Desktop, light and dark | Minimum sampled text contrast was 5.28:1 in light and 7.12:1 in dark across the normal surface states. Keyboard switching preserved layout and showed a 2 CSS px focus ring. |
+| Desktop, light and dark | Minimum sampled text contrast was 5.28:1 in light and 7.09:1 in dark across the normal surface states. Keyboard switching preserved layout and showed a 2 CSS px focus ring. |
 | Dark toolbar over a bright test backdrop | The minimum sampled toolbar-label contrast was 7.23:1. |
 | Touch at 320 CSS px | Both targets were 68 × 44 CSS px. Minimum sampled text contrast was 6.74:1. Both choices worked without horizontal overflow. |
 | Chromatic rim | Both themes showed cyan and rose at the moving edge. Pixels in the sampled label area matched at rest and under the pointer. |

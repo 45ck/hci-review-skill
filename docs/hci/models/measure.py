@@ -31,12 +31,24 @@ def percentile(samples, fraction):
     return sorted(samples)[math.ceil(fraction * len(samples)) - 1]
 
 
+def point_distance(a, b):
+    if len(a) != 2 or len(b) != 2:
+        raise ValueError("points require exactly two coordinates")
+    return math.dist(a, b)
+
+
+def elapsed(start_ms, end_ms):
+    if end_ms < start_ms:
+        raise ValueError("end timestamp precedes start timestamp")
+    return end_ms - start_ms
+
+
 def kerning(kerned_px, unkerned_px, font_size_px):
     return {"pair_adjustment_em": divide(kerned_px - unkerned_px, font_size_px)}
 
 
 def optical_centre(ink_centroid_px, container_centre_px, container_short_side_px):
-    offset = math.dist(ink_centroid_px, container_centre_px)
+    offset = point_distance(ink_centroid_px, container_centre_px)
     return {"normalised_centre_offset": divide(offset, container_short_side_px)}
 
 
@@ -61,8 +73,9 @@ def tracking(letter_spacing_px, font_size_px):
 
 
 def optimistic_update(action_ms, paint_ms, settled_ms, reconciled, settled_mutations):
+    elapsed(action_ms, settled_ms)
     return {
-        "feedback_ms": paint_ms - action_ms,
+        "feedback_ms": elapsed(action_ms, paint_ms),
         "confirmation_gap_ms": settled_ms - paint_ms,
         "reconciliation_rate": rate(reconciled, settled_mutations),
     }
@@ -85,7 +98,7 @@ def leading(baseline_distance_px, font_size_px):
 
 
 def origin_aware_animation(first_anchor_px, trigger_anchor_px, trigger_diagonal_px):
-    offset = math.dist(first_anchor_px, trigger_anchor_px)
+    offset = point_distance(first_anchor_px, trigger_anchor_px)
     return {"normalised_origin_error": divide(offset, trigger_diagonal_px)}
 
 
@@ -118,7 +131,7 @@ def safe_area(target_ltrb_px, safe_ltrb_px):
 def stagger(onsets_ms, content_ready_ms, all_items_usable_ms):
     return {
         "onset_spread_ms": spread(onsets_ms),
-        "readiness_delay_ms": all_items_usable_ms - content_ready_ms,
+        "readiness_delay_ms": elapsed(content_ready_ms, all_items_usable_ms),
     }
 
 
@@ -143,8 +156,8 @@ def combobox(correct_selections, attempts, input_to_results_ms, stale_queries, q
 
 def interruptible_animation(input_ms, first_retargeted_frame_ms, before_px, after_px):
     return {
-        "retarget_latency_ms": first_retargeted_frame_ms - input_ms,
-        "position_jump_px": math.dist(before_px, after_px),
+        "retarget_latency_ms": elapsed(input_ms, first_retargeted_frame_ms),
+        "position_jump_px": point_distance(before_px, after_px),
     }
 
 
@@ -161,8 +174,8 @@ def shared_element_transition(animated_corners_px, live_corners_px, input_ms, de
     if len(animated_corners_px) != 4 or len(live_corners_px) != 4:
         raise ValueError("provide four matching corners for each box")
     return {
-        "handoff_error_px": max(math.dist(before, after) for before, after in zip(animated_corners_px, live_corners_px)),
-        "task_latency_ms": destination_ready_ms - input_ms,
+        "handoff_error_px": max(point_distance(before, after) for before, after in zip(animated_corners_px, live_corners_px)),
+        "task_latency_ms": elapsed(input_ms, destination_ready_ms),
     }
 
 

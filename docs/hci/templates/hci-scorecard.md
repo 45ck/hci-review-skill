@@ -66,7 +66,7 @@ Rate each dimension 1-5:
 ## Quantitative measurements
 
 Use the relevant [interface design model](../models/interface-design-models.md)
-and record the task, variant, device, and input mode in the evidence.
+and record the task, variant, device, and input mode in the evidence. For paired studies, follow the [evaluation protocol](../models/evaluation-protocol.md) and attach the comparison output and any failed guardrails.
 
 | Task and model ID | Baseline | Current | Unit | Sample size | Target and basis | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |

@@ -27,6 +27,12 @@ Run the calculator against the [synthetic examples](docs/hci/models/example-meas
 python3 docs/hci/models/measure.py docs/hci/models/example-measurements.json
 ```
 
+Use the [evaluation protocol](docs/hci/models/evaluation-protocol.md) to collect matched observations and compare a candidate with a baseline. The paired calculator reports the median gain, its uncertainty and whether it clears the improvement you specified.
+
+```bash
+python3 -B docs/hci/models/compare.py docs/hci/models/example-comparison.json
+```
+
 ## Included skills
 
 ### Core review skills

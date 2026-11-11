@@ -37,6 +37,8 @@ Pass a JSON object keyed by model ID with the input fields shown in the [example
 
 ## Record evidence in a review
 
+Use the [evaluation protocol](evaluation-protocol.md) for model-specific collection steps and paired comparisons.
+
 1. Record the task, variant, device or viewport, input mode, accessibility settings and measurement boundaries.
 2. Record sample sizes and eligibility rules. Report missing observations and failure rates with timings. The calculator uses nearest-rank percentiles and expects non-empty samples.
 3. Compare the same tasks before and after. Use paired or counterbalanced trials where appropriate. Segment results when inputs or populations differ.

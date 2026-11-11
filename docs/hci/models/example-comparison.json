@@ -1,0 +1,15 @@
+{
+  "analysis": "paired",
+  "model": "interruptible-animation",
+  "metric": "retarget_latency_ms",
+  "direction": "lower",
+  "min_improvement": 8,
+  "pairs": [
+    {"id": "trial-01", "baseline": {"input_ms": 100, "first_retargeted_frame_ms": 137, "before_px": [24, 0], "after_px": [28, 0]}, "candidate": {"input_ms": 100, "first_retargeted_frame_ms": 117, "before_px": [24, 0], "after_px": [25, 0]}},
+    {"id": "trial-02", "baseline": {"input_ms": 100, "first_retargeted_frame_ms": 136, "before_px": [36, 0], "after_px": [40, 0]}, "candidate": {"input_ms": 100, "first_retargeted_frame_ms": 118, "before_px": [36, 0], "after_px": [37, 0]}},
+    {"id": "trial-03", "baseline": {"input_ms": 100, "first_retargeted_frame_ms": 134, "before_px": [23, 0], "after_px": [28, 0]}, "candidate": {"input_ms": 100, "first_retargeted_frame_ms": 121, "before_px": [23, 0], "after_px": [24, 0]}},
+    {"id": "trial-04", "baseline": {"input_ms": 100, "first_retargeted_frame_ms": 135, "before_px": [35, 0], "after_px": [40, 0]}, "candidate": {"input_ms": 100, "first_retargeted_frame_ms": 115, "before_px": [35, 0], "after_px": [36, 0]}},
+    {"id": "trial-05", "baseline": {"input_ms": 100, "first_retargeted_frame_ms": 131, "before_px": [41, 0], "after_px": [45, 0]}, "candidate": {"input_ms": 100, "first_retargeted_frame_ms": 120, "before_px": [41, 0], "after_px": [42, 0]}},
+    {"id": "trial-06", "baseline": {"input_ms": 100, "first_retargeted_frame_ms": 140, "before_px": [52, 0], "after_px": [56, 0]}, "candidate": {"input_ms": 100, "first_retargeted_frame_ms": 118, "before_px": [52, 0], "after_px": [53, 0]}}
+  ]
+}

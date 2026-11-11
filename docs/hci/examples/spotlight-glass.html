@@ -154,7 +154,7 @@
 
     @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
       main:has(#glass:checked) .spotlight {
-        background: linear-gradient(145deg, #3c4e7444, #10182888), #152039a0;
+        background: linear-gradient(145deg, #3c4e7444, #10182888), #152039c4;
         -webkit-backdrop-filter: blur(18px);
         backdrop-filter: blur(18px);
       }
@@ -303,9 +303,15 @@
     const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
     const forcedColors = matchMedia("(forced-colors: active)");
     const glass = document.querySelector("#glass");
+    const surfaceControl = document.querySelector(".modes");
 
     for (const card of document.querySelectorAll(".spotlight")) {
+      let frame = 0;
+      let pointer;
+
       function resetSpotlight() {
+        if (frame) cancelAnimationFrame(frame);
+        frame = 0;
         card.style.removeProperty("--pointer-x");
         card.style.removeProperty("--pointer-y");
       }
@@ -313,11 +319,19 @@
       card.addEventListener("pointermove", (event) => {
         if (event.pointerType !== "mouse" || !finePointer.matches ||
             reducedMotion.matches || forcedColors.matches || !glass.checked) return;
-        const rect = card.getBoundingClientRect();
-        card.style.setProperty("--pointer-x", `${event.clientX - rect.left}px`);
-        card.style.setProperty("--pointer-y", `${event.clientY - rect.top}px`);
+        pointer = {x: event.clientX, y: event.clientY};
+        if (frame) return;
+
+        frame = requestAnimationFrame(() => {
+          frame = 0;
+          const rect = card.getBoundingClientRect();
+          card.style.setProperty("--pointer-x", `${pointer.x - rect.left}px`);
+          card.style.setProperty("--pointer-y", `${pointer.y - rect.top}px`);
+        });
       });
       card.addEventListener("pointerleave", resetSpotlight);
+      card.addEventListener("pointercancel", resetSpotlight);
+      surfaceControl.addEventListener("change", resetSpotlight);
       reducedMotion.addEventListener("change", resetSpotlight);
       finePointer.addEventListener("change", resetSpotlight);
       forcedColors.addEventListener("change", resetSpotlight);

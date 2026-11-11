@@ -102,13 +102,17 @@ def origin_aware_animation(first_anchor_px, trigger_anchor_px, trigger_diagonal_
     return {"normalised_origin_error": divide(offset, trigger_diagonal_px)}
 
 
+def contrast_ratio(foreground_luminance, background_luminance):
+    darker, lighter = sorted((foreground_luminance, background_luminance))
+    return (lighter + 0.05) / (darker + 0.05)
+
+
 def oklch(palette_lightness, foreground_luminance, background_luminance):
     if not all(0 <= value <= 1 for value in (*palette_lightness, foreground_luminance, background_luminance)):
         raise ValueError("lightness and relative luminance must be in [0, 1]")
-    darker, lighter = sorted((foreground_luminance, background_luminance))
     return {
         "oklch_lightness_spread": spread(palette_lightness),
-        "wcag_contrast_ratio": (lighter + 0.05) / (darker + 0.05),
+        "wcag_contrast_ratio": contrast_ratio(foreground_luminance, background_luminance),
     }
 
 

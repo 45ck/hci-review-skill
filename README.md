@@ -23,7 +23,7 @@ Spotlight glass is the default for new high-fidelity Quantitative HCI examples a
 
 ![Quantitative HCI scorecard using the default spotlight glass cards, with a Glass and Solid switch and a synthetic motion result](assets/spotlight-glass-preview.webp)
 
-Open [the example HTML](docs/hci/examples/spotlight-glass.html) locally to switch surfaces and try the border effect. The [design guidance](docs/hci/examples/README.md) covers when to use the solid fallback and how to review the result. [21st.dev border-only Spotlight reference](https://21st.dev/?q=spotlight+card&preview=%2F%40ibelick%2Fcomponents%2Fspotlight%2Fborder-only)
+Open [the example HTML](docs/hci/examples/spotlight-glass.html) locally to switch surfaces and try the border effect. The [design guidance](docs/hci/examples/README.md) covers when to use the solid fallback and how to run the Chromium audit for rendered contrast, keyboard, touch, and motion behaviour. [21st.dev border-only Spotlight reference](https://21st.dev/?q=spotlight+card&preview=%2F%40ibelick%2Fcomponents%2Fspotlight%2Fborder-only)
 
 ## Quantitative models
 

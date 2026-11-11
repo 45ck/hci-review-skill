@@ -13,8 +13,7 @@
       --muted: #4a5671;
       --accent: #285ba8;
       --line: #c1cce0;
-      --paper: #f7f9fe;
-      --rail: #e9effa;
+      --rail: #f4f7fd;
       --track: #dce5f5;
       --range-start: #6485dc;
       --range-end: #365cb9;
@@ -25,9 +24,9 @@
       --selection: #f9fbffe8;
       --focus: #144fa7;
       --shadow: #21365e25;
-      --glow-1: #b6d1f9;
-      --glow-2: #dacbf5;
-      --glow-3: #d2e8fa;
+      --glow-1: #d1e2fc;
+      --glow-2: #e4d9f6;
+      --glow-3: #dbeafa;
       font: 100%/1.5 system-ui, sans-serif;
     }
 
@@ -39,9 +38,9 @@
       min-height: 100svh;
       padding: clamp(2.25rem, 5vw, 4.25rem) clamp(1rem, 6vw, 5rem) 3rem;
       background:
-        radial-gradient(ellipse at 92% 31%, var(--glow-2), transparent 41%),
-        radial-gradient(ellipse at 66% 15%, var(--glow-1), transparent 42%),
-        radial-gradient(ellipse at 10% 87%, var(--glow-3), transparent 54%),
+        radial-gradient(ellipse at 98% 10%, var(--glow-2), transparent 62%),
+        radial-gradient(ellipse at 66% 0%, var(--glow-1), transparent 66%),
+        radial-gradient(ellipse at 0% 92%, var(--glow-3), transparent 69%),
         var(--canvas);
     }
 
@@ -87,38 +86,15 @@
       font-size: clamp(1rem, 1.6vw, 1.25rem);
     }
 
-    .comparison {
-      margin-top: clamp(1.85rem, 5vw, 3.5rem);
-      padding: clamp(1rem, 3vw, 2rem);
-      border: 1px solid var(--rim);
-      border-radius: clamp(1.4rem, 4vw, 2.3rem);
-      background: var(--paper);
-      box-shadow: 0 24px 60px -36px var(--shadow), 0 3px 9px var(--shadow);
-    }
+    .comparison { margin-top: clamp(1.85rem, 5vw, 3.5rem); }
 
     .toolbar {
-      position: relative;
-      isolation: isolate;
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
       gap: .75rem 1rem;
       margin-bottom: clamp(1rem, 3vw, 1.65rem);
-    }
-
-    .toolbar::before {
-      position: absolute;
-      z-index: -1;
-      inset: -.75rem -.75rem -.5rem auto;
-      width: min(100%, 12rem);
-      border-radius: 999px;
-      filter: blur(12px);
-      background:
-        radial-gradient(ellipse at 74% 60%, var(--glow-2), transparent 68%),
-        radial-gradient(ellipse at 27% 38%, var(--glow-1), transparent 62%);
-      pointer-events: none;
-      content: "";
     }
 
     h2 { font-size: 1.05rem; font-weight: 700; letter-spacing: -.025em; }
@@ -214,7 +190,7 @@
     .results {
       display: grid;
       grid-template-columns: minmax(0, 1.8fr) minmax(13rem, 1fr);
-      gap: 1rem;
+      gap: clamp(1rem, 4vw, 3rem);
     }
 
     .measure {
@@ -276,19 +252,17 @@
     .detail {
       display: grid;
       align-content: center;
-      border: 1px solid var(--line);
-      border-radius: 1.45rem;
-      padding: 0 clamp(1rem, 2vw, 1.45rem);
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      padding: 0 .2rem;
     }
 
     .detail > div { padding: 1rem 0; }
     .detail > div + div { border-top: 1px solid var(--line); }
     .detail .label { font-size: .83rem; }
     .detail .value { font-size: clamp(1.6rem, 3vw, 2.25rem); }
-    .caption { margin-top: .9rem; color: var(--muted); font-size: .84rem; }
 
     @media (max-width: 42rem) {
-      .toolbar::before { inset-inline: -.5rem auto; }
       .results { grid-template-columns: minmax(0, 1fr); }
       .detail { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; }
       .detail .value { font-size: 1.4rem; }
@@ -307,7 +281,6 @@
         --muted: #b6c5df;
         --accent: #a9cbff;
         --line: #405473;
-        --paper: #17243c;
         --rail: #202f4c;
         --track: #3a4b69;
         --range-start: #82a9f8;
@@ -326,7 +299,7 @@
     }
 
     @media (forced-colors: active) {
-      main, .comparison, .measure, .detail, .surface-switch:has(#glass:checked) {
+      main, .measure, .detail, .surface-switch:has(#glass:checked) {
         background: Canvas;
         border-color: CanvasText;
         box-shadow: none;
@@ -334,7 +307,7 @@
         backdrop-filter: none;
       }
 
-      .toolbar::before, .surface-switch:has(#glass:checked)::before, .plot { display: none; }
+      .surface-switch:has(#glass:checked)::before, .plot { display: none; }
       .surface-switch input:checked + span { outline: 2px solid Highlight; outline-offset: -2px; }
       .surface-switch input:focus-visible + span { outline-color: Highlight; outline-offset: 2px; }
     }
@@ -390,7 +363,6 @@
             </div>
           </dl>
         </div>
-        <p class="caption">Switch surfaces to compare the toolbar.</p>
       </section>
     </div>
   </main>

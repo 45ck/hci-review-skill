@@ -6,8 +6,8 @@ Open [spotlight-glass.html](spotlight-glass.html) locally. The toolbar starts in
 
 | Layer | Treatment |
 | --- | --- |
-| Background | Soft colour underlays give the glass something to pick up. |
-| Content | Solid charts, tables and reading surfaces keep text and metrics consistent across backdrops. |
+| Background | Continuous colour across the page gives the glass something to pick up. |
+| Content | Give the chart one solid surface and let supporting figures sit on the page with simple dividers. |
 | Controls | A tinted translucent fill, backdrop blur, inset rim and quiet shadow give controls depth. Match the radii of nested elements to keep the edges aligned. |
 | Spotlight | A border-only highlight tracks a mouse. It stays static with touch or reduced motion and disappears in solid and reduced-transparency modes. |
 | Fallback | Solid fill preserves legibility without blur support. Native controls, a visible focus ring and explicit labels preserve the same actions in forced colours. |
@@ -33,9 +33,9 @@ Use `--profile desktop_dark` to run one profile or `--executable /path/to/chromi
 
 | Check | Chromium 153 result |
 | --- | --- |
-| Desktop, light and dark | Minimum sampled text contrast was 5.40:1 in light and 7.44:1 in dark across the normal surface states. Keyboard switching preserved layout and showed a 2 CSS px focus ring. |
+| Desktop, light and dark | Minimum sampled text contrast was 5.28:1 in light and 7.12:1 in dark across the normal surface states. Keyboard switching preserved layout and showed a 2 CSS px focus ring. |
 | Dark toolbar over a bright test backdrop | The minimum sampled toolbar-label contrast was 7.23:1. |
-| Touch at 320 CSS px | Both targets were 68 × 44 CSS px. Minimum sampled text contrast was 6.21:1. Both choices worked without horizontal overflow. |
+| Touch at 320 CSS px | Both targets were 68 × 44 CSS px. Minimum sampled text contrast was 6.74:1. Both choices worked without horizontal overflow. |
 | 24 pointer events in one frame | Two style updates applied the latest coordinates. |
 | Reduced motion, reduced transparency and forced colours | The spotlight stopped tracking. Blur and glow were disabled for reduced transparency and forced colours. Metric text remained visible. |
 

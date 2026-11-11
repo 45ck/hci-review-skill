@@ -213,7 +213,7 @@ def audit_desktop(page, image_class):
     page.keyboard.press("ArrowLeft")
     keyboard_returns_to_glass = glass.is_checked()
 
-    backdrop = page.add_style_tag(content=f".toolbar::before {{ background: {BRIGHT_BACKDROP}; filter: none; }}")
+    backdrop = page.add_style_tag(content=f".toolbar {{ background: {BRIGHT_BACKDROP}; }}")
     try:
         contrast["glass_bright_backdrop"] = sample_contrast(page, image_class, ".surface-switch")
     finally:

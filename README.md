@@ -27,7 +27,7 @@ Open [the example HTML](docs/hci/examples/spotlight-glass.html) locally to compa
 
 ## Quantitative models
 
-All 20 terms in the [20 Design Terms reel](https://www.instagram.com/reel/DfknF2ljIE6/) have a quantitative model. The [catalogue](docs/hci/models/interface-design-models.md) follows the reel in timestamp order and gives each term a formula, measurement instructions and a worked example.
+The [interface design catalogue](docs/hci/models/interface-design-models.md) covers 20 terms from typography, layout, interaction and motion. Each entry defines what to measure and how to interpret it.
 
 Run the calculator against the [synthetic examples](docs/hci/models/example-measurements.json) with Python 3.9+.
 

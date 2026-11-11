@@ -25,8 +25,6 @@ You can also open the [fixture](browser/fixture.html) locally in Chromium, appen
 | Like control with a simulated server | Optimistic update | Show the result before settlement and restore the prior state on rejection. |
 | Staggered results | Stagger | Keep controls visible and usable during the animation. Honour the reduced-motion preference in both variants. |
 
-For touch targets, origin-aware animation, OKLCH, safe areas, affordance, comboboxes, interruptible animation, progressive disclosure and shared element transitions, collect inputs using the [model-specific evaluation protocol](evaluation-protocol.md#collection-plan-for-the-20-models). All nine have worked calculator examples alongside the 11 benchmarked models.
-
 The JSON records Chromium version, profile settings, fixture hashes, and raw inputs and metrics for every trial. Summaries use trial medians except for the reported percentiles. The layout summary uses p75 lab CLS and p95 target drift across trials. Each trial observes one lab shift window after the initial paint.
 
 The fixture uses one simulated success and one rejection per trial. Its correction rate describes that scenario. Feedback latency uses a browser paint opportunity as a proxy for presentation. The mobile and reduced-motion profiles are emulated. Use actual hardware for device-specific safe areas, touch input and performance.

@@ -9,7 +9,7 @@ Open [spotlight-glass.html](spotlight-glass.html) locally. The toolbar starts in
 | Background | Continuous colour across the page gives the glass something to pick up. |
 | Content | Give the chart one solid surface and let supporting figures sit on the page with simple dividers. |
 | Controls | A tinted translucent fill, backdrop blur, inset rim and quiet shadow give controls depth. Match the radii of nested elements to keep the edges aligned. |
-| Spotlight | A border-only highlight tracks a mouse. It stays static with touch or reduced motion and disappears in solid and reduced-transparency modes. |
+| Spotlight | A narrow white highlight with cyan and rose fringes tracks the mouse along the rim. It stays static with touch or reduced motion and disappears in solid and reduced-transparency modes. |
 | Fallback | Solid fill preserves legibility without blur support. Native controls, a visible focus ring and explicit labels preserve the same actions in forced colours. |
 
 ## Measure the effect
@@ -36,9 +36,18 @@ Use `--profile desktop_dark` to run one profile or `--executable /path/to/chromi
 | Desktop, light and dark | Minimum sampled text contrast was 5.28:1 in light and 7.12:1 in dark across the normal surface states. Keyboard switching preserved layout and showed a 2 CSS px focus ring. |
 | Dark toolbar over a bright test backdrop | The minimum sampled toolbar-label contrast was 7.23:1. |
 | Touch at 320 CSS px | Both targets were 68 × 44 CSS px. Minimum sampled text contrast was 6.74:1. Both choices worked without horizontal overflow. |
+| Chromatic rim | Both themes showed cyan and rose at the moving edge. Pixels in the sampled label area matched at rest and under the pointer. |
 | 24 pointer events in one frame | Two style updates applied the latest coordinates. |
 | Reduced motion, reduced transparency and forced colours | The spotlight stopped tracking. Blur and glow were disabled for reduced transparency and forced colours. Metric text remained visible. |
 
+The rim audit compares screenshots at rest and at a fixed pointer position. It
+checks for both colours in the top four CSS pixel rows and compares interior
+pixels after excluding the rounded ends and border.
+
 The audit samples rendered pixels beneath the text bounds with glyph ink hidden. It checks this fixture in Chromium, including emulated preferences. Measure the actual device, backdrop and task when adopting the pattern in a product.
+
+For hosted screenshot review, [Chromatic for Playwright](https://www.chromatic.com/docs/playwright/)
+can compare snapshots in pull requests. Use fixed pointer coordinates for hover
+and capture idle Glass, keyboard-focused Solid, and the 320 CSS px layout.
 
 [Apple’s materials guidance](https://developer.apple.com/design/human-interface-guidelines/materials) · [Julien Thibeaut’s border-only Spotlight](https://21st.dev/?q=spotlight+card&preview=%2F%40ibelick%2Fcomponents%2Fspotlight%2Fborder-only) · [WCAG 2.2](https://www.w3.org/TR/WCAG22/)

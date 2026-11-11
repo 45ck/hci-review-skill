@@ -21,6 +21,8 @@
       --chrome-solid: #e5ebf8;
       --chrome-tint: #e1e9ff9e;
       --rim: #ffffffd9;
+      --rim-cyan: #2e96b3c7;
+      --rim-rose: #b957a5bd;
       --selection: #f9fbffe8;
       --focus: #144fa7;
       --shadow: #21365e25;
@@ -168,7 +170,13 @@
         inset: -1px;
         padding: 1px;
         border-radius: inherit;
-        background: radial-gradient(5.5rem circle at var(--spot-x) var(--spot-y), #fff, #a6c3ff 36%, transparent 80%);
+        background:
+          radial-gradient(2rem circle at var(--spot-x) var(--spot-y),
+            #fff, #fff9 24%, transparent 80%),
+          radial-gradient(2.8rem circle at calc(var(--spot-x) - 1.15rem) var(--spot-y),
+            var(--rim-cyan) 8%, transparent 78%),
+          radial-gradient(2.8rem circle at calc(var(--spot-x) + 1.15rem) var(--spot-y),
+            var(--rim-rose) 8%, transparent 78%);
         mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
         mask-composite: exclude;
         pointer-events: none;
@@ -276,6 +284,8 @@
 
     @media (prefers-color-scheme: dark) {
       :root {
+        --rim-cyan: #61e7dfcc;
+        --rim-rose: #f39decdd;
         --canvas: #101828;
         --ink: #eef3ff;
         --muted: #b6c5df;

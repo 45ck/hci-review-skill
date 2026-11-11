@@ -19,9 +19,9 @@ A structured HCI and UX review skill pack for prototypes, flows, interface syste
 
 ## Default UI · Liquid Glass
 
-Apple-inspired Liquid Glass is the default for new high-fidelity Quantitative HCI examples and prototypes without an established design system. Use frosted glass and a subtle border spotlight on controls. Use solid, quiet surfaces for charts, tables and reading.
+Apple-inspired Liquid Glass is the default for new high-fidelity Quantitative HCI examples and prototypes without an established design system. Use frosted glass and a subtle cyan-to-rose border spotlight on controls. Use solid, quiet surfaces for charts, tables and reading.
 
-![Quantitative HCI example with a Liquid Glass toolbar and an opaque scorecard showing a 19 ms median improvement](assets/spotlight-glass-preview.webp)
+![Quantitative HCI example with a chromatic Liquid Glass toolbar rim and a scorecard showing a 19 ms median improvement](assets/spotlight-glass-preview.webp)
 
 Open [the example HTML](docs/hci/examples/spotlight-glass.html) locally to compare Glass and Solid on the same toolbar. The [design guidance](docs/hci/examples/README.md) covers surface selection, what to measure and how to run the browser audit. [Apple materials](https://developer.apple.com/design/human-interface-guidelines/materials) · [21st.dev border-only Spotlight](https://21st.dev/?q=spotlight+card&preview=%2F%40ibelick%2Fcomponents%2Fspotlight%2Fborder-only)
 

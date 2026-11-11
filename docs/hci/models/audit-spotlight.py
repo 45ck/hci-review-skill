@@ -155,6 +155,38 @@ def move_over_toolbar(page, toolbar, dx=18, dy=10):
     page.evaluate(FRAMES)
 
 
+def capture_toolbar(toolbar, image_class):
+    with image_class.open(BytesIO(toolbar.screenshot(scale="css", animations="disabled"))) as image:
+        return image.convert("RGB")
+
+
+def measure_rim(page, toolbar, image_class):
+    page.evaluate(FRAMES)
+    with capture_toolbar(toolbar, image_class) as before:
+        move_over_toolbar(page, toolbar, dx=round(before.width * 0.65), dy=4)
+        with capture_toolbar(toolbar, image_class) as after:
+            # Skip the rounded caps and the rim when comparing the label area.
+            inset = 27
+            interior = (inset, 6, before.width - inset, before.height - 6)
+            with before.crop(interior) as idle, after.crop(interior) as hover:
+                interior_unchanged = idle.tobytes() == hover.tobytes()
+
+            cyan = rose = 0
+            for y in range(4):
+                for x in range(inset, before.width - inset):
+                    previous = before.getpixel((x, y))
+                    red, green, blue = after.getpixel((x, y))
+                    if max(abs(new - old) for new, old in zip((red, green, blue), previous)) < 12:
+                        continue
+                    cyan += min(green, blue) - red >= 16
+                    rose += min(red, blue) - green >= 12
+            return {
+                "changed_cyan_rim_pixels": cyan,
+                "changed_rose_rim_pixels": rose,
+                "interior_pixels_unchanged": interior_unchanged,
+            }
+
+
 def burst_pointer_events(toolbar):
     return toolbar.evaluate(
         """async toolbar => {
@@ -189,10 +221,13 @@ def audit_desktop(page, image_class):
     solid = page.get_by_role("radio", name="Solid")
     default_glass = glass.is_checked()
     base_geometry = layout_geometry(page)
-    contrast = {"glass_idle": sample_contrast(page, image_class)}
-
-    move_over_toolbar(page, toolbar)
+    rim = measure_rim(page, toolbar, image_class)
     pointer_active = pointer_position(toolbar) != ["", ""]
+
+    # Capture the visual comparison before the contrast probe changes the text DOM.
+    page.mouse.move(0, 0)
+    contrast = {"glass_idle": sample_contrast(page, image_class)}
+    move_over_toolbar(page, toolbar)
     contrast["glass_pointer"] = sample_contrast(page, image_class)
     burst = burst_pointer_events(toolbar)
 
@@ -236,6 +271,8 @@ def audit_desktop(page, image_class):
         "checks": {
             "glass_is_default": default_glass,
             "mouse_tracks": pointer_active,
+            "chromatic_rim_is_visible": min(rim["changed_cyan_rim_pixels"], rim["changed_rose_rim_pixels"]) >= 4,
+            "hover_preserves_interior_pixels": rim["interior_pixels_unchanged"],
             "coalesced_pointer_burst": 0 < burst["style_mutations"] <= 2 and burst["latest_pointer_applied"],
             "keyboard_switches_both_directions": keyboard_glass and keyboard_solid and keyboard_returns_to_glass,
             "keyboard_focus_outline_present": focus_ring["width_px"] >= 2 and focus_ring["style"] != "none",
@@ -243,6 +280,7 @@ def audit_desktop(page, image_class):
             "surface_switch_preserves_geometry": base_geometry == solid_geometry,
         },
         "pointer_burst": burst,
+        "rim": rim,
         "focus_outline": focus_ring,
     }
 

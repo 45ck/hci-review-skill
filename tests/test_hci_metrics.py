@@ -1,6 +1,7 @@
 import json
 import math
 from pathlib import Path
+import re
 import subprocess
 import sys
 import unittest
@@ -47,6 +48,9 @@ class HciMetricsTest(unittest.TestCase):
             "shared-element-transition": {"handoff_error_px": 2, "task_latency_ms": 220},
         }
         self.assertEqual(len(actual), 20)
+        catalogue = (MODEL_DIR / "interface-design-models.md").read_text(encoding="utf-8")
+        documented_models = re.findall(r"^\| \d{2}:\d{2} \| [^|]+ · `([^`]+)` \|", catalogue, re.MULTILINE)
+        self.assertEqual(documented_models, list(expected))
         self.assertEqual(actual.keys(), expected.keys())
         for model, metrics in expected.items():
             with self.subTest(model=model):

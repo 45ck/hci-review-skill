@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Spotlight glass · Quantitative HCI</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --canvas: #0a0e1c;
+      --surface: #151e33;
+      --text: #f3f6ff;
+      --muted: #b5c4db;
+      --accent: #a5daff;
+      --line: #435371;
+      --gutter: clamp(1rem, 5vw, 4rem);
+      font: 100%/1.5 system-ui, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; background: var(--canvas); color: var(--text); }
+
+    main {
+      position: relative;
+      isolation: isolate;
+      min-block-size: 100svh;
+      padding: clamp(1.75rem, 5.5vw, 4.5rem) var(--gutter);
+      background:
+        radial-gradient(ellipse at 74% 16%, #202859, transparent 52%),
+        radial-gradient(ellipse at 11% 64%, #132e4b, transparent 57%),
+        var(--canvas);
+    }
+
+    main::before {
+      position: absolute;
+      z-index: -1;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(#8cadfa0c 1px, transparent 1px),
+        linear-gradient(90deg, #8cadfa0c 1px, transparent 1px);
+      background-size: 44px 44px;
+      mask-image: linear-gradient(#000, transparent 92%);
+      content: "";
+    }
+
+    .frame { max-inline-size: 70rem; margin-inline: auto; }
+    .heading { margin-block-end: clamp(1.75rem, 4vw, 3rem); }
+    .eyebrow {
+      margin: 0;
+      color: var(--accent);
+      font-size: .77rem;
+      font-weight: 700;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: .28em 0 .22em;
+      font-size: clamp(2.7rem, 7vw, 5.5rem);
+      font-weight: 680;
+      letter-spacing: -.072em;
+      line-height: .96;
+    }
+
+    .intro { max-inline-size: 48ch; margin: 0; color: var(--muted); }
+    .preview-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: .85rem 1.5rem;
+      margin-block-end: .9rem;
+    }
+
+    .preview-toolbar h2 {
+      margin: 0;
+      font-size: .875rem;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .modes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .3rem;
+      margin: 0;
+      min-inline-size: 0;
+      border: 1px solid #7084a8;
+      border-radius: .85rem;
+      padding: .22rem;
+      background: #10182a;
+    }
+
+    .visually-hidden {
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+
+    .modes label { position: relative; cursor: pointer; }
+    .modes span {
+      display: grid;
+      min-block-size: 2.75rem;
+      place-items: center;
+      padding: .25rem .95rem;
+      border-radius: .6rem;
+      color: var(--text);
+      font-size: .85rem;
+      font-weight: 650;
+    }
+
+    .modes input:checked + span { background: #bddeff; color: #0b213a; }
+    .modes input:focus-visible + span { outline: 2px solid #fff; outline-offset: 2px; }
+
+    .scorecard {
+      display: grid;
+      grid-template-columns: minmax(0, 1.72fr) minmax(0, 1fr);
+      gap: .85rem;
+    }
+
+    .spotlight {
+      --pointer-x: 70%;
+      --pointer-y: 0%;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-inline-size: 0;
+      padding: clamp(1.15rem, 3vw, 2.2rem);
+      border: 1px solid var(--line);
+      border-radius: 1.25rem;
+      background: var(--surface);
+    }
+
+    @supports (mask-composite: exclude) {
+      .spotlight::before {
+        position: absolute;
+        inset: -1px;
+        pointer-events: none;
+        border-radius: inherit;
+        padding: 1px;
+        background: radial-gradient(14rem circle at var(--pointer-x) var(--pointer-y),
+          #ddf1ff, #8db0ff 24%, transparent 76%);
+        mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+        mask-composite: exclude;
+        content: "";
+      }
+    }
+
+    @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+      main:has(#glass:checked) .spotlight {
+        background: linear-gradient(145deg, #3c4e7444, #10182888), #152039a0;
+        -webkit-backdrop-filter: blur(18px);
+        backdrop-filter: blur(18px);
+      }
+    }
+
+    main:has(#solid:checked) .spotlight::before { display: none; }
+
+    .primary { grid-row: span 2; justify-content: start; }
+    .spotlight h3 { margin: 0; font-size: 1rem; font-weight: 640; }
+    .metric {
+      margin: .2em 0 0;
+      color: var(--text);
+      font-size: clamp(1.75rem, 4vw, 3rem);
+      font-weight: 650;
+      line-height: 1.07;
+      letter-spacing: -.055em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .primary .metric { font-size: clamp(3.5rem, 9vw, 6rem); }
+    .unit { font-size: .46em; letter-spacing: -.02em; color: var(--accent); }
+    .explanation { margin: .45rem 0 0; color: var(--muted); font-size: .9rem; }
+
+    .plot {
+      display: grid;
+      gap: .55rem;
+      margin-block-start: auto;
+      padding-block-start: 1.85rem;
+    }
+
+    .track {
+      position: relative;
+      block-size: .48rem;
+      border-radius: 1rem;
+      background: #293a57;
+    }
+
+    .interval {
+      position: absolute;
+      inset-block: 0;
+      inset-inline: 45.8333% 8.3333%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #6d9ded, #ade2ff);
+    }
+
+    .marker {
+      position: absolute;
+      inset-block-start: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .marker.goal { inset-inline-start: 33.3333%; block-size: 1.05rem; border-inline-start: 2px dashed #e7effc; }
+    .marker.median {
+      inset-inline-start: 79.1667%;
+      inline-size: .85rem;
+      block-size: .85rem;
+      border: 2px solid #263d68;
+      border-radius: 50%;
+      background: #e5f6ff;
+    }
+
+    .axis {
+      position: relative;
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: .75rem;
+    }
+
+    .axis-goal { position: absolute; inset-inline-start: 33.3333%; transform: translateX(-50%); }
+    .footnote { margin: 1.15rem 0 0; color: var(--muted); font-size: .83rem; }
+
+    @media (max-width: 43rem) {
+      .scorecard { grid-template-columns: 1fr; }
+      .primary { grid-row: auto; }
+    }
+
+    @media (forced-colors: active) {
+      main, .spotlight, main:has(#glass:checked) .spotlight {
+        background: Canvas;
+        border-color: CanvasText;
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+      }
+      .spotlight::before, .plot { display: none; }
+      .modes input:checked + span {
+        outline: 2px solid Highlight;
+        outline-offset: -2px;
+      }
+      .modes input:focus-visible + span { outline-color: Highlight; outline-offset: 2px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="frame">
+      <header class="heading">
+        <p class="eyebrow">Quantitative HCI</p>
+        <h1>Spotlight glass</h1>
+        <p class="intro">Frosted cards with light at the edge. Compare glass and solid surfaces using the same HCI scorecard.</p>
+      </header>
+
+      <section aria-labelledby="example-heading">
+        <div class="preview-toolbar">
+          <h2 id="example-heading">Motion evaluation · Synthetic example</h2>
+          <fieldset class="modes">
+            <legend class="visually-hidden">Card surface</legend>
+            <label><input class="visually-hidden" type="radio" name="surface" id="glass" checked><span>Glass</span></label>
+            <label><input class="visually-hidden" type="radio" name="surface" id="solid"><span>Solid</span></label>
+          </fieldset>
+        </div>
+
+        <div class="scorecard">
+          <article class="spotlight primary">
+            <h3>Median improvement</h3>
+            <p class="metric">19 <span class="unit">ms</span></p>
+            <p class="explanation">Faster response to a change of direction</p>
+            <div class="plot" aria-hidden="true">
+              <div class="track">
+                <div class="interval"></div>
+                <div class="marker goal"></div>
+                <div class="marker median"></div>
+              </div>
+              <div class="axis"><span>0 ms</span><span class="axis-goal">8 ms target</span><span>24 ms</span></div>
+            </div>
+          </article>
+
+          <article class="spotlight">
+            <h3>95% confidence interval</h3>
+            <p class="metric">11–22 <span class="unit">ms</span></p>
+            <p class="explanation">From six matched observations</p>
+          </article>
+
+          <article class="spotlight">
+            <h3>Decision</h3>
+            <p class="metric">Target met</p>
+            <p class="explanation">The lower bound clears the 8 ms target.</p>
+          </article>
+        </div>
+        <p class="footnote">Move a mouse along the card edges to see the spotlight. The surface switch also works by keyboard and touch.</p>
+      </section>
+    </div>
+  </main>
+  <script>
+    const finePointer = matchMedia("(hover: hover) and (pointer: fine)");
+    const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+    const forcedColors = matchMedia("(forced-colors: active)");
+    const glass = document.querySelector("#glass");
+
+    for (const card of document.querySelectorAll(".spotlight")) {
+      function resetSpotlight() {
+        card.style.removeProperty("--pointer-x");
+        card.style.removeProperty("--pointer-y");
+      }
+
+      card.addEventListener("pointermove", (event) => {
+        if (event.pointerType !== "mouse" || !finePointer.matches ||
+            reducedMotion.matches || forcedColors.matches || !glass.checked) return;
+        const rect = card.getBoundingClientRect();
+        card.style.setProperty("--pointer-x", `${event.clientX - rect.left}px`);
+        card.style.setProperty("--pointer-y", `${event.clientY - rect.top}px`);
+      });
+      card.addEventListener("pointerleave", resetSpotlight);
+      reducedMotion.addEventListener("change", resetSpotlight);
+      finePointer.addEventListener("change", resetSpotlight);
+      forcedColors.addEventListener("change", resetSpotlight);
+    }
+  </script>
+</body>
+</html>

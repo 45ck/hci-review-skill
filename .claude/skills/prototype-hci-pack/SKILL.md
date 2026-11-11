@@ -16,6 +16,10 @@ Use ultrathink. Work from the current repository, current files, current screens
 - Surface the highest-risk UX/HCI problems early.
 - Leave durable artifacts that can guide implementation.
 
+## Visual default for new high-fidelity prototypes
+
+Use spotlight glass when the prototype has no established design system. Use a tinted frosted card with a quiet border and keep the pointer highlight on the border. Provide an opaque fallback, preserve text contrast and keyboard focus, and keep the highlight static for touch and reduced motion. Use the product’s own visual system when one exists. Evaluate the treatment against the task and the [Quantitative HCI example](https://github.com/45ck/hci-review-skill/tree/main/docs/hci/examples).
+
 ## Produce these outputs
 Write them to `docs/hci/` unless the user asked for another path.
 

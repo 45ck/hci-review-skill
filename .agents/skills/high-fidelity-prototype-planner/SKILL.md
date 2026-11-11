@@ -35,6 +35,10 @@ Plan high-fidelity prototypes when interaction detail, visual hierarchy, timing,
 4. Surface uncertainty explicitly instead of masking it with confident UX language.
 5. Recommend the next most useful research, design, or evaluation step.
 
+## Visual default for new high-fidelity prototypes
+
+Use spotlight glass when the prototype has no established design system. Use a tinted frosted card with a quiet border and keep the pointer highlight on the border. Provide an opaque fallback, preserve text contrast and keyboard focus, and keep the highlight static for touch and reduced motion. Use the product’s own visual system when one exists. Evaluate the treatment against the task and the [Quantitative HCI example](https://github.com/45ck/hci-review-skill/tree/main/docs/hci/examples).
+
 ## Quality gates
 - Findings are tied to a user goal or task, not generic taste.
 - Assumptions are marked as assumptions.

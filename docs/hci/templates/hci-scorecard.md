@@ -61,3 +61,13 @@ Rate each dimension 1-5:
 | Dimension | Previous | Current | Change |
 |-----------|----------|---------|--------|
 |           |          |         |        |
+
+
+## Quantitative measurements
+
+Use the relevant [interface design model](../models/interface-design-models.md)
+and record the task, variant, device, and input mode in the evidence.
+
+| Task and model ID | Baseline | Current | Unit | Sample size | Target and basis | Evidence |
+| --- | --- | --- | --- | --- | --- | --- |
+| | | | | | | |

@@ -1,0 +1,27 @@
+{
+  "kerning": {"kerned_px": 30, "unkerned_px": 32, "font_size_px": 20},
+  "optical-centre": {"ink_centroid_px": [17, 16], "container_centre_px": [16, 16], "container_short_side_px": 32},
+  "tabular-numbers": {"digit_advances_px": [9, 9, 9, 9, 9, 9, 9, 9, 9, 9], "decimal_positions_px": [84, 84, 84]},
+  "layout-shift": {"page_view_cls": [0.02, 0.06, 0.12, 0.18], "target_drift_px": [0, 4, 16, 36]},
+  "tracking": {"letter_spacing_px": 0.48, "font_size_px": 16},
+  "optimistic-update": {"action_ms": 1000, "paint_ms": 1040, "settled_ms": 1480, "reconciled": 3, "settled_mutations": 100},
+  "x-height": {"x_height_px": 8.8, "font_size_px": 16},
+  "touch-target": {"distance_px": 96, "target_width_px": 48, "intercept_ms": 80, "slope_ms_per_bit": 60},
+  "leading": {"baseline_distance_px": 24, "font_size_px": 16},
+  "origin-aware-animation": {"first_anchor_px": [103, 104], "trigger_anchor_px": [100, 100], "trigger_diagonal_px": 50},
+  "oklch": {"palette_lightness": [0.61, 0.62, 0.63], "foreground_luminance": 0.15, "background_luminance": 0.95},
+  "widow": {"one_word_endings": 6, "multiline_blocks": 40},
+  "safe-area": {"target_ltrb_px": [16, 720, 374, 764], "safe_ltrb_px": [0, 44, 390, 780]},
+  "stagger": {"onsets_ms": [20, 55, 90, 125], "content_ready_ms": 0, "all_items_usable_ms": 180},
+  "line-length": {"full_line_graphemes": [54, 57, 60, 61, 62, 64, 67, 69, 74, 76]},
+  "affordance": {"correct_first_actions": 34, "attempts": 40},
+  "combobox": {"correct_selections": 18, "attempts": 20, "input_to_results_ms": [80, 90, 130, 160], "stale_queries": 0, "queries": 40},
+  "interruptible-animation": {"input_ms": 200, "first_retargeted_frame_ms": 216, "before_px": [47, 0], "after_px": [48, 0]},
+  "progressive-disclosure": {"advanced_share": 0.2, "mean_basic_s": 20, "mean_advanced_s": 50, "advanced_successes": 9, "advanced_attempts": 10},
+  "shared-element-transition": {
+    "animated_corners_px": [[0, 0], [100, 0], [100, 50], [0, 50]],
+    "live_corners_px": [[2, 0], [102, 0], [102, 50], [2, 50]],
+    "input_ms": 500,
+    "destination_ready_ms": 720
+  }
+}

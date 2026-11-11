@@ -1,11 +1,11 @@
-# hci-review-skill
+# Quantitative HCI
 
 <p align="center">
-  <img src="logo.svg" alt="hci-review-skill logo" width="128" height="128" />
+  <img src="logo.svg" alt="Quantitative HCI logo" width="128" height="128" />
 </p>
 
 <p align="center">
-  <img src="banner.svg" alt="hci-review-skill banner" width="100%" />
+  <img src="banner.svg" alt="Quantitative HCI banner" width="100%" />
 </p>
 
 <p align="center">
@@ -16,6 +16,16 @@
 </p>
 
 A structured HCI and UX review skill pack for prototypes, flows, interface systems, research planning, and usability evaluation. It focuses on models, journeys, terminology, state handling, consistency, failure paths, heuristics, cognitive walkthroughs, personas, task analysis, prototype planning, and usability studies.
+
+## Quantitative models
+
+The [interface design catalogue](docs/hci/models/interface-design-models.md) covers 20 terms from typography, layout, interaction and motion. Each entry defines what to measure and how to interpret it.
+
+Run the calculator against the [synthetic examples](docs/hci/models/example-measurements.json) with Python 3.9+.
+
+```bash
+python3 docs/hci/models/measure.py docs/hci/models/example-measurements.json
+```
 
 ## Included skills
 
@@ -76,8 +86,8 @@ A structured HCI and UX review skill pack for prototypes, flows, interface syste
 ### Option A: Install globally
 
 ```bash
-git clone https://github.com/45ck/hci-review-skill.git
-cd hci-review-skill
+git clone https://github.com/45ck/hci-review-skill.git quantitative-hci
+cd quantitative-hci
 bash install.sh
 ```
 

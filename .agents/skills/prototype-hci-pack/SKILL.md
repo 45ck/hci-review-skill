@@ -169,6 +169,12 @@ Create `hci-scorecard.md` rating the prototype 1-5 on each dimension:
 
 Include total score out of 40, top 3 strengths, top 3 weaknesses, and priority fixes.
 
+For relevant interface patterns, use the Quantitative HCI catalogue at
+`docs/hci/models/interface-design-models.md` in the Quantitative HCI repository.
+Record the model ID, baseline, observed value, unit, sample size, test context,
+and evidence. If a measurement is missing, record how to collect it. Keep
+measurements alongside the scorecard's judgement scores.
+
 ### 11) Synthesize
 Create `hci-summary.md` with:
 - one-paragraph context recap

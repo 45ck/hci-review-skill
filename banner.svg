@@ -72,7 +72,7 @@
   </g>
 
   <!-- Title -->
-  <text x="600" y="120" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="48" font-weight="700" fill="#f8fafc" letter-spacing="-1">hci-review-skill</text>
+  <text x="600" y="120" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="48" font-weight="700" fill="#f8fafc" letter-spacing="-1">Quantitative HCI</text>
 
   <!-- Subtitle -->
   <text x="600" y="158" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="18" fill="#94a3b8" letter-spacing="0.5">Structured HCI &amp; UX prototype review for Claude Code and Codex CLI</text>

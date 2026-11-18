@@ -56,3 +56,7 @@ The app includes a compact evidence index derived from the canonical raw JSON, t
 [`check-ui-sdk-demos.py`](check-ui-sdk-demos.py) checks the comparison forms, six individual task replays, suite execution, inspection/reset, read-only and rejection cases, recorded-evidence presentation, and mobile layout/interactions. It reads the actual embedded application's DOM rather than trusting the hub's success message. Screenshots and a machine-readable report are retained by CI separately from the matched benchmark results.
 
 The original native and SDK component implementations, shared reducer, dependency versions, fixed protocol and canonical raw evidence are preserved. The demo changes the landing page and adds a presentation/controller layer. It does not integrate the SDK into production projects or connect to customer data.
+
+## Acceptance record
+
+The [demo acceptance record](ui-sdk-demo-results.md) contains the final 15/15 browser checks, source/publication provenance, retained screenshots, and the initial 13/15 result plus its label correction.

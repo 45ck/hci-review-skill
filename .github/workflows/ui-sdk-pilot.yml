@@ -1,0 +1,76 @@
+name: UI SDK HCI pilot
+
+on:
+  push:
+    branches: [experiment/ui-sdk-hci-pilot]
+    paths:
+      - '.github/workflows/ui-sdk-pilot.yml'
+      - 'docs/hci/examples/ui-sdk-pilot/**'
+      - 'docs/hci/models/run-ui-sdk-pilot.py'
+      - 'docs/hci/models/ui-sdk-pilot-protocol.md'
+      - 'tests/test_ui_sdk_pilot.py'
+  pull_request:
+    paths:
+      - '.github/workflows/ui-sdk-pilot.yml'
+      - 'docs/hci/examples/ui-sdk-pilot/**'
+      - 'docs/hci/models/run-ui-sdk-pilot.py'
+      - 'docs/hci/models/ui-sdk-pilot-protocol.md'
+      - 'tests/test_ui_sdk_pilot.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ui-sdk-pilot-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scripted-pilot:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.13'
+      - name: Install and build the isolated fixture
+        working-directory: docs/hci/examples/ui-sdk-pilot
+        run: |
+          npm ci --ignore-scripts
+          npm run build
+      - name: Check existing HCI calculators
+        run: python -B -m unittest discover -s tests -v
+      - name: Install browser tooling
+        run: |
+          python -m pip install playwright==1.65.2
+          python -m playwright install --with-deps chromium
+      - name: Run matched browser tasks and guardrails
+        shell: bash
+        run: |
+          mkdir -p ui-sdk-evidence
+          cp docs/hci/examples/ui-sdk-pilot/dist/.vite/manifest.json ui-sdk-evidence/build-manifest.json
+          python -m http.server 4178 --bind 127.0.0.1 --directory docs/hci/examples/ui-sdk-pilot/dist >ui-sdk-evidence/server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          for attempt in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:4178/baseline.html >/dev/null; then break; fi
+            sleep 0.5
+          done
+          python -B docs/hci/models/run-ui-sdk-pilot.py --output ui-sdk-evidence/results.json --screenshots ui-sdk-evidence/screenshots
+      - name: Preserve raw evidence and runnable build
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ui-sdk-pilot-${{ github.sha }}
+          if-no-files-found: error
+          retention-days: 30
+          path: |
+            ui-sdk-evidence/
+            docs/hci/examples/ui-sdk-pilot/dist/

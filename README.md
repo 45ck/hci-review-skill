@@ -43,6 +43,8 @@ python3 -B docs/hci/models/compare.py docs/hci/models/example-comparison.json
 
 The [Chromium benchmark](docs/hci/models/browser-benchmark.md) captures real browser measurements for 11 models across desktop, mobile and reduced-motion fixtures.
 
+The [UI SDK settings pilot](docs/hci/examples/ui-sdk-pilot/README.md) compares native controls, SDK controls, and structured agent actions using the same tasks. Its [fixed protocol](docs/hci/models/ui-sdk-pilot-protocol.md) separates task correctness, scripted execution cost, and bundle size from unmeasured model or human performance.
+
 ## Included skills
 
 ### Core review skills

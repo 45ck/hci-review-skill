@@ -7,6 +7,7 @@ on:
       - '.github/workflows/ui-sdk-pilot.yml'
       - 'docs/hci/examples/ui-sdk-pilot/**'
       - 'docs/hci/models/run-ui-sdk-pilot.py'
+      - 'docs/hci/models/check-ui-sdk-demos.py'
       - 'docs/hci/models/ui-sdk-pilot-protocol.md'
       - 'tests/test_ui_sdk_pilot.py'
   pull_request:
@@ -14,6 +15,7 @@ on:
       - '.github/workflows/ui-sdk-pilot.yml'
       - 'docs/hci/examples/ui-sdk-pilot/**'
       - 'docs/hci/models/run-ui-sdk-pilot.py'
+      - 'docs/hci/models/check-ui-sdk-demos.py'
       - 'docs/hci/models/ui-sdk-pilot-protocol.md'
       - 'tests/test_ui_sdk_pilot.py'
   workflow_dispatch:
@@ -64,6 +66,7 @@ jobs:
             sleep 0.5
           done
           python -B docs/hci/models/run-ui-sdk-pilot.py --output ui-sdk-evidence/results.json --screenshots ui-sdk-evidence/screenshots
+          python -B docs/hci/models/check-ui-sdk-demos.py --output ui-sdk-evidence/demo-checks.json --screenshots ui-sdk-evidence/demo-screenshots
       - name: Preserve raw evidence and runnable build
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

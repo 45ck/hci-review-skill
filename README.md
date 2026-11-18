@@ -47,6 +47,8 @@ The [UI SDK settings pilot](docs/hci/examples/ui-sdk-pilot/README.md) compares n
 
 [Measured pilot results](docs/hci/models/ui-sdk-pilot-results.md): 162/162 scripted tasks and 33/33 additional checks passed. The native reference was faster and smaller; no model-token, development-speed or human-usability gain was measured.
 
+[Open the interactive UI SDK demo lab](https://quantitative-hci-ui-sdk-demos.ajax414655.chatgpt.site) (owner access): compare the forms, replay all six tasks through the real agent bridge, try read-only and cancellation cases, and explore every recorded attempt. The [demo guide](docs/hci/models/ui-sdk-demo-guide.md) also includes local run instructions.
+
 ## Included skills
 
 ### Core review skills

@@ -1,0 +1,47 @@
+{
+  "_shared-DQ6_r4-X.js": {
+    "file": "assets/shared-DQ6_r4-X.js",
+    "name": "shared"
+  },
+  "_styles-DT9Nq3-e.css": {
+    "file": "assets/styles-DT9Nq3-e.css",
+    "src": "_styles-DT9Nq3-e.css"
+  },
+  "baseline.html": {
+    "file": "assets/baseline-C-w1HT-m.js",
+    "name": "baseline",
+    "src": "baseline.html",
+    "isEntry": true,
+    "imports": [
+      "_shared-DQ6_r4-X.js"
+    ],
+    "css": [
+      "assets/styles-DT9Nq3-e.css"
+    ]
+  },
+  "node_modules/@ui-sdk/core/dist/foundation/popups/sheet-presentation.js": {
+    "file": "assets/sheet-presentation-Bxu_WwlY.js",
+    "name": "sheet-presentation",
+    "src": "node_modules/@ui-sdk/core/dist/foundation/popups/sheet-presentation.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "sdk.html"
+    ]
+  },
+  "sdk.html": {
+    "file": "assets/sdk-Bvip9kv8.js",
+    "name": "sdk",
+    "src": "sdk.html",
+    "isEntry": true,
+    "imports": [
+      "_shared-DQ6_r4-X.js"
+    ],
+    "dynamicImports": [
+      "sdk.html",
+      "node_modules/@ui-sdk/core/dist/foundation/popups/sheet-presentation.js"
+    ],
+    "css": [
+      "assets/styles-DT9Nq3-e.css"
+    ]
+  }
+}

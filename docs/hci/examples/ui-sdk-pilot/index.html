@@ -3,18 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>UI SDK pilot · Quantitative HCI</title>
-    <link rel="stylesheet" href="/src/styles.css" />
+    <meta name="theme-color" content="#f3f6f8" />
+    <meta name="description" content="Try native controls, operate UI SDK components through their agent bridge, and inspect measured Quantitative HCI results." />
+    <title>UI SDK Demo Lab · Quantitative HCI</title>
   </head>
   <body>
-    <main class="page">
-      <p class="eyebrow">Quantitative HCI / UI SDK pilot</p>
-      <h1>Try the same settings task</h1>
-      <p class="intro">Choose a region, set retention, enable the digest, and save. Both versions keep their state in this browser tab.</p>
-      <nav class="variant-links" aria-label="Pilot versions">
-        <a class="glass-control" href="/baseline.html">Native controls</a>
-        <a class="glass-control" href="/sdk.html">UI SDK controls</a>
-      </nav>
-    </main>
+    <div id="root"></div>
+    <script type="module" src="/src/demo.tsx"></script>
   </body>
 </html>

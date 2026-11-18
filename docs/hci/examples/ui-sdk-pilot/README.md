@@ -2,6 +2,20 @@
 
 A small, runnable comparison of native React controls, UI SDK controls, and the SDK's structured agent interface. It uses synthetic settings and saves only to page memory. The package is isolated from the installed HCI skills and other examples.
 
+## Interactive demo lab
+
+[Open the demo lab](https://quantitative-hci-ui-sdk-demos.ajax414655.chatgpt.site) (owner access) or run it locally below. The [demo guide](../../models/ui-sdk-demo-guide.md) explains every view, expected outcome and evidence link.
+
+| Demo | What to try |
+| --- | --- |
+| `/#compare` | Edit and save the native and SDK forms side by side |
+| `/#agent` | Inspect real SDK components; replay any of T1–T6 or the full suite |
+| `/#readonly` | Request a change against disabled controls and verify unchanged state |
+| `/#rejection` | Request a deliberately cancelled 365-day retention change |
+| `/#results` | Explore the recorded 162 attempts, 33 checks, screenshots and downloads |
+
+The agent demo makes actual `snapshot()` and `act()` calls against the embedded SDK page. It checks rendered draft/saved values, save count and the disabled Save button independently. Replays are scripted demonstrations, not model runs or fresh benchmark measurements. Recorded performance and bundle numbers refer to the original pilot build; the demo hub adds its own assets.
+
 | Page | Purpose |
 | --- | --- |
 | `/baseline.html` | Native selects, checkbox and submit button |
@@ -20,6 +34,16 @@ npm run preview
 ```
 
 Open `http://127.0.0.1:4178/` to choose a variant. Settings, saved output and save count are visible on the page. Refreshing resets everything.
+
+To check the demo interactions against the running production preview, run from the repository root:
+
+```sh
+python3 -B docs/hci/models/check-ui-sdk-demos.py \
+  --output /tmp/ui-sdk-demo-checks.json \
+  --screenshots /tmp/ui-sdk-demo-screenshots
+```
+
+This produces separate functional evidence for the demo hub. It does not replace the canonical benchmark report.
 
 On the SDK page, a developer console can inspect and operate the controls:
 

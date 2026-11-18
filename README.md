@@ -45,6 +45,8 @@ The [Chromium benchmark](docs/hci/models/browser-benchmark.md) captures real bro
 
 The [UI SDK settings pilot](docs/hci/examples/ui-sdk-pilot/README.md) compares native controls, SDK controls, and structured agent actions using the same tasks. Its [fixed protocol](docs/hci/models/ui-sdk-pilot-protocol.md) separates task correctness, scripted execution cost, and bundle size from unmeasured model or human performance.
 
+[Measured pilot results](docs/hci/models/ui-sdk-pilot-results.md): 162/162 scripted tasks and 33/33 additional checks passed. The native reference was faster and smaller; no model-token, development-speed or human-usability gain was measured.
+
 ## Included skills
 
 ### Core review skills

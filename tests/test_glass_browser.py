@@ -56,10 +56,16 @@ async def run(args):
 
         async def record(name, operation):
             try:
+                await page.goto(args.base_url, wait_until="networkidle")
                 detail = await operation()
-                report["checks"].append({"name": name, "passed": True, "detail": detail})
+                result = {"name": name, "passed": True, "detail": detail}
             except Exception as error:
-                report["checks"].append({"name": name, "passed": False, "error": str(error)})
+                result = {"name": name, "passed": False, "error": str(error)}
+            report["checks"].append(result)
+            output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+            print(f"{'PASS' if result['passed'] else 'FAIL'} {name}", flush=True)
+            if not result["passed"]:
+                print(result["error"], flush=True)
 
         async def choose(component_id):
             await page.locator(f"[data-catalogue-id='{component_id}']").click()
@@ -209,9 +215,12 @@ async def run(args):
             return result
 
         await record("reference_refraction_and_live_sdk_controls", optics)
-        await page.get_by_role("radio", name="Components", exact=True).check()
-        await choose("select")
-        await page.screenshot(path=str(output.parent / "workbench-desktop.png"), full_page=True)
+        async def desktop_evidence():
+            await choose("select")
+            await page.screenshot(path=str(output.parent / "workbench-desktop.png"), full_page=True)
+            return {"screenshot": "workbench-desktop.png"}
+
+        await record("desktop_workbench_evidence", desktop_evidence)
         report["checks"].append({"name": "uncaught_page_errors", "passed": not page_errors, "errors": page_errors})
         report["checks"].append({"name": "console_errors", "passed": not console_errors, "errors": console_errors})
         await context.close()

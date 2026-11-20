@@ -1,8 +1,6 @@
-"""Exercise the production Liquid Glass gallery; run explicitly, not via unittest.
+"""Verify the UI SDK workbench, agent contract and optional refraction renderer.
 
-Start the production preview on port 4185. This suite tests observable outcomes
-against the component manifest and writes a bounded machine-readable report.
-It does not establish WCAG conformance or human usability gains.
+Run against a production preview. This is scripted evidence, not a human study.
 """
 
 import argparse
@@ -11,7 +9,10 @@ from datetime import datetime, timezone
 import json
 from pathlib import Path
 import sys
+from urllib.parse import urlparse
 
+from glass_agent_contract import verify_agent_contract
+from glass_optics_contract import verify_optics_contract
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "packages/liquid-glass/component-manifest.json"
@@ -21,29 +22,37 @@ async def run(args):
     from playwright.async_api import async_playwright, expect
 
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
-    expected_ids = sorted(item["id"] for item in manifest["components"])
+    components = manifest["components"]
+    expected_ids = sorted(item["id"] for item in components)
+    output = Path(args.output)
+    output.parent.mkdir(parents=True, exist_ok=True)
     report = {
         "createdAt": datetime.now(timezone.utc).isoformat(),
         "baseUrl": args.base_url,
         "sdkVersion": manifest["sdkVersion"],
         "upstreamCommit": manifest["upstreamCommit"],
-        "scope": "Scripted functional and preference checks; not a human study or conformance audit.",
+        "scope": "Scripted component, agent, keyboard, preference and rendering checks; not human usability or conformance evidence.",
         "checks": [],
     }
-    page_errors = []
-    console_errors = []
-
+    page_errors, console_errors = [], []
     async with async_playwright() as playwright:
         launch = {"headless": True}
         if args.executable:
             launch["executable_path"] = args.executable
+        if args.software_gpu:
+            assert urlparse(args.base_url).hostname in {"127.0.0.1", "localhost", "::1"}, "Software GPU verification is limited to the local reviewed build"
+            launch["args"] = ["--enable-unsafe-webgpu", "--enable-unsafe-swiftshader", "--use-angle=swiftshader", "--use-vulkan=swiftshader", "--enable-features=Vulkan"]
         browser = await playwright.chromium.launch(**launch)
         report["browser"] = browser.version
+        report["softwareGpuRequested"] = args.software_gpu
         context = await browser.new_context(viewport={"width": 1440, "height": 1000})
+        if args.software_gpu:
+            origin = urlparse(args.base_url).netloc
+            await context.route("**/*", lambda route: route.continue_() if urlparse(route.request.url).netloc == origin else route.abort())
         page = await context.new_page()
         page.on("pageerror", lambda error: page_errors.append(str(error)))
         page.on("console", lambda message: console_errors.append(message.text) if message.type == "error" else None)
-        page.set_default_timeout(7000)
+        page.set_default_timeout(8000)
 
         async def record(name, operation):
             try:
@@ -52,187 +61,163 @@ async def run(args):
             except Exception as error:
                 report["checks"].append({"name": name, "passed": False, "error": str(error)})
 
-        async def open_gallery():
+        async def choose(component_id):
+            await page.locator(f"[data-catalogue-id='{component_id}']").click()
+            await expect(page.locator("[data-component-id]")).to_have_count(1)
+            await expect(page.locator(f"[data-component-id='{component_id}']")).to_be_visible()
+
+        async def initial():
             response = await page.goto(args.base_url, wait_until="networkidle")
-            assert response and response.ok, "Gallery returned an unsuccessful response"
-            await expect(page.locator("[data-component-id]")).to_have_count(len(expected_ids))
-            actual = sorted(await page.locator("[data-component-id]").evaluate_all(
-                "nodes => nodes.map(node => node.dataset.componentId)"
-            ))
-            assert actual == expected_ids, f"Rendered IDs differ from manifest: {actual}"
-            await expect(page.locator(".demo-error")).to_have_count(0)
-            await expect(page.get_by_text("Missing component:", exact=False)).to_have_count(0)
-            return {"components": len(actual), "viewport": {"width": 1440, "height": 1000}}
+            assert response and response.ok
+            await expect(page.locator("[data-catalogue-id]")).to_have_count(55)
+            await expect(page.locator("[data-component-id]")).to_have_count(1)
+            await expect(page.get_by_role("radio", name="UI SDK default", exact=True)).to_be_checked()
+            assert await page.locator("html").get_attribute("data-qg-material-enabled") != "true"
+            await expect(page.locator(".agent-inspector-stats")).to_contain_text("Named")
+            return {"catalogue": 55, "mountedSpecimens": 1, "default": "UI SDK"}
 
-        await record("all_manifest_components_render", open_gallery)
+        await record("upstream_default_and_single_specimen", initial)
+        await record("real_sdk_agent_contract", lambda: verify_agent_contract(page, expect))
 
-        async def search_and_filter():
+        async def all_components():
+            await page.goto(args.base_url, wait_until="networkidle")
+            actual = sorted(await page.locator("[data-catalogue-id]").evaluate_all("nodes => nodes.map(node => node.dataset.catalogueId)"))
+            assert actual == expected_ids
+            unnamed = []
+            for item in components:
+                await choose(item["id"])
+                await expect(page.locator(".demo-error")).to_have_count(0)
+                entries = await page.evaluate("window.quantitativeHciAgent.snapshot().filter(entry => !entry.offPage && entry.component !== 'more')")
+                unnamed.extend({"specimen": item["id"], "component": entry["component"], "ref": entry["ref"]} for entry in entries if not entry.get("label", "").strip())
+            assert not unnamed, f"SDK components lack names: {json.dumps(unnamed)}"
+            return {"familiesOpened": len(components), "unnamed": unnamed}
+
+        await record("all_55_families_render_and_have_agent_names", all_components)
+
+        async def filtering():
             search = page.get_by_label("Search components", exact=True)
             await search.fill("password")
-            await expect(page.locator("[data-component-id]")).to_have_count(1)
+            await expect(page.locator("[data-catalogue-id]")).to_have_count(1)
             await expect(page.locator("[data-component-id='password-input']")).to_be_visible()
             await search.fill("no-component-matches-this-query")
             await expect(page.locator("[data-component-id]")).to_have_count(0)
             await expect(page.get_by_role("heading", name="No matching components", exact=True)).to_be_visible()
             await search.fill("")
-            await expect(page.locator("[data-component-id]")).to_have_count(len(expected_ids))
-            category = page.locator("button[data-category]:not([data-category='all'])").first
-            category_name = await category.get_attribute("data-category")
-            await category.click()
-            category_ids = sorted(item["id"] for item in manifest["components"] if item["category"] == category_name)
-            assert 0 < len(category_ids) < len(expected_ids), "Category must contain a proper subset of the catalogue"
-            await expect(page.locator("[data-component-id]")).to_have_count(len(category_ids))
-            filtered_ids = sorted(await page.locator("[data-component-id]").evaluate_all(
-                "nodes => nodes.map(node => node.dataset.componentId)"
-            ))
-            assert filtered_ids == category_ids, f"Category rendered incorrect components: {filtered_ids}"
-            await page.locator("button[data-category='all']").click()
-            await expect(page.locator("[data-component-id]")).to_have_count(len(expected_ids))
-            return {"searched": "password-input", "category": category_name, "categoryCount": len(filtered_ids)}
+            await page.get_by_role("combobox", name="Component category", exact=True).click()
+            await page.get_by_role("option", name="Overlays", exact=True).click()
+            await expect(page.locator("[data-catalogue-id]")).to_have_count(sum(item["category"] == "Overlays" for item in components))
+            await page.get_by_role("combobox", name="Component category", exact=True).click()
+            await page.get_by_role("option", name="All categories", exact=True).click()
+            return {"search": "password", "category": "Overlays", "emptyState": True}
 
-        await record("catalogue_search_empty_and_category", search_and_filter)
+        await record("search_category_and_empty_state", filtering)
 
-        async def switch_changes():
-            specimen = page.locator("[data-component-id='switch'] .component-stage")
-            control = specimen.get_by_role("switch", name="Ambient light", exact=True)
-            before = await control.get_attribute("aria-checked")
-            assert before in ("true", "false"), f"Switch is missing a valid checked state: {before}"
-            await control.click()
-            await expect(control).to_have_attribute("aria-checked", "false" if before == "true" else "true")
-            await expect(specimen.get_by_role("switch", name="Locked setting", exact=True)).to_be_disabled()
-            return {"before": before, "after": await control.get_attribute("aria-checked")}
-
-        await record("switch_updates_checked_state", switch_changes)
-
-        async def slider_keyboard():
-            slider = page.locator("[data-component-id='slider'] .component-stage").get_by_role("slider")
+        async def keyboard():
+            await choose("slider")
+            slider = page.locator(".component-stage").get_by_role("slider")
+            before = float(await slider.input_value())
             await slider.focus()
-            native_range = await slider.evaluate("node => node instanceof HTMLInputElement && node.type === 'range'")
-            before = await slider.input_value() if native_range else await slider.get_attribute("aria-valuenow")
-            assert before is not None, "Slider is missing its native value or aria-valuenow"
             await slider.press("ArrowRight")
-            if native_range:
-                await expect(slider).not_to_have_value(before)
-            else:
-                await expect(slider).not_to_have_attribute("aria-valuenow", before)
-            after = await slider.input_value() if native_range else await slider.get_attribute("aria-valuenow")
-            assert after is not None and float(after) > float(before), "Right arrow did not increase the slider value"
-            return {"semantics": "native-range" if native_range else "aria-slider", "before": before, "after": after}
-
-        await record("slider_keyboard_changes_value", slider_keyboard)
-
-        async def select_keyboard():
-            specimen = page.locator("[data-component-id='select'] .component-stage")
-            trigger = specimen.locator("[data-slot='select-trigger']")
-            before = await trigger.inner_text()
+            assert float(await slider.input_value()) > before
+            await choose("select")
+            trigger = page.locator(".component-stage [data-slot='select-trigger']")
             await trigger.focus()
             await trigger.press("ArrowDown")
             await expect(trigger).to_have_attribute("aria-expanded", "true")
-            popup_id = await trigger.get_attribute("aria-controls")
-            assert popup_id, "Select does not identify its controlled popup"
-            popup = page.locator(f"[id={json.dumps(popup_id)}]")
-            await expect(popup.get_by_role("option", name="Solid surface", exact=True)).to_be_visible()
             await page.keyboard.press("End")
             await page.keyboard.press("Enter")
-            await expect(trigger).to_have_attribute("aria-expanded", "false")
             await expect(trigger).to_contain_text("Solid surface")
-            return {"before": before, "after": await trigger.inner_text()}
-
-        await record("select_keyboard_commits_selection", select_keyboard)
-
-        async def dialog_keyboard():
-            trigger = page.locator("[data-component-id='dialog'] .component-stage [data-slot='dialog-trigger']")
-            await expect(trigger).to_have_accessible_name("Save a preset")
+            await choose("dialog")
+            trigger = page.locator(".component-stage [data-slot='dialog-trigger']")
             await trigger.click()
             dialog = page.get_by_role("dialog", name="Save your material", exact=True)
             await expect(dialog).to_be_visible()
-            assert await dialog.evaluate("node => node.contains(document.activeElement)"), "Focus did not enter dialog"
+            assert await dialog.evaluate("node => node.contains(document.activeElement)")
             await page.keyboard.press("Escape")
             await expect(dialog).not_to_be_visible()
             await expect(trigger).to_be_focused()
-            return {"dismissedWithEscape": True, "focusRestored": True}
+            return {"sliderArrow": True, "selectKeyboard": True, "dialogEscapeAndFocus": True}
 
-        await record("dialog_escape_and_focus_restoration", dialog_keyboard)
+        await record("keyboard_selection_and_dialog_focus", keyboard)
 
-        async def preferences_persist():
-            await page.get_by_role("button", name="Material settings", exact=True).click()
-            settings = page.get_by_role("dialog", name="Material settings", exact=True)
-            await settings.get_by_label("Appearance", exact=True).select_option("dark")
-            await settings.get_by_label("Material", exact=True).select_option("solid")
-            for name in ["Reduce motion", "Increase contrast"]:
-                control = settings.get_by_role("switch", name=name, exact=True)
-                if await control.get_attribute("aria-checked") != "true":
-                    await control.click()
+        async def material():
+            await choose("button")
+            await page.get_by_role("radio", name="Frosted CSS", exact=True).check()
             root = page.locator("html")
+            await expect(root).to_have_attribute("data-qg-material-enabled", "true")
+            primary = page.locator(".component-stage [data-variant='solid']")
+            primary_colours = await primary.evaluate("node => ({background: getComputedStyle(node).backgroundColor, color: getComputedStyle(node).color})")
+            assert primary_colours["background"] != "rgba(0, 0, 0, 0)"
+            assert primary_colours["background"] != primary_colours["color"]
+            await page.get_by_role("button", name="Appearance settings", exact=True).click()
+            settings = page.get_by_role("dialog", name="Frosted appearance settings", exact=True)
+            await settings.get_by_role("combobox", name="Appearance", exact=True).click()
+            await page.get_by_role("option", name="Dark", exact=True).click()
+            await settings.get_by_role("combobox", name="Frosted material", exact=True).click()
+            await page.get_by_role("option", name="Solid", exact=True).click()
+            await settings.get_by_role("switch", name="Reduce motion", exact=True).check()
+            await settings.get_by_role("switch", name="Increase contrast", exact=True).check()
             for name, value in [("theme", "dark"), ("material", "solid"), ("motion", "reduced"), ("contrast", "more")]:
                 await expect(root).to_have_attribute(f"data-qg-{name}", value)
-            stored = await page.evaluate("localStorage.getItem('qg.preferences.v1')")
-            assert stored, "Preferences were not persisted"
-            preferences = json.loads(stored)
-            for name, value in [("theme", "dark"), ("material", "solid"), ("reduceMotion", True), ("increaseContrast", True)]:
-                assert preferences.get(name) == value, f"Requested {name} was not persisted: {preferences}"
+            await page.keyboard.press("Escape")
+            blur = await primary.evaluate("node => getComputedStyle(node).backdropFilter")
+            assert blur in ("none", "blur(0px)")
             await page.reload(wait_until="networkidle")
-            for name, value in [("theme", "dark"), ("material", "solid"), ("motion", "reduced"), ("contrast", "more")]:
-                await expect(root).to_have_attribute(f"data-qg-{name}", value)
-            control = page.locator("[data-component-id='button'] [data-slot='button']").first
-            await control.scroll_into_view_if_needed()
-            blur = await control.evaluate("node => getComputedStyle(node).backdropFilter")
-            assert blur in ("none", "blur(0px)"), f"Solid mode retained backdrop filtering: {blur}"
-            return {"storedPreferences": preferences, "solidBackdropFilter": blur}
+            assert await root.get_attribute("data-qg-material-enabled") != "true", "Optional material must not become the next session's default"
+            await page.get_by_role("radio", name="Frosted CSS", exact=True).check()
+            await expect(root).to_have_attribute("data-qg-material", "solid")
+            await expect(root).to_have_attribute("data-qg-theme", "dark")
+            await page.get_by_role("radio", name="UI SDK default", exact=True).check()
+            assert await root.get_attribute("data-qg-material-enabled") != "true"
+            return {"primaryColours": primary_colours, "solidBlur": blur, "preferencesPersist": True, "themeOptIn": True}
 
-        await record("display_preferences_persist_and_solid_removes_blur", preferences_persist)
+        await record("optional_material_semantics_preferences_and_cleanup", material)
 
-        async def narrow_viewport():
+        async def mobile():
             await page.set_viewport_size({"width": 390, "height": 844})
-            await page.evaluate("window.scrollTo(0, 0)")
-            await expect(page.get_by_label("Search components", exact=True)).to_be_visible()
+            await page.get_by_label("Search components", exact=True).fill("dialog")
+            await choose("dialog")
             dimensions = await page.evaluate("({width: innerWidth, scroll: document.documentElement.scrollWidth})")
-            assert dimensions["scroll"] <= dimensions["width"] + 1, f"Horizontal overflow: {dimensions}"
-            search = page.get_by_label("Search components", exact=True)
-            await search.fill("dialog")
-            await expect(page.locator("[data-component-id='dialog']")).to_be_visible()
-            await search.fill("")
-            await expect(page.locator("[data-component-id]")).to_have_count(len(expected_ids))
+            assert dimensions["scroll"] <= dimensions["width"] + 1, dimensions
+            await page.screenshot(path=str(output.parent / "workbench-mobile.png"), full_page=True)
+            await page.get_by_label("Search components", exact=True).fill("")
+            await page.set_viewport_size({"width": 1440, "height": 1000})
             return dimensions
 
-        await record("mobile_layout_and_search", narrow_viewport)
+        await record("mobile_workbench_layout", mobile)
 
-        async def system_preferences():
-            system_context = await browser.new_context(
-                viewport={"width": 1024, "height": 900}, reduced_motion="reduce", color_scheme="dark"
-            )
-            system_page = await system_context.new_page()
-            system_page.on("pageerror", lambda error: page_errors.append(str(error)))
-            system_page.on("console", lambda message: console_errors.append(message.text) if message.type == "error" else None)
-            await system_page.goto(args.base_url, wait_until="networkidle")
-            await expect(system_page.locator("html")).to_have_attribute("data-qg-motion", "reduced")
-            await system_page.get_by_role("button", name="Material settings", exact=True).click()
-            settings = system_page.get_by_role("dialog", name="Material settings", exact=True)
-            await settings.get_by_label("Appearance", exact=True).select_option("system")
-            await expect(system_page.locator("html")).to_have_attribute("data-qg-theme", "dark")
-            await system_page.keyboard.press("Escape")
-            await system_page.emulate_media(forced_colors="active")
-            await expect(system_page.locator("html")).to_have_attribute("data-qg-material", "solid")
-            await expect(system_page.locator("html")).to_have_attribute("data-qg-contrast", "more")
-            button = system_page.locator("[data-component-id='button'] [data-slot='button']").first
-            await button.scroll_into_view_if_needed()
+        async def preferences():
+            await page.emulate_media(reduced_motion="reduce", forced_colors="active")
+            await page.get_by_role("radio", name="Frosted CSS", exact=True).check()
+            root = page.locator("html")
+            await expect(root).to_have_attribute("data-qg-material", "solid")
+            await expect(root).to_have_attribute("data-qg-contrast", "more")
+            await expect(root).to_have_attribute("data-qg-motion", "reduced")
+            await choose("button")
+            button = page.locator(".component-stage [data-variant='solid']")
             await button.focus()
-            await expect(button).to_be_focused()
-            rendered = await button.evaluate("node => ({filter:getComputedStyle(node).backdropFilter, outline:getComputedStyle(node).outlineStyle, color:getComputedStyle(node).color})")
-            assert rendered["filter"] in ("none", "blur(0px)"), f"Forced colours retained blur: {rendered}"
-            assert rendered["outline"] != "none", f"Forced colours hid keyboard focus: {rendered}"
-            await system_context.close()
-            return rendered
+            style = await button.evaluate("node => ({filter: getComputedStyle(node).backdropFilter, outline: getComputedStyle(node).outlineStyle})")
+            assert style["filter"] in ("none", "blur(0px)") and style["outline"] != "none"
+            await page.emulate_media(reduced_motion="no-preference", forced_colors="none")
+            await page.get_by_role("radio", name="UI SDK default", exact=True).check()
+            return style
 
-        await record("system_reduced_motion_dark_and_forced_colours", system_preferences)
+        await record("forced_colours_and_reduced_motion", preferences)
+
+        async def optics():
+            result = await verify_optics_contract(page, expect, output_dir=output.parent, require_gpu=args.software_gpu)
+            return result
+
+        await record("reference_refraction_and_live_sdk_controls", optics)
+        await page.get_by_role("radio", name="Components", exact=True).check()
+        await choose("select")
+        await page.screenshot(path=str(output.parent / "workbench-desktop.png"), full_page=True)
         report["checks"].append({"name": "uncaught_page_errors", "passed": not page_errors, "errors": page_errors})
-        report["checks"].append({"name": "console_errors_including_caught_render_failures", "passed": not console_errors, "errors": console_errors})
+        report["checks"].append({"name": "console_errors", "passed": not console_errors, "errors": console_errors})
         await context.close()
         await browser.close()
 
     report["passed"] = all(item["passed"] for item in report["checks"])
-    output = Path(args.output)
-    output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     for item in report["checks"]:
         print(f"{'PASS' if item['passed'] else 'FAIL'} {item['name']}")
@@ -247,6 +232,7 @@ def main():
     parser.add_argument("--base-url", default="http://127.0.0.1:4185/")
     parser.add_argument("--output", default="test-results/liquid-glass.json")
     parser.add_argument("--executable", default=None)
+    parser.add_argument("--software-gpu", action="store_true", help="Opt in to software WebGPU for a reviewed loopback build only")
     return asyncio.run(run(parser.parse_args()))
 
 

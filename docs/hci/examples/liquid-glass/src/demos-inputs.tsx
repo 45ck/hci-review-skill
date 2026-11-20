@@ -23,8 +23,8 @@ import {
   AutocompleteItem,
   AutocompleteLabel,
   AutocompleteList,
-} from "@quantitative-hci/liquid-glass/autocomplete";
-import { Button } from "@quantitative-hci/liquid-glass/button";
+} from "@ui-sdk/react/autocomplete";
+import { Button } from "@ui-sdk/react/button";
 import {
   Calendar,
   CalendarDay,
@@ -35,11 +35,11 @@ import {
   CalendarWeekday,
   CalendarWeekdays,
   CalendarWeeks,
-} from "@quantitative-hci/liquid-glass/calendar";
+} from "@ui-sdk/react/calendar";
 import {
   Checkbox,
   CheckboxIndicator,
-} from "@quantitative-hci/liquid-glass/checkbox";
+} from "@ui-sdk/react/checkbox";
 import {
   ColorPicker,
   ColorPickerArea,
@@ -50,7 +50,7 @@ import {
   ColorPickerSwatch,
   ColorPickerSwatches,
   ColorPickerSwatchItem,
-} from "@quantitative-hci/liquid-glass/color-picker";
+} from "@ui-sdk/react/color-picker";
 import {
   Combobox,
   ComboboxContent,
@@ -61,21 +61,21 @@ import {
   ComboboxLabel,
   ComboboxList,
   ComboboxTrigger,
-} from "@quantitative-hci/liquid-glass/combobox";
-import { DateInput } from "@quantitative-hci/liquid-glass/date-input";
+} from "@ui-sdk/react/combobox";
+import { DateInput } from "@ui-sdk/react/date-input";
 import {
   DatePicker,
   DatePickerContent,
   DatePickerHint,
   DatePickerInput,
   DatePickerTrigger,
-} from "@quantitative-hci/liquid-glass/date-picker";
+} from "@ui-sdk/react/date-picker";
 import {
   Field,
   FieldDescription,
   FieldError,
   FieldLabel,
-} from "@quantitative-hci/liquid-glass/field";
+} from "@ui-sdk/react/field";
 import {
   FileInput,
   FileInputDropzone,
@@ -84,47 +84,47 @@ import {
   FileInputList,
   FileInputTrigger,
   formatFileSize,
-} from "@quantitative-hci/liquid-glass/file-input";
+} from "@ui-sdk/react/file-input";
 import {
   Input,
   InputClear,
   InputGroup,
-} from "@quantitative-hci/liquid-glass/input";
-import { Label } from "@quantitative-hci/liquid-glass/label";
+} from "@ui-sdk/react/input";
+import { Label } from "@ui-sdk/react/label";
 import {
   Listbox,
   ListboxItem,
   ListboxItemIndicator,
-} from "@quantitative-hci/liquid-glass/listbox";
+} from "@ui-sdk/react/listbox";
 import {
   NumberInput,
   NumberInputControl,
   NumberInputDecrement,
   NumberInputGroup,
   NumberInputIncrement,
-} from "@quantitative-hci/liquid-glass/number-input";
+} from "@ui-sdk/react/number-input";
 import {
   OTPInput,
   OTPInputGroup,
   OTPInputSeparator,
   OTPInputSlot,
-} from "@quantitative-hci/liquid-glass/otp-input";
+} from "@ui-sdk/react/otp-input";
 import {
   PasswordInput,
   PasswordInputControl,
   PasswordInputToggle,
-} from "@quantitative-hci/liquid-glass/password-input";
+} from "@ui-sdk/react/password-input";
 import {
   Radio,
   RadioGroup,
   RadioIndicator,
-} from "@quantitative-hci/liquid-glass/radio";
-import { Rating, RatingItem } from "@quantitative-hci/liquid-glass/rating";
+} from "@ui-sdk/react/radio";
+import { Rating, RatingItem } from "@ui-sdk/react/rating";
 import {
   SegmentedControl,
   SegmentedControlIndicator,
   SegmentedControlItem,
-} from "@quantitative-hci/liquid-glass/segmented-control";
+} from "@ui-sdk/react/segmented-control";
 import {
   Select,
   SelectContent,
@@ -132,7 +132,7 @@ import {
   SelectItemIndicator,
   SelectTrigger,
   SelectValue,
-} from "@quantitative-hci/liquid-glass/select";
+} from "@ui-sdk/react/select";
 import {
   Slider,
   SliderControl,
@@ -140,25 +140,25 @@ import {
   SliderThumb,
   SliderTrack,
   SliderValue,
-} from "@quantitative-hci/liquid-glass/slider";
-import { Switch, SwitchThumb } from "@quantitative-hci/liquid-glass/switch";
-import { Textarea } from "@quantitative-hci/liquid-glass/textarea";
-import { TimeInput } from "@quantitative-hci/liquid-glass/time-input";
-import { Toggle, ToggleIcon } from "@quantitative-hci/liquid-glass/toggle";
+} from "@ui-sdk/react/slider";
+import { Switch, SwitchThumb } from "@ui-sdk/react/switch";
+import { Textarea } from "@ui-sdk/react/textarea";
+import { TimeInput } from "@ui-sdk/react/time-input";
+import { Toggle, ToggleIcon } from "@ui-sdk/react/toggle";
 import {
   TokenInput,
   TokenInputEditor,
   TokenInputToken,
   TokenInputTokenRemove,
   type TokenInputValue,
-} from "@quantitative-hci/liquid-glass/token-input";
+} from "@ui-sdk/react/token-input";
 import {
   TriggerMenu,
   TriggerMenuContent,
   TriggerMenuItem,
   TriggerMenuList,
   type TriggerMenuDataItem,
-} from "@quantitative-hci/liquid-glass/trigger-menu";
+} from "@ui-sdk/react/trigger-menu";
 
 const destinations = [
   "Newcastle",
@@ -369,7 +369,7 @@ function FieldDemo() {
 
 function FileInputDemo() {
   return (
-    <FileInput multiple>
+    <FileInput multiple aria-label="Local sample files">
       <FileInputDropzone>
         <Upload aria-hidden="true" />
         <p>Drop a file here</p>
@@ -714,6 +714,7 @@ function TokenInputDemo() {
       >
         <TokenInputEditor placeholder="Type @ to add a component" />
         <TriggerMenu
+          aria-label="Component token suggestions"
           triggers={[{ char: "@", type: "component", items: tokenComponents }]}
         >
           <TriggerMenuContent>

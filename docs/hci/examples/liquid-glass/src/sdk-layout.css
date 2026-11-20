@@ -1,0 +1,144 @@
+/* Neutral layout only; these two SDK parts are missing from upstream web.css. */
+@layer ui-sdk {
+  /* Minimal layout for parts not yet covered by @ui-sdk/core/web.css. */
+  [data-slot="timeline"] {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  [data-slot="timeline-item"] {
+    position: relative;
+    display: grid;
+    grid-template-columns: 12px minmax(0, 1fr);
+    column-gap: 12px;
+    align-content: start;
+    padding-bottom: 19px;
+  }
+  [data-slot="timeline-item"] > * {
+    grid-column: 2;
+  }
+  [data-slot="timeline-item"]:last-child {
+    padding-bottom: 0;
+  }
+  [data-slot="timeline-marker"] {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: center;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid var(--ui-primary);
+    background: var(--ui-background);
+  }
+  [data-slot="timeline-connector"] {
+    position: absolute;
+    grid-column: auto;
+    inset-inline-start: 4px;
+    top: 20px;
+    bottom: 5px;
+    width: 2px;
+    background: var(--ui-border);
+  }
+  [data-slot="timeline-item"]:last-child [data-slot="timeline-connector"] {
+    display: none;
+  }
+  [data-slot="timeline-title"] {
+    grid-row: 1;
+    font-size: var(--ui-font-size);
+    font-weight: 650;
+  }
+  [data-slot="timeline-time"] {
+    color: var(--ui-muted-foreground);
+    font-size: var(--ui-font-size);
+  }
+  [data-slot="timeline-description"] {
+    color: var(--ui-muted-foreground);
+    font-size: var(--ui-font-size);
+    line-height: 1.5;
+    margin-top: 3px;
+  }
+  [data-slot="waterfall"] {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius);
+    background: var(--ui-background);
+  }
+  :is([data-slot="waterfall-header-row"], [data-slot="waterfall-row"]) {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 37px;
+    padding-inline: 8px;
+  }
+  [data-slot="waterfall-header-row"] {
+    color: var(--ui-muted-foreground);
+    font-size: var(--ui-font-size);
+    border-bottom: 1px solid var(--ui-border);
+  }
+  [data-slot="waterfall-row"] {
+    outline-offset: -3px;
+    cursor: default;
+  }
+  [data-slot="waterfall-row"][data-selected] {
+    background: var(--ui-muted);
+  }
+  :is(
+    [data-slot="waterfall-header-row"] > :first-child,
+    [data-slot="waterfall-row-header"]
+  ) {
+    flex: 0 0 86px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  :is(
+    [data-slot="waterfall-header-row"] > :last-child,
+    [data-slot="waterfall-bar"]
+  ) {
+    position: relative;
+    flex: 1 1 100px;
+    align-self: stretch;
+    min-width: 0;
+  }
+  [data-slot="waterfall-bar"]::before {
+    content: "";
+    position: absolute;
+    inset-block: 11px;
+    inset-inline-start: var(--waterfall-start);
+    width: max(var(--waterfall-size), 2px);
+    border-radius: 4px;
+    background: color-mix(
+      in srgb,
+      var(--ui-primary) 65%,
+      transparent
+    );
+  }
+  [data-slot="waterfall-row"][data-selected]
+    [data-slot="waterfall-bar"]::before {
+    background: var(--ui-primary);
+  }
+  [data-slot="waterfall-axis"] {
+    position: relative;
+    height: 100%;
+    min-height: 24px;
+  }
+  [data-slot="waterfall-tick"] {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: var(--waterfall-tick);
+    padding-inline-start: 3px;
+    align-content: center;
+    border-inline-start: 1px solid var(--ui-border);
+    font-size: var(--ui-font-size);
+    white-space: nowrap;
+  }
+}

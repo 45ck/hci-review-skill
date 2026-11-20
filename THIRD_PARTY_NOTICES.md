@@ -14,6 +14,12 @@ React and React DOM are copyright Meta Platforms, Inc. and affiliates, under the
 
 Lucide icons are provided under the [ISC licence](https://github.com/lucide-icons/lucide/blob/main/LICENSE). The gallery uses the pinned `lucide-react` dependency for interface icons.
 
+## Reference WebGPU shader
+
+The refraction study includes source from [arya3d/liquid-glass-webgpu](https://github.com/arya3d/liquid-glass-webgpu), commit `90cb73931bbaf38bd54b3263cd3fda1daef1869c`, copyright 2026 arya3d, under the MIT licence. The WGSL shader is retained unchanged; the capture and renderer lifecycle are adapted for an isolated local scene. The complete notice ships at `docs/hci/examples/liquid-glass/public/licenses/arya3d-liquid-glass-MIT.txt`.
+
+`html2canvas-pro` version `2.6.3` is provided under MIT, copyright Niklas von Hertzen and contributors. Its notice is retained with the distribution. WebGPU TypeScript types are development-only and retain their upstream licence.
+
 ## Apple visual reference
 
 Apple's Liquid Glass and Human Interface Guidelines are visual and interaction references. No Apple framework, proprietary rendering implementation, endorsement or affiliation is represented by this web material. Apple names and marks remain their owners' property.

@@ -1,5 +1,5 @@
 @layer qg-tokens {
-  :root {
+  :root[data-qg-material-enabled="true"] {
     --qg-font:
       -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI",
       sans-serif;
@@ -43,7 +43,7 @@
     --ui-font-sans: var(--qg-font);
     color-scheme: light;
   }
-  :root[data-qg-theme="dark"] {
+  :root[data-qg-material-enabled="true"][data-qg-theme="dark"] {
     color-scheme: dark;
     --qg-text: #edf7fb;
     --qg-muted: #c0d0da;
@@ -65,15 +65,15 @@
     --ui-destructive: #ffa3ad;
     --ui-overlay: rgb(1 12 21 / 0.6);
   }
-  :root[data-qg-material="clear"] {
+  :root[data-qg-material-enabled="true"][data-qg-material="clear"] {
     --qg-surface: rgb(244 252 251 / 0.42);
     --qg-control: rgb(255 255 255 / 0.48);
   }
-  :root[data-qg-theme="dark"][data-qg-material="clear"] {
+  :root[data-qg-material-enabled="true"][data-qg-theme="dark"][data-qg-material="clear"] {
     --qg-surface: rgb(16 38 52 / 0.58);
     --qg-control: rgb(48 73 89 / 0.56);
   }
-  :root[data-qg-material="solid"] {
+  :root[data-qg-material-enabled="true"][data-qg-material="solid"] {
     --qg-surface: var(--qg-solid);
     --qg-control: var(--qg-solid);
     --qg-popup: var(--qg-solid);
@@ -81,10 +81,10 @@
     --qg-blur: 0px;
     --qg-saturation: 100%;
   }
-  :root[data-qg-motion="reduced"] {
+  :root[data-qg-material-enabled="true"][data-qg-motion="reduced"] {
     --qg-duration: 0ms;
   }
-  :root[data-qg-contrast="more"] {
+  :root[data-qg-material-enabled="true"][data-qg-contrast="more"] {
     --qg-text: #081823;
     --qg-muted: #243c4c;
     --qg-solid: #fff;
@@ -92,7 +92,7 @@
     --qg-separator: #64818f;
     --qg-focus: #0055a9;
   }
-  :root[data-qg-theme="dark"][data-qg-contrast="more"] {
+  :root[data-qg-material-enabled="true"][data-qg-theme="dark"][data-qg-contrast="more"] {
     --qg-text: #fff;
     --qg-muted: #e2eff7;
     --qg-solid: #09141d;

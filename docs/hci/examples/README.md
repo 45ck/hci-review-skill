@@ -1,12 +1,12 @@
-# Liquid Glass
+# UI SDK examples and material studies
 
-Apple-inspired Liquid Glass is the default visual treatment for controls in new high-fidelity Quantitative HCI examples and prototypes without an established design system. Apply the product’s own design system where one exists.
+Use UI SDK directly for component behaviour and agent interaction. Appearance should preserve task hierarchy, semantic states and readable content. Frosted CSS is an optional visual experiment rather than the default implementation rule.
 
-## Shared component library
+## Component workbench
 
-Use [`@quantitative-hci/liquid-glass`](../../../packages/liquid-glass/README.md) for new implementations. The [private gallery](https://quantitative-hci-ui-sdk-demos.ajax414655.chatgpt.site/glass/) demonstrates all 55 UI SDK component families through the shared package. Read the [implementation standard](../standards/liquid-glass.md) and [gallery guide](liquid-glass/README.md) for material selection, import paths and verification.
+The [private workbench](https://quantitative-hci-ui-sdk-demos.ajax414655.chatgpt.site/glass/) contains all 55 UI SDK component families, a real agent bridge, live inspector and the video author's source-based WebGPU lens study. Read the [implementation standard](../standards/liquid-glass.md) and [workbench guide](liquid-glass/README.md).
 
-The toolbar experiment below has its own audit and recorded evidence. Its measurements do not describe the new component gallery.
+The toolbar experiment below has its own audit and recorded evidence. Its measurements do not describe the component workbench or prove that glass improves usability.
 
 ## Toolbar material study
 

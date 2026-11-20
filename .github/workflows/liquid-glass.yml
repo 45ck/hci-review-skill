@@ -1,4 +1,4 @@
-name: Liquid Glass standard
+name: UI SDK workbench
 
 on:
   pull_request:
@@ -12,6 +12,8 @@ on:
       - 'docs/hci/standards/liquid-glass.md'
       - 'scripts/check-glass-standard.mjs'
       - 'tests/test_glass_browser.py'
+      - 'tests/glass_agent_contract.py'
+      - 'tests/glass_optics_contract.py'
   workflow_dispatch:
 
 permissions:
@@ -57,7 +59,7 @@ jobs:
             if curl --fail --silent http://127.0.0.1:4185/ >/dev/null; then break; fi
             sleep 0.5
           done
-          python -B tests/test_glass_browser.py --output test-results/liquid-glass.json
+          python -B tests/test_glass_browser.py --software-gpu --output test-results/liquid-glass.json
       - name: Keep concise verification evidence
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

@@ -4,8 +4,8 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@quantitative-hci/liquid-glass/avatar";
-import { Button } from "@quantitative-hci/liquid-glass/button";
+} from "@ui-sdk/react/avatar";
+import { Button } from "@ui-sdk/react/button";
 import {
   Carousel,
   CarouselContent,
@@ -13,9 +13,9 @@ import {
   CarouselNext,
   CarouselPrevious,
   CarouselViewport,
-} from "@quantitative-hci/liquid-glass/carousel";
-import { createPreference } from "@quantitative-hci/liquid-glass/core";
-import { cropImage } from "@quantitative-hci/liquid-glass/image";
+} from "@ui-sdk/react/carousel";
+import { createPreference } from "@ui-sdk/core";
+import { cropImage } from "@ui-sdk/react/image";
 import {
   ImageCropper,
   ImageCropperGrid,
@@ -24,38 +24,38 @@ import {
   ImageCropperSelection,
   ImageCropperViewport,
   type ImageCrop,
-} from "@quantitative-hci/liquid-glass/image-cropper";
+} from "@ui-sdk/react/image-cropper";
 import {
   Meter,
   MeterIndicator,
   MeterLabel,
   MeterTrack,
   MeterValue,
-} from "@quantitative-hci/liquid-glass/meter";
+} from "@ui-sdk/react/meter";
 import {
   Preferences,
   usePreference,
-} from "@quantitative-hci/liquid-glass/preferences";
+} from "@ui-sdk/react/preferences";
 import {
   Progress,
   ProgressIndicator,
   ProgressLabel,
   ProgressTrack,
   ProgressValue,
-} from "@quantitative-hci/liquid-glass/progress";
+} from "@ui-sdk/react/progress";
 import {
   Resizable,
   ResizableHandle,
   ResizablePanel,
-} from "@quantitative-hci/liquid-glass/resizable";
+} from "@ui-sdk/react/resizable";
 import {
   ScrollArea,
   ScrollAreaContent,
   ScrollAreaScrollbar,
   ScrollAreaThumb,
   ScrollAreaViewport,
-} from "@quantitative-hci/liquid-glass/scroll-area";
-import { Separator } from "@quantitative-hci/liquid-glass/separator";
+} from "@ui-sdk/react/scroll-area";
+import { Separator } from "@ui-sdk/react/separator";
 import {
   Timeline,
   TimelineConnector,
@@ -64,7 +64,7 @@ import {
   TimelineMarker,
   TimelineTime,
   TimelineTitle,
-} from "@quantitative-hci/liquid-glass/timeline";
+} from "@ui-sdk/react/timeline";
 import {
   Waterfall,
   WaterfallAxis,
@@ -74,7 +74,7 @@ import {
   WaterfallRow,
   WaterfallRowHeader,
   type WaterfallData,
-} from "@quantitative-hci/liquid-glass/waterfall";
+} from "@ui-sdk/react/waterfall";
 
 const landscape = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="640" height="420" viewBox="0 0 640 420"><defs><linearGradient id="a" x2="0" y2="1"><stop stop-color="#b9d4df"/><stop offset=".62" stop-color="#f1c7ad"/><stop offset="1" stop-color="#d1b7cc"/></linearGradient><linearGradient id="b" x2="0" y2="1"><stop stop-color="#7597a8"/><stop offset="1" stop-color="#4c647c"/></linearGradient></defs><path fill="url(#a)" d="M0 0h640v420H0z"/><circle cx="460" cy="110" r="47" fill="#fff0cf"/><path d="M0 253 110 169 209 270 358 123 467 223 570 161 640 210v210H0z" fill="url(#b)"/><path d="m0 316 110-53 140 73 140-53 164 50 86-24v111H0z" fill="#758f9a"/><path d="M0 354q160-22 320 5t320-6v67H0z" fill="#bdd4d4"/><path d="M0 381q180-18 320 2t320-4" fill="none" stroke="#e4eeee" stroke-width="3"/></svg>')}`;
 const portrait = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96"><defs><linearGradient id="g" x2="1" y2="1"><stop stop-color="#e8c8b8"/><stop offset="1" stop-color="#b9b7d8"/></linearGradient></defs><rect width="96" height="96" rx="48" fill="url(#g)"/><circle cx="48" cy="35" r="18" fill="#f9eee2"/><path d="M15 96V80a33 33 0 0 1 66 0v16" fill="#5e627e"/></svg>')}`;
@@ -83,14 +83,14 @@ export function AvatarDemo() {
   return (
     <div className="demo-stack">
       <div className="demo-row surface-avatar-group">
-        <Avatar>
+        <Avatar role="img" aria-label="Illustrated team member">
           <AvatarImage src={portrait} alt="Illustrated team member" />
           <AvatarFallback>TM</AvatarFallback>
         </Avatar>
-        <Avatar aria-label="Design team">
+        <Avatar role="img" aria-label="Design team">
           <AvatarFallback>DS</AvatarFallback>
         </Avatar>
-        <Avatar aria-label="Research team">
+        <Avatar role="img" aria-label="Research team">
           <AvatarFallback>RX</AvatarFallback>
         </Avatar>
         <span className="surface-avatar-count">+4</span>
@@ -184,7 +184,7 @@ export function ImageCropperDemo() {
         </ImageCropperViewport>
       </ImageCropper>
       <div className="demo-row">
-        <Button disabled={!crop || saving} onClick={() => void saveCrop()}>
+        <Button disabled={!crop || saving} onClick={saveCrop}>
           {saving ? "Preparing…" : "Preview crop"}
         </Button>
         {result ? (
@@ -296,7 +296,7 @@ export function ProgressDemo() {
 
 export function ResizableDemo() {
   return (
-    <Resizable className="surface-resizable">
+    <Resizable className="surface-resizable" aria-label="Library and canvas layout">
       <ResizablePanel defaultSize={38} minSize={25}>
         <div className="demo-stack">
           <strong>Library</strong>
@@ -332,7 +332,7 @@ const collectionNames = [
 ];
 export function ScrollAreaDemo() {
   return (
-    <ScrollArea className="surface-scroll-area">
+    <ScrollArea className="surface-scroll-area" aria-label="Material collection scroller">
       <ScrollAreaViewport
         role="region"
         aria-label="Scrollable material collection"
@@ -372,10 +372,10 @@ export function SeparatorDemo() {
         <strong>Material collection</strong>
         <p className="demo-muted">A small, considered set.</p>
       </div>
-      <Separator />
+      <Separator aria-label="Collection summary divider" />
       <div className="demo-row">
         <span>12 surfaces</span>
-        <Separator orientation="vertical" />
+        <Separator orientation="vertical" decorative aria-hidden="true" />
         <span className="demo-muted">3 families</span>
       </div>
     </div>

@@ -123,11 +123,14 @@ p {
   max-height: none;
   overflow-y: auto;
   flex: 1;
-  padding: 0 4px 0 0;
+  padding: 4px;
   border: 0;
-  background: transparent;
+  background: rgb(245 251 255 / 0.75);
   box-shadow: none;
-  border-radius: 0;
+  border-radius: 14px;
+  scrollbar-width: thin;
+  scrollbar-color: #7995a6 transparent;
+  scrollbar-gutter: stable;
 }
 .kit-sidebar .kit-catalogue [data-slot="listbox-item"] {
   display: flex;

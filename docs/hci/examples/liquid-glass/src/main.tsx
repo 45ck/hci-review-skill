@@ -601,6 +601,7 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
           <Listbox
             aria-label="Component catalogue"
             className="kit-catalogue"
+            data-liquid-glass="off"
             value={active ?? null}
             onValueChange={(value) => {
               if (typeof value === "string") {

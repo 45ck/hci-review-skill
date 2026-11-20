@@ -200,6 +200,10 @@ async def run(args):
             assert dimensions["scroll"] <= dimensions["width"] + 1, f"Mobile overview overflows: {dimensions}"
             await page.evaluate("() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))")
             await page.screenshot(path=str(output.parent / "overview-mobile.png"), animations="disabled", timeout=SCREENSHOT_TIMEOUT_MS)
+            catalogue = page.get_by_role("listbox", name="Component catalogue", exact=True)
+            assert await catalogue.evaluate("node => node.scrollHeight > node.clientHeight"), "Mobile catalogue should remain scrollable"
+            await choose("preferences")
+            await choose("overview")
             control = page.get_by_role("switch", name="Notifications", exact=True)
             before = await control.get_attribute("aria-checked")
             await control.click()

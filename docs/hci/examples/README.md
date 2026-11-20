@@ -1,12 +1,12 @@
-# UI SDK examples and material studies
+# Liquid Glass kit and HCI studies
 
-Use UI SDK directly for component behaviour and agent interaction. Appearance should preserve task hierarchy, semantic states and readable content. Frosted CSS is an optional visual experiment rather than the default implementation rule.
+Use the shared WebGPU Liquid Glass kit with real UI SDK behaviour for new high-fidelity internal interfaces without an existing product design system. Preserve task hierarchy, names, semantic states, readable content and usable fallbacks.
 
-## Component workbench
+## Component kit
 
-The [private workbench](https://quantitative-hci-ui-sdk-demos.ajax414655.chatgpt.site/glass/) contains all 55 UI SDK component families, a real agent bridge, live inspector and the video author's source-based WebGPU lens study. Read the [implementation standard](../standards/liquid-glass.md) and [workbench guide](liquid-glass/README.md).
+The [private kit](https://quantitative-hci-ui-sdk-demos.ajax414655.chatgpt.site/) opens with working glass controls and includes all 55 component families. Its GPU material follows actual control and popup bounds. Read the [implementation standard](../standards/liquid-glass.md) and [kit guide](liquid-glass/README.md).
 
-The toolbar experiment below has its own audit and recorded evidence. Its measurements do not describe the component workbench or prove that glass improves usability.
+The toolbar experiment below has its own audit and recorded evidence. Its measurements do not describe the new kit or prove that glass improves usability.
 
 ## Toolbar material study
 

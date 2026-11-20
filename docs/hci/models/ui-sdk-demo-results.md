@@ -1,6 +1,6 @@
-# UI SDK demo acceptance — 19 November 2026
+# Archived UI SDK settings demo results
 
-**The five-view demo lab is published and its final browser integration run passed 15/15 checks.** Open the [private demo lab](https://quantitative-hci-ui-sdk-demos.ajax414655.chatgpt.site) and follow the [demo guide](ui-sdk-demo-guide.md).
+**The recorded five-view demo integration run passed 15/15 checks.** This is historical evidence for the archived settings fixture, not the current hosted Liquid Glass kit. Use the [local reproduction guide](ui-sdk-demo-guide.md) to inspect the original implementation.
 
 ## What is available
 

@@ -1,66 +1,55 @@
-# UI SDK workbench
+# Liquid Glass UI kit
 
-A private workbench for **55 Vercel UI SDK component families**, their actual agent interface, and a separate source-based WebGPU refraction study. The catalogue remains at the existing `/glass/` URL for compatibility.
+A private UI kit that applies a shared WebGPU material to real Vercel UI SDK components. Its default overview contains working buttons, fields, choices, switches, sliders and a collection dialog. The searchable catalogue includes all **55 component families**, with one selected specimen shown at a time.
 
-## The three things you can compare
-
-| View | What it implements |
-| --- | --- |
-| UI SDK default | Direct `@ui-sdk/react/<component>` imports and upstream `@ui-sdk/core/web.css`. One specimen is mounted at a time. |
-| Frosted CSS | The same controls with optional shared tint, blur and highlights. This is not the video's refraction technique. |
-| Video refraction | The original WGSL shader from arya3d's linked source, applied to a captured local DOM backdrop. Real SDK buttons remain above the canvas. |
-
-The earlier gallery's “Optical refraction” switch applied a turbulence filter to decorative surfaces. It did not implement the video's page texture, shape-derived refraction, colour separation or edge-lighting pipeline. That misleading switch and effect have been removed.
+The GPU treatment is the default. Refraction and colour dispersion are adjustable in **Material settings**, and **Backdrop** changes the scene sampled by the glass. Labels and interaction stay in the DOM. The same controls remain usable through the solid fallback when WebGPU is unavailable or a transparency preference requires it.
 
 ## Run
 
-Use Node 22.12 or later, from the repository root:
+Use Node 22.12 or later. From the repository root:
 
 ```sh
 npm ci --ignore-scripts
 npm run glass:dev
 ```
 
-Open the URL printed by Vite. For a production preview:
+For a production preview:
 
 ```sh
 npm run glass:verify
 npm run preview -w @quantitative-hci/glass-gallery
 ```
 
-## Use it as an agent
+Open the local address printed by Vite. The hosted site opens the kit directly; `/glass/` remains a compatibility redirect. The former workbench, agent inspector, command console and settings pilot are not part of the hosted interface.
 
-The application initializes one `createAgent` bridge from the same installed SDK as its components. It registers `snapshot`, `query` and `act` through `registerTools` when the browser exposes `document.modelContext`.
+## What to exercise
 
-- **Snapshot:** read current component names, state, constraints and actions.
-- **Query:** discover all component families through `Component catalogue`, or the valid options for a selected control.
-- **Act:** run a discovered action through the SDK. The rendered control and application callbacks receive the change.
-- **Agent view:** inspect the actual snapshot and recent changes. It is diagnostic output, excluded from its own registry.
-- **Run SDK command:** use the visible diagnostic console when native browser tools are unavailable. It accepts JSON arguments for the three SDK methods; it does not evaluate JavaScript or connect an LLM.
+| Area | Interaction |
+| --- | --- |
+| Overview | Edit Project name, choose Project access, change Notifications or Sound, and adjust Volume. |
+| Collection dialog | Open New collection, enter Collection name, create or cancel, and check keyboard focus. |
+| Material settings | Compare low and high Refraction strength, vary Colour dispersion and switch Backdrop. |
+| Catalogue | Search a family and select it from Component catalogue. Every item uses the real upstream component. |
+| Popups | Open menus, dialogs, popovers and drawers; their controls must remain above the backdrop and operable. |
+| Accessibility preferences | Check forced colours, reduced transparency and reduced motion with the same labels, state and actions. |
 
-For example, from the browser console during development:
+All data and state changes belong to the demonstration. There is no form backend, account connection, upload service or purchase flow.
 
-```js
-const agent = window.quantitativeHciAgent;
-const catalogue = await agent.query({ within: "Component catalogue" });
-// Read the returned choices before choosing one.
-await agent.act({ steps: [
-  { ref: "Component catalogue", action: "setValue", args: ["switch"] }
-] });
-agent.snapshot();
-```
+## Material implementation
 
-Use a fresh component `ref` from the returned snapshot when names are ambiguous. `act.ok` alone is insufficient: verify the resulting state, because application validation can cancel a requested change. Batches are sequential, not transactions.
+`LiquidGlassProvider` coordinates the supplied backdrop, registered DOM surfaces and renderer. A shared viewport canvas draws ordinary controls and panels; local canvases keep GPU surfaces visible inside top-layer popups. The provider tracks real element bounds, so glass follows actual controls rather than a separate optical specimen.
 
-Actions carrying `data-agent-confirm` are refused by this demonstration. Password/OTP values are redacted by the SDK. The console uses the same bridge and policy. There is no backend, model service or API credential in this application.
+The integration adapts the shader from [arya3d/liquid-glass-webgpu](https://github.com/arya3d/liquid-glass-webgpu/tree/90cb73931bbaf38bd54b3263cd3fda1daef1869c), the project linked by the [reference video](https://www.youtube.com/watch?v=lq-ikfNVx7g). Its attribution and MIT notice are retained. The renderer samples the supplied decorative backdrop; it does not automatically capture arbitrary live application content and is not Apple's native renderer.
 
-## Reference optics
+Reduced motion keeps static refraction without decorative animation. Forced colours and reduced transparency suppress the GPU effect. Unsupported adapters have a usable fallback, and verification reports that path separately from successful GPU rendering.
 
-The [video](https://www.youtube.com/watch?v=lq-ikfNVx7g) links [arya3d/liquid-glass-webgpu](https://github.com/arya3d/liquid-glass-webgpu). The integration pins commit `90cb73931bbaf38bd54b3263cd3fda1daef1869c`, retains its unchanged WGSL shader, and ships the author's MIT notice.
+## Behaviour and agent integration
 
-Only the demonstration scene is captured with `html2canvas-pro`. It is captured on initialization, resizing, sample changes and explicit refresh. Lens motion and strength changes redraw from that texture; they do not continuously recapture the entire application. The sliders provide keyboard and agent alternatives to dragging. Reduced transparency and forced colours show solid controls. Unsupported WebGPU reports the limitation explicitly.
+Primitives import directly from `@ui-sdk/react/<component>` and retain upstream keyboard, focus, validation and state APIs. Both SDK packages are pinned to **0.1.0-beta.13**. The official skill and documentation ship with the installed packages.
 
-This does not apply GPU refraction to all 55 controls or capture arbitrary live application content. A production material system needs explicit capture boundaries, dynamic-content synchronization, contrast and performance evidence before broader adoption. See [source and adaptation details](src/reference-optics/README.md).
+One real SDK agent bridge remains underneath the UI. Its private `window.quantitativeHciAgent` facade exposes `snapshot`, `query`, `act` and `subscribe` for development and automated verification. Browser tools are registered only when `document.modelContext` is supported; detection is not evidence of a connected agent.
+
+Tests discover actual refs and choices before calling actions, then check rendered results. They verify disabled controls, confirmation refusal, secret redaction and change source. The bridge retains the SDK's filtering and permission semantics. The kit requires no inspector or command console.
 
 ## Verification
 
@@ -71,16 +60,26 @@ python3 tests/test_glass_browser.py --base-url http://127.0.0.1:4185/ \
   --output test-results/liquid-glass.json
 ```
 
-The suite opens every manifest family, checks exposed names, performs real SDK agent actions and verifies the rendered outcomes, exercises keyboard/focus behaviour, checks material cleanup and preferences, and checks narrow layout. Agent checks cover disabled controls, confirmation refusal and secret redaction.
+CI adds `--software-gpu`. This uses the established Chromium SwiftShader flags only against the reviewed loopback build and blocks outside requests. CI requires the GPU path to reach `ready`; an unavailable adapter does not pass the rendering requirement.
 
-CI additionally passes `--software-gpu`. This enables Chromium's software renderer only for the reviewed loopback build and blocks external requests. It requires the reference lens to reach `ready`, captures its canvas at two strengths, and checks that rendered pixels change. Its screenshots are rendering evidence, not hardware performance measurements.
+| Evidence | What the suite checks |
+| --- | --- |
+| Catalogue | Overview plus all 55 families are discoverable; each family mounts without a render error and exposes named SDK entries. |
+| Interaction | Real agent actions, keyboard selection, dialog dismissal and focus restoration. |
+| Optical contribution | Actual button, input and panel rectangles with GPU canvases visible and hidden. |
+| Material changes | Pixel changes after refraction-strength changes; a new capture revision and changed pixels after a backdrop change. |
+| Popup rendering | A real top-layer dialog has a visible local GPU canvas and operable controls. |
+| Responsive layout | The default mobile overview has no page-level horizontal overflow. |
+| Preferences | Static reduced-motion rendering and the forced-colour fallback preserve controls and focus. |
 
-`npm run glass:check` enforces version pins, direct SDK imports, coverage, optional material and bridge integration. `npm run glass:build` typechecks and builds. The path-filtered CI job has a ten-minute cap, cancellation for superseded runs and seven-day artifacts.
+The JSON report records browser metadata, status, pixel differences, timing and per-check outcomes. Screenshots include the desktop overview, desktop popup, mobile overview and GPU comparisons. Software rendering is functional evidence, not a hardware performance benchmark.
 
-## Related work
+`npm run glass:check` verifies source coverage, pins, direct imports, renderer integration and attribution. `npm run glass:build` typechecks and builds. The path-filtered CI job has bounded runtime, cancellation of superseded runs and seven-day artifacts.
 
-- [Component and material standard](../../standards/liquid-glass.md)
-- [Optional material package](../../../../packages/liquid-glass/README.md)
-- [Independent beta.10 settings pilot](../ui-sdk-pilot/README.md)
+## Related material
 
-Automated correctness, readable agent state, visual fidelity and human usability are separate questions. This workbench does not reuse the older pilot's measured performance claims.
+- [Implementation standard](../../standards/liquid-glass.md)
+- [Reusable package](../../../../packages/liquid-glass/README.md)
+- [HCI evaluation protocol](../../models/evaluation-protocol.md)
+
+Visual fidelity and human usability require their own comparison evidence. The kit does not inherit results from the archived settings pilot or toolbar study.

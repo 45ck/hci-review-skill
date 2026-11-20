@@ -1,4 +1,4 @@
-"""Browser contract for the workbench's real UI SDK agent bridge."""
+"""Browser contract for the Liquid Glass kit's real UI SDK agent bridge."""
 
 import asyncio
 import json
@@ -75,10 +75,14 @@ async def verify_agent_contract(page, expect):
 
     async def select_family(family):
         catalogue = await entry("listbox", "Component catalogue")
-        option = await choice(catalogue, families[family])
+        option = await choice(catalogue, "Overview" if family == "overview" else families[family])
         await act(catalogue, "setValue", [option["value"]])
-        await expect(page.locator("[data-component-id]")).to_have_count(1, timeout=TIMEOUT_MS)
-        stage = page.locator(f"[data-component-id={json.dumps(family)}] .component-stage")
+        if family == "overview":
+            await expect(page.locator("[data-component-id]")).to_have_count(0, timeout=TIMEOUT_MS)
+            stage = page.locator("[data-kit-view='overview']")
+        else:
+            await expect(page.locator("[data-component-id]")).to_have_count(1, timeout=TIMEOUT_MS)
+            stage = page.locator(f"[data-component-id={json.dumps(family)}] .component-stage")
         await expect(stage).to_be_visible(timeout=TIMEOUT_MS)
         await expect(stage.locator(".demo-error")).to_have_count(0, timeout=TIMEOUT_MS)
         return stage
@@ -94,78 +98,81 @@ async def verify_agent_contract(page, expect):
     verified_changes = []
     outcomes = {}
     try:
-        view = await entry("segmented-control", "Workbench view")
-        view_choices = await choices(view)
-        assert {item["label"] for item in view_choices["items"]} == {"Components", "Video refraction"}
-        components = await choice(view, "Components")
-        await act(view, "setValue", [components["value"]])
         search = await entry("input", "Search components")
         await act(search, "setValue", [""])
-        category = await entry("select", "Component category")
-        all_categories = await choice(category, "All categories")
-        await act(category, "setValue", [all_categories["value"]])
-        treatment = await entry("segmented-control", "Preview appearance")
-        baseline = await choice(treatment, "UI SDK default")
-        await act(treatment, "setValue", [baseline["value"]])
-
         catalogue = await entry("listbox", "Component catalogue")
         first_page = await choices(catalogue)
         available = {item["value"]: item["label"] for item in first_page.get("items", [])}
-        for family, label in families.items():
+        expected_choices = {"overview": "Overview", **families}
+        for family, label in expected_choices.items():
             if family not in available:
                 item = await choice(catalogue, label)
                 available[item["value"]] = item["label"]
-        assert available == families, f"Agent catalogue differs from the manifest: {available}"
+        assert available == expected_choices, f"Agent catalogue differs from the manifest plus Overview: {available}"
         outcomes["catalogue"] = {
-            "discoverableFamilies": len(available),
+            "discoverableFamilies": len(families),
+            "overviewAvailable": available.get("overview") == "Overview",
             "firstQueryChoices": len(first_page.get("items", [])),
             "queriedBeyondFirstPage": len(first_page.get("items", [])) < len(available),
         }
 
-        await select_family("button")
+        stage = await select_family("overview")
         shell = {
-            "Workbench view": "segmented-control",
             "Search components": "input",
-            "Component category": "select",
             "Component catalogue": "listbox",
-            "Preview appearance": "segmented-control",
-            "Inspect agent state": "toggle",
-            "Restart selected demo": "button",
-            "Copy component import": "button",
+            "Material settings": "popover",
+            "Copy starter": "button",
         }
-        for label, kind in shell.items():
+        overview_names = {
+            "Project name": "input", "Project access": "select",
+            "Notifications": "switch", "Sound": "switch", "Volume": "slider",
+            "Workspace view": "segmented-control", "Create project": "button",
+            "New collection": "dialog", "More actions": "menu",
+        }
+        for label, kind in {**shell, **overview_names}.items():
             await entry(kind, label)
         snapshot = await call("snapshot")
         mounted = [item for item in snapshot if not item.get("offPage") and item["component"] != "more"]
         unnamed = [(item["ref"], item["component"]) for item in mounted if not item.get("label", "").strip()]
         assert not unnamed, f"Unnamed mounted SDK components: {unnamed}"
-        assert not any(item.get("label") == "Refresh snapshot" for item in mounted), "Inspector observed itself"
+        await expect(page.locator(".agent-inspector, .agent-command-console, .reference-lens-stage")).to_have_count(0)
         outcomes["shellNames"] = list(shell)
 
-        appearance_names = {"Appearance settings", "Frosted appearance settings"}
-        assert not any(item.get("label") in appearance_names for item in mounted), "Baseline exposes a live appearance dialog to agents"
-        await expect(page.get_by_role("button", name="Appearance settings", exact=True)).to_have_count(0, timeout=TIMEOUT_MS)
-        treatment = await entry("segmented-control", "Preview appearance")
-        frosted = await choice(treatment, "Frosted CSS")
-        await act(treatment, "setValue", [frosted["value"]])
-        await expect(page.get_by_role("button", name="Appearance settings", exact=True)).to_be_enabled(timeout=TIMEOUT_MS)
-        appearance = await entry("dialog", "Appearance settings")
-        await act(appearance, "setOpen", [True])
-        appearance_dialog = page.get_by_role("dialog", name="Frosted appearance settings", exact=True)
-        await expect(appearance_dialog).to_be_visible(timeout=TIMEOUT_MS)
-        await act(await entry("dialog", "Frosted appearance settings"), "setOpen", [False])
-        await expect(appearance_dialog).not_to_be_visible(timeout=TIMEOUT_MS)
-        await act(await entry("segmented-control", "Preview appearance"), "setValue", [baseline["value"]])
-        await expect(page.get_by_role("button", name="Appearance settings", exact=True)).to_have_count(0, timeout=TIMEOUT_MS)
-        after_baseline = await call("snapshot")
-        assert not any(item.get("label") in appearance_names and not item.get("offPage") for item in after_baseline), "Unmounted appearance dialog still exposes live actions"
-        await act(appearance, "setOpen", [True], succeeds=False)
-        await expect(appearance_dialog).not_to_be_visible(timeout=TIMEOUT_MS)
-        outcomes["appearanceAvailability"] = {
-            "unmountedInBaseline": True,
-            "availableWhenFrosted": True,
-            "staleRefRefused": True,
-        }
+        project = await entry("input", "Project name")
+        project_value = "Agent-created studio"
+        await act(project, "setValue", [project_value])
+        await expect(stage.get_by_label("Project name", exact=True)).to_have_value(project_value, timeout=TIMEOUT_MS)
+        verified_changes.append((project["ref"], "value", project_value))
+        access = await entry("select", "Project access")
+        team = await choice(access, "Team")
+        await act(access, "setValue", [team["value"]])
+        await expect(stage.get_by_role("combobox", name="Project access", exact=True)).to_contain_text(team["label"], timeout=TIMEOUT_MS)
+        verified_changes.append((access["ref"], "value", team["value"]))
+        notifications = await entry("switch", "Notifications")
+        target = not notifications["checked"]
+        await act(notifications, "setChecked", [target])
+        await expect(stage.get_by_role("switch", name="Notifications", exact=True)).to_have_attribute("aria-checked", str(target).lower(), timeout=TIMEOUT_MS)
+        verified_changes.append((notifications["ref"], "checked", target))
+        workspace = await entry("segmented-control", "Workspace view")
+        activity = await choice(workspace, "Activity")
+        await act(workspace, "setValue", [activity["value"]])
+        await expect(stage.get_by_text("No recent changes", exact=True)).to_be_visible(timeout=TIMEOUT_MS)
+        verified_changes.append((workspace["ref"], "value", activity["value"]))
+        await act(await entry("button", "Create project"), "press", [])
+        await expect(stage.get_by_label("Project result", exact=True)).to_have_text("Created " + project_value, timeout=TIMEOUT_MS)
+
+        collection = await entry("dialog", "New collection")
+        await act(collection, "setOpen", [True])
+        collection_dialog = page.get_by_role("dialog", name="Create a collection", exact=True)
+        await expect(collection_dialog).to_be_visible(timeout=TIMEOUT_MS)
+        collection_name = await entry("input", "Collection name")
+        await act(collection_name, "setValue", ["Agent collection"])
+        await expect(collection_dialog.get_by_label("Collection name", exact=True)).to_have_value("Agent collection", timeout=TIMEOUT_MS)
+        await act(await entry("button", "Create collection"), "press", [])
+        await expect(collection_dialog).not_to_be_visible(timeout=TIMEOUT_MS)
+        await expect(stage.get_by_label("Collection result", exact=True)).to_have_text("Created Agent collection", timeout=TIMEOUT_MS)
+        verified_changes.append((collection_name["ref"], "value", "Agent collection"))
+        outcomes["overview"] = {"namedControls": list(overview_names), "projectCreated": True, "accessApplied": True, "notificationApplied": True, "workspaceChanged": True, "collectionCreated": True}
 
         search = await entry("input", "Search components")
         await act(search, "setValue", ["password"])
@@ -278,7 +285,7 @@ async def verify_agent_contract(page, expect):
             "verifiedAgentChanges": len(verified_changes),
             "observedSources": sorted({event["source"] for event in events}),
         }
-        await select_family("button")
+        await select_family("overview")
         return {"facade": facade, "perOperationTimeoutMs": TIMEOUT_MS, **outcomes}
     finally:
         await page.evaluate("""() => {

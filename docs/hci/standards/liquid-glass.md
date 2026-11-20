@@ -1,98 +1,66 @@
-# UI SDK and Liquid Glass experiments
+# Liquid Glass UI kit standard
 
-**Status:** The upstream UI SDK is the component baseline. Frosted CSS and the reference WebGPU lens are optional, distinct experiments. This replaces the earlier requirement to apply Liquid Glass to every new high-fidelity interface.
+**Status:** Default component material for new high-fidelity Quantitative HCI internal interfaces without an established product design system. Real UI SDK behaviour and a reusable WebGPU theme form one kit.
 
-The Quantitative HCI workbench demonstrates real component behavior, its agent-facing API and the effect of optional material treatments. A product's established design system and the fidelity required by a study take precedence. The appearance experiment is not evidence that glass improves usability.
+The [kit](../examples/liquid-glass/README.md) starts with usable glass controls and keeps all 55 component families in a searchable catalogue. The reference shader is integrated into actual surfaces. A separate optical lab, diagnostic workbench or CSS blur toggle does not satisfy this standard.
 
-## Sources and versions
+## Responsibilities
 
-| Layer | Source | Contract |
+| Layer | Owner | Requirement |
 | --- | --- | --- |
-| Component behavior and agent tools | `@ui-sdk/react` and `@ui-sdk/core`, both pinned to **0.1.0-beta.13** | Import documented upstream entries directly. Keep APIs and semantics intact. |
-| Component catalogue reference | [vercel-labs/ui at b4dbe88209ecf4dc555225f630268095f510ad49](https://github.com/vercel-labs/ui/tree/b4dbe88209ecf4dc555225f630268095f510ad49) | Cover the 54 upstream example families and the exported Time Input family. |
-| Baseline appearance | `@ui-sdk/core/web.css` from the pinned package | Retain its geometry and state treatments unless a specific example requires a documented change. |
-| Optional Frosted CSS | `packages/liquid-glass/src/{tokens.css,styles.css,material.tsx}` | Scope every material rule and token to the explicit enabled root. This adds tint, blur and highlights, not the video's optical renderer. |
-| Video refraction study | [arya3d/liquid-glass-webgpu at 90cb73931bbaf38bd54b3263cd3fda1daef1869c](https://github.com/arya3d/liquid-glass-webgpu/tree/90cb73931bbaf38bd54b3263cd3fda1daef1869c) | Retain attribution and the MIT notice. Identify source shader code separately from the local capture, rendering and React integration. |
+| Component behaviour | `@ui-sdk/react` and `@ui-sdk/core` **0.1.0-beta.13** | Preserve composition, keyboard navigation, focus, validation and popup handling. |
+| Material | `packages/liquid-glass` | Share optical parameters, tokens, semantic states, focus and fallback rules. |
+| Renderer | `LiquidGlassProvider` and its engine | Register actual DOM bounds, sample the supplied backdrop, draw normal and top-layer surfaces, and clean up resources. |
+| Agent interface | `@ui-sdk/react/agent` | Expose genuine names, state, choices, actions and notifications through one policy-controlled bridge. |
+| Demo | `docs/hci/examples/liquid-glass` | Show a usable overview and one selected family at a time without requiring diagnostic UI. |
+| Evidence | Browser contract and HCI protocol | Keep source checks, functional outcomes, rendered pixels and human observations distinct. |
 
-The WebGPU source is the project linked by the [reference video](https://www.youtube.com/watch?v=lq-ikfNVx7g). The workbench keeps the shader study separate from the component appearance comparison. It does not claim to implement Apple's native renderer or physically exact optics.
+The shader reference is [arya3d/liquid-glass-webgpu at 90cb73931bbaf38bd54b3263cd3fda1daef1869c](https://github.com/arya3d/liquid-glass-webgpu/tree/90cb73931bbaf38bd54b3263cd3fda1daef1869c), linked by the [original video](https://www.youtube.com/watch?v=lq-ikfNVx7g). Retain its MIT notice and identify local multi-surface and React adaptations. This is a web implementation inspired by the reference, not Apple's native renderer.
 
-## Follow the official installed workflow
+## Components and state
 
-Read `node_modules/@ui-sdk/core/skills/ui-sdk/SKILL.md` before building with UI SDK. The skill is distributed with the pinned core package; no separate, unpinned skill download is needed for this workspace. Read `node_modules/@ui-sdk/react/docs/llms.txt`, then only the relevant component pages and the skill's `references/build-interface.md`, `references/styles.md`, `references/agent-ready.md` and `references/testing.md` as needed.
+Follow the official skill at `node_modules/@ui-sdk/core/skills/ui-sdk/SKILL.md` and the installed React documentation before changing composition. Import primitives from explicit `@ui-sdk/react/<component>` entries and helpers from documented core entries. Preserve package re-exports as compatibility aliases, without forking the SDK interaction engine.
 
-Use the installed documentation and declaration types as the API reference. Consult the core behavior documentation only when the SDK does not already supply the required interaction. Do not reverse-engineer compiled implementation code or introduce a parallel behavior engine to implement an existing component.
+Use default or controlled state consistently. Update controlled application state in `onValueChange` or the corresponding SDK callback. Return asynchronous button work so pending/error state and agent actions track completion. Validate values in the shared callback or application action, rather than only in pointer or keyboard handlers.
 
-New examples import upstream components directly:
+Give every control a meaningful name. Keep names stable where selected or pressed state already explains the change. Popup titles, triggers and final actions must be distinguishable. A disabled trigger must not leave a contradictory action available to an agent; mount or disable the complete interaction consistently.
 
-```tsx
-import { Input } from "@ui-sdk/react/input";
-import "@ui-sdk/core/web.css";
+The manifest remains the source of truth for **55 families**. Every family needs its real upstream import, package alias and working specimen. Overview is an additional catalogue choice, not a replacement for coverage.
 
-export function Example() {
-  return <Input aria-label="Project name" defaultValue="Atlas" />;
-}
-```
+## Optical surfaces
 
-Declare `@layer ui-sdk;` at the start of the global stylesheet. Preserve the root/part composition, controlled callbacks and state attributes documented for each component. Do not use a local material wrapper as a prerequisite for using the SDK. The private `@quantitative-hci/liquid-glass` package retains per-component re-exports for existing consumers; the manifest's `exportPath` records those compatibility aliases, while new imports use `@ui-sdk/react/<id>`.
+Apply the shared kit stylesheet and `LiquidGlassProvider` at the application boundary. Register intended surfaces with `data-liquid-glass`; `data-liquid-glass="off"` excludes a subtree. One shared viewport canvas and local canvases for actual top-layer popups align with current DOM rectangles after resizing, scrolling, selection and popup changes.
 
-The workbench's neutral `src/sdk-layout.css` supplies the missing Timeline and Waterfall layout in this SDK release. It uses upstream `--ui-*` tokens and has no glass recipe. Keep that shim narrow and review it when updating the SDK.
+Keep text, input values, focus rings and interaction in the DOM above the decorative renderer. Canvases are `aria-hidden` and have `pointer-events: none`. Never replace an accessible control with a picture. Preserve primary/destructive variants, invalid, selected and disabled states.
 
-## Agent contract
+The capture boundary is the supplied decorative backdrop. Changing it must refresh the GPU texture. Refraction and dispersion changes should redraw from the current texture without recapturing the whole application. Do not claim automatic refraction of arbitrary live page content.
 
-Create one client-side bridge with `createAgent` from `@ui-sdk/react/agent`. Register the same bridge with `registerTools` and an explicit `allow` policy when the browser exposes WebMCP. Unregister those tools when the integration is disposed. Browsers without that API still use the local bridge; report that distinction honestly.
+Share work across controls, bound resolution, draw when material or geometry changes, and release GPU resources and observers on teardown. Do not create an independent continuously running GPU loop for every control.
 
-The contract consists of the actual SDK `snapshot`, `query`, `act` and `subscribe` APIs. The workbench exposes a restricted facade at `window.quantitativeHciAgent` for local inspection and browser verification. The live inspector reads the bridge and its change notifications. It must not manufacture component state, actions or success results.
+## Readability and fallbacks
 
-Every intended control must be discoverable by an appropriate name. Use SDK parts rather than native controls when the agent needs to operate them. Keep state synchronization in callbacks such as `onValueChange(value, details)`: an API action does not replay arbitrary pointer or keyboard handlers. Verify `details.source === "agent"` and the accepted state after an action; `ok: true` alone is insufficient if a callback cancelled a change.
+Use glass principally for controls, navigation and compact surfaces. Keep long text and dense data readable. Test final composited contrast against the supported scenes; a token value alone is insufficient. Apple's [materials guidance](https://developer.apple.com/design/human-interface-guidelines/materials) is a design reference.
 
-Use the SDK's `data-agent-secret`, `data-agent-hidden` and `data-agent-confirm` contracts. The demonstration may permit harmless local changes and refuse marked confirmation actions. Do not add a confirmation flow to every interaction. Keep private values redacted and distinguish a disabled action from an action requiring a person.
+| Condition | Required behaviour |
+| --- | --- |
+| WebGPU available | Registered controls and panels receive the GPU material by default. |
+| Unsupported adapter or renderer failure | Preserve the DOM interface and fallback surfaces; report the actual renderer state. |
+| Reduced transparency or forced colours | Suppress the GPU effect and use solid/system-colour surfaces. |
+| Reduced motion | Keep static refraction, remove decorative animation, and retain requested control/layout updates. |
+| Keyboard input | Keep visible focus, arrows, selection, Escape dismissal and focus restoration. |
+| Narrow viewport | Fit the overview and selected specimens without page-level horizontal overflow. |
 
-An agent test must obtain component references and choice values from `snapshot` or `query`, perform actions through `act`, and check the resulting DOM/state. Include named controls, choice discovery, disabled-state refusal, secret redaction and observed source attribution. Test actual browser-tool registration separately from detecting the API's presence.
+Fallbacks retain the same actions and state. They are not a separate demo mode that replaces the default kit.
 
-## Workbench requirements
+## Agent semantics beneath the UI
 
-`packages/liquid-glass/component-manifest.json` is the catalogue source of truth. All **55** families must remain searchable and selectable. Mount one selected specimen at a time, so the preview, keyboard sequence and active agent registry stay understandable. Component selection should use stable IDs; do not show a fabricated specimen when a component fails.
+Create one client-side `createAgent` bridge from the same SDK instance as the controls. Register supported browser tools with an explicit policy and clean them up on disposal. The private verification facade exposes the actual `snapshot`, `query`, `act` and `subscribe` methods. The product interface does not need an inspector, code console or synthetic state registry.
 
-The default surface treatment is **UI SDK default**. The workbench also offers **Frosted CSS**, a live agent inspector and a separate **Video refraction** study. Keep component behavior and values tied to the same upstream APIs across treatments. Avoid repeated status labels, decorative metrics and explanations that do not help someone try the component or inspect its state.
+Respect `data-agent-secret`, `data-agent-hidden` and `data-agent-confirm`. Put confirmation on the final action needing a person, while opening or cancelling remains available. The demo refuses marked actions. Password and OTP values stay redacted in snapshots, results and notifications.
 
-The SDK remembers previously mounted components as `offPage`; the inspector may distinguish them from active entries, and must handle the SDK's `more` entry without pretending the snapshot is complete. Discoverability of all catalogue entries and the single mounted specimen are runtime requirements, not claims established by the manifest alone.
+Tests discover refs and choices from the bridge and use a fresh ref after replacement or renaming. An `act` success alone does not prove a requested value was accepted: compare rendered state. Sequential action batches do not imply rollback.
 
-## Optional Frosted CSS
-
-Use `GlassProvider` only when opting into the appearance experiment. Its existing default remains enabled for compatibility, so a workbench or comparison must pass an explicit boolean and initialize it to `false`:
-
-```tsx
-<GlassProvider enabled={frosted}>
-  <Input aria-label="Project name" defaultValue="Atlas" />
-</GlassProvider>
-```
-
-Only `:root[data-qg-material-enabled="true"]` activates the package's material tokens and rules. Disabling the provider removes its owned root attributes and inline properties and stops its pointer-lighting effect. Portalled overlays inherit the same root scope. Importing the stylesheet alone must leave the upstream baseline active.
-
-The optional theme can set shared colour, radius, tint and blur tokens. It must preserve solid and destructive action variants, invalid borders, focus visibility, disabled state and selected state. A later CSS layer overrides an earlier layer regardless of selector specificity; preserve semantic states explicitly when adding generic material rules. Keep dense text and data on stable surfaces and avoid stacked opaque cards that obscure the material behind the actual control.
-
-Respect reduced motion, reduced transparency, increased contrast and forced colours. Retain usable solid fallbacks and the same actions and layout in every mode. The legacy `refraction` preference remains accepted for compatibility, defaults to `false` and has no optical effect; the misleading turbulence displacement has been removed.
-
-## Reference WebGPU study
-
-Keep the source pin and attribution in `src/reference-optics/README.md`, the copied shader/uniform files and the shipped license notice. Describe any adaptation to the renderer, DOM capture, dimensions or redraw strategy. Do not substitute a blur, arbitrary noise displacement or the earlier canvas texture experiment and call it the video's technique.
-
-The reference technique samples a captured backdrop through a shape-derived shader. The local study captures a bounded demonstration region and keeps real SDK controls above the canvas. That is a limited rendering contract: arbitrary live DOM, captured updates, GPU/browser support and capture fidelity require their own verification. Stop unneeded rendering and release resources when the study unmounts. Display an unavailable-renderer state truthfully while leaving controls usable.
-
-A successful shader compile, visible lens or screenshot does not establish video equivalence. Compare the actual rendered result with the reference and report the backdrop, geometry, settings, browser and limitations. Keep labels and interaction targets as readable DOM content.
-
-## Verification and evidence
-
-| Check | Required evidence | Practical limit |
-| --- | --- | --- |
-| Catalogue and source checks | All 55 IDs, real demo entries, direct imports, compatibility aliases and SDK pins agree. | Static checks do not prove mounted behavior. |
-| TypeScript and production build | The complete workbench compiles against the installed SDK. | A build does not establish visual fidelity. |
-| Workbench navigation | All catalogue entries are discoverable; one selected specimen mounts; search and category changes work. | A manifest count does not establish discoverability. |
-| Agent contract | Real snapshot/query/act results, accepted values, names, redaction, disabled handling and source attribution; browser-tool registration where supported or explicitly mocked. | API detection does not prove browser-agent execution. |
-| Human interaction wiring | Keyboard operation, forms, popup placement, Escape dismissal and focus restoration. | Upstream behavior tests do not cover local wiring automatically. |
-| Baseline and material modes | Baseline has no material scope; opt-in and disable work; variants, errors and preferences remain visible. | Token values alone do not establish painted contrast. |
-| Reference optics | Renderer status, actual output, resize/movement behavior and reference comparison. | A passing build or CSS fallback is not optical equivalence. |
-| Human evaluation, when needed | Matched tasks, completion/errors, time and preference using the existing HCI protocol. | Scripted checks do not establish improved human usability. |
+## Verification
 
 From the repository root:
 
@@ -102,13 +70,27 @@ npm run glass:verify
 npm run preview -w @quantitative-hci/glass-gallery
 ```
 
-With the preview running:
+With the production preview running:
 
 ```sh
 python3 tests/test_glass_browser.py --base-url http://127.0.0.1:4185/ \
   --output test-results/liquid-glass.json
 ```
 
-Report command exit codes, the tested browser and viewport, actual assertions and anything skipped or blocked. Keep source inspection, rendered screenshots, scripted measurements and observations from people separate. Do not claim WCAG conformance, source-video fidelity or better usability from a successful build or scan.
+CI adds `--software-gpu` for the reviewed loopback build using the established Chromium SwiftShader flags and blocked outside requests. The GPU path must reach `ready`; fallback cannot substitute for rendered evidence.
 
-The workbench and material package are private workspace packages. Keep internal examples private by default and treat hosted access separately from repository visibility. The original settings/agent pilot remains on **0.1.0-beta.10**, with its own benchmark protocol and recorded evidence; do not overwrite it when updating this workbench.
+Required checks:
+
+1. Overview plus all 55 catalogue families are discoverable; each specimen mounts and its SDK entries are named.
+2. Representative agent actions change DOM state, with disabled refusal, confirmation refusal, secret redaction and `source: "agent"` verified.
+3. Keyboard selection, dialog dismissal and focus restoration work.
+4. GPU canvases change pixels on at least three actual surface rectangles: button, input and panel. Record matched visible/hidden-canvas screenshots.
+5. Refraction strength changes rendered pixels. Backdrop changes advance capture evidence and change rendered output.
+6. A real top-layer dialog renders its local GPU surface and retains visible, operable controls.
+7. The mobile overview fits; accessibility preferences preserve controls and keyboard focus.
+
+Save desktop overview, desktop popup, mobile overview and GPU comparison screenshots. Report actual browser/version, viewport, status, pixel differences, timing and failures. These checks establish the observed integration; they do not establish optical equivalence, full WCAG conformance or improved human usability.
+
+## Existing research and access
+
+Keep the calculators, [evaluation protocol](../models/evaluation-protocol.md), toolkit skills and recorded studies intact. The archived beta.10 settings pilot remains a separate source fixture; its measurements do not describe this kit, and it is not part of the hosted UI. Keep internal hosting private unless instructed otherwise.

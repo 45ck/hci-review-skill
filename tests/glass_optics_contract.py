@@ -1,10 +1,10 @@
-"""Bounded reference-lens checks for the remote browser suite.
+"""Pixel evidence for GPU material on actual Liquid Glass kit controls.
 
-Call verify_optics_contract(page, expect). No browser is launched here. A ready
-GPU path additionally needs a real screenshot change after optical input; an
-unavailable adapter is reported separately from successful rendering.
+No browser is launched here. An unavailable renderer is reported separately;
+CI requires a ready GPU and verifies its contribution on three DOM rectangles.
 """
 
+import asyncio
 from pathlib import Path
 import re
 import struct
@@ -66,100 +66,184 @@ def _png_rgb(data):
     return width, height, rgb
 
 
-async def _agent_value(page, label, value):
-    result = await page.evaluate("""async ({label, value}) => {
-      const agent = window.quantitativeHciAgent;
-      if (!agent) throw new Error('The gallery agent bridge is missing');
-      return agent.act({steps: [{ref: label, action: 'setValue', args: [value]}]});
-    }""", {"label": label, "value": value})
-    assert result.get("ok"), f"Agent could not set {label}: {result}"
+
+def _difference(before, after, *, border_only=False):
+    width, height, left = _png_rgb(before)
+    other_width, other_height, right = _png_rgb(after)
+    assert (width, height) == (other_width, other_height), "Comparison changed screenshot geometry"
+    changed = total = channel_sum = 0
+    edge = min(14, width // 4, height // 4)
+    for pixel in range(width * height):
+        x, y = pixel % width, pixel // width
+        if border_only and edge <= x < width - edge and edge <= y < height - edge:
+            continue
+        offset = pixel * 3
+        differences = [abs(left[offset + channel] - right[offset + channel]) for channel in range(3)]
+        changed += max(differences) > 4
+        channel_sum += sum(differences)
+        total += 1
+    assert total, "No pixels were sampled"
+    return {
+        "width": width, "height": height, "sampledPixels": total,
+        "region": "14px border band" if border_only else "full control",
+        "changedFraction": round(changed / total, 5),
+        "meanChannelDifference": round(channel_sum / (total * 3), 4),
+    }
 
 
-async def _agent_refresh(page):
-    result = await page.evaluate("""async () => {
-      return window.quantitativeHciAgent.act({steps: [{ref: 'Refresh captured backdrop', action: 'press', args: []}]});
-    }""")
-    assert result.get("ok"), f"Agent could not refresh the captured backdrop: {result}"
+async def _call(page, method, arguments=None):
+    return await asyncio.wait_for(page.evaluate("""async ({method, input}) => {
+        const agent = window.quantitativeHciAgent;
+        if (method === 'query') return agent.query(input);
+        if (method === 'act') return agent.act(input);
+        throw new Error('Unsupported optical-test operation');
+    }""", {"method": method, "input": arguments}), timeout=5)
+
+
+async def _entry(page, kind, labels):
+    result = await _call(page, "query", {"kind": kind})
+    assert isinstance(result, list), result
+    names = [labels] if isinstance(labels, str) else labels
+    matching = [item for item in result if not item.get("offPage") and item.get("label") in names]
+    assert len(matching) == 1, f"Expected one {kind} named {names}: {matching}"
+    return matching[0]
+
+
+async def _act(page, entry, action, args):
+    assert action in entry["actions"], f"{entry} does not expose {action}"
+    result = await _call(page, "act", {"steps": [{"ref": entry["ref"], "action": action, "args": args}]})
+    assert result.get("ok"), f"Optical control action failed: {result}"
+    return result
 
 
 async def _painted(page):
     await page.evaluate("() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))")
 
 
-async def verify_optics_contract(page, expect, *, output_dir="test-results/optics", require_gpu=False):
+async def _revision(page, name):
+    return int(await page.locator("html").get_attribute(name) or 0)
+
+
+async def _after_revision(page, name, before):
+    await page.wait_for_function("""({name, before}) =>
+        document.documentElement.dataset.liquidStatus === 'ready' &&
+        Number(document.documentElement.getAttribute(name) || 0) > before
+    """, arg={"name": name, "before": before}, timeout=8000)
+    await _painted(page)
+
+
+async def _settings(page):
+    settings = await _entry(page, "popover", ["Material settings", "Glass material"])
+    if not settings.get("open"):
+        await _act(page, settings, "setOpen", [True])
+    return await _entry(page, "popover", "Glass material")
+
+
+async def _configure(page, *, strength=None, backdrop=None):
+    await _settings(page)
+    capture_before = await _revision(page, "data-liquid-capture-revision")
+    backdrop_changed = False
+    if strength is not None:
+        control = await _entry(page, "slider", "Refraction strength")
+        await _act(page, control, "setValue", [strength])
+        assert (await _entry(page, "slider", "Refraction strength"))["value"] == strength
+    if backdrop is not None:
+        control = await _entry(page, "select", "Backdrop")
+        result = await _call(page, "query", {"within": control["ref"]})
+        assert isinstance(result, list), result
+        options = [item for found in result if found["ref"] == control["ref"] for item in found.get("items", [])]
+        chosen = [item for item in options if item["label"] == backdrop]
+        assert len(chosen) == 1, f"Backdrop choice missing: {options}"
+        backdrop_changed = control.get("value") != chosen[0]["value"]
+        await _act(page, control, "setValue", [chosen[0]["value"]])
+        assert (await _entry(page, "select", "Backdrop"))["value"] == chosen[0]["value"]
+    render_before = await _revision(page, "data-liquid-render-revision")
+    await _act(page, await _entry(page, "popover", "Glass material"), "setOpen", [False])
+    await page.locator(".kit-material-popover").wait_for(state="hidden", timeout=5000)
+    await _after_revision(page, "data-liquid-render-revision", render_before)
+    if backdrop_changed:
+        await _after_revision(page, "data-liquid-capture-revision", capture_before)
+    return {"captureBefore": capture_before, "captureAfter": await _revision(page, "data-liquid-capture-revision")}
+
+
+async def verify_optics_contract(page, expect, *, output_dir="test-results", require_gpu=False):
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
-    if not await page.locator(".reference-lens-stage").count():
-        await page.get_by_role("radio", name="Video refraction", exact=True).click()
-    stage = page.locator(".reference-lens-stage")
-    await expect(stage).to_be_visible()
-    await expect(stage).to_have_attribute("data-lens-status", re.compile(r"^(ready|unavailable|error|reduced)$"), timeout=30000)
-    status = await stage.get_attribute("data-lens-status")
-    detail = await page.locator(".reference-lens-status").inner_text()
-    assert status != "error", detail
+    root = page.locator("html")
+    await expect(page.locator("[data-kit-view='overview']")).to_be_visible(timeout=5000)
+    await expect(root).to_have_attribute("data-liquid-status", re.compile(r"^(ready|unavailable|error|reduced)$"), timeout=25000)
+    status = await root.get_attribute("data-liquid-status")
+    failure = await root.get_attribute("data-liquid-error")
+    assert status != "error", f"GPU initialization/capture failed: {failure}"
+    result = {"status": status, "gpuRendered": False, "required": require_gpu}
+    if status != "ready":
+        result["limitation"] = "The controls use the compatibility material; GPU pixels were not verified."
+        assert not require_gpu, f"GPU evidence is required; renderer reported {status}: {failure}"
+        return result
 
-    next_sample = stage.get_by_role("button", name="Next sample", exact=True)
-    previous_sample = stage.get_by_role("button", name="Previous sample", exact=True)
-    sample_label = stage.locator(".reference-lens-scene-heading span").last
-    before_sample = int((await sample_label.inner_text()).split()[-1])
-    await next_sample.scroll_into_view_if_needed()
-    unobscured = await next_sample.evaluate("""node => {
-      const box = node.getBoundingClientRect();
-      const top = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
-      return top === node || node.contains(top);
-    }""")
-    assert unobscured, "Backdrop text covers a live lens button"
-    await next_sample.click()
-    await expect(sample_label).to_have_text(f"Sample {before_sample + 1:02}")
-    await previous_sample.click()
-    await expect(sample_label).to_have_text(f"Sample {before_sample:02}")
+    await page.evaluate("window.scrollTo(0, 0)")
+    await page.mouse.move(1, 1)
+    await _configure(page, strength=30, backdrop="Coast")
+    canvas = page.locator("canvas[data-liquid-canvas='viewport']")
+    await expect(canvas).to_have_count(1)
+    await expect(canvas).to_be_visible()
+    assert await canvas.get_attribute("aria-hidden") == "true"
+    assert await canvas.evaluate("node => getComputedStyle(node).pointerEvents") == "none"
+    surface_count = int(await root.get_attribute("data-liquid-surface-count") or 0)
+    assert surface_count >= 3, f"Only {surface_count} actual surfaces were registered"
+    probes = {}
+    for kind in ["button", "input", "panel"]:
+        locator = page.locator(f"[data-optics-probe='{kind}']")
+        await expect(locator).to_have_count(1)
+        await expect(locator).to_be_visible()
+        await expect(locator).to_have_attribute("data-liquid-surface", "viewport", timeout=5000)
+        box = await locator.bounding_box()
+        assert box and box["width"] >= 30 and box["height"] >= 20, f"Invalid {kind} bounds: {box}"
+        viewport = page.viewport_size
+        assert box["x"] >= 0 and box["y"] >= 0 and box["x"] + box["width"] <= viewport["width"] + 1 and box["y"] + box["height"] <= viewport["height"] + 1, f"{kind} probe is outside the overview viewport: {box}"
+        probes[kind] = box
 
-    lens = stage.locator(".reference-lens-object")
-    before_box = await lens.bounding_box()
-    await _agent_value(page, "Lens horizontal position", 15)
-    await expect(page.get_by_role("slider", name="Lens horizontal position", exact=True)).to_have_value("15")
-    await _painted(page)
-    after_box = await lens.bounding_box()
-    assert before_box and after_box and abs(before_box["x"] - after_box["x"]) > 5, "Agent position change did not move the rendered lens"
-    await _agent_value(page, "Lens horizontal position", 50)
-    await _agent_value(page, "Lens vertical position", 70)
-    await expect(page.get_by_role("slider", name="Lens vertical position", exact=True)).to_have_value("70")
+    async def capture(label):
+        return {kind: await page.screenshot(path=str(output / f"gpu-{label}-{kind}.png"), clip=box, animations="disabled") for kind, box in probes.items()}
 
-    canvas = stage.locator(".reference-lens-canvas")
-    result = {"status": status, "message": detail, "controlsUsable": True, "agentPositionVerified": True, "gpuRendered": False}
-    if status == "ready":
-        await expect(canvas).to_be_visible()
-        await _agent_refresh(page)
-        await _agent_value(page, "Lens refraction strength", 1)
+    on = await capture("on")
+    hide = await page.add_style_tag(content="canvas[data-liquid-canvas] { visibility: hidden !important; }")
+    try:
         await _painted(page)
-        before_png = await canvas.screenshot(path=str(output / "lens-minimum.png"), animations="disabled")
-        await _agent_value(page, "Lens refraction strength", 60)
-        await expect(page.get_by_role("slider", name="Lens refraction strength", exact=True)).to_have_value("60")
-        await _painted(page)
-        after_png = await canvas.screenshot(path=str(output / "lens-maximum.png"), animations="disabled")
-        await expect(stage).to_have_attribute("data-lens-status", "ready")
-        width, height, before_pixels = _png_rgb(before_png)
-        after_width, after_height, after_pixels = _png_rgb(after_png)
-        assert (width, height) == (after_width, after_height), "Probe changed canvas geometry"
-        assert width >= 150 and height >= 50, "Canvas rendered at an unexpectedly small size"
-        differences = [abs(first - second) for first, second in zip(before_pixels, after_pixels)]
-        changed = sum(max(differences[index:index + 3]) > 8 for index in range(0, len(differences), 3))
-        fraction = changed / (width * height)
-        mean_difference = sum(differences) / len(differences)
-        assert max(after_pixels) - min(after_pixels) > 40, "GPU screenshot is effectively uniform"
-        assert fraction > 0.01 and mean_difference > 0.25, f"Optical input did not change rendered pixels: {fraction=}, {mean_difference=}"
-        result.update({"gpuRendered": True, "pixelProbe": {"width": width, "height": height, "changedFraction": round(fraction, 4), "meanChannelDifference": round(mean_difference, 3)}, "screenshots": [str(output / "lens-minimum.png"), str(output / "lens-maximum.png")]})
-    else:
-        await expect(canvas).not_to_be_visible()
-        await expect(page.get_by_role("button", name="Refresh captured backdrop", exact=True)).to_be_disabled()
-        result["limitation"] = "Controls verified; GPU rendering was unavailable or suppressed by a system preference."
-    await page.get_by_role("button", name="Reset lens", exact=True).click()
-    await expect(page.get_by_role("slider", name="Lens horizontal position", exact=True)).to_have_value("50")
-    await expect(page.get_by_role("slider", name="Lens vertical position", exact=True)).to_have_value("46")
-    await expect(page.get_by_role("slider", name="Lens refraction strength", exact=True)).to_have_value("30")
+        off = await capture("off")
+    finally:
+        await hide.evaluate("node => node.remove()")
     await _painted(page)
-    await stage.screenshot(path=str(output / "reference-stage.png"), animations="disabled")
-    result["stageScreenshot"] = str(output / "reference-stage.png")
-    if require_gpu:
-        assert result["gpuRendered"], f"GPU verification required, but the stage reported {status}: {detail}"
+    contribution = {kind: _difference(off[kind], on[kind], border_only=kind == "panel") for kind in probes}
+    for kind, difference in contribution.items():
+        assert difference["changedFraction"] > 0.005 and difference["meanChannelDifference"] > 0.15, f"GPU has no meaningful contribution on actual {kind} rectangle: {difference}"
+
+    await _configure(page, strength=1)
+    low = await capture("strength-1")
+    await _configure(page, strength=60)
+    high = await capture("strength-60")
+    strength = {kind: _difference(low[kind], high[kind], border_only=kind == "panel") for kind in probes}
+    responding = [kind for kind, difference in strength.items() if difference["changedFraction"] > 0.002 and difference["meanChannelDifference"] > 0.05]
+    assert len(responding) >= 2, f"Refraction strength did not affect multiple actual surfaces: {strength}"
+
+    capture_change = await _configure(page, backdrop="Grid")
+    grid = await capture("grid")
+    backdrop = {kind: _difference(high[kind], grid[kind], border_only=kind == "panel") for kind in probes}
+    assert capture_change["captureAfter"] > capture_change["captureBefore"], "Backdrop changed without a completed texture capture"
+    for kind, difference in backdrop.items():
+        assert difference["changedFraction"] > 0.01 and difference["meanChannelDifference"] > 0.25, f"Changed backdrop did not reach the actual {kind} surface: {difference}"
+    await page.screenshot(path=str(output / "gpu-effect-overview.png"), full_page=True, animations="disabled")
+    await expect(root).to_have_attribute("data-liquid-status", "ready")
+    await _configure(page, strength=30, backdrop="Coast")
+    result.update({
+        "gpuRendered": True,
+        "surfaceCount": surface_count,
+        "probeRectangles": probes,
+        "gpuContribution": contribution,
+        "strengthChanges": strength,
+        "strengthResponders": responding,
+        "backdropChanges": backdrop,
+        "captureRevision": capture_change,
+        "screenshots": sorted(path.name for path in output.glob("gpu-*.png")),
+    })
     return result

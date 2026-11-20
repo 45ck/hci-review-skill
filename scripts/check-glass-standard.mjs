@@ -5,306 +5,114 @@ import { fileURLToPath } from "node:url";
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const packageDir = join(root, "packages/liquid-glass");
 const galleryDir = join(root, "docs/hci/examples/liquid-glass");
-const expected =
-  `accordion alert-dialog autocomplete avatar button calendar carousel checkbox collapsible color-picker combobox command date-input date-picker dialog drawer field file-input hover-card image-cropper input label listbox menu menubar meter navigation-menu number-input otp-input pagination password-input popover preferences progress radio rating resizable scroll-area segmented-control select separator slider switch tabs textarea time-input timeline toast toggle token-input toolbar tooltip tree trigger-menu waterfall`.split(
-    " ",
-  );
+const expected = "accordion alert-dialog autocomplete avatar button calendar carousel checkbox collapsible color-picker combobox command date-input date-picker dialog drawer field file-input hover-card image-cropper input label listbox menu menubar meter navigation-menu number-input otp-input pagination password-input popover preferences progress radio rating resizable scroll-area segmented-control select separator slider switch tabs textarea time-input timeline toast toggle token-input toolbar tooltip tree trigger-menu waterfall".split(" ");
 const errors = [];
-const check = (condition, message) => {
-  if (!condition) errors.push(message);
-};
+const check = (condition, message) => { if (!condition) errors.push(message); };
 const read = (path) => {
-  if (!existsSync(path)) {
-    errors.push(`Missing ${relative(root, path)}`);
-    return "";
-  }
+  if (!existsSync(path)) { errors.push(`Missing ${relative(root, path)}`); return ""; }
   return readFileSync(path, "utf8");
 };
 const json = (path) => {
-  try {
-    return JSON.parse(read(path));
-  } catch (error) {
-    errors.push(`Invalid JSON in ${relative(root, path)}: ${error.message}`);
-    return {};
-  }
+  try { return JSON.parse(read(path)); }
+  catch (error) { errors.push(`Invalid JSON in ${relative(root, path)}: ${error.message}`); return {}; }
 };
-const filesUnder = (directory) =>
-  existsSync(directory)
-    ? readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
-        const path = join(directory, entry.name);
-        return entry.isDirectory() ? filesUnder(path) : [path];
-      })
-    : [];
-
-const checkMaterialScope = (source, name) => {
-  const css = source.replace(/\/\*[\s\S]*?\*\//g, "");
-  const stack = [];
-  let start = 0;
-  let quote = "";
-  for (let index = 0; index < css.length; index++) {
-    const char = css[index];
-    if (quote) {
-      if (char === "\\") index++;
-      else if (char === quote) quote = "";
-      continue;
-    }
-    if (char === '"' || char === "'") {
-      quote = char;
-      continue;
-    }
-    if (char === "{") {
-      const selector = css.slice(start, index).trim();
-      const enabledRoot =
-        /^:root\[data-qg-material-enabled=(?:"true"|'true'|true)\](?:\[[^\]]+\])*$/.test(
-          selector,
-        );
-      const scoped = enabledRoot || stack.at(-1) === true;
-      if (!selector.startsWith("@")) {
-        check(scoped, `${name}: material selector is outside the enabled root: ${selector}`);
-      }
-      stack.push(scoped);
-      start = index + 1;
-    } else if (char === "}") {
-      stack.pop();
-      start = index + 1;
-    } else if (char === ";") {
-      start = index + 1;
-    }
-  }
-  check(stack.length === 0 && !quote, `${name}: incomplete CSS block or string.`);
-};
+const filesUnder = (directory) => existsSync(directory)
+  ? readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+      const path = join(directory, entry.name);
+      return entry.isDirectory() ? filesUnder(path) : [path];
+    }) : [];
 
 const manifest = json(join(packageDir, "component-manifest.json"));
 const pkg = json(join(packageDir, "package.json"));
 const gallery = json(join(galleryDir, "package.json"));
 const components = manifest.components ?? [];
 const ids = components.map((component) => component.id);
-check(
-  ids.length === expected.length,
-  `Catalogue must contain ${expected.length} families, found ${ids.length}.`,
-);
+check(ids.length === expected.length, `Catalogue must contain ${expected.length} families; found ${ids.length}.`);
 check(new Set(ids).size === ids.length, "Catalogue IDs must be unique.");
-check(
-  expected.every((id) => ids.includes(id)),
-  `Missing catalogue families: ${expected.filter((id) => !ids.includes(id)).join(", ")}`,
-);
-check(
-  ids.every((id) => expected.includes(id)),
-  `Unreviewed catalogue families: ${ids.filter((id) => !expected.includes(id)).join(", ")}`,
-);
-check(
-  /^[a-f0-9]{40}$/.test(manifest.upstreamCommit ?? ""),
-  "Catalogue must retain a full upstream reference commit.",
-);
-check(
-  manifest.sdkVersion === "0.1.0-beta.13",
-  "Review catalogue and examples explicitly before updating the pinned UI SDK beta.",
-);
-check(
-  pkg.private === true && gallery.private === true,
-  "Material and gallery packages must remain private workspace packages.",
-);
+check(expected.every((id) => ids.includes(id)) && ids.every((id) => expected.includes(id)), "Catalogue families differ from the reviewed 55-family inventory.");
+check(/^[a-f0-9]{40}$/.test(manifest.upstreamCommit ?? ""), "Retain a full upstream reference commit.");
+check(manifest.sdkVersion === "0.1.0-beta.13", "Review the catalogue and tests explicitly before updating the SDK pin.");
+check(pkg.private === true && gallery.private === true, "Kit and demo must remain private workspace packages.");
 for (const name of ["@ui-sdk/core", "@ui-sdk/react"]) {
-  check(
-    pkg.dependencies?.[name] === manifest.sdkVersion,
-    `${name} must be pinned to the manifest SDK version.`,
-  );
-  check(
-    gallery.dependencies?.[name] === manifest.sdkVersion,
-    `The workbench must depend directly on ${name}, pinned to the manifest SDK version.`,
-  );
-  check(
-    json(join(root, "node_modules", name, "package.json")).version === manifest.sdkVersion,
-    `Installed ${name} must match the pinned SDK version; run npm ci.`,
-  );
+  check(pkg.dependencies?.[name] === manifest.sdkVersion, `Package ${name} must match the manifest pin.`);
+  check(gallery.dependencies?.[name] === manifest.sdkVersion, `Demo ${name} must match the manifest pin.`);
+  check(json(join(root, "node_modules", name, "package.json")).version === manifest.sdkVersion, `Installed ${name} differs from the lock; run npm ci.`);
 }
-check(
-  gallery.dependencies?.["@quantitative-hci/liquid-glass"],
-  "The workbench must retain its optional material comparison package.",
-);
-for (const path of [
-  "node_modules/@ui-sdk/core/skills/ui-sdk/SKILL.md",
-  "node_modules/@ui-sdk/react/docs/llms.txt",
-  "node_modules/@ui-sdk/react/docs/agents.md",
-]) {
+check(gallery.dependencies?.["@quantitative-hci/liquid-glass"], "The demo must consume the shared kit package.");
+check(pkg.exports?.["./webgpu"] === "./src/webgpu.tsx", "Export the reusable WebGPU provider from the package.");
+check(pkg.exports?.["./kit.css"] === "./src/kit.css", "Export the shared kit stylesheet.");
+for (const path of ["node_modules/@ui-sdk/core/skills/ui-sdk/SKILL.md", "node_modules/@ui-sdk/react/docs/llms.txt", "node_modules/@ui-sdk/react/docs/agents.md"]) {
   check(existsSync(join(root, path)), `Missing installed official SDK guidance: ${path}.`);
 }
 
-const demoFiles = filesUnder(join(galleryDir, "src")).filter((path) =>
-  /demos.*\.(?:tsx?|jsx?)$/.test(path),
-);
-const demos = demoFiles.map((path) => read(path)).join("\n");
+const sourceFiles = filesUnder(join(galleryDir, "src")).filter((path) => /\.(?:tsx?|jsx?)$/.test(path));
+const demos = sourceFiles.filter((path) => /demos.*\.(?:tsx?|jsx?)$/.test(path)).map(read).join("\n");
 for (const id of expected) {
   const component = components.find((entry) => entry.id === id);
-  check(
-    component?.name && component?.category,
-    `${id}: name and category are required.`,
-  );
-  check(
-    component?.exportPath === `@quantitative-hci/liquid-glass/${id}`,
-    `${id}: preserve its existing compatibility exportPath.`,
-  );
-  const source = read(join(packageDir, "src/components", `${id}.ts`));
-  check(
-    new RegExp(`^export\\s+\\*\\s+from\\s+["']@ui-sdk/react/${id}["'];?$`).test(source.trim()),
-    `${id}: compatibility subpath must remain a plain SDK re-export, without a behavior fork.`,
-  );
+  check(component?.name && component?.category, `${id}: name and category are required.`);
+  check(component?.exportPath === `@quantitative-hci/liquid-glass/${id}`, `${id}: preserve the compatibility exportPath.`);
+  const alias = read(join(packageDir, "src/components", `${id}.ts`));
+  check(new RegExp(`^export\\s+\\*\\s+from\\s+["']@ui-sdk/react/${id}["'];?$`).test(alias.trim()), `${id}: compatibility subpath must remain a plain SDK re-export.`);
   const escaped = id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const key = new RegExp(
-    `(?:["']${escaped}["']|\\b${escaped})\\s*:\\s*[A-Z][A-Za-z0-9_]*`,
-  );
-  check(key.test(demos), `${id}: add a real component entry to a demo map.`);
-  check(
-    new RegExp(`["']@ui-sdk/react/${id}["']`).test(demos),
-    `${id}: the workbench specimen must import the upstream component directly.`,
-  );
+  check(new RegExp(`(?:["']${escaped}["']|\\b${escaped})\\s*:\\s*[A-Z][A-Za-z0-9_]*`).test(demos), `${id}: add a real demo-map entry.`);
+  check(new RegExp(`["']@ui-sdk/react/${id}["']`).test(demos), `${id}: import the real SDK component directly.`);
 }
-
-for (const path of filesUnder(join(galleryDir, "src")).filter((file) =>
-  /\.(?:tsx?|jsx?)$/.test(file),
-)) {
+for (const path of sourceFiles) {
   const source = read(path);
-  check(
-    !/["']@quantitative-hci\/liquid-glass\/(?!styles\.css["']|tokens\.css["'])/.test(source),
-    `${relative(root, path)}: use direct SDK component/helper imports; material aliases are for compatibility.`,
-  );
-  check(
-    !/["']@ui-sdk\/react["']/.test(source) && !source.includes("@ui-sdk/core/internal/"),
-    `${relative(root, path)}: use documented per-component SDK entries, not root or internal imports.`,
-  );
+  check(!/["']@ui-sdk\/react["']/.test(source) && !source.includes("@ui-sdk/core/internal/"), `${relative(root, path)}: use documented SDK entries.`);
+  check(!/["']@quantitative-hci\/liquid-glass\/(?!webgpu["']|material["']|kit\.css["']|styles\.css["']|tokens\.css["'])/.test(source), `${relative(root, path)}: use direct SDK primitives and the shared material/provider APIs.`);
 }
 
 const main = read(join(galleryDir, "src/main.tsx"));
 const bridge = read(join(galleryDir, "src/agent-bridge.ts"));
-const inspector = read(join(galleryDir, "src/agent-inspector.tsx"));
-check(main.includes("@ui-sdk/core/web.css"), "The workbench must retain the upstream baseline stylesheet.");
-check(
-  /\[frosted,\s*setFrosted\]\s*=\s*useState\(false\)/.test(main) &&
-    /<GlassProvider\s+enabled=\{/.test(main),
-  "The workbench must start in the upstream baseline and enable Frosted CSS explicitly.",
-);
-check(
-  main.includes("data-catalogue-id") &&
-    (main.match(/\bdata-component-id\s*=/g) ?? []).length === 1 &&
-    (main.match(/<Demo\b/g) ?? []).length === 1,
-  "Keep the full discoverable catalogue and one selected specimen render site; verify mounted counts in the browser.",
-);
-check(
-  main.includes("<AgentInspector") && main.includes("<ReferenceLens"),
-  "The workbench must expose the live inspector and separate reference optics study.",
-);
-check(
-  bridge.includes("@ui-sdk/react/agent") &&
-    /\bcreateAgent\s*\(/.test(bridge) &&
-    /\bregisterTools\s*\(/.test(bridge) &&
-    /\ballow\s*:/.test(bridge),
-  "Use the official createAgent/registerTools bridge with an explicit action policy.",
-);
+const provider = read(join(packageDir, "src/webgpu.tsx"));
+const engine = read(join(packageDir, "src/webgpu/engine.ts"));
+const renderer = read(join(packageDir, "src/webgpu/renderer.ts"));
+const surfaces = read(join(packageDir, "src/webgpu/surfaces.ts"));
+const shader = read(join(packageDir, "src/webgpu/shader.ts"));
+const kit = read(join(packageDir, "src/kit.css"));
+check(main.includes("@quantitative-hci/liquid-glass/webgpu") && main.includes("<LiquidGlassProvider"), "The demo must use the reusable GPU provider by default.");
+check(main.includes("@quantitative-hci/liquid-glass/kit.css") && main.includes("@ui-sdk/core/web.css"), "Load the shared kit theme over SDK base structure.");
+check(main.includes('useState("overview")') && main.includes('data-kit-view="overview"'), "Start with the usable component overview.");
+check(main.includes("data-catalogue-id") && main.includes("data-component-id") && main.includes("<Demo"), "Retain all family choices and the selected real specimen.");
+for (const name of ["button", "input", "panel"]) {
+  check(main.includes(`data-optics-probe="${name}"`) || main.includes(`probe="${name}"`), `Keep an actual ${name} surface probe for optical verification.`);
+}
+check(!/AgentInspector|ReferenceLens|agent-inspector|reference-lens/.test(main), "Do not ship the former workbench/inspector/lens in the kit interface.");
+check(!existsSync(join(galleryDir, "public/refraction-lab.html")), "Remove the separate public refraction lab from the hosted build.");
+check(!existsSync(join(galleryDir, "src/agent-inspector.tsx")), "Remove the unused diagnostic inspector and command console.");
+check(provider.includes("LiquidGlassProvider") && provider.includes("useLiquidGlass"), "Export the shared provider and its status/refresh hook.");
+for (const attribute of ["data-liquid-glass-kit", "data-liquid-status", "data-liquid-surface-count", "data-liquid-render-revision", "data-liquid-capture-revision"]) {
+  check((provider + engine).includes(attribute), `Missing renderer evidence contract: ${attribute}.`);
+}
+check((provider + engine).includes("data-liquid-canvas") && surfaces.includes("data-liquid-glass"), "Use actual registered surfaces and identifiable GPU canvases.");
+check(engine.includes("requestAdapter") && /createRenderPipeline/.test(renderer) && shader.includes("@fragment"), "Use an actual WebGPU pipeline, not a CSS-only substitute.");
+check(engine.includes("html2canvas") && engine.includes("config.backdrop"), "Keep capture bounded to the supplied backdrop.");
+check(kit.includes('data-liquid-glass-kit="true"'), "Scope the kit theme to an active provider.");
+for (const preference of ["prefers-reduced-motion", "prefers-reduced-transparency", "forced-colors", "prefers-contrast"]) {
+  check((kit + provider + engine).includes(preference), `Preserve the ${preference} policy.`);
+}
+check(kit.includes(":focus-visible") && kit.includes("data-invalid") && kit.includes('data-variant="destructive"'), "Retain focus, invalid and destructive semantics in the kit theme.");
+check(bridge.includes("@ui-sdk/react/agent") && /\bcreateAgent\s*\(/.test(bridge) && /\bregisterTools\s*\(/.test(bridge) && /allow\s*:/.test(bridge), "Keep the official SDK bridge with an explicit action policy.");
+check(bridge.includes("quantitativeHciAgent"), "Retain the private browser verification facade.");
 for (const method of ["snapshot", "query", "act", "subscribe"]) {
-  check(
-    new RegExp(`\\.${method}\\b`).test(bridge),
-    `The restricted browser agent facade must expose the SDK ${method} method.`,
-  );
+  check(new RegExp(`\\.${method}\\b`).test(bridge), `Expose the actual SDK ${method} method in the facade.`);
 }
-check(bridge.includes("quantitativeHciAgent"), "Retain the documented browser agent facade.");
-check(
-  /\.snapshot\s*\(/.test(inspector) && /\.subscribe\s*\(/.test(inspector),
-  "The live inspector must read and subscribe to the actual SDK bridge.",
-);
-const browserChecks = read(join(root, "tests/test_glass_browser.py"));
-check(
-  ["quantitativeHciAgent", "snapshot", "query", "act", "data-catalogue-id", "data-component-id"].every(
-    (contract) => browserChecks.includes(contract),
-  ),
-  "The browser suite must cover catalogue discovery, one mounted specimen and the real snapshot/query/act contract.",
-);
-
-const tokens = read(join(packageDir, "src/tokens.css"));
-const styles = read(join(packageDir, "src/styles.css"));
-const material = read(join(packageDir, "src/material.tsx"));
-checkMaterialScope(tokens, "tokens.css");
-checkMaterialScope(styles, "styles.css");
-check(
-  /--qg-[\w-]+\s*:/.test(tokens),
-  "Reusable material tokens must live in tokens.css under the --qg- namespace.",
-);
-for (const feature of [
-  "prefers-reduced-motion",
-  "prefers-reduced-transparency",
-  "prefers-contrast",
-  "forced-colors",
-]) {
-  check(
-    (styles + tokens).includes(feature),
-    `Add a CSS fallback for ${feature}.`,
-  );
+const browser = read(join(root, "tests/test_glass_browser.py"));
+const agentTests = read(join(root, "tests/glass_agent_contract.py"));
+const opticsTests = read(join(root, "tests/glass_optics_contract.py"));
+check(["data-catalogue-id", "data-component-id", "data-kit-view", "software_gpu"].every((term) => browser.includes(term)), "Browser checks must cover the kit overview, every family and the reviewed GPU path.");
+check(["quantitativeHciAgent", "snapshot", "query", "act", "subscribe", "[redacted]"].every((term) => agentTests.includes(term)), "Verify real SDK reads/actions, subscriptions and secret redaction.");
+check(["data-optics-probe", "data-liquid-canvas", "data-liquid-capture-revision", "Refraction strength", "Backdrop"].every((term) => opticsTests.includes(term)), "Verify actual control rectangles, GPU contribution, strength changes and backdrop capture.");
+const notice = read(join(packageDir, "src/webgpu/NOTICE.md"));
+check(notice.includes("arya3d/liquid-glass-webgpu") && notice.includes("90cb73931bbaf38bd54b3263cd3fda1daef1869c"), "Document the exact reference shader and its local adaptations.");
+for (const path of ["packages/liquid-glass/LICENSES/arya3d-MIT.txt", "docs/hci/examples/liquid-glass/public/licenses/arya3d-liquid-glass-MIT.txt", "THIRD_PARTY_NOTICES.md", "docs/hci/standards/liquid-glass.md"]) {
+  check(existsSync(join(root, path)), `Retain ${path}.`);
 }
-for (const attribute of [
-  "data-qg-material-enabled",
-  "data-qg-theme",
-  "data-qg-material",
-  "data-qg-motion",
-  "data-qg-contrast",
-]) {
-  check(
-    (styles + tokens + material).includes(attribute),
-    `Missing material preference contract: ${attribute}.`,
-  );
-}
-check(
-  material.includes("matchMedia"),
-  "The material provider must resolve system preferences.",
-);
-check(
-  /enabled\??:\s*boolean/.test(material) && material.includes("!enabled"),
-  "GlassProvider must support disabling its material side effects.",
-);
-check(
-  /refraction:\s*false/.test(material) && !material.includes("feTurbulence"),
-  "Frosted CSS must not enable or present turbulent noise as optical refraction.",
-);
-for (const semantic of ['data-variant="solid"', 'data-variant="destructive"', "data-invalid"]) {
-  check(styles.includes(semantic), `Preserve the optional material's semantic state: ${semantic}.`);
-}
-const layout = read(join(galleryDir, "src/sdk-layout.css"));
-check(
-  !layout.includes("--qg-") && layout.includes("--ui-") && main.includes("./sdk-layout.css"),
-  "The Timeline/Waterfall base layout shim must use neutral upstream tokens and load without the material.",
-);
-const reference = read(join(galleryDir, "src/reference-optics/README.md"));
-check(
-  reference.includes("arya3d/liquid-glass-webgpu") &&
-    reference.includes("90cb73931bbaf38bd54b3263cd3fda1daef1869c"),
-  "Document the exact optical reference source separately from local adaptations.",
-);
-check(
-  existsSync(join(galleryDir, "public/licenses/arya3d-liquid-glass-MIT.txt")),
-  "Ship the reference shader's MIT attribution notice.",
-);
-check(
-  material.includes("qg.preferences.v1"),
-  "Persist requested preferences under the versioned preference key.",
-);
-check(
-  styles.includes(":focus-visible"),
-  "The material must preserve a visible keyboard focus treatment.",
-);
-check(
-  existsSync(join(root, "docs/hci/standards/liquid-glass.md")),
-  "The checked material standard must be documented.",
-);
-check(
-  existsSync(join(root, "THIRD_PARTY_NOTICES.md")),
-  "Retain notices for the upstream UI SDK dependency.",
-);
 
 if (errors.length) {
-  process.stderr.write(
-    `UI SDK workbench source contract failed (${errors.length}):\n${errors.map((error) => `- ${error}`).join("\n")}\n`,
-  );
+  process.stderr.write(`Liquid Glass kit source contract failed (${errors.length}):\n${errors.map((error) => `- ${error}`).join("\n")}\n`);
   process.exitCode = 1;
 } else {
-  process.stdout.write(
-    `UI SDK workbench source contract passed: ${expected.length} families, pinned direct imports, agent bridge, optional scoped material and source attribution. Browser behavior and optical fidelity require separate evidence.\n`,
-  );
+  process.stdout.write(`Liquid Glass kit source contract passed: ${expected.length} families, pinned SDK behaviour, shared WebGPU material, private agent bridge and source attribution. Rendering requires the browser pixel checks.\n`);
 }

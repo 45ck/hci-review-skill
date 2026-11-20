@@ -16,7 +16,7 @@ Lucide icons are provided under the [ISC licence](https://github.com/lucide-icon
 
 ## Reference WebGPU shader
 
-The refraction study includes source from [arya3d/liquid-glass-webgpu](https://github.com/arya3d/liquid-glass-webgpu), commit `90cb73931bbaf38bd54b3263cd3fda1daef1869c`, copyright 2026 arya3d, under the MIT licence. The WGSL shader is retained unchanged; the capture and renderer lifecycle are adapted for an isolated local scene. The complete notice ships at `docs/hci/examples/liquid-glass/public/licenses/arya3d-liquid-glass-MIT.txt`.
+The kit adapts the signed-distance shape, refraction, colour dispersion and Fresnel terms from [arya3d/liquid-glass-webgpu](https://github.com/arya3d/liquid-glass-webgpu), commit `90cb73931bbaf38bd54b3263cd3fda1daef1869c`, copyright 2026 arya3d, under the MIT licence. The local renderer instances the adapted shader across actual SDK control and panel bounds, shares its GPU pipeline and backdrop texture, and uses local canvases for top-layer popups. It is not an unchanged shader in an isolated lens scene. The complete notice is retained at `packages/liquid-glass/LICENSES/arya3d-MIT.txt` and ships at `docs/hci/examples/liquid-glass/public/licenses/arya3d-liquid-glass-MIT.txt`.
 
 `html2canvas-pro` version `2.6.3` is provided under MIT, copyright Niklas von Hertzen and contributors. Its notice is retained with the distribution. WebGPU TypeScript types are development-only and retain their upstream licence.
 

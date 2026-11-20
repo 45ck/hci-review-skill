@@ -1,6 +1,6 @@
-# UI SDK demo lab
+# Archived UI SDK settings demo guide
 
-The [interactive demo lab](https://quantitative-hci-ui-sdk-demos.ajax414655.chatgpt.site) makes the completed Quantitative HCI pilot inspectable without opening a developer console. The hosted copy is private to its owner. Anyone with repository access can [run the example locally](../examples/ui-sdk-pilot/README.md).
+The former five-view settings demo is retained as a reproducible local source fixture. The hosted site now serves the Liquid Glass kit. Run the archived example using its [local instructions](../examples/ui-sdk-pilot/README.md); its recorded results remain unchanged.
 
 ## Start here
 
@@ -14,11 +14,11 @@ The [interactive demo lab](https://quantitative-hci-ui-sdk-demos.ajax414655.chat
 
 | View | Direct link | Purpose |
 | --- | --- | --- |
-| Compare | [Open comparison](https://quantitative-hci-ui-sdk-demos.ajax414655.chatgpt.site/#compare) | Independently usable native and SDK forms, with full-page links |
-| Agent lab | [Open agent lab](https://quantitative-hci-ui-sdk-demos.ajax414655.chatgpt.site/#agent) | Real structured component inspection and one-step-per-request task replay |
-| Read-only | [Open read-only scenario](https://quantitative-hci-ui-sdk-demos.ajax414655.chatgpt.site/#readonly) | Disabled controls and unchanged state after an attempted bridge mutation |
-| Rejected change | [Open cancellation scenario](https://quantitative-hci-ui-sdk-demos.ajax414655.chatgpt.site/#rejection) | Expected application cancellation of 365-day retention |
-| Results | [Open recorded evidence](https://quantitative-hci-ui-sdk-demos.ajax414655.chatgpt.site/#results) | All 162 routine attempts, all 33 checks, original captures, metrics and source files |
+| Compare | Local `/#compare` | Independently usable native and SDK forms, with full-page links |
+| Agent lab | Local `/#agent` | Real structured component inspection and one-step-per-request task replay |
+| Read-only | Local `/#readonly` | Disabled controls and unchanged state after an attempted bridge mutation |
+| Rejected change | Local `/#rejection` | Expected application cancellation of 365-day retention |
+| Results | Local `/#results` | All 162 routine attempts, all 33 checks, original captures, metrics and source files |
 
 ## Six tasks and expected outcomes
 

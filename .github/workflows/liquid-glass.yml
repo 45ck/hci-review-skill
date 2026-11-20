@@ -1,4 +1,4 @@
-name: UI SDK workbench
+name: WebGPU Liquid Glass kit
 
 on:
   pull_request:
@@ -10,6 +10,8 @@ on:
       - 'packages/liquid-glass/**'
       - 'docs/hci/examples/liquid-glass/**'
       - 'docs/hci/standards/liquid-glass.md'
+      - 'docs/hci/examples/README.md'
+      - 'THIRD_PARTY_NOTICES.md'
       - 'scripts/check-glass-standard.mjs'
       - 'tests/test_glass_browser.py'
       - 'tests/glass_agent_contract.py'
@@ -48,7 +50,7 @@ jobs:
         run: |
           python -m pip install playwright==1.65.2
           python -m playwright install --with-deps chromium
-      - name: Exercise the production gallery
+      - name: Verify real controls and GPU pixels
         shell: bash
         run: |
           mkdir -p test-results

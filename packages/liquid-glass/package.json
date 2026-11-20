@@ -9,13 +9,17 @@
   "exports": {
     ".": "./src/index.ts",
     "./material": "./src/material.tsx",
+    "./webgpu": "./src/webgpu.tsx",
+    "./kit.css": "./src/kit.css",
     "./styles.css": "./src/styles.css",
     "./tokens.css": "./src/tokens.css",
     "./*": "./src/components/*.ts"
   },
   "dependencies": {
     "@ui-sdk/core": "0.1.0-beta.13",
-    "@ui-sdk/react": "0.1.0-beta.13"
+    "@ui-sdk/react": "0.1.0-beta.13",
+    "@webgpu/types": "0.1.66",
+    "html2canvas-pro": "2.6.3"
   },
   "peerDependencies": {
     "react": ">=19",

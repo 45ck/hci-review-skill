@@ -17,13 +17,13 @@
 
 A structured HCI and UX review skill pack for prototypes, flows, interface systems, research planning, and usability evaluation. It focuses on models, journeys, terminology, state handling, consistency, failure paths, heuristics, cognitive walkthroughs, personas, task analysis, prototype planning, and usability studies.
 
-## UI SDK standard and workbench
+## Liquid Glass UI kit
 
-Use [Vercel UI SDK](https://github.com/vercel-labs/ui) directly for component behaviour and agent semantics. Give controls clear names, initialize the real `createAgent` bridge, and verify actions against the rendered state. Follow the official UI SDK skill and the installed version's documentation. An existing product design system still takes precedence for appearance.
+Use the shared **WebGPU Liquid Glass kit** for new high-fidelity internal interfaces without an established product design system. Real [Vercel UI SDK](https://github.com/vercel-labs/ui) controls retain their behaviour while a shared renderer applies the reference-based material to actual buttons, fields, panels and popups.
 
-**[Open the UI SDK workbench](https://quantitative-hci-ui-sdk-demos.ajax414655.chatgpt.site/glass/)** (owner access): explore all **55 component families**, with one mounted specimen at a time, a searchable catalogue and a live agent-state inspector. Compare upstream styles with optional **Frosted CSS**, or open **Video refraction** for the original reference shader over a captured local scene.
+**[Open the Liquid Glass UI kit](https://quantitative-hci-ui-sdk-demos.ajax414655.chatgpt.site/)** (owner access): use the default overview, adjust refraction and colour dispersion in Material settings, choose a backdrop, and explore all **55 component families** through the searchable catalogue.
 
-CSS blur is not the video's GPU refraction. The former default “Liquid Glass” styling and decorative turbulence were insufficient grounds for calling the interface a replication. Glass is now an explicit appearance experiment. The [implementation standard](docs/hci/standards/liquid-glass.md), [agent instructions](AGENTS.md), pinned dependency versions and browser contract checks keep that distinction concrete.
+The [implementation standard](docs/hci/standards/liquid-glass.md), [agent instructions](AGENTS.md), pinned SDK packages and browser contracts define the integration. GPU tests compare real control rectangles, strength changes, backdrop recapture and top-layer popups. The SDK agent bridge remains beneath the UI for verification; the hosted kit has no diagnostic workbench, inspector or settings pilot.
 
 ```bash
 npm ci --ignore-scripts
@@ -31,7 +31,7 @@ npm run glass:dev
 npm run glass:verify
 ```
 
-The [workbench guide](docs/hci/examples/liquid-glass/README.md) explains browser tools, the fallback SDK command console, optical limitations and verification. The [optional material package](packages/liquid-glass/README.md) retains compatibility imports for existing examples. The earlier toolbar study below remains a separate fixture with its own evidence.
+Read the [kit guide](docs/hci/examples/liquid-glass/README.md) for rendering boundaries, fallbacks and verification, and the [reusable package](packages/liquid-glass/README.md) for integration. The earlier toolbar study below remains an independent fixture with its own evidence.
 
 ![Quantitative HCI example with a chromatic Liquid Glass toolbar rim and a scorecard showing a 19 ms median improvement](assets/spotlight-glass-preview.webp)
 
@@ -59,7 +59,7 @@ The [UI SDK settings pilot](docs/hci/examples/ui-sdk-pilot/README.md) compares n
 
 [Measured pilot results](docs/hci/models/ui-sdk-pilot-results.md): 162/162 scripted tasks and 33/33 additional checks passed. The native reference was faster and smaller; no model-token, development-speed or human-usability gain was measured.
 
-[Open the interactive UI SDK demo lab](https://quantitative-hci-ui-sdk-demos.ajax414655.chatgpt.site) (owner access): compare the forms, replay all six tasks through the real agent bridge, try read-only and cancellation cases, and explore every recorded attempt. The [demo guide](docs/hci/models/ui-sdk-demo-guide.md) also includes local run instructions.
+The former settings demo lab is archived as a local source fixture. Its [demo guide](docs/hci/models/ui-sdk-demo-guide.md) preserves reproduction instructions; the hosted site now serves the Liquid Glass kit.
 
 ## Included skills
 

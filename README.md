@@ -21,6 +21,19 @@ A structured HCI and UX review skill pack for prototypes, flows, interface syste
 
 Apple-inspired Liquid Glass is the default for new high-fidelity Quantitative HCI examples and prototypes without an established design system. Use frosted glass and a subtle cyan-to-rose border spotlight on controls. Use solid, quiet surfaces for charts, tables and reading.
 
+**[Open the Liquid Glass component library](https://quantitative-hci-ui-sdk-demos.ajax414655.chatgpt.site/glass/)** (owner access): try all **55 component families** with regular glass, clear glass and solid materials, light/dark appearance, adjustable frost and optical refraction. Search the catalogue, copy component imports, and compare accessibility preferences in the same interface.
+
+The internal [`@quantitative-hci/liquid-glass` package](packages/liquid-glass/README.md) supplies the shared material and explicit component imports on top of [Vercel UI SDK](https://github.com/vercel-labs/ui), pinned to `0.1.0-beta.13`. Use it as the default implementation for new prototypes; keep an existing product design system where one exists. The [implementation standard](docs/hci/standards/liquid-glass.md), root [agent instructions](AGENTS.md), complete component manifest and CI checks keep future work aligned.
+
+```bash
+npm ci
+npm run glass:dev
+# TypeScript, component coverage and production build
+npm run glass:verify
+```
+
+See the [gallery guide](docs/hci/examples/liquid-glass/README.md) for package imports, local development and browser checks. The earlier toolbar study below remains a separate measured fixture.
+
 ![Quantitative HCI example with a chromatic Liquid Glass toolbar rim and a scorecard showing a 19 ms median improvement](assets/spotlight-glass-preview.webp)
 
 Open [the example HTML](docs/hci/examples/spotlight-glass.html) locally to compare Glass and Solid on the same toolbar. The [design guidance](docs/hci/examples/README.md) covers surface selection, what to measure and how to run the browser audit. [Apple materials](https://developer.apple.com/design/human-interface-guidelines/materials) · [21st.dev border-only Spotlight](https://21st.dev/?q=spotlight+card&preview=%2F%40ibelick%2Fcomponents%2Fspotlight%2Fborder-only)

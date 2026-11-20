@@ -1,0 +1,336 @@
+{
+  "sdkVersion": "0.1.0-beta.13",
+  "upstreamCommit": "b4dbe88209ecf4dc555225f630268095f510ad49",
+  "components": [
+    {
+      "id": "button",
+      "name": "Button",
+      "category": "Actions",
+      "exportPath": "@quantitative-hci/liquid-glass/button"
+    },
+    {
+      "id": "toggle",
+      "name": "Toggle",
+      "category": "Actions",
+      "exportPath": "@quantitative-hci/liquid-glass/toggle"
+    },
+    {
+      "id": "toolbar",
+      "name": "Toolbar",
+      "category": "Actions",
+      "exportPath": "@quantitative-hci/liquid-glass/toolbar"
+    },
+    {
+      "id": "segmented-control",
+      "name": "Segmented Control",
+      "category": "Actions",
+      "exportPath": "@quantitative-hci/liquid-glass/segmented-control"
+    },
+    {
+      "id": "input",
+      "name": "Input",
+      "category": "Inputs",
+      "exportPath": "@quantitative-hci/liquid-glass/input"
+    },
+    {
+      "id": "textarea",
+      "name": "Textarea",
+      "category": "Inputs",
+      "exportPath": "@quantitative-hci/liquid-glass/textarea"
+    },
+    {
+      "id": "field",
+      "name": "Field",
+      "category": "Inputs",
+      "exportPath": "@quantitative-hci/liquid-glass/field"
+    },
+    {
+      "id": "label",
+      "name": "Label",
+      "category": "Inputs",
+      "exportPath": "@quantitative-hci/liquid-glass/label"
+    },
+    {
+      "id": "checkbox",
+      "name": "Checkbox",
+      "category": "Inputs",
+      "exportPath": "@quantitative-hci/liquid-glass/checkbox"
+    },
+    {
+      "id": "switch",
+      "name": "Switch",
+      "category": "Inputs",
+      "exportPath": "@quantitative-hci/liquid-glass/switch"
+    },
+    {
+      "id": "radio",
+      "name": "Radio",
+      "category": "Inputs",
+      "exportPath": "@quantitative-hci/liquid-glass/radio"
+    },
+    {
+      "id": "select",
+      "name": "Select",
+      "category": "Inputs",
+      "exportPath": "@quantitative-hci/liquid-glass/select"
+    },
+    {
+      "id": "slider",
+      "name": "Slider",
+      "category": "Inputs",
+      "exportPath": "@quantitative-hci/liquid-glass/slider"
+    },
+    {
+      "id": "number-input",
+      "name": "Number Input",
+      "category": "Inputs",
+      "exportPath": "@quantitative-hci/liquid-glass/number-input"
+    },
+    {
+      "id": "password-input",
+      "name": "Password Input",
+      "category": "Inputs",
+      "exportPath": "@quantitative-hci/liquid-glass/password-input"
+    },
+    {
+      "id": "otp-input",
+      "name": "OTP Input",
+      "category": "Inputs",
+      "exportPath": "@quantitative-hci/liquid-glass/otp-input"
+    },
+    {
+      "id": "file-input",
+      "name": "File Input",
+      "category": "Inputs",
+      "exportPath": "@quantitative-hci/liquid-glass/file-input"
+    },
+    {
+      "id": "combobox",
+      "name": "Combobox",
+      "category": "Inputs",
+      "exportPath": "@quantitative-hci/liquid-glass/combobox"
+    },
+    {
+      "id": "autocomplete",
+      "name": "Autocomplete",
+      "category": "Inputs",
+      "exportPath": "@quantitative-hci/liquid-glass/autocomplete"
+    },
+    {
+      "id": "token-input",
+      "name": "Token Input",
+      "category": "Inputs",
+      "exportPath": "@quantitative-hci/liquid-glass/token-input"
+    },
+    {
+      "id": "listbox",
+      "name": "Listbox",
+      "category": "Inputs",
+      "exportPath": "@quantitative-hci/liquid-glass/listbox"
+    },
+    {
+      "id": "rating",
+      "name": "Rating",
+      "category": "Inputs",
+      "exportPath": "@quantitative-hci/liquid-glass/rating"
+    },
+    {
+      "id": "dialog",
+      "name": "Dialog",
+      "category": "Overlays",
+      "exportPath": "@quantitative-hci/liquid-glass/dialog"
+    },
+    {
+      "id": "alert-dialog",
+      "name": "Alert Dialog",
+      "category": "Overlays",
+      "exportPath": "@quantitative-hci/liquid-glass/alert-dialog"
+    },
+    {
+      "id": "drawer",
+      "name": "Drawer",
+      "category": "Overlays",
+      "exportPath": "@quantitative-hci/liquid-glass/drawer"
+    },
+    {
+      "id": "popover",
+      "name": "Popover",
+      "category": "Overlays",
+      "exportPath": "@quantitative-hci/liquid-glass/popover"
+    },
+    {
+      "id": "hover-card",
+      "name": "Hover Card",
+      "category": "Overlays",
+      "exportPath": "@quantitative-hci/liquid-glass/hover-card"
+    },
+    {
+      "id": "tooltip",
+      "name": "Tooltip",
+      "category": "Overlays",
+      "exportPath": "@quantitative-hci/liquid-glass/tooltip"
+    },
+    {
+      "id": "menu",
+      "name": "Menu",
+      "category": "Overlays",
+      "exportPath": "@quantitative-hci/liquid-glass/menu"
+    },
+    {
+      "id": "menubar",
+      "name": "Menubar",
+      "category": "Overlays",
+      "exportPath": "@quantitative-hci/liquid-glass/menubar"
+    },
+    {
+      "id": "command",
+      "name": "Command",
+      "category": "Overlays",
+      "exportPath": "@quantitative-hci/liquid-glass/command"
+    },
+    {
+      "id": "trigger-menu",
+      "name": "Trigger Menu",
+      "category": "Overlays",
+      "exportPath": "@quantitative-hci/liquid-glass/trigger-menu"
+    },
+    {
+      "id": "toast",
+      "name": "Toast",
+      "category": "Overlays",
+      "exportPath": "@quantitative-hci/liquid-glass/toast"
+    },
+    {
+      "id": "tabs",
+      "name": "Tabs",
+      "category": "Navigation",
+      "exportPath": "@quantitative-hci/liquid-glass/tabs"
+    },
+    {
+      "id": "navigation-menu",
+      "name": "Navigation Menu",
+      "category": "Navigation",
+      "exportPath": "@quantitative-hci/liquid-glass/navigation-menu"
+    },
+    {
+      "id": "pagination",
+      "name": "Pagination",
+      "category": "Navigation",
+      "exportPath": "@quantitative-hci/liquid-glass/pagination"
+    },
+    {
+      "id": "tree",
+      "name": "Tree",
+      "category": "Navigation",
+      "exportPath": "@quantitative-hci/liquid-glass/tree"
+    },
+    {
+      "id": "accordion",
+      "name": "Accordion",
+      "category": "Navigation",
+      "exportPath": "@quantitative-hci/liquid-glass/accordion"
+    },
+    {
+      "id": "collapsible",
+      "name": "Collapsible",
+      "category": "Navigation",
+      "exportPath": "@quantitative-hci/liquid-glass/collapsible"
+    },
+    {
+      "id": "calendar",
+      "name": "Calendar",
+      "category": "Date & colour",
+      "exportPath": "@quantitative-hci/liquid-glass/calendar"
+    },
+    {
+      "id": "date-input",
+      "name": "Date Input",
+      "category": "Date & colour",
+      "exportPath": "@quantitative-hci/liquid-glass/date-input"
+    },
+    {
+      "id": "date-picker",
+      "name": "Date Picker",
+      "category": "Date & colour",
+      "exportPath": "@quantitative-hci/liquid-glass/date-picker"
+    },
+    {
+      "id": "time-input",
+      "name": "Time Input",
+      "category": "Date & colour",
+      "exportPath": "@quantitative-hci/liquid-glass/time-input"
+    },
+    {
+      "id": "color-picker",
+      "name": "Color Picker",
+      "category": "Date & colour",
+      "exportPath": "@quantitative-hci/liquid-glass/color-picker"
+    },
+    {
+      "id": "avatar",
+      "name": "Avatar",
+      "category": "Display",
+      "exportPath": "@quantitative-hci/liquid-glass/avatar"
+    },
+    {
+      "id": "carousel",
+      "name": "Carousel",
+      "category": "Display",
+      "exportPath": "@quantitative-hci/liquid-glass/carousel"
+    },
+    {
+      "id": "image-cropper",
+      "name": "Image Cropper",
+      "category": "Display",
+      "exportPath": "@quantitative-hci/liquid-glass/image-cropper"
+    },
+    {
+      "id": "meter",
+      "name": "Meter",
+      "category": "Display",
+      "exportPath": "@quantitative-hci/liquid-glass/meter"
+    },
+    {
+      "id": "progress",
+      "name": "Progress",
+      "category": "Display",
+      "exportPath": "@quantitative-hci/liquid-glass/progress"
+    },
+    {
+      "id": "resizable",
+      "name": "Resizable",
+      "category": "Display",
+      "exportPath": "@quantitative-hci/liquid-glass/resizable"
+    },
+    {
+      "id": "scroll-area",
+      "name": "Scroll Area",
+      "category": "Display",
+      "exportPath": "@quantitative-hci/liquid-glass/scroll-area"
+    },
+    {
+      "id": "separator",
+      "name": "Separator",
+      "category": "Display",
+      "exportPath": "@quantitative-hci/liquid-glass/separator"
+    },
+    {
+      "id": "timeline",
+      "name": "Timeline",
+      "category": "Display",
+      "exportPath": "@quantitative-hci/liquid-glass/timeline"
+    },
+    {
+      "id": "waterfall",
+      "name": "Waterfall",
+      "category": "Display",
+      "exportPath": "@quantitative-hci/liquid-glass/waterfall"
+    },
+    {
+      "id": "preferences",
+      "name": "Preferences",
+      "category": "Display",
+      "exportPath": "@quantitative-hci/liquid-glass/preferences"
+    }
+  ]
+}

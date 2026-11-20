@@ -1,0 +1,23 @@
+# Third-party notices
+
+## Vercel UI SDK
+
+The Liquid Glass workspace depends on `@ui-sdk/core` and `@ui-sdk/react` version `0.1.0-beta.13` from [vercel-labs/ui](https://github.com/vercel-labs/ui). UI SDK is copyright 2026 Vercel, Inc. and licensed under the [Apache License 2.0](https://github.com/vercel-labs/ui/blob/b4dbe88209ecf4dc555225f630268095f510ad49/LICENSE).
+
+The original Quantitative HCI layer uses published component APIs, state attributes and the upstream base stylesheet. Its component subpaths delegate to the upstream adapter rather than reproducing the core interaction engine. Upstream source was inspected at commit `b4dbe88209ecf4dc555225f630268095f510ad49` when preparing the 55-family catalogue. Preserve dependency licence notices when distributing a bundled application.
+
+## React
+
+React and React DOM are copyright Meta Platforms, Inc. and affiliates, under the [MIT licence](https://github.com/facebook/react/blob/main/LICENSE).
+
+## Lucide
+
+Lucide icons are provided under the [ISC licence](https://github.com/lucide-icons/lucide/blob/main/LICENSE). The gallery uses the pinned `lucide-react` dependency for interface icons.
+
+## Apple visual reference
+
+Apple's Liquid Glass and Human Interface Guidelines are visual and interaction references. No Apple framework, proprietary rendering implementation, endorsement or affiliation is represented by this web material. Apple names and marks remain their owners' property.
+
+## Project licence
+
+Original Quantitative HCI source and documentation remain under this repository's [MIT licence](LICENSE). A private workspace package does not change the upstream dependency licences or the repository's visibility.

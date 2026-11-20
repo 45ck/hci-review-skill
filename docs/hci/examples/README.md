@@ -2,6 +2,14 @@
 
 Apple-inspired Liquid Glass is the default visual treatment for controls in new high-fidelity Quantitative HCI examples and prototypes without an established design system. Apply the product’s own design system where one exists.
 
+## Shared component library
+
+Use [`@quantitative-hci/liquid-glass`](../../../packages/liquid-glass/README.md) for new implementations. The [private gallery](https://quantitative-hci-ui-sdk-demos.ajax414655.chatgpt.site/glass/) demonstrates all 55 UI SDK component families through the shared package. Read the [implementation standard](../standards/liquid-glass.md) and [gallery guide](liquid-glass/README.md) for material selection, import paths and verification.
+
+The toolbar experiment below has its own audit and recorded evidence. Its measurements do not describe the new component gallery.
+
+## Toolbar material study
+
 Open [spotlight-glass.html](spotlight-glass.html) locally. The toolbar starts in **Glass** mode. Move a mouse across the toolbar to see light follow the edge, or use the **Solid** option to compare surfaces. The chart and values come from the same [synthetic evaluation](../models/example-comparison.json). [Desktop screenshot](../../../assets/spotlight-glass-preview.webp) · [Mobile dark-mode screenshot](../../../assets/spotlight-glass-mobile.webp)
 
 | Layer | Treatment |

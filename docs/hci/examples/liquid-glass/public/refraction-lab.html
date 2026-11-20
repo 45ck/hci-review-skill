@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1020">
+<title>Refraction Lab — Interactive WebGPU Liquid Glass</title>
+<style>
+:root {color-scheme:dark;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--white:#eef2fc;--muted:#a9b1c8;--edge:rgba(255,255,255,.15);--panel:rgba(11,16,32,.67);--accent:#b2cdff}
+*{box-sizing:border-box}
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#090e1e;color:var(--white)}
+button,input{font:inherit}button{cursor:pointer}
+#scene{position:fixed;inset:0;display:block;width:100%;height:100%;touch-action:none;cursor:grab;z-index:0}#scene:active{cursor:grabbing}
+.grain{pointer-events:none;z-index:1;position:fixed;inset:0;opacity:.12;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.35'/%3E%3C/svg%3E")}
+header{position:fixed;z-index:3;top:27px;left:clamp(20px,3.6vw,64px);right:clamp(20px,3.6vw,64px);display:flex;align-items:center;justify-content:space-between;pointer-events:none}
+.identity{display:flex;gap:15px;align-items:center;letter-spacing:.095em;font-size:12px;font-weight:700}.monogram{display:grid;place-items:center;width:41px;height:41px;border-radius:13px;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.1);font-size:17px;font-weight:500;letter-spacing:-.05em;backdrop-filter:blur(10px)}
+.identity small{display:block;font-size:10px;font-weight:500;letter-spacing:.2em;color:#ccd3e4;margin-top:6px}
+.monitor{display:flex;align-items:center;gap:14px;font-size:11px;color:#d9e5f9;letter-spacing:.05em;border:1px solid var(--edge);background:rgba(5,9,21,.42);padding:11px 15px;border-radius:100px;backdrop-filter:blur(16px)}.status-dot{width:6px;height:6px;background:#a7dcb7;border-radius:50%;box-shadow:0 0 11px #a7dcb7}
+main{position:fixed;z-index:2;pointer-events:none;inset:0}
+.hero{position:absolute;left:clamp(24px,4.8vw,86px);bottom:clamp(40px,9vh,110px);width:min(410px,33vw);text-shadow:0 2px 24px rgba(0,0,0,.15)}.eyebrow{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#d2d6ee}.hero h1{font-size:clamp(36px,4.5vw,72px);line-height:.98;letter-spacing:-.065em;font-weight:540;margin:18px 0 20px}.hero h1 em{font-weight:450;font-style:italic;font-family:Georgia,serif;color:#c0d6ff}.hero p{font-size:13px;line-height:1.7;color:#c5cfe0;max-width:295px}.drag-tip{display:flex;gap:11px;align-items:center;margin-top:28px;color:#e7edff;font-size:11px;letter-spacing:.045em}.drag-tip .pointer{border:1px solid #abc6ff;border-radius:9px;width:29px;height:29px;display:grid;place-items:center}
+.panel{position:fixed;pointer-events:auto;top:clamp(100px,15vh,150px);right:clamp(22px,3.5vw,62px);width:294px;max-height:calc(100vh - 150px);overflow:auto;z-index:4;padding:20px;border:1px solid rgba(255,255,255,.18);border-radius:23px;background:var(--panel);backdrop-filter:blur(40px) saturate(1.2);box-shadow:0 24px 65px rgba(0,0,0,.2);scrollbar-width:thin;scrollbar-color:#53607b transparent}
+.panel-header{display:flex;align-items:center;justify-content:space-between;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,.12);margin-bottom:19px}.panel h2{font-size:14px;letter-spacing:.005em;margin:0;font-weight:600}.panel-badge{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:#cfdbf5;border:1px solid rgba(255,255,255,.14);border-radius:7px;padding:5px 7px}
+.section-name{font-size:10px;color:#a6afc7;letter-spacing:.14em;text-transform:uppercase;margin:18px 0 12px}
+.choices{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:4px;border-radius:13px;background:rgba(6,9,18,.5);border:1px solid rgba(255,255,255,.09)}.choices button{border:0;border-radius:9px;padding:10px 5px;color:#aeb9d2;background:transparent;font-size:11px}.choices button[aria-pressed=true]{background:rgba(203,217,255,.2);box-shadow:inset 0 0 0 1px rgba(219,226,255,.16);color:#fff}
+.control{margin:15px 0}.control-head{display:flex;justify-content:space-between;font-size:11px;color:#e2e7f5;margin-bottom:9px}.control output{font-variant-numeric:tabular-nums;color:#a3b7df}
+input[type=range]{width:100%;height:12px;appearance:none;background:transparent;margin:0;cursor:pointer}input[type=range]::-webkit-slider-runnable-track{height:3px;background:linear-gradient(90deg,#a5bde8 0%,#8c99b8 48%,rgba(255,255,255,.17) 100%);border-radius:99px}input[type=range]::-moz-range-track{height:3px;background:#7787ac;border-radius:99px}input[type=range]::-webkit-slider-thumb{appearance:none;width:11px;height:11px;margin-top:-4px;background:white;border:2px solid #8eade9;border-radius:50%;box-shadow:0 0 10px #9fc5ff55}input[type=range]::-moz-range-thumb{width:9px;height:9px;background:white;border:2px solid #8eade9;border-radius:50%}
+.action-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:18px}.action-row button{padding:11px;border-radius:11px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.1);color:#f2f6ff;font-size:11px}.action-row button:hover{background:rgba(255,255,255,.18)}
+.toggles{display:flex;align-items:center;justify-content:space-between;margin:14px 0 6px;font-size:11px;color:#dee5f5}.switch{appearance:none;width:35px;height:20px;border-radius:99px;background:#47536c;position:relative;border:1px solid #7784a4;cursor:pointer}.switch:before{content:"";display:block;position:absolute;top:2px;left:2px;width:14px;height:14px;background:white;border-radius:100%;transition:transform .2s}.switch:checked{background:#859ece}.switch:checked:before{transform:translateX(14px)}
+footer{position:fixed;z-index:3;left:clamp(22px,3.6vw,64px);right:clamp(22px,3.6vw,64px);bottom:25px;display:flex;justify-content:space-between;align-items:center;pointer-events:none;font-size:10px;letter-spacing:.12em;color:rgba(222,232,247,.7)}footer strong{color:#ecf1ff;font-weight:500}
+#error{position:fixed;z-index:10;left:50%;top:18px;transform:translateX(-50%);background:#2c2731;color:#fff8e9;border:1px solid #b9916b;padding:10px 18px;border-radius:12px;font-size:12px;display:none;max-width:80vw;pointer-events:none}
+button:focus-visible,input:focus-visible{outline:2px solid #b0ceff;outline-offset:3px}
+@media(max-width:850px){.hero{width:40vw;bottom:85px}.hero h1{font-size:clamp(35px,5vw,53px)}.panel{width:260px;right:15px;top:95px;padding:16px;max-height:calc(100vh - 130px)}header{top:16px}.monitor{font-size:9px}}
+@media(max-width:650px){#error{top:75px;left:12px;right:12px;transform:none;max-width:none}.identity{gap:8px;font-size:10px}.identity small{display:none}.monitor{font-size:9px;gap:6px;padding:8px 9px}.panel{top:auto;bottom:20px;left:12px;right:12px;width:auto;max-height:42vh;border-radius:20px;padding:14px 18px}.panel-header{margin-bottom:8px;padding-bottom:8px}.panel-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}.section-name{margin:8px 0}.hero{top:18vh;bottom:auto;left:24px;width:75vw}.hero h1{font-size:clamp(36px,9vw,54px);margin:12px 0}.hero p{display:none}.drag-tip{margin-top:11px}footer{display:none}.monitor{padding:9px 10px;gap:8px}}
+@media(prefers-reduced-motion:reduce){.switch:before{transition:none}}
+</style>
+</head>
+<body>
+<canvas id="scene" aria-label="Interactive real-time refraction material demonstration"></canvas>
+<div class="grain" aria-hidden="true"></div><div id="error" role="alert"></div>
+<header>
+ <div class="identity"><span class="monogram">R<span style="font-size:.8em;color:#9dbdf0">/</span></span><div>REFRACTION LAB<small>WEBGPU MATERIAL STUDY</small></div></div>
+ <div class="monitor"><span class="status-dot" aria-hidden="true"></span><span id="backend">INITIALISING</span><span style="opacity:.4">/</span><span id="fps">-- FPS</span></div>
+</header>
+<main><section class="hero"><div class="eyebrow">01 — MATERIAL EXPLORER</div><h1>Light bends.<br><em>Glass moves.</em></h1><p>A real-time refractive surface. Drag the lens, disturb its edges, and reshape how it bends the light behind it.</p><div class="drag-tip"><span class="pointer" aria-hidden="true">↗</span><span>DRAG THE LENS TO INTERACT</span></div></section></main>
+<aside class="panel" aria-label="Glass material controls">
+ <div class="panel-header"><h2>Material controls</h2><span class="panel-badge">LIVE</span></div>
+ <div class="section-name">Lens geometry</div>
+ <div class="choices" id="shape-options"><button type="button" data-shape="0" aria-pressed="true">Orb</button><button type="button" data-shape="1" aria-pressed="false">Capsule</button><button type="button" data-shape="2" aria-pressed="false">Pane</button></div>
+ <div class="panel-grid">
+ <div><div class="section-name">Optics</div>
+ <div class="control"><div class="control-head"><label for="refraction">Refraction</label><output id="refraction-val">58%</output></div><input id="refraction" type="range" min="0" max="100" value="58" step="1"></div>
+ <div class="control"><div class="control-head"><label for="dispersion">Dispersion</label><output id="dispersion-val">40%</output></div><input id="dispersion" type="range" min="0" max="100" value="40" step="1"></div>
+ <div class="control"><div class="control-head"><label for="bevel">Bevel depth</label><output id="bevel-val">65%</output></div><input id="bevel" type="range" min="0" max="100" value="65" step="1"></div></div>
+ <div><div class="section-name">Material</div>
+ <div class="control"><div class="control-head"><label for="frost">Frost</label><output id="frost-val">8%</output></div><input id="frost" type="range" min="0" max="100" value="8" step="1"></div>
+ <div class="control"><div class="control-head"><label for="viscosity">Viscosity</label><output id="viscosity-val">68%</output></div><input id="viscosity" type="range" min="0" max="100" value="68" step="1"></div>
+ <div class="control"><div class="control-head"><label for="scale">Lens scale</label><output id="scale-val">60%</output></div><input id="scale" type="range" min="20" max="100" value="60" step="1"></div></div></div>
+ <div class="section-name">Environment</div>
+ <div class="choices" id="theme-options"><button type="button" data-theme="0" aria-pressed="true">Nocturne</button><button type="button" data-theme="1" aria-pressed="false">Prism</button><button type="button" data-theme="2" aria-pressed="false">Blueprint</button></div>
+ <label class="toggles"><span>Follow pointer</span><input class="switch" id="follow" type="checkbox"></label>
+ <div class="action-row"><button type="button" id="reset">Reset material</button><button type="button" id="export">Save screenshot</button></div>
+</aside>
+<footer><span><strong>MOVE · DRAG · EXPERIMENT</strong></span><span>REAL-TIME OPTICAL SIMULATION <strong>© REFRACTION LAB</strong></span></footer>
+<script>
+(() => {
+  'use strict';
+  const byId = id => document.getElementById(id);
+  let canvas=byId('scene');
+  const state={shape:0,theme:0,refraction:0.58,dispersion:0.40,bevel:0.65,frost:0.08,viscosity:0.68,scale:0.60,follow:false,
+    centerX:0,centerY:0,targetX:0,targetY:0,px:0,py:0,velocityX:0,velocityY:0,disturbance:0,dragging:false,dragDX:0,dragDY:0,pulse:0,
+    time:0,backend:'INITIALISING',width:0,height:0,dpr:1};
+  const initial={refraction:58,dispersion:40,bevel:65,frost:8,viscosity:68,scale:60};
+  const off=document.createElement('canvas'); const ctx=off.getContext('2d',{alpha:false});
+  const reduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let renderer=null,lastFrame=performance.now(),lastFps=performance.now(),frames=0;
+  const glslV=`#version 300 es
+  out vec2 vUV;
+  void main(){vec2 p=vec2(float((gl_VertexID<<1)&2),float(gl_VertexID&2));vUV=p;gl_Position=vec4(p*2.0-1.0,0.0,1.0);}`;
+  const glslF=`#version 300 es
+precision highp float;
+in vec2 vUV;out vec4 fragColor;
+uniform sampler2D uScene;
+uniform vec4 uA,uB,uC,uD;
+vec3 scene(vec2 q){return texture(uScene,clamp(q,vec2(.001),vec2(.999))).rgb;}
+float boxSdf(vec2 p,vec2 b,float r){vec2 q=abs(p)-b+r;return length(max(q,0.))+min(max(q.x,q.y),0.)-r;}
+float sdf(vec2 p,float r,float mode){if(mode<.5)return length(p)-r;if(mode<1.5)return boxSdf(p,vec2(r*1.42,r*.52),r*.48);return boxSdf(p,vec2(r*1.14,r*.90),r*.23);}
+void main(){
+vec2 res=uA.xy;float t=uA.z;vec2 center=uB.xy;float r=uC.z;
+vec2 p=vUV*res-center;float d=sdf(p,r,uA.w);float b=max(r*(.06+uD.w*.20),2.0);
+vec2 n=normalize(vec2(sdf(p+vec2(1.,0.),r,uA.w)-sdf(p-vec2(1.,0.),r,uA.w),sdf(p+vec2(0.,1.),r,uA.w)-sdf(p-vec2(0.,1.),r,uA.w))+vec2(1.e-5));
+float edge=smoothstep(-b,0.,d);float mask=1.-smoothstep(-1.5,1.5,d);
+vec2 bgUV=vUV+vec2(sin(vUV.y*3.2+t*.14),cos(vUV.x*2.6+t*.12))*0.0018;
+vec3 bg=scene(bgUV);
+float ripple=sin(length(p)*.075-t*7.2)*exp(-length(p)/(r*.55))*uD.z*0.055*r;
+float refrPx=r*(.015+uB.z*.155)*pow(edge,.78);
+vec2 warp=n*(refrPx+ripple)+uD.xy*(.065+edge*.05);
+vec2 sampleUV=(center+p*.966-warp)/res;
+float ca=uB.w*pow(edge,1.15)*.019;
+vec2 nUV=n*ca;
+vec3 glass=vec3(scene(sampleUV+nUV).r,scene(sampleUV).g,scene(sampleUV-nUV*1.3).b);
+float blurPx=uC.x*12.;vec2 e=vec2(blurPx)/res;
+vec3 softened=.25*(scene(sampleUV+vec2(e.x,0))+scene(sampleUV-vec2(e.x,0))+scene(sampleUV+vec2(0,e.y))+scene(sampleUV-vec2(0,e.y)));
+glass=mix(glass,softened,clamp(uC.x*1.5,0.,.92));
+float rim=exp(-abs(d+b*.3)/max(b*.28,1.));
+float directional=.28+.72*pow(max(dot(n,normalize(vec2(-.61,.79))),0.),2.0);
+float flare=pow(max(dot(n,normalize(vec2(-.5,.86))),0.),15.)*pow(edge,3.);
+glass=mix(glass,vec3(.83,.91,1.),.038)+vec3(.73,.86,1.)*rim*directional*.30+vec3(1.,.97,.92)*flare*.5;
+float innerShade=pow(edge,1.5)*.12;glass*=1.-innerShade;
+float shadow=(1.-smoothstep(0.,52.,max(d,0.)))*step(0.,d)*.21;
+bg*=1.-shadow;
+fragColor=vec4(mix(bg,glass,mask),1.);
+}`;
+  const wgsl=`
+struct Uniforms { a: vec4<f32>, b: vec4<f32>, c: vec4<f32>, d: vec4<f32> }
+@group(0) @binding(0) var<uniform> u: Uniforms;
+@group(0) @binding(1) var sceneTex: texture_2d<f32>;
+@group(0) @binding(2) var sceneSampler: sampler;
+struct VsOut {@builtin(position) pos: vec4<f32>, @location(0) uv: vec2<f32>};
+@vertex fn vs(@builtin(vertex_index) ix: u32)->VsOut {
+ var o: VsOut; let p=vec2<f32>(f32((ix<<1u)&2u),f32(ix&2u));o.uv=p;o.pos=vec4<f32>(p*2.0-1.0,0.,1.);return o;
+}
+fn scene(q:vec2<f32>)->vec3<f32>{return textureSampleLevel(sceneTex,sceneSampler,clamp(vec2<f32>(q.x,1.-q.y),vec2<f32>(.001),vec2<f32>(.999)),0.).rgb;}
+fn boxSdf(p:vec2<f32>,b:vec2<f32>,r:f32)->f32{let q=abs(p)-b+r;return length(max(q,vec2<f32>(0.)))+min(max(q.x,q.y),0.)-r;}
+fn sdf(p:vec2<f32>,r:f32,mode:f32)->f32 {if(mode<.5){return length(p)-r;}if(mode<1.5){return boxSdf(p,vec2<f32>(r*1.42,r*.52),r*.48);}return boxSdf(p,vec2<f32>(r*1.14,r*.9),r*.23);}
+@fragment fn fs(i:VsOut)->@location(0) vec4<f32>{
+ let res=u.a.xy;let t=u.a.z;let center=u.b.xy;let r=u.c.z;
+ let p=i.uv*res-center;let dist=sdf(p,r,u.a.w);let b=max(r*(.06+u.d.w*.20),2.);
+ let n=normalize(vec2<f32>(sdf(p+vec2<f32>(1.,0.),r,u.a.w)-sdf(p-vec2<f32>(1.,0.),r,u.a.w),sdf(p+vec2<f32>(0.,1.),r,u.a.w)-sdf(p-vec2<f32>(0.,1.),r,u.a.w))+vec2<f32>(.00001));
+ let edge=smoothstep(-b,0.,dist);let mask=1.-smoothstep(-1.5,1.5,dist);
+ let bgUV=i.uv+vec2<f32>(sin(i.uv.y*3.2+t*.14),cos(i.uv.x*2.6+t*.12))*.0018;
+ var bg=scene(bgUV);
+ let ripple=sin(length(p)*.075-t*7.2)*exp(-length(p)/(r*.55))*u.d.z*.055*r;
+ let refrPx=r*(.015+u.b.z*.155)*pow(edge,.78);
+ let warp=n*(refrPx+ripple)+u.d.xy*(.065+edge*.05);
+ let sampleUV=(center+p*.966-warp)/res;
+ let ca=u.b.w*pow(edge,1.15)*.019;
+ let nUV=n*ca;
+ var glass=vec3<f32>(scene(sampleUV+nUV).r,scene(sampleUV).g,scene(sampleUV-nUV*1.3).b);
+ let blurPx=u.c.x*12.;let e=vec2<f32>(blurPx)/res;
+ let softened=.25*(scene(sampleUV+vec2<f32>(e.x,0.))+scene(sampleUV-vec2<f32>(e.x,0.))+scene(sampleUV+vec2<f32>(0.,e.y))+scene(sampleUV-vec2<f32>(0.,e.y)));
+ glass=mix(glass,softened,clamp(u.c.x*1.5,0.,.92));
+ let rim=exp(-abs(dist+b*.3)/max(b*.28,1.));
+ let directional=.28+.72*pow(max(dot(n,normalize(vec2<f32>(-.61,.79))),0.),2.);
+ let flare=pow(max(dot(n,normalize(vec2<f32>(-.5,.86))),0.),15.)*pow(edge,3.);
+ glass=mix(glass,vec3<f32>(.83,.91,1.),.038)+vec3<f32>(.73,.86,1.)*rim*directional*.30+vec3<f32>(1.,.97,.92)*flare*.5;
+ let innerShade=pow(edge,1.5)*.12;glass*=1.-innerShade;
+ let shadow=(1.-smoothstep(0.,52.,max(dist,0.)))*select(0.,1.,dist>=0.)*.21;
+ bg*=1.-shadow;
+ return vec4<f32>(mix(bg,glass,mask),1.);
+}`;
+  const round=(a,b,c,d)=>{ctx.beginPath();ctx.roundRect(a,b,c,d,Math.min(c,d)*.15)};
+  function paint(){
+    const w=off.width,h=off.height, theme=state.theme;
+    ctx.save();ctx.clearRect(0,0,w,h);
+    const palettes=[['#0a1124','#182b4c','#765eaa','#8fceef'],['#351a35','#a15b91','#fa9e79','#ffe2ac'],['#091722','#123745','#168b9c','#8bdce1']];
+    const p=palettes[theme];let g=ctx.createLinearGradient(0,0,w,h);g.addColorStop(0,p[0]);g.addColorStop(.48,p[1]);g.addColorStop(1,p[0]);ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
+    function glow(x,y,r,color){const grad=ctx.createRadialGradient(x,y,0,x,y,r);grad.addColorStop(0,color);grad.addColorStop(1,'transparent');ctx.fillStyle=grad;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();}
+    ctx.globalCompositeOperation='screen';glow(w*.28,h*.33,Math.max(w,h)*.55,p[2]+'88');glow(w*.77,h*.82,Math.max(w,h)*.55,p[3]+'77');glow(w*.9,h*.15,Math.max(w,h)*.30,p[2]+'4b');ctx.globalCompositeOperation='source-over';
+    ctx.lineWidth=Math.max(1,w*.00075);ctx.strokeStyle=theme===2?'rgba(170,236,247,.16)':'rgba(222,224,255,.1)';let gap=Math.max(56,w*.055);
+    for(let x=-gap;x<w+gap;x+=gap){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke()};for(let y=-gap;y<h+gap;y+=gap){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}
+    const base=Math.min(w,h);ctx.save();ctx.translate(w*.49,h*.47);ctx.rotate(-.19);
+    for(let a=0;a<6;a++){ctx.lineWidth=base*(a===0?.002:.001);ctx.strokeStyle=theme===1?'rgba(255,255,255,.21)':'rgba(213,231,255,.19)';ctx.beginPath();ctx.ellipse(0,0,base*(.30+.068*a),base*(.23+.038*a),.25,0,2*Math.PI);ctx.stroke()};ctx.restore();
+    ctx.textBaseline='middle';ctx.textAlign='center';ctx.fillStyle=theme===1?'rgba(255,245,226,.79)':'rgba(235,244,255,.81)';ctx.font=`650 ${Math.round(Math.min(w*.235,h*.33))}px Inter, Arial, sans-serif`;
+    ctx.fillText(theme===2?'LIGHT':'GLASS',w*.50,h*.50);ctx.fillStyle=theme===1?'rgba(73,31,48,.5)':'rgba(12,24,51,.48)';ctx.font=`550 ${Math.round(Math.min(w*.145,h*.17))}px Inter,Arial,sans-serif`;ctx.fillText('MATERIAL',w*.5,h*.66);
+    ctx.textAlign='left';ctx.fillStyle='rgba(241,246,255,.5)';ctx.font=`500 ${Math.max(10,Math.round(w*.009))}px ui-monospace,monospace`;ctx.fillText('01 / REFRACTIVE MEDIA',w*.045,h*.27);ctx.fillText('OPTICAL FIELD — REAL TIME',w*.68,h*.8);
+    ctx.strokeStyle=theme===1?'rgba(255,222,213,.65)':'rgba(211,233,255,.58)';ctx.lineWidth=Math.max(1,base*.0012);
+    ctx.beginPath();ctx.moveTo(w*.17,h*.32);ctx.bezierCurveTo(w*.42,h*.07,w*.61,h*.86,w*.89,h*.64);ctx.stroke();
+    for(let k=0;k<7;k++){ctx.fillStyle=theme===1?'rgba(255,238,219,.9)':'rgba(196,227,255,.8)';const x=w*(.15+k*.115),y=h*(.67+Math.sin(k*1.28)*.09);ctx.beginPath();ctx.arc(x,y,base*.003,0,2*Math.PI);ctx.fill()}
+    ctx.restore();
+    if(renderer&&renderer.updateTexture)renderer.updateTexture();
+  }
+  let errorTimeout;function showError(msg){const e=byId('error');e.textContent=msg;e.style.display='block';clearTimeout(errorTimeout);errorTimeout=setTimeout(()=>{e.style.display='none'},6500);}
+  function compileGL(gl,type,src){const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(s));return s}
+  function webglRenderer(){
+    let gl=canvas.getContext('webgl2',{alpha:false,antialias:false,desynchronized:true,preserveDrawingBuffer:true});if(!gl)throw Error('WebGL2 unavailable');
+    const prog=gl.createProgram();gl.attachShader(prog,compileGL(gl,gl.VERTEX_SHADER,glslV));gl.attachShader(prog,compileGL(gl,gl.FRAGMENT_SHADER,glslF));gl.linkProgram(prog);if(!gl.getProgramParameter(prog,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(prog));
+    gl.useProgram(prog);const vao=gl.createVertexArray();gl.bindVertexArray(vao);
+    const tex=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,tex);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+    gl.uniform1i(gl.getUniformLocation(prog,'uScene'),0);let loc=['uA','uB','uC','uD'].map(x=>gl.getUniformLocation(prog,x));gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);
+    return {backend:'WEBGL2',updateTexture(){gl.bindTexture(gl.TEXTURE_2D,tex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,off);},render(a){gl.viewport(0,0,canvas.width,canvas.height);gl.useProgram(prog);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tex);for(let i=0;i<4;i++)gl.uniform4fv(loc[i],a.subarray(i*4,i*4+4));gl.drawArrays(gl.TRIANGLES,0,3);},destroy(){gl.deleteProgram(prog);gl.deleteTexture(tex);gl.deleteVertexArray(vao)}};
+  }
+  async function webgpuRenderer(){
+    if(!navigator.gpu)throw Error('WebGPU unsupported');const adapter=await navigator.gpu.requestAdapter({powerPreference:'high-performance'});if(!adapter)throw Error('No WebGPU adapter');
+    const device=await adapter.requestDevice();const context=canvas.getContext('webgpu');if(!context)throw Error('WebGPU context unavailable');
+    const preferred=navigator.gpu.getPreferredCanvasFormat();context.configure({device,format:preferred,alphaMode:'opaque'});
+    const shader=device.createShaderModule({code:wgsl});
+    const info=await shader.getCompilationInfo();const errors=info.messages.filter(m=>m.type==='error');if(errors.length)throw Error(errors.map(x=>x.message).join('\n'));
+    const pipeline=await device.createRenderPipelineAsync({layout:'auto',vertex:{module:shader,entryPoint:'vs'},fragment:{module:shader,entryPoint:'fs',targets:[{format:preferred}]},primitive:{topology:'triangle-list'}});
+    const uniform=device.createBuffer({size:64,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});const sampler=device.createSampler({magFilter:'linear',minFilter:'linear',addressModeU:'clamp-to-edge',addressModeV:'clamp-to-edge'});
+    let tex=null,bindGroup=null;
+    function updateTexture(){if(tex)tex.destroy();tex=device.createTexture({size:[off.width,off.height],format:'rgba8unorm',usage:GPUTextureUsage.TEXTURE_BINDING|GPUTextureUsage.COPY_DST|GPUTextureUsage.RENDER_ATTACHMENT});device.queue.copyExternalImageToTexture({source:off},{texture:tex},[off.width,off.height]);bindGroup=device.createBindGroup({layout:pipeline.getBindGroupLayout(0),entries:[{binding:0,resource:{buffer:uniform}},{binding:1,resource:tex.createView()},{binding:2,resource:sampler}]})}
+    const render=a=>{if(!bindGroup)return;device.queue.writeBuffer(uniform,0,a);const cmd=device.createCommandEncoder();const pass=cmd.beginRenderPass({colorAttachments:[{view:context.getCurrentTexture().createView(),clearValue:{r:0,g:0,b:0,a:1},loadOp:'clear',storeOp:'store'}]});pass.setPipeline(pipeline);pass.setBindGroup(0,bindGroup);pass.draw(3);pass.end();device.queue.submit([cmd.finish()])};
+    device.lost.then(info=>{showError('WebGPU device lost. Reload to try WebGL2. '+info.message)});
+    return {backend:'WEBGPU',updateTexture,render,destroy(){if(tex)tex.destroy();uniform.destroy();device.destroy()}};
+  }
+  function fallbackRenderer(){
+    const c=canvas.getContext('2d',{alpha:false});
+    const pathFor=(x,y,r)=>{const path=new Path2D();if(state.shape===0)path.arc(x,y,r,0,Math.PI*2);else {const cap=state.shape===1;const w=r*(cap?2.84:2.28),h=r*(cap?1.04:1.8);path.roundRect(x-w/2,y-h/2,w,h,r*(cap?.48:.23))}return path};
+    return {backend:'CANVAS 2D',updateTexture(){},render(a){
+      const w=canvas.width,h=canvas.height,z=state.dpr,x=state.centerX*z,y=(state.height-state.centerY)*z,r=a[10],path=pathFor(x,y,r);
+      c.clearRect(0,0,w,h);c.drawImage(off,0,0);
+      c.save();c.shadowColor='rgba(9,15,34,.9)';c.shadowBlur=Math.max(20,r*.21);c.shadowOffsetY=r*.07;c.fillStyle='rgba(18,27,53,.35)';c.fill(path);c.restore();
+      c.save();c.clip(path);
+      const zoom=1.018+state.refraction*.14;
+      c.translate(x,y);c.scale(zoom,zoom);c.translate(-x,-y);
+      c.filter=`blur(${state.frost*7*z}px)`;c.drawImage(off,0,0);c.filter='none';
+      c.restore();
+      c.save();c.clip(path);const flare=c.createLinearGradient(x-r,y-r,x+r,y+r);
+      flare.addColorStop(0,'rgba(255,255,255,.26)');flare.addColorStop(.31,'rgba(160,208,255,.025)');flare.addColorStop(.72,'rgba(20,28,61,.12)');flare.addColorStop(1,'rgba(255,255,255,.20)');c.fillStyle=flare;c.fill(path);c.restore();
+      c.save();c.strokeStyle='rgba(233,241,255,.65)';c.lineWidth=Math.max(2,z*1.8+r*.009*state.bevel);c.shadowColor='rgba(199,225,255,.74)';c.shadowBlur=r*(.05+.17*state.bevel);c.stroke(path);c.restore();
+      if(state.dispersion>.03){c.save();c.globalCompositeOperation='screen';c.strokeStyle=`rgba(88,162,255,${state.dispersion*.25})`;c.lineWidth=z*2.5;c.translate(-state.dispersion*4*z,0);c.stroke(path);c.restore();c.save();c.globalCompositeOperation='screen';c.strokeStyle=`rgba(255,132,94,${state.dispersion*.20})`;c.lineWidth=z*2.5;c.translate(state.dispersion*4*z,0);c.stroke(path);c.restore();}
+      const hi=c.createLinearGradient(x-r,y-r,x+r,y+r);hi.addColorStop(0,'rgba(255,255,255,.7)');hi.addColorStop(.38,'rgba(255,255,255,.03)');hi.addColorStop(.78,'rgba(255,255,255,.01)');hi.addColorStop(1,'rgba(255,246,225,.65)');c.strokeStyle=hi;c.lineWidth=Math.max(z*2,r*.016);c.stroke(path);
+    },destroy(){}};
+  }
+  function replaceCanvas(){const n=document.createElement('canvas');n.id='scene';n.setAttribute('aria-label',canvas.getAttribute('aria-label'));canvas.replaceWith(n);canvas=n;bindPointer();}
+  function resize(){const oldW=state.width,oldH=state.height;state.width=window.innerWidth;state.height=window.innerHeight;state.dpr=Math.min(window.devicePixelRatio||1,1.7);if(state.width*state.height*state.dpr*state.dpr>3500000)state.dpr=Math.sqrt(3500000/(state.width*state.height));canvas.width=Math.max(1,Math.round(state.width*state.dpr));canvas.height=Math.max(1,Math.round(state.height*state.dpr));off.width=canvas.width;off.height=canvas.height;
+    if(!oldW){state.centerX=state.targetX=state.width*.51;state.centerY=state.targetY=state.height*(state.width<650?.58:.51);}else{const fx=state.width/oldW,fy=state.height/oldH;state.centerX*=fx;state.centerY*=fy;state.targetX*=fx;state.targetY*=fy;}
+    paint();
+  }
+  function lensRadius(){return Math.max(56,Math.min(state.width,state.height)*((state.width<650?.15:.10)+.19*state.scale));}
+  function sdfJS(x,y){const r=lensRadius();if(state.shape===0)return Math.hypot(x,y)-r;const w=state.shape===1?r*1.42:r*1.14,h=state.shape===1?r*.52:r*.9,cr=state.shape===1?r*.48:r*.23;const qx=Math.abs(x)-w+cr,qy=Math.abs(y)-h+cr;return Math.hypot(Math.max(qx,0),Math.max(qy,0))+Math.min(Math.max(qx,qy),0)-cr;}
+  function inLens(e){return sdfJS(e.clientX-state.centerX,state.height-e.clientY-state.centerY)<24;}
+  function bindPointer(){
+    canvas.addEventListener('pointerdown',e=>{if(inLens(e)){state.dragging=true;state.follow=false;byId('follow').checked=false;state.dragDX=state.targetX-e.clientX;state.dragDY=state.targetY-(state.height-e.clientY);canvas.setPointerCapture(e.pointerId)}state.disturbance=Math.min(1.7,state.disturbance+.9)});
+    canvas.addEventListener('pointermove',e=>{const py=state.height-e.clientY;state.px=e.clientX;state.py=py;if(state.dragging){state.targetX=Math.max(40,Math.min(state.width-40,e.clientX+state.dragDX));state.targetY=Math.max(40,Math.min(state.height-40,py+state.dragDY));state.disturbance=Math.min(1.5,state.disturbance+.12)}else if(state.follow){state.targetX=e.clientX;state.targetY=py;state.disturbance=Math.min(1.0,state.disturbance+.09)}else if(inLens(e)){state.disturbance=Math.min(.62,state.disturbance+.065)}});
+    const up=()=>{state.dragging=false};canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',up);
+  }
+  function reset(){for(const [k,v] of Object.entries(initial)){byId(k).value=v;byId(k+'-val').textContent=v+'%';state[k]=v/100}state.shape=0;state.theme=0;state.follow=false;byId('follow').checked=false;updatePressed();state.targetX=state.width*.51;state.targetY=state.height*(state.width<650?.58:.51);state.disturbance=1.1;paint()}
+  function updatePressed(){document.querySelectorAll('[data-shape]').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.shape)===state.shape)));document.querySelectorAll('[data-theme]').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.theme)===state.theme)))}
+  for(const k of Object.keys(initial)){byId(k).addEventListener('input',e=>{state[k]=Number(e.target.value)/100;byId(k+'-val').textContent=e.target.value+'%';state.disturbance=Math.min(1,state.disturbance+.04)})}
+  document.querySelectorAll('[data-shape]').forEach(b=>b.addEventListener('click',()=>{state.shape=Number(b.dataset.shape);updatePressed();state.disturbance=1}));
+  document.querySelectorAll('[data-theme]').forEach(b=>b.addEventListener('click',()=>{state.theme=Number(b.dataset.theme);updatePressed();state.disturbance=1.2;paint()}));
+  byId('follow').addEventListener('change',e=>state.follow=e.target.checked);
+  byId('reset').addEventListener('click',reset);
+  window.addEventListener('keydown',e=>{if(['INPUT','BUTTON','TEXTAREA'].includes(document.activeElement.tagName))return;let dx=0,dy=0;const step=e.shiftKey?55:22;if(e.key==='ArrowLeft')dx=-step;if(e.key==='ArrowRight')dx=step;if(e.key==='ArrowUp')dy=step;if(e.key==='ArrowDown')dy=-step;if(dx||dy){state.targetX=Math.max(40,Math.min(state.width-40,state.targetX+dx));state.targetY=Math.max(40,Math.min(state.height-40,state.targetY+dy));state.disturbance=.7;e.preventDefault()}else if(e.code==='Space'){state.disturbance=1.4;e.preventDefault()}else if(e.key==='Escape'){reset()}});
+  byId('export').addEventListener('click',()=>{try{const link=document.createElement('a');link.href=canvas.toDataURL('image/png');link.download='refraction-lab.png';link.click()}catch(e){showError('Screenshot unavailable: '+e.message)}});
+  function tick(now){
+    const dt=Math.min(.05,Math.max(.001,(now-lastFrame)/1000));lastFrame=now;
+    state.time+=reduceMotion?0:dt;
+    const response=1-Math.exp(-dt*(14-state.viscosity*10.7));const oldX=state.centerX,oldY=state.centerY;
+    state.centerX+=(state.targetX-state.centerX)*response;state.centerY+=(state.targetY-state.centerY)*response;
+    state.velocityX=state.velocityX*.85+(state.centerX-oldX)*.15*60;state.velocityY=state.velocityY*.85+(state.centerY-oldY)*.15*60;
+    state.disturbance*=Math.exp(-dt*(1.0+(1-state.viscosity)*3));
+    if(renderer){const z=state.dpr,r=lensRadius()*z;
+      const a=new Float32Array([canvas.width,canvas.height,state.time,state.shape,state.centerX*z,state.centerY*z,state.refraction,state.dispersion,state.frost,state.viscosity,r,state.theme,state.velocityX*z,state.velocityY*z,state.disturbance,state.bevel]);
+      try{renderer.render(a)}catch(e){showError('Renderer error: '+e.message)}
+    }
+    frames++;if(now-lastFps>800){byId('fps').textContent=Math.round(frames*1000/(now-lastFps))+' FPS';lastFps=now;frames=0}
+    requestAnimationFrame(tick);
+  }
+  async function init(){
+    bindPointer();try{renderer=await webgpuRenderer()}catch(e){console.info('WebGPU:',e.message);try{replaceCanvas();renderer=webglRenderer()}catch(e2){console.warn('WebGL2:',e2.message);replaceCanvas();renderer=fallbackRenderer();showError('GPU unavailable. Showing a simplified Canvas 2D fallback.')}}
+    state.backend=renderer.backend;byId('backend').textContent=renderer.backend;resize();window.addEventListener('resize',resize,{passive:true});lastFrame=performance.now();requestAnimationFrame(tick);
+  }
+  window.__liquidLab={state,get backend(){return state.backend},reset};
+  init().catch(e=>showError(e.message));
+})();
+</script>
+</body>
+</html>

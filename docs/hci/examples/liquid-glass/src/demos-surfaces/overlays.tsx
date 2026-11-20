@@ -17,8 +17,8 @@ import {
   AlertDialogDescription,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@quantitative-hci/liquid-glass/alert-dialog";
-import { Button } from "@quantitative-hci/liquid-glass/button";
+} from "@ui-sdk/react/alert-dialog";
+import { Button } from "@ui-sdk/react/button";
 import {
   Command,
   CommandEmpty,
@@ -27,7 +27,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@quantitative-hci/liquid-glass/command";
+} from "@ui-sdk/react/command";
 import {
   Dialog,
   DialogBackdrop,
@@ -36,7 +36,7 @@ import {
   DialogDescription,
   DialogTitle,
   DialogTrigger,
-} from "@quantitative-hci/liquid-glass/dialog";
+} from "@ui-sdk/react/dialog";
 import {
   Drawer,
   DrawerBackdrop,
@@ -45,14 +45,14 @@ import {
   DrawerDescription,
   DrawerTitle,
   DrawerTrigger,
-} from "@quantitative-hci/liquid-glass/drawer";
-import { Field, FieldLabel } from "@quantitative-hci/liquid-glass/field";
+} from "@ui-sdk/react/drawer";
+import { Field, FieldLabel } from "@ui-sdk/react/field";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
-} from "@quantitative-hci/liquid-glass/hover-card";
-import { Input } from "@quantitative-hci/liquid-glass/input";
+} from "@ui-sdk/react/hover-card";
+import { Input } from "@ui-sdk/react/input";
 import {
   Menu,
   MenuContent,
@@ -61,7 +61,7 @@ import {
   MenuItem,
   MenuSeparator,
   MenuTrigger,
-} from "@quantitative-hci/liquid-glass/menu";
+} from "@ui-sdk/react/menu";
 import {
   Popover,
   PopoverClose,
@@ -69,7 +69,7 @@ import {
   PopoverDescription,
   PopoverTitle,
   PopoverTrigger,
-} from "@quantitative-hci/liquid-glass/popover";
+} from "@ui-sdk/react/popover";
 import {
   Toast,
   ToastAction,
@@ -77,12 +77,12 @@ import {
   ToastRegion,
   ToastTitle,
   createToaster,
-} from "@quantitative-hci/liquid-glass/toast";
+} from "@ui-sdk/react/toast";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@quantitative-hci/liquid-glass/tooltip";
+} from "@ui-sdk/react/tooltip";
 import {
   TriggerMenu,
   TriggerMenuContent,
@@ -92,7 +92,7 @@ import {
   TriggerMenuList,
   TriggerMenuStatus,
   type TriggerMenuDataItem,
-} from "@quantitative-hci/liquid-glass/trigger-menu";
+} from "@ui-sdk/react/trigger-menu";
 
 export function ButtonDemo() {
   const [saved, setSaved] = useState(false);
@@ -133,6 +133,7 @@ export function AlertDialogDemo() {
             <AlertDialogClose
               data-variant="solid"
               value="confirm"
+              data-agent-confirm="Resets this specimen's demonstration state."
               onClick={() => setCleared(true)}
             >
               Reset specimen
@@ -153,7 +154,10 @@ export function CommandDemo() {
   const [action, setAction] = useState("Use ↑ ↓ and Enter to choose.");
   return (
     <div className="demo-stack">
-      <Command onAction={(value) => setAction(`Selected ${value}.`)}>
+      <Command
+        aria-label="Specimen commands"
+        onAction={(value) => setAction(`Selected ${value}.`)}
+      >
         <CommandInput
           aria-label="Search specimen commands"
           placeholder="Find an action…"
@@ -385,7 +389,16 @@ export function ToastDemo() {
           ? "Preset saved. Undo is available in the notification."
           : "No pending changes."}
       </output>
-      <ToastRegion toaster={toaster}>
+      <ToastRegion
+        toaster={toaster}
+        aria-label="Preset notifications"
+        render={(props) => (
+          <section
+            {...props}
+            data-agent-hidden={props["aria-label"] ? undefined : ""}
+          />
+        )}
+      >
         {() => (
           <Toast>
             <div data-slot="stack">
@@ -406,7 +419,7 @@ export function TooltipDemo() {
     <div className="demo-stack">
       <Tooltip>
         <TooltipTrigger
-          aria-label={saved ? "Remove specimen bookmark" : "Bookmark specimen"}
+          aria-label="Bookmark specimen"
           aria-pressed={saved}
           onClick={() => setSaved((value) => !value)}
         >

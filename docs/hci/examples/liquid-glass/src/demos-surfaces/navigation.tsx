@@ -16,12 +16,12 @@ import {
   AccordionItem,
   AccordionPanel,
   AccordionTrigger,
-} from "@quantitative-hci/liquid-glass/accordion";
+} from "@ui-sdk/react/accordion";
 import {
   Collapsible,
   CollapsiblePanel,
   CollapsibleTrigger,
-} from "@quantitative-hci/liquid-glass/collapsible";
+} from "@ui-sdk/react/collapsible";
 import {
   Menu,
   MenuCheckboxItem,
@@ -30,8 +30,8 @@ import {
   MenuItemIndicator,
   MenuSeparator,
   MenuTrigger,
-} from "@quantitative-hci/liquid-glass/menu";
-import { Menubar } from "@quantitative-hci/liquid-glass/menubar";
+} from "@ui-sdk/react/menu";
+import { Menubar } from "@ui-sdk/react/menubar";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -40,7 +40,7 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
   NavigationMenuViewport,
-} from "@quantitative-hci/liquid-glass/navigation-menu";
+} from "@ui-sdk/react/navigation-menu";
 import {
   Pagination,
   PaginationEllipsis,
@@ -49,26 +49,26 @@ import {
   PaginationList,
   PaginationNext,
   PaginationPrevious,
-} from "@quantitative-hci/liquid-glass/pagination";
+} from "@ui-sdk/react/pagination";
 import {
   Tabs,
   TabsList,
   TabsPanel,
   TabsTab,
-} from "@quantitative-hci/liquid-glass/tabs";
-import { Toggle, ToggleIcon } from "@quantitative-hci/liquid-glass/toggle";
+} from "@ui-sdk/react/tabs";
+import { Toggle, ToggleIcon } from "@ui-sdk/react/toggle";
 import {
   Toolbar,
   ToolbarButton,
   ToolbarSeparator,
-} from "@quantitative-hci/liquid-glass/toolbar";
+} from "@ui-sdk/react/toolbar";
 import {
   Tree,
   TreeGroup,
   TreeItem,
   TreeItemIndicator,
   TreeItemLabel,
-} from "@quantitative-hci/liquid-glass/tree";
+} from "@ui-sdk/react/tree";
 
 export function MenubarDemo() {
   const [last, setLast] = useState("Use arrow keys between menus.");
@@ -80,7 +80,7 @@ export function MenubarDemo() {
           <MenuContent>
             <MenuItem value="New document">New document</MenuItem>
             <MenuItem value="Duplicate document">Duplicate</MenuItem>
-            <MenuSeparator />
+            <MenuSeparator aria-label="File action groups" />
             <MenuItem value="Export specimen">Export specimen</MenuItem>
           </MenuContent>
         </Menu>
@@ -201,7 +201,7 @@ export function PaginationDemo() {
 
 export function TabsDemo() {
   return (
-    <Tabs defaultValue="design">
+    <Tabs defaultValue="design" aria-label="Specimen details">
       <TabsList aria-label="Specimen details">
         <TabsTab value="design">Design</TabsTab>
         <TabsTab value="build">Build</TabsTab>
@@ -262,7 +262,7 @@ export function ToolbarDemo() {
             <Underline />
           </ToggleIcon>
         </Toggle>
-        <ToolbarSeparator />
+        <ToolbarSeparator aria-hidden="true" />
         <ToolbarButton
           aria-label="Toggle sample link"
           aria-pressed={linked}
@@ -287,7 +287,7 @@ export function ToolbarDemo() {
 
 export function AccordionDemo() {
   return (
-    <Accordion defaultValue={["material"]}>
+    <Accordion defaultValue={["material"]} aria-label="Material questions">
       {[
         {
           value: "material",

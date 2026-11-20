@@ -1,48 +1,38 @@
-# Quantitative HCI Liquid Glass
+# Optional frosted material
 
-Private React component material built over `@ui-sdk/react` and `@ui-sdk/core` **0.1.0-beta.13**. The package preserves the upstream APIs and supplies a shared Apple-inspired web glass treatment, tokens and display preferences.
-
-The [component manifest](component-manifest.json) lists all 55 covered families. The [gallery](../../docs/hci/examples/liquid-glass/README.md) provides a working specimen for each family. The [standard](../../docs/hci/standards/liquid-glass.md) defines material selection, accessibility fallbacks and verification.
+`@quantitative-hci/liquid-glass` is a private workspace package of tokens, scoped CSS and appearance preferences for UI SDK **0.1.0-beta.13**. New components import the upstream SDK directly. Existing package component re-exports remain as compatibility aliases.
 
 ## Use
 
-This package is a private workspace dependency; it is not a published npm package.
-
 ```tsx
+import { Button } from "@ui-sdk/react/button";
 import { GlassProvider } from "@quantitative-hci/liquid-glass";
-import { Button } from "@quantitative-hci/liquid-glass/button";
+import "@ui-sdk/core/web.css";
 import "@quantitative-hci/liquid-glass/styles.css";
 
-export function App() {
+export function App({ frosted = false }) {
   return (
-    <GlassProvider>
-      <Button type="submit">Save changes</Button>
+    <GlassProvider enabled={frosted}>
+      <Button data-variant="solid">Save changes</Button>
     </GlassProvider>
   );
 }
 ```
 
-Use the material provider from `@quantitative-hci/liquid-glass/material` at the application boundary. The gallery's `src/main.tsx` is the complete integration example for its current props and preference controls. Import individual component subpaths to keep dependencies explicit.
+The provider retains its historical `enabled=true` default for callers already using it. New applications should make the choice explicit and start from upstream behaviour/styles. The workbench passes `enabled=false` initially. The material stylesheet only applies beneath `html[data-qg-material-enabled="true"]`, including portalled overlays. Disabling it removes provider-owned root attributes and styles.
 
-The original SDK component props, composition and events remain available. Public subpaths delegate to the pinned upstream React adapter, while the shared stylesheet uses its `data-slot` and state attributes. Update the upstream dependency only with corresponding typecheck, gallery and interaction verification.
+Preferences include appearance, material, blur, saturation, reduced motion and increased contrast. System reduced transparency and forced colours select solid rendering. The deprecated `refraction` preference is retained for stored-data compatibility, defaults to false and no longer activates a turbulence filter.
 
-## Material and behaviour
+This package supplies **CSS tint and blur**, not the reference video's lens renderer. The separate [reference optics study](../../docs/hci/examples/liquid-glass/src/reference-optics/README.md) uses the video's actual shader over a captured local scene. It does not establish a production DOM-refraction solution for every component.
 
-Glass is the default for controls and navigation; text, data and form labels remain ordinary readable DOM content. Solid, motion and contrast preferences are part of the material contract. Do not create separate visual-only versions of the controls that drop the SDK behaviour.
+## Behaviour and agent access
 
-The package does not promise physically accurate refraction through arbitrary DOM content. The retained GPU experiment is separate from the component material and has separate rendering requirements.
+Keyboard, focus, validation, forms and popup behaviour belong to UI SDK. Preserve variant, invalid, selected, disabled and focus states when styling. An application must initialize `createAgent` and, when available, `registerTools`; importing this material package or its `/agent` compatibility entry alone does not connect an agent.
 
-## Validate
+The [55-family workbench](../../docs/hci/examples/liquid-glass/README.md) shows direct SDK imports, an actual bridge and a live state inspector. Follow the [project standard](../../docs/hci/standards/liquid-glass.md).
 
-From the repository root:
+## Verification and licences
 
-```sh
-npm ci --ignore-scripts
-npm run glass:verify
-```
+Run `npm run glass:verify` and the documented browser suite for behaviour or appearance changes. The beta.10 settings pilot remains independently measured.
 
-For interactive changes, also run the gallery browser checks described in its README. The repository's existing HCI pilot remains independently versioned and measured.
-
-## Licence
-
-The original Quantitative HCI material and examples use the repository's [MIT licence](../../LICENSE). UI SDK remains Apache-2.0; React and Lucide retain their respective licences. See [third-party notices](../../THIRD_PARTY_NOTICES.md). Apple is a visual reference, not a supplier or endorser of this web implementation.
+Original material code is covered by the repository's [MIT licence](../../LICENSE). UI SDK remains Apache-2.0. See [third-party notices](../../THIRD_PARTY_NOTICES.md). Apple is a visual reference, not an endorser or supplier of this implementation.

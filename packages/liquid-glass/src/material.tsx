@@ -4,7 +4,6 @@ import {
   createContext,
   useContext,
   useEffect,
-  useId,
   useMemo,
   useRef,
   useState,
@@ -18,6 +17,7 @@ export interface GlassPreferences {
   material: GlassMaterial;
   reduceMotion: boolean;
   increaseContrast: boolean;
+  /** @deprecated Reserved for compatibility; the CSS material has no optical renderer. */
   refraction: boolean;
   blur: number;
   saturation: number;
@@ -27,12 +27,13 @@ const defaults: GlassPreferences = {
   material: "regular",
   reduceMotion: false,
   increaseContrast: false,
-  refraction: true,
+  refraction: false,
   blur: 18,
   saturation: 150,
 };
 const storageKey = "qg.preferences.v1";
 type GlassContextValue = {
+  enabled: boolean;
   preferences: GlassPreferences;
   update: (patch: Partial<GlassPreferences>) => void;
   reset: () => void;
@@ -52,7 +53,7 @@ function cleanPreferences(value: unknown): GlassPreferences {
       v.material === "clear" || v.material === "solid" ? v.material : "regular",
     reduceMotion: v.reduceMotion === true,
     increaseContrast: v.increaseContrast === true,
-    refraction: v.refraction !== false,
+    refraction: v.refraction === true,
     blur:
       typeof v.blur === "number" && Number.isFinite(v.blur)
         ? Math.max(0, Math.min(32, v.blur))
@@ -85,7 +86,13 @@ function useMedia(query: string) {
   return matches;
 }
 
-export function GlassProvider({ children }: { children: ReactNode }) {
+export function GlassProvider({
+  children,
+  enabled = true,
+}: {
+  children: ReactNode;
+  enabled?: boolean;
+}) {
   const [preferences, setPreferences] = useState<GlassPreferences>(() => ({
     ...defaults,
   }));
@@ -108,7 +115,6 @@ export function GlassProvider({ children }: { children: ReactNode }) {
       : preferences.theme;
   const material =
     reducedTransparency || highContrast ? "solid" : preferences.material;
-  const filterId = `qg-refraction-${useId().replace(/:/g, "")}`;
 
   useEffect(() => {
     setPreferences(readPreferences());
@@ -116,20 +122,19 @@ export function GlassProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!storageReady) return;
+    if (!storageReady || !enabled) return;
     const root = document.documentElement;
     const attrs = {
+      "data-qg-material-enabled": "true",
       "data-qg-theme": theme,
       "data-qg-material": material,
       "data-qg-motion": reducedMotion ? "reduced" : "full",
       "data-qg-contrast": highContrast ? "more" : "normal",
-      "data-qg-optics":
-        preferences.refraction && material !== "solid" ? "on" : "off",
+      "data-qg-optics": "off",
     };
     const properties = {
       "--qg-blur": `${preferences.blur}px`,
       "--qg-saturation": `${preferences.saturation}%`,
-      "--qg-refraction-filter": `url(#${filterId})`,
     };
     const previousAttrs = Object.entries(attrs).map(([key, value]) => ({
       key,
@@ -171,12 +176,12 @@ export function GlassProvider({ children }: { children: ReactNode }) {
     theme,
     reducedMotion,
     highContrast,
-    filterId,
     storageReady,
+    enabled,
   ]);
 
   useEffect(() => {
-    if (reducedMotion || material === "solid") return;
+    if (!enabled || reducedMotion || material === "solid") return;
     let frame = 0;
     let latest: PointerEvent | null = null;
     let active: HTMLElement | null = null;
@@ -216,10 +221,11 @@ export function GlassProvider({ children }: { children: ReactNode }) {
         active.style.removeProperty("--qg-y");
       }
     };
-  }, [reducedMotion, material]);
+  }, [enabled, reducedMotion, material]);
 
   const value = useMemo<GlassContextValue>(
     () => ({
+      enabled,
       preferences,
       update: (patch) =>
         setPreferences((current) => cleanPreferences({ ...current, ...patch })),
@@ -229,43 +235,10 @@ export function GlassProvider({ children }: { children: ReactNode }) {
       highContrast,
       theme,
     }),
-    [preferences, reducedMotion, reducedTransparency, highContrast, theme],
+    [enabled, preferences, reducedMotion, reducedTransparency, highContrast, theme],
   );
   return (
     <GlassContext.Provider value={value}>
-      <svg
-        width="0"
-        height="0"
-        aria-hidden="true"
-        className="qg-filter-definitions"
-      >
-        <defs>
-          <filter
-            id={filterId}
-            x="0%"
-            y="0%"
-            width="100%"
-            height="100%"
-            colorInterpolationFilters="sRGB"
-          >
-            <feTurbulence
-              type="fractalNoise"
-              baseFrequency="0.014 0.018"
-              numOctaves="1"
-              seed="8"
-              result="noise"
-            />
-            <feGaussianBlur in="noise" stdDeviation="2" result="map" />
-            <feDisplacementMap
-              in="SourceGraphic"
-              in2="map"
-              scale="9"
-              xChannelSelector="R"
-              yChannelSelector="G"
-            />
-          </filter>
-        </defs>
-      </svg>
       {children}
     </GlassContext.Provider>
   );

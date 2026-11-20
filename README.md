@@ -17,22 +17,21 @@
 
 A structured HCI and UX review skill pack for prototypes, flows, interface systems, research planning, and usability evaluation. It focuses on models, journeys, terminology, state handling, consistency, failure paths, heuristics, cognitive walkthroughs, personas, task analysis, prototype planning, and usability studies.
 
-## Default UI · Liquid Glass
+## UI SDK standard and workbench
 
-Apple-inspired Liquid Glass is the default for new high-fidelity Quantitative HCI examples and prototypes without an established design system. Use frosted glass and a subtle cyan-to-rose border spotlight on controls. Use solid, quiet surfaces for charts, tables and reading.
+Use [Vercel UI SDK](https://github.com/vercel-labs/ui) directly for component behaviour and agent semantics. Give controls clear names, initialize the real `createAgent` bridge, and verify actions against the rendered state. Follow the official UI SDK skill and the installed version's documentation. An existing product design system still takes precedence for appearance.
 
-**[Open the Liquid Glass component library](https://quantitative-hci-ui-sdk-demos.ajax414655.chatgpt.site/glass/)** (owner access): try all **55 component families** with regular glass, clear glass and solid materials, light/dark appearance, adjustable frost and optical refraction. Search the catalogue, copy component imports, and compare accessibility preferences in the same interface.
+**[Open the UI SDK workbench](https://quantitative-hci-ui-sdk-demos.ajax414655.chatgpt.site/glass/)** (owner access): explore all **55 component families**, with one mounted specimen at a time, a searchable catalogue and a live agent-state inspector. Compare upstream styles with optional **Frosted CSS**, or open **Video refraction** for the original reference shader over a captured local scene.
 
-The internal [`@quantitative-hci/liquid-glass` package](packages/liquid-glass/README.md) supplies the shared material and explicit component imports on top of [Vercel UI SDK](https://github.com/vercel-labs/ui), pinned to `0.1.0-beta.13`. Use it as the default implementation for new prototypes; keep an existing product design system where one exists. The [implementation standard](docs/hci/standards/liquid-glass.md), root [agent instructions](AGENTS.md), complete component manifest and CI checks keep future work aligned.
+CSS blur is not the video's GPU refraction. The former default “Liquid Glass” styling and decorative turbulence were insufficient grounds for calling the interface a replication. Glass is now an explicit appearance experiment. The [implementation standard](docs/hci/standards/liquid-glass.md), [agent instructions](AGENTS.md), pinned dependency versions and browser contract checks keep that distinction concrete.
 
 ```bash
-npm ci
+npm ci --ignore-scripts
 npm run glass:dev
-# TypeScript, component coverage and production build
 npm run glass:verify
 ```
 
-See the [gallery guide](docs/hci/examples/liquid-glass/README.md) for package imports, local development and browser checks. The earlier toolbar study below remains a separate measured fixture.
+The [workbench guide](docs/hci/examples/liquid-glass/README.md) explains browser tools, the fallback SDK command console, optical limitations and verification. The [optional material package](packages/liquid-glass/README.md) retains compatibility imports for existing examples. The earlier toolbar study below remains a separate fixture with its own evidence.
 
 ![Quantitative HCI example with a chromatic Liquid Glass toolbar rim and a scorecard showing a 19 ms median improvement](assets/spotlight-glass-preview.webp)
 

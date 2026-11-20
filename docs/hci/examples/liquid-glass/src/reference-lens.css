@@ -1,0 +1,210 @@
+.reference-optics {
+  min-width: 0;
+}
+.reference-lens-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.reference-lens-header h2 {
+  margin: 0.35rem 0 0.6rem;
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  letter-spacing: -0.04em;
+}
+.reference-lens-header p {
+  margin: 0;
+  color: var(--ui-muted-foreground);
+  max-width: 38rem;
+}
+.reference-lens-header a {
+  white-space: nowrap;
+  font-size: 0.8rem;
+}
+.reference-lens-eyebrow {
+  font-size: 0.7rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.reference-lens-stage {
+  position: relative;
+  isolation: isolate;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--ui-border);
+  border-radius: 1rem;
+}
+.reference-lens-backdrop {
+  height: 340px;
+  overflow: hidden;
+  position: relative;
+  z-index: 0;
+  padding: 24px;
+  box-sizing: border-box;
+  background: #f4f0e9;
+  color: #191919;
+  font-family: Arial, Helvetica, sans-serif;
+}
+.reference-lens-scene-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.reference-lens-display {
+  position: relative;
+  z-index: 1;
+  font-size: clamp(58px, 11vw, 126px);
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: -0.075em;
+  margin: 26px 0 0;
+  text-align: center;
+}
+.reference-lens-stripes {
+  position: absolute;
+  inset: 172px 0 0;
+  background: repeating-linear-gradient(
+    100deg,
+    #fc5638 0 32px,
+    #f2b544 32px 64px,
+    #457eae 64px 96px,
+    #d4dbd1 96px 128px,
+    #27292e 128px 160px
+  );
+}
+.reference-lens-scene-caption {
+  position: absolute;
+  bottom: 22px;
+  left: 24px;
+  right: 24px;
+  color: #fff;
+  font-size: 11px;
+  letter-spacing: 0.025em;
+  margin: 0;
+  background: #191919;
+  padding: 10px 12px;
+  border-radius: 3px;
+}
+.reference-lens-object {
+  position: absolute;
+  z-index: 1;
+  top: var(--lens-y);
+  left: var(--lens-x);
+  width: var(--lens-width);
+  height: var(--lens-height);
+  border-radius: calc(var(--lens-width) * 0.15);
+  cursor: grab;
+  touch-action: none;
+}
+.reference-lens-object:active {
+  cursor: grabbing;
+}
+.reference-lens-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: inherit;
+}
+.reference-lens-live-controls {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 12px;
+  box-sizing: border-box;
+}
+.reference-lens-live-controls [data-slot="button"] {
+  background: rgb(255 255 255 / 0.94);
+  color: #151515;
+  border-color: rgb(0 0 0 / 0.3);
+  height: auto;
+  min-height: 36px;
+  font-size: 0.7rem;
+  padding: 0.45rem 0.65rem;
+}
+.reference-lens-stage:not([data-lens-status="ready"]) .reference-lens-canvas {
+  visibility: hidden;
+}
+.reference-lens-stage:not([data-lens-status="ready"])
+  .reference-lens-live-controls {
+  background: #fff;
+  border: 1px solid #777;
+  border-radius: inherit;
+}
+.reference-lens-status {
+  color: var(--ui-muted-foreground);
+  font-size: 0.75rem;
+  min-height: 1.3em;
+  margin: 0.7rem 0 1.5rem;
+}
+.reference-lens-controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+.reference-lens-controls [data-slot="slider"] {
+  min-width: 0;
+  width: 100%;
+}
+.reference-lens-slider-label {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-size: 0.75rem;
+}
+.reference-lens-slider-label [data-slot="field-label"] {
+  font-size: 0.75rem;
+}
+.reference-lens-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+.reference-lens-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.reference-lens-footer p {
+  color: var(--ui-muted-foreground);
+  font-size: 0.7rem;
+  line-height: 1.6;
+  max-width: 24rem;
+  margin: 0;
+}
+@media (max-width: 700px) {
+  .reference-lens-header,
+  .reference-lens-footer {
+    flex-direction: column;
+  }
+  .reference-lens-controls {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .reference-lens-backdrop {
+    height: 300px;
+    padding: 20px;
+  }
+  .reference-lens-scene-caption {
+    left: 20px;
+    right: 20px;
+  }
+}
+@media (forced-colors: active) {
+  .reference-lens-live-controls,
+  .reference-lens-live-controls [data-slot="button"] {
+    background: Canvas;
+    color: CanvasText;
+    border-color: ButtonText;
+  }
+}

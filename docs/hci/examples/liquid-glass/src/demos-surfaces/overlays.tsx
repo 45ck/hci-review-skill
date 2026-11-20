@@ -154,7 +154,10 @@ export function CommandDemo() {
   const [action, setAction] = useState("Use ↑ ↓ and Enter to choose.");
   return (
     <div className="demo-stack">
-      <Command onAction={(value) => setAction(`Selected ${value}.`)}>
+      <Command
+        aria-label="Specimen commands"
+        onAction={(value) => setAction(`Selected ${value}.`)}
+      >
         <CommandInput
           aria-label="Search specimen commands"
           placeholder="Find an action…"
@@ -386,7 +389,16 @@ export function ToastDemo() {
           ? "Preset saved. Undo is available in the notification."
           : "No pending changes."}
       </output>
-      <ToastRegion toaster={toaster}>
+      <ToastRegion
+        toaster={toaster}
+        aria-label="Preset notifications"
+        render={(props) => (
+          <section
+            {...props}
+            data-agent-hidden={props["aria-label"] ? undefined : ""}
+          />
+        )}
+      >
         {() => (
           <Toast>
             <div data-slot="stack">
@@ -407,7 +419,7 @@ export function TooltipDemo() {
     <div className="demo-stack">
       <Tooltip>
         <TooltipTrigger
-          aria-label={saved ? "Remove specimen bookmark" : "Bookmark specimen"}
+          aria-label="Bookmark specimen"
           aria-pressed={saved}
           onClick={() => setSaved((value) => !value)}
         >

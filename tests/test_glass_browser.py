@@ -56,6 +56,8 @@ async def run(args):
 
         async def record(name, operation):
             try:
+                await page.set_viewport_size({"width": 1440, "height": 1000})
+                await page.emulate_media(reduced_motion="no-preference", forced_colors="none")
                 await page.goto(args.base_url, wait_until="networkidle")
                 detail = await operation()
                 result = {"name": name, "passed": True, "detail": detail}
@@ -184,8 +186,8 @@ async def run(args):
             await page.get_by_label("Search components", exact=True).fill("dialog")
             await choose("dialog")
             dimensions = await page.evaluate("({width: innerWidth, scroll: document.documentElement.scrollWidth})")
-            assert dimensions["scroll"] <= dimensions["width"] + 1, dimensions
             await page.screenshot(path=str(output.parent / "workbench-mobile.png"), full_page=True)
+            assert dimensions["scroll"] <= dimensions["width"] + 1, dimensions
             await page.get_by_label("Search components", exact=True).fill("")
             await page.set_viewport_size({"width": 1440, "height": 1000})
             return dimensions
@@ -202,8 +204,11 @@ async def run(args):
             await choose("button")
             button = page.locator(".component-stage [data-variant='solid']")
             await button.focus()
-            style = await button.evaluate("node => ({filter: getComputedStyle(node).backdropFilter, outline: getComputedStyle(node).outlineStyle})")
-            assert style["filter"] in ("none", "blur(0px)") and style["outline"] != "none"
+            await page.keyboard.press("Tab")
+            await page.keyboard.press("Shift+Tab")
+            await expect(button).to_be_focused()
+            style = await button.evaluate("node => ({filter: getComputedStyle(node).backdropFilter, outline: getComputedStyle(node).outlineStyle, outlineWidth: getComputedStyle(node).outlineWidth, focusVisible: node.matches(':focus-visible')})")
+            assert style["filter"] in ("none", "blur(0px)") and style["outline"] != "none" and style["focusVisible"], style
             await page.emulate_media(reduced_motion="no-preference", forced_colors="none")
             await page.get_by_role("radio", name="UI SDK default", exact=True).check()
             return style

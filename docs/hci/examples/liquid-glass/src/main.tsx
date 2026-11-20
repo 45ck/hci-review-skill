@@ -417,21 +417,23 @@ function App() {
                   <Toggle pressed={inspecting} onPressedChange={setInspecting}>
                     <Code2 size={15} aria-hidden="true" /> Inspect agent state
                   </Toggle>
-                  <Dialog>
-                    <DialogTrigger disabled={!frosted}>
-                      <Settings2 size={15} aria-hidden="true" /> Appearance
-                      settings
-                    </DialogTrigger>
-                    <DialogContent className="appearance-dialog">
-                      <DialogTitle>Frosted appearance settings</DialogTitle>
-                      <DialogDescription>
-                        This changes tint and blur. The WebGPU lens from the
-                        video is in Video refraction.
-                      </DialogDescription>
-                      <MaterialControls />
-                      <DialogClose>Done</DialogClose>
-                    </DialogContent>
-                  </Dialog>
+                  {frosted && (
+                    <Dialog>
+                      <DialogTrigger>
+                        <Settings2 size={15} aria-hidden="true" /> Appearance
+                        settings
+                      </DialogTrigger>
+                      <DialogContent className="appearance-dialog">
+                        <DialogTitle>Frosted appearance settings</DialogTitle>
+                        <DialogDescription>
+                          This changes tint and blur. The WebGPU lens from the
+                          video is in Video refraction.
+                        </DialogDescription>
+                        <MaterialControls />
+                        <DialogClose>Done</DialogClose>
+                      </DialogContent>
+                    </Dialog>
+                  )}
                 </div>
               </div>
               {selected && Demo ? (

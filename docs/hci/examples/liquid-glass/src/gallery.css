@@ -149,6 +149,7 @@ input {
 }
 .workbench-choice [data-slot="select-trigger"] {
   width: 100%;
+  min-width: 0;
 }
 .workbench-choice [data-slot="select-label"] {
   font-size: 12px;
@@ -536,7 +537,7 @@ input {
     border-right: 0;
     border-bottom: 1px solid var(--ui-border);
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
   }
   .catalogue-heading,

@@ -130,7 +130,6 @@ async def verify_agent_contract(page, expect):
             "Component catalogue": "listbox",
             "Preview appearance": "segmented-control",
             "Inspect agent state": "toggle",
-            "Appearance settings": "dialog",
             "Restart selected demo": "button",
             "Copy component import": "button",
         }
@@ -142,6 +141,31 @@ async def verify_agent_contract(page, expect):
         assert not unnamed, f"Unnamed mounted SDK components: {unnamed}"
         assert not any(item.get("label") == "Refresh snapshot" for item in mounted), "Inspector observed itself"
         outcomes["shellNames"] = list(shell)
+
+        appearance_names = {"Appearance settings", "Frosted appearance settings"}
+        assert not any(item.get("label") in appearance_names for item in mounted), "Baseline exposes a live appearance dialog to agents"
+        await expect(page.get_by_role("button", name="Appearance settings", exact=True)).to_have_count(0, timeout=TIMEOUT_MS)
+        treatment = await entry("segmented-control", "Preview appearance")
+        frosted = await choice(treatment, "Frosted CSS")
+        await act(treatment, "setValue", [frosted["value"]])
+        await expect(page.get_by_role("button", name="Appearance settings", exact=True)).to_be_enabled(timeout=TIMEOUT_MS)
+        appearance = await entry("dialog", "Appearance settings")
+        await act(appearance, "setOpen", [True])
+        appearance_dialog = page.get_by_role("dialog", name="Frosted appearance settings", exact=True)
+        await expect(appearance_dialog).to_be_visible(timeout=TIMEOUT_MS)
+        await act(await entry("dialog", "Frosted appearance settings"), "setOpen", [False])
+        await expect(appearance_dialog).not_to_be_visible(timeout=TIMEOUT_MS)
+        await act(await entry("segmented-control", "Preview appearance"), "setValue", [baseline["value"]])
+        await expect(page.get_by_role("button", name="Appearance settings", exact=True)).to_have_count(0, timeout=TIMEOUT_MS)
+        after_baseline = await call("snapshot")
+        assert not any(item.get("label") in appearance_names and not item.get("offPage") for item in after_baseline), "Unmounted appearance dialog still exposes live actions"
+        await act(appearance, "setOpen", [True], succeeds=False)
+        await expect(appearance_dialog).not_to_be_visible(timeout=TIMEOUT_MS)
+        outcomes["appearanceAvailability"] = {
+            "unmountedInBaseline": True,
+            "availableWhenFrosted": True,
+            "staleRefRefused": True,
+        }
 
         search = await entry("input", "Search components")
         await act(search, "setValue", ["password"])

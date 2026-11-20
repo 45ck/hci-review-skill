@@ -10,6 +10,10 @@ import re
 import struct
 import zlib
 
+# SwiftShader capture can outlast the interaction timeout after fonts are ready.
+# Keep capture bounded and fatal; do not skip Playwright's font-readiness check.
+SCREENSHOT_TIMEOUT_MS = 15000
+
 
 def _png_rgb(data):
     """Decode Chromium's non-interlaced 8-bit RGB/RGBA screenshot without PIL."""
@@ -204,7 +208,7 @@ async def verify_optics_contract(page, expect, *, output_dir="test-results", req
         probes[kind] = box
 
     async def capture(label):
-        return {kind: await page.screenshot(path=str(output / f"gpu-{label}-{kind}.png"), clip=box, animations="disabled") for kind, box in probes.items()}
+        return {kind: await page.screenshot(path=str(output / f"gpu-{label}-{kind}.png"), clip=box, animations="disabled", timeout=SCREENSHOT_TIMEOUT_MS) for kind, box in probes.items()}
 
     on = await capture("on")
     hide = await page.add_style_tag(content="canvas[data-liquid-canvas] { visibility: hidden !important; }")
@@ -232,7 +236,7 @@ async def verify_optics_contract(page, expect, *, output_dir="test-results", req
     assert capture_change["captureAfter"] > capture_change["captureBefore"], "Backdrop changed without a completed texture capture"
     for kind, difference in backdrop.items():
         assert difference["changedFraction"] > 0.01 and difference["meanChannelDifference"] > 0.25, f"Changed backdrop did not reach the actual {kind} surface: {difference}"
-    await page.screenshot(path=str(output / "gpu-effect-overview.png"), full_page=True, animations="disabled")
+    await page.screenshot(path=str(output / "gpu-effect-overview.png"), full_page=True, animations="disabled", timeout=SCREENSHOT_TIMEOUT_MS)
     await expect(root).to_have_attribute("data-liquid-status", "ready")
     await _configure(page, strength=30, backdrop="Coast")
     result.update({

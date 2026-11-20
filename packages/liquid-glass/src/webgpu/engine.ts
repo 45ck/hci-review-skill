@@ -129,8 +129,10 @@ export function createLiquidGlassEngine(config: EngineOptions) {
           canvas.className = "qg-gpu-popup-canvas";
           canvas.dataset.liquidCanvas = "popup";
           canvas.setAttribute("aria-hidden", "true");
+          canvas.setAttribute("data-html2canvas-ignore", "");
           canvas.style.cssText =
             "position:absolute;pointer-events:none;z-index:-1;border-radius:inherit;display:block;";
+          renderer.attach(canvas);
           popup.prepend(canvas);
           popups.set(popup, canvas);
         }
@@ -192,6 +194,11 @@ export function createLiquidGlassEngine(config: EngineOptions) {
           logging: false,
           allowTaint: false,
           imageTimeout: 3000,
+          ignoreElements: (element) =>
+            element.hasAttribute("data-liquid-canvas") ||
+            (!config.backdrop.contains(element) &&
+              !element.contains(config.backdrop) &&
+              !document.head.contains(element)),
         });
         if (disposed) return;
         const bitmap = await createImageBitmap(capture);
@@ -340,6 +347,8 @@ export function createLiquidGlassEngine(config: EngineOptions) {
       renderer.destroy();
       return;
     }
+    // html2canvas clones the document and may claim an uninitialised canvas's 2D context.
+    renderer.attach(config.canvas);
     await refresh();
   })().catch((error) => {
     if (!disposed) fail(error);

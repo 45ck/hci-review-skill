@@ -62,6 +62,28 @@ export class LiquidRenderer {
     for (const layer of this.layers.values()) layer.bind = undefined;
   }
 
+  attach(canvas: HTMLCanvasElement) {
+    if (this.layers.has(canvas)) return;
+    const context = canvas.getContext("webgpu");
+    if (!context) throw new Error("WebGPU canvas context unavailable");
+    context.configure({
+      device: this.device,
+      format: this.format,
+      alphaMode: "premultiplied",
+    });
+    this.layers.set(canvas, {
+      context,
+      uniform: this.device.createBuffer({
+        size: 48,
+        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+      }),
+      data: this.device.createBuffer({
+        size: MAX_SURFACES * 48,
+        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+      }),
+    });
+  }
+
   draw(
     canvas: HTMLCanvasElement,
     view: Box,
@@ -72,32 +94,21 @@ export class LiquidRenderer {
     ratio: number,
   ) {
     if (!this.texture || !view.width || !view.height) return;
-    let layer = this.layers.get(canvas);
-    if (!layer) {
-      const context = canvas.getContext("webgpu");
-      if (!context) throw new Error("WebGPU canvas context unavailable");
-      context.configure({
-        device: this.device,
-        format: this.format,
-        alphaMode: "premultiplied",
-      });
-      layer = {
-        context,
-        uniform: this.device.createBuffer({
-          size: 48,
-          usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-        }),
-        data: this.device.createBuffer({
-          size: MAX_SURFACES * 48,
-          usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-        }),
-      };
-      this.layers.set(canvas, layer);
-    }
+    this.attach(canvas);
+    const layer = this.layers.get(canvas)!;
     const limit = this.device.limits.maxTextureDimension2D;
-    const layerRatio = Math.min(ratio, limit / Math.max(view.width, view.height));
-    const width = Math.max(1, Math.min(limit, Math.round(view.width * layerRatio)));
-    const height = Math.max(1, Math.min(limit, Math.round(view.height * layerRatio)));
+    const layerRatio = Math.min(
+      ratio,
+      limit / Math.max(view.width, view.height),
+    );
+    const width = Math.max(
+      1,
+      Math.min(limit, Math.round(view.width * layerRatio)),
+    );
+    const height = Math.max(
+      1,
+      Math.min(limit, Math.round(view.height * layerRatio)),
+    );
     if (canvas.width !== width) canvas.width = width;
     if (canvas.height !== height) canvas.height = height;
     const settings = new Float32Array([

@@ -152,6 +152,7 @@ export function LiquidGlassProvider({
           ref={canvas}
           className="qg-gpu-canvas"
           data-liquid-canvas="viewport"
+          data-html2canvas-ignore=""
           aria-hidden="true"
           style={{
             position: "fixed",

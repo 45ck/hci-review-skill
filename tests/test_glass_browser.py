@@ -16,7 +16,7 @@ from time import perf_counter
 from urllib.parse import urlparse
 
 from glass_agent_contract import verify_agent_contract
-from glass_optics_contract import verify_optics_contract
+from glass_optics_contract import SCREENSHOT_TIMEOUT_MS, verify_optics_contract
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "packages/liquid-glass/component-manifest.json"
@@ -107,11 +107,11 @@ async def run(args):
             await expect(root).to_have_attribute("data-liquid-status", re.compile(r"^(ready|unavailable|error|reduced)$"), timeout=25000)
             status = await root.get_attribute("data-liquid-status")
             assert status != "error", await root.get_attribute("data-liquid-error")
-            await page.screenshot(path=str(output.parent / "overview-desktop.png"), animations="disabled")
+            await page.screenshot(path=str(output.parent / "overview-desktop.png"), animations="disabled", timeout=SCREENSHOT_TIMEOUT_MS)
             return {"catalogueChoices": 56, "families": 55, "default": "Liquid Glass overview", "rendererStatus": status, "screenshot": "overview-desktop.png", "viewport": {"width": 1440, "height": 1000}}
 
-        await record("default_glass_kit_overview", initial, reset=False, timeout=28)
-        await record("gpu_on_actual_controls_strength_and_backdrop", lambda: verify_optics_contract(page, expect, output_dir=output.parent, require_gpu=args.software_gpu), reset=False, timeout=25)
+        await record("default_glass_kit_overview", initial, reset=False, timeout=45)
+        await record("gpu_on_actual_controls_strength_and_backdrop", lambda: verify_optics_contract(page, expect, output_dir=output.parent, require_gpu=args.software_gpu), reset=False, timeout=45)
         await record("real_sdk_agent_contract", lambda: verify_agent_contract(page, expect), timeout=20)
 
         async def all_components():
@@ -176,7 +176,7 @@ async def run(args):
                 const hit = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
                 return hit === node || node.contains(hit);
             }"""), "The popup renderer covers its live input"
-            await page.screenshot(path=str(output.parent / "dialog-desktop.png"), animations="disabled")
+            await page.screenshot(path=str(output.parent / "dialog-desktop.png"), animations="disabled", timeout=SCREENSHOT_TIMEOUT_MS)
             await page.keyboard.press("Escape")
             await expect(dialog).not_to_be_visible()
             await expect(collection).to_be_focused()
@@ -188,7 +188,7 @@ async def run(args):
             await expect(page.get_by_label("Collection result", exact=True)).to_have_text("Created Keyboard collection")
             return {"searchAndEmptyState": True, "sliderBefore": before, "sliderAfter": after, "selectKeyboard": True, "dialogEscapeAndFocus": True, "keyboardCreate": True, "popup": popup_evidence, "screenshot": "dialog-desktop.png"}
 
-        await record("keyboard_selection_and_real_popup", keyboard_and_popup, timeout=12)
+        await record("keyboard_selection_and_real_popup", keyboard_and_popup, timeout=25)
 
         async def mobile():
             await page.set_viewport_size({"width": 390, "height": 844})
@@ -199,7 +199,7 @@ async def run(args):
             dimensions = await page.evaluate("({width: innerWidth, scroll: document.documentElement.scrollWidth})")
             assert dimensions["scroll"] <= dimensions["width"] + 1, f"Mobile overview overflows: {dimensions}"
             await page.evaluate("() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))")
-            await page.screenshot(path=str(output.parent / "overview-mobile.png"), animations="disabled")
+            await page.screenshot(path=str(output.parent / "overview-mobile.png"), animations="disabled", timeout=SCREENSHOT_TIMEOUT_MS)
             control = page.get_by_role("switch", name="Notifications", exact=True)
             before = await control.get_attribute("aria-checked")
             await control.click()
@@ -208,7 +208,7 @@ async def run(args):
             await page.evaluate("window.scrollTo(0, 0)")
             return {**dimensions, "viewport": {"width": 390, "height": 844}, "switchUsable": True, "screenshot": "overview-mobile.png"}
 
-        await record("mobile_overview_fits_and_remains_usable", mobile, timeout=10)
+        await record("mobile_overview_fits_and_remains_usable", mobile, timeout=20)
 
         async def preferences():
             status_before = await root.get_attribute("data-liquid-status")

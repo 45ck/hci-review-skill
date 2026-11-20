@@ -1,0 +1,68 @@
+name: Liquid Glass standard
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/liquid-glass.yml'
+      - 'AGENTS.md'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'packages/liquid-glass/**'
+      - 'docs/hci/examples/liquid-glass/**'
+      - 'docs/hci/standards/liquid-glass.md'
+      - 'scripts/check-glass-standard.mjs'
+      - 'tests/test_glass_browser.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: liquid-glass-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.13'
+      - name: Install locked dependencies and verify catalogue
+        run: |
+          npm ci --ignore-scripts
+          npm run glass:verify
+      - name: Preserve existing HCI calculator behaviour
+        run: python -B -m unittest discover -s tests -v
+      - name: Install one browser
+        run: |
+          python -m pip install playwright==1.65.2
+          python -m playwright install --with-deps chromium
+      - name: Exercise the production gallery
+        shell: bash
+        run: |
+          mkdir -p test-results
+          python -m http.server 4185 --bind 127.0.0.1 --directory docs/hci/examples/liquid-glass/dist >test-results/server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          for attempt in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:4185/ >/dev/null; then break; fi
+            sleep 0.5
+          done
+          python -B tests/test_glass_browser.py --output test-results/liquid-glass.json
+      - name: Keep concise verification evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: liquid-glass-${{ github.sha }}
+          if-no-files-found: ignore
+          retention-days: 7
+          path: test-results/

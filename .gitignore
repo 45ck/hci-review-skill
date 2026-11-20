@@ -1,0 +1,6 @@
+node_modules/
+dist/
+test-results/
+.vercel/
+__pycache__/
+*.pyc

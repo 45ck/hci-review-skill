@@ -871,11 +871,11 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
         <main className="kit-main" id="kit-main" tabIndex={-1}>
           <div className="kit-title-row">
             <div>
-              <p className="kit-eyebrow">
+              {active !== "layouts" && <p className="kit-eyebrow">
                 {active === "overview"
                   ? "The component collection"
                   : collection ? "Custom collection" : (component?.category ?? "Components")}
-              </p>
+              </p>}
               <h1>
                 {active === "overview"
                   ? "Liquid Glass"

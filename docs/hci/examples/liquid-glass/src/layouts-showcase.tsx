@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { LiquidIcon } from "@quantitative-hci/liquid-glass/icons";
 import {
-  LiquidAppShell, LiquidAppRail, LiquidAppHeader, LiquidAppContent,
+  LiquidAppShell, LiquidAppRail, LiquidAppWorkarea, LiquidAppHeader, LiquidAppContent,
   LiquidAppInspector, LiquidAppDock, LiquidAppNavigation, LiquidWorkspaceSwitcher
 } from "@quantitative-hci/liquid-glass/layouts";
 import "@quantitative-hci/liquid-glass/layouts.css";
@@ -201,7 +201,7 @@ export function LayoutsShowcase() {
             <p className="qg-app-rail-end">Sample application</p>
           </LiquidAppRail>
 
-          <div className="qg-app-workarea">
+          <LiquidAppWorkarea className="qg-app-workarea">
             <LiquidAppHeader className="qg-app-header">
               <LiquidWorkspaceSwitcher items={spaces.map(item => ({ id: item.id, name: item.name, role: item.role, shortLabel: item.short }))}
                 value={spaceId} onValueChange={(id) => switchSpace(id as SpaceId)} />
@@ -401,7 +401,7 @@ export function LayoutsShowcase() {
                 </MenuContent>
               </Menu>
             </LiquidAppDock>
-          </div>
+          </LiquidAppWorkarea>
           {route === "reviews" && selected && scenario === "ready" && (
             <LiquidAppInspector className="qg-app-detail" aria-label="Selected review" data-open={detailOpen}>
               <div className="qg-app-detail-head">

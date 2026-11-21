@@ -108,6 +108,16 @@ async def run(args):
                 evidence["state"] = await asyncio.wait_for(target.evaluate("""() => {
                     const rect = node => {const box = node.getBoundingClientRect();
                         return {x: box.x, y: box.y, width: box.width, height: box.height};};
+                    const presentation = node => {const style = getComputedStyle(node);
+                        return {tag: node.tagName, slot: node.getAttribute('data-slot'),
+                            opacity: style.opacity, display: style.display, visibility: style.visibility,
+                            overflow: style.overflow, overflowX: style.overflowX, overflowY: style.overflowY};};
+                    const ancestors = node => {
+                        const result = [];
+                        for (let parent = node.parentElement; parent && result.length < 4; parent = parent.parentElement)
+                            result.push(presentation(parent));
+                        return result;
+                    };
                     return {
                         url: location.href,
                         visibility: document.visibilityState, hasFocus: document.hasFocus(),
@@ -117,10 +127,17 @@ async def run(args):
                         activeElement: {tag: document.activeElement?.tagName,
                             slot: document.activeElement?.getAttribute('data-slot'),
                             name: document.activeElement?.getAttribute('aria-label')},
-                        openLayers: [...document.querySelectorAll(':popover-open,dialog:modal')]
-                            .slice(0, 12).map(node => ({slot: node.getAttribute('data-slot'),
+                        openLayers: [...document.querySelectorAll(':popover-open,dialog:modal,[role="dialog"][data-open]')]
+                            .slice(0, 12).map(node => ({...presentation(node),
                                 role: node.getAttribute('role'), bounds: rect(node),
-                                canvases: node.querySelectorAll('canvas[data-liquid-canvas]').length})),
+                                popoverOpen: node.matches(':popover-open'), modal: node.matches('dialog:modal'),
+                                liquidSurface: node.getAttribute('data-liquid-surface'),
+                                checkVisibility: node.checkVisibility?.() ?? null,
+                                ancestors: ancestors(node),
+                                canvases: [...node.querySelectorAll('canvas[data-liquid-canvas]')]
+                                    .slice(0, 8).map(canvas => ({connected: canvas.isConnected,
+                                        kind: canvas.getAttribute('data-liquid-canvas'), bounds: rect(canvas),
+                                        rendered: canvas.getAttribute('data-liquid-render-rect'), ...presentation(canvas)}))})),
                         runningAnimations: document.getAnimations().filter(animation => animation.playState === 'running')
                             .slice(0, 16).map(animation => ({type: animation.constructor.name,
                                 slot: animation.effect?.target?.getAttribute?.('data-slot'),

@@ -745,13 +745,19 @@ async def verify_suppressed_motion(page, expect, *, policy):
     return {"policy": policy, "before": before, "after": after, "button": state, "selectionStillWorks": True}
 
 
-async def _arm_drawer_frames(page):
-    await page.evaluate("""() => {
+async def _arm_drawer_frames(page, target_y):
+    await page.evaluate("""targetY => {
+        window.__glassDrawerFrames?.cancel();
         const root = document.documentElement;
         const drawer = document.querySelector('[data-slot="drawer-content"][data-open]');
         if (!(drawer instanceof HTMLElement)) throw new Error('Missing open native Drawer');
         const frames = [];
-        let previous = -Infinity;
+        const renders = new Set();
+        const box = node => {const rect = node.getBoundingClientRect(); return [rect.x, rect.y, rect.width, rect.height];};
+        const start = box(drawer);
+        const probe = {phase: 'armed before release', startedAt: performance.now(), frameDeadlineMs: 4000,
+            observedRenders: 0, nativeRenders: 0, frameCount: 0, startY: start[1], targetY};
+        let observedNative = false;
         let timer;
         let finished = false;
         let resolve;
@@ -761,10 +767,14 @@ async def _arm_drawer_frames(page):
             finished = true;
             observer.disconnect();
             clearTimeout(timer);
-            resolve({frames, error});
+            probe.phase = error ? 'failed' : 'complete';
+            probe.elapsedMs = performance.now() - probe.startedAt;
+            resolve({frames, error, probe});
         };
-        const observer = new MutationObserver(() => {
-            if (performance.now() - previous < 25) return;
+        const sample = initial => {
+            const render = Number(root.dataset.liquidRenderRevision);
+            if (!initial) probe.observedRenders++;
+            if (renders.has(render) || render <= 0) return;
             const host = drawer.closest(':popover-open,dialog:modal');
             const canvas = host?.querySelector(':scope > canvas[data-liquid-canvas="popup"]');
             const animations = [];
@@ -780,24 +790,38 @@ async def _arm_drawer_frames(page):
                 }
                 if (node === host) break;
             }
-            if (!animations.length || !canvas || !host) return;
-            const box = node => {const rect = node.getBoundingClientRect(); return [rect.x, rect.y, rect.width, rect.height];};
-            frames.push({
-                at: performance.now(), nativeAnimations: animations,
-                drawer: box(drawer), renderedDrawer: JSON.parse(drawer.getAttribute('data-liquid-render-rect') || 'null'),
+            if (!canvas || !host) { probe.phase = 'waiting for popup canvas'; return; }
+            if (animations.length) { observedNative = true; probe.nativeRenders++; }
+            const settled = observedNative && !animations.length && !drawer.hasAttribute('data-dragging') &&
+                root.dataset.liquidMotionState === 'idle' && Number(root.dataset.liquidActiveEffects) === 0;
+            if (!initial && !animations.length && !settled) return;
+            const actual = box(drawer);
+            const frame = {
+                at: performance.now(), phase: initial ? 'dragged start' : settled ? 'settled response' : 'native settle',
+                progress: Math.abs(actual[1] - start[1]) / Math.max(0.5, Math.abs(targetY - start[1])),
+                nativeAnimations: animations,
+                drawer: actual, renderedDrawer: JSON.parse(drawer.getAttribute('data-liquid-render-rect') || 'null'),
                 host: box(host), renderedLayer: JSON.parse(canvas.getAttribute('data-liquid-render-rect') || 'null'),
-                render: Number(root.dataset.liquidRenderRevision),
+                render,
                 motion: Number(root.dataset.liquidMotionRevision),
                 capture: Number(root.dataset.liquidCaptureRevision),
                 state: root.dataset.liquidMotionState
-            });
-            previous = performance.now();
-            if (frames.length === 3) finish(null);
-        });
+            };
+            // Keep bounded geometry evidence without discarding adjacent 60 Hz draws.
+            if (frames.length < 32 || settled) frames.push(frame);
+            else frames[31] = frame;
+            renders.add(render);
+            probe.frameCount = frames.length;
+            probe.phase = frame.phase;
+            if (settled) finish(null);
+        };
+        const observer = new MutationObserver(() => sample(false));
         observer.observe(root, {attributes: true, attributeFilter: ['data-liquid-render-revision']});
-        timer = setTimeout(() => finish('Fewer than three rendered native Drawer settle frames'), 4000);
-        window.__glassDrawerFrames = {done, cancel: () => finish('Capture cancelled')};
-    }""")
+        // The already completed drag draw is the start state, before pointerup.
+        sample(true);
+        timer = setTimeout(() => finish('Native Drawer did not produce a completed settled redraw'), 4000);
+        window.__glassDrawerFrames = {done, probe, cancel: () => finish('Capture cancelled')};
+    }""", target_y)
 
 
 def _assert_rect_alignment(actual, rendered, label):
@@ -844,7 +868,7 @@ async def verify_drawer_motion_contract(page, expect, *, output_dir="test-result
                 dragged = await drawer.bounding_box()
                 assert dragged and dragged["y"] - rest["y"] > 8, f"The real Drawer did not follow the pointer: {rest}, {dragged}"
                 await page.wait_for_timeout(180)
-                await _arm_drawer_frames(page)
+                await _arm_drawer_frames(page, rest["y"])
             finally:
                 await page.mouse.up()
             browser_stage("drawer: await native settle frames", policy=policy, deadlineMs=4000)
@@ -857,15 +881,22 @@ async def verify_drawer_motion_contract(page, expect, *, output_dir="test-result
                     await asyncio.wait_for(page.evaluate("window.__glassDrawerFrames?.cancel(); delete window.__glassDrawerFrames"), timeout=2)
                 except Exception as cleanup_error:
                     browser_stage("drawer: cleanup unavailable", error=str(cleanup_error) or type(cleanup_error).__name__)
-            assert not samples["error"], f"{policy}: {samples['error']}; observed {len(samples['frames'])}"
+            evidence_file = output / f"drawer-settle-{policy}.json"
+            evidence_file.write_text(json.dumps(samples, indent=2) + "\n", encoding="utf-8")
+            browser_stage("drawer: inspect completed render states", policy=policy, sampler=samples["probe"], evidence=evidence_file.name)
+            assert not samples["error"], f"{policy}: {samples['error']}; sampler={samples['probe']}; frames={samples['frames']}"
             frames = samples["frames"]
-            assert len({frame["render"] for frame in frames}) == 3, f"{policy} Drawer did not redraw each sampled settle frame"
+            assert len(frames) >= 3 and len({frame["render"] for frame in frames}) == len(frames), f"{policy} Drawer did not produce three distinct completed render states: {samples}"
+            assert frames[0]["phase"] == "dragged start" and frames[-1]["phase"] == "settled response", f"{policy} Drawer evidence omitted a rendered response endpoint: {samples}"
             assert max(frame["drawer"][1] for frame in frames) - min(frame["drawer"][1] for frame in frames) > 2, f"{policy} Drawer samples did not show native movement"
+            minimum, maximum = sorted([frames[0]["drawer"][1], frames[-1]["drawer"][1]])
+            assert any(frame["nativeAnimations"] and minimum + 0.5 < frame["drawer"][1] < maximum - 0.5 for frame in frames), f"{policy} Drawer lacked a rendered native intermediate position: {samples}"
             for frame in frames:
                 frame["drawerAlignmentErrorPx"] = _assert_rect_alignment(frame["drawer"], frame["renderedDrawer"], f"{policy} Drawer surface")
                 frame["layerAlignmentErrorPx"] = _assert_rect_alignment(frame["host"], frame["renderedLayer"], f"{policy} popup host")
                 assert frame["capture"] == before["capture"], "Native Drawer settling recaptured the backdrop"
-                assert frame["state"] == "running", "Native Drawer settle was reported idle while moving"
+                if frame["nativeAnimations"]:
+                    assert frame["state"] == "running", "Native Drawer settle was reported idle while moving"
                 if not enabled:
                     assert frame["motion"] == before["motion"], "Native geometry tracking restarted decorative motion in off mode"
             idle = await settled_motion(page)
@@ -885,7 +916,7 @@ async def verify_drawer_motion_contract(page, expect, *, output_dir="test-result
             await page.keyboard.press("Escape")
             await expect(drawer).not_to_be_visible()
             await expect(trigger).to_be_focused()
-            outcomes[policy] = {"frames": frames, "final": final, "idle": idle, "screenshot": filename, "focusRestored": True}
+            outcomes[policy] = {"frames": frames, "sampler": samples["probe"], "evidence": evidence_file.name, "final": final, "idle": idle, "screenshot": filename, "focusRestored": True}
     finally:
         await page.keyboard.press("Escape")
         await page.get_by_role("dialog", name="Workspace layout", exact=True).wait_for(state="hidden", timeout=5000)

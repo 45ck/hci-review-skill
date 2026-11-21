@@ -279,9 +279,9 @@ export function createLiquidGlassEngine(config: EngineOptions) {
           canvas.style.cssText =
             "position:absolute;pointer-events:none;z-index:-1;border-radius:inherit;display:block;";
           renderer.attach(canvas);
-          popup.prepend(canvas);
           popups.set(popup, canvas);
         }
+        if (canvas.parentElement !== popup) popup.prepend(canvas);
         const geometry = popupGeometry.get(popup)!;
         const rect = geometry.rect;
         canvas.style.left = `${geometry.left}px`;
@@ -465,6 +465,12 @@ export function createLiquidGlassEngine(config: EngineOptions) {
         record.oldValue === record.target.getAttribute(record.attributeName)) return true;
     if (record.type === "childList") {
       const changed = [...record.addedNodes, ...record.removedNodes];
+      // Framework reconciliation may remove an injected layer while keeping
+      // its host. Our own cleanup deletes the map entry before delivery.
+      if (record.target instanceof HTMLElement && record.target.isConnected &&
+          [...record.removedNodes].some((node) =>
+            popups.get(record.target as HTMLElement) === node && node.parentElement !== record.target))
+        return false;
       return (
         changed.length > 0 &&
         changed.every(

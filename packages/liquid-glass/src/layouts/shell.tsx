@@ -17,6 +17,10 @@ export function LiquidAppShell({ children, className = "", ...props }: ShellProp
   return <div className={["qg-application-shell", className].filter(Boolean).join(" ")} {...props}>{children}</div>;
 }
 
+export function LiquidAppWorkarea({ children, className = "", ...props }: ShellProps) {
+  return <div className={["qg-application-workarea", className].filter(Boolean).join(" ")} {...props}>{children}</div>;
+}
+
 export function LiquidAppRail({ children, className = "", ...props }: RegionProps) {
   return <aside className={["qg-application-rail", className].filter(Boolean).join(" ")}
     aria-label={props["aria-label"] ?? "Workspace navigation"} {...props}>{children}</aside>;

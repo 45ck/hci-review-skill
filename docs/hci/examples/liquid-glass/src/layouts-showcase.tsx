@@ -3,10 +3,15 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { canRecordReview, initialLayoutNavigation, transitionLayout, type LayoutSpaceId as SpaceId, type LayoutRouteId as RouteId } from "./layouts-state";
 import {
-  ArrowLeft, Check, ChevronDown, ChevronRight,
+  ArrowLeft, Check, ChevronRight,
   MoreHorizontal, Search, X
 } from "lucide-react";
 import { LiquidIcon } from "@quantitative-hci/liquid-glass/icons";
+import {
+  LiquidAppShell, LiquidAppRail, LiquidAppHeader, LiquidAppContent,
+  LiquidAppInspector, LiquidAppDock, LiquidAppNavigation, LiquidWorkspaceSwitcher
+} from "@quantitative-hci/liquid-glass/layouts";
+import "@quantitative-hci/liquid-glass/layouts.css";
 import { Button } from "@ui-sdk/react/button";
 import { Input } from "@ui-sdk/react/input";
 import { Field, FieldLabel } from "@ui-sdk/react/field";
@@ -185,42 +190,21 @@ export function LayoutsShowcase() {
       </div>
 
       <div className="qg-layout-canvas" data-size={device}>
-        <div className="qg-app" data-app-screen={route} data-details-open={detailOpen} data-preview-size={device} data-has-detail={route === "reviews" && selected !== null && scenario === "ready"}>
-          <aside className="qg-app-rail" aria-label="Workspace navigation">
+        <LiquidAppShell className="qg-app" data-app-screen={route} data-details-open={detailOpen} data-preview-size={device} data-has-detail={route === "reviews" && selected !== null && scenario === "ready"}>
+          <LiquidAppRail className="qg-app-rail" aria-label="Workspace navigation">
             <div className="qg-app-identity">
               <span className="qg-app-symbol"><LiquidIcon name="layers" size={26} /></span>
               <strong>Quantive</strong>
             </div>
-            <nav className="qg-app-navigation" aria-label="Workspace pages">
-              {navigation.map((item) => (
-                <Button key={item.id} className="qg-app-nav-button" aria-label={item.label} aria-current={route === item.id ? "page" : undefined}
-                  onClick={() => navigate(item.id)}>
-                  <LiquidIcon name={item.icon} size={22} /><span>{item.label}</span>
-                  {item.id === "reviews" && totalOpen > 0 && <span className="qg-app-nav-count">{totalOpen}</span>}
-                </Button>
-              ))}
-            </nav>
+            <LiquidAppNavigation className="qg-app-navigation" items={navigation.map(item => ({ ...item, count: item.id === "reviews" ? totalOpen : undefined }))}
+              activeId={route} onNavigate={(id) => navigate(id as RouteId)} />
             <p className="qg-app-rail-end">Sample application</p>
-          </aside>
+          </LiquidAppRail>
 
           <div className="qg-app-workarea">
-            <header className="qg-app-header" data-liquid-glass="" data-liquid-kind="panel">
-              <Menu>
-                <MenuTrigger className="qg-app-space-menu" aria-label={"Current workspace: " + space.name + ". Switch workspace"}>
-                  <span className="qg-app-workspace-avatar">{space.short}</span>
-                  <span className="qg-app-space-label">{space.name}</span>
-                  <ChevronDown size={15} aria-hidden="true" />
-                </MenuTrigger>
-                <MenuContent>
-                  {spaces.map((item) => (
-                    <MenuItem key={item.id} onClick={() => switchSpace(item.id)}>
-                      <span className="qg-app-menu-space">{item.name}</span>
-                      <span className="qg-app-menu-role">{item.role}</span>
-                      {item.id === spaceId && <Check size={15} aria-hidden="true" />}
-                    </MenuItem>
-                  ))}
-                </MenuContent>
-              </Menu>
+            <LiquidAppHeader className="qg-app-header">
+              <LiquidWorkspaceSwitcher items={spaces.map(item => ({ id: item.id, name: item.name, role: item.role, shortLabel: item.short }))}
+                value={spaceId} onValueChange={(id) => switchSpace(id as SpaceId)} />
               <span className="qg-app-header-spacer" />
               <Dialog open={commandOpen} onOpenChange={setCommandOpen}>
                 <DialogTrigger aria-label="Search application pages" className="qg-app-icon-control">
@@ -260,9 +244,9 @@ export function LayoutsShowcase() {
                   <MenuItem onClick={() => navigate("workspace")}>Workspace settings</MenuItem>
                 </MenuContent>
               </Menu>
-            </header>
+            </LiquidAppHeader>
 
-            <main className="qg-app-main" id="qg-layout-main">
+            <LiquidAppContent className="qg-app-main" id="qg-layout-main">
               {route === "reviews" && (
                 <div className="qg-app-page">
                   <div className="qg-app-heading">
@@ -400,8 +384,8 @@ export function LayoutsShowcase() {
                 {lastReviewed && notice.includes("marked reviewed") && <Button onClick={undoReview}>Undo</Button>}
                 <Button aria-label="Dismiss message" onClick={() => { setNotice(""); setLastReviewed(null); }}><X size={15} aria-hidden="true"/></Button>
               </div>}
-            </main>
-            <nav className="qg-app-bottom-nav" aria-label="Mobile workspace navigation" data-liquid-glass="" data-liquid-kind="panel">
+            </LiquidAppContent>
+            <LiquidAppDock className="qg-app-bottom-nav" aria-label="Mobile workspace navigation">
               <Button onClick={() => navigate("reviews")} aria-current={route === "reviews" ? "page" : undefined}>
                 <LiquidIcon name="inbox" size={24}/> Reviews
               </Button>
@@ -416,10 +400,10 @@ export function LayoutsShowcase() {
                   <MenuItem onClick={() => navigate("account")}>Your account</MenuItem>
                 </MenuContent>
               </Menu>
-            </nav>
+            </LiquidAppDock>
           </div>
           {route === "reviews" && selected && scenario === "ready" && (
-            <aside className="qg-app-detail" aria-label="Selected review" data-open={detailOpen}>
+            <LiquidAppInspector className="qg-app-detail" aria-label="Selected review" data-open={detailOpen}>
               <div className="qg-app-detail-head">
                 <Button className="qg-app-back" onClick={() => dispatch({ type: "close-detail" })}>
                   <ArrowLeft size={17} aria-hidden="true"/> Reviews
@@ -454,9 +438,9 @@ export function LayoutsShowcase() {
                     {!canReview && <p>You have view-only access in {space.name}.</p>}
                   </>}
               </div>
-            </aside>
+            </LiquidAppInspector>
           )}
-        </div>
+        </LiquidAppShell>
       </div>
       <p className="qg-layout-footer">
         This example uses the gallery's real UI SDK, Quantive icons, fonts and Liquid Glass provider.

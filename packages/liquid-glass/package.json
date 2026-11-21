@@ -39,7 +39,9 @@
     "./fonts.css": "./src/fonts.css",
     "./styles.css": "./src/styles.css",
     "./tokens.css": "./src/tokens.css",
-    "./*": "./src/components/*.ts"
+    "./*": "./src/components/*.ts",
+    "./layouts": "./src/layouts/index.ts",
+    "./layouts.css": "./src/layouts/layouts.css"
   },
   "dependencies": {
     "@ui-sdk/core": "0.1.0-beta.13",

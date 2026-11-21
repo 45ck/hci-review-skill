@@ -905,7 +905,7 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
             </SpecimenBoundary>
           </div>}
           {(active === "standards" || visitedCollections.includes("standards")) && <div hidden={active !== "standards"}>
-            <SpecimenBoundary key="standards" name="Standards"><StandardsShowcase documents={documents} onDocumentsChange={setDocuments} /></SpecimenBoundary>
+            <SpecimenBoundary key="standards" name="Standards"><StandardsShowcase documents={documents} onDocumentsChange={next => setDocuments(structuredClone(next))} /></SpecimenBoundary>
           </div>}
           {(active === "agents" || visitedCollections.includes("agents")) && <div hidden={active !== "agents"}>
             <SpecimenBoundary key="agents" name="Agents"><AgentsShowcase /></SpecimenBoundary>

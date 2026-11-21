@@ -10,6 +10,8 @@ Separate headless primitives, SDK compositions, passive presentation and pure ut
 
 Agent-ready means a real bridge can find the intended control, discover valid inputs, invoke a supported action and observe the accepted result. Assert those outcomes, including rejection and cancellation, rather than treating `act().ok`, a manifest, TypeScript or a screenshot as proof. Read installed SDK docs/types and preserve human keyboard, focus, selection, touch and fallback behaviour. Do not create a second mutation API or use DOM-only handlers for rules that agents must obey.
 
+Keep custom action JSON input schemas aligned with shared validation and current contracts. Structural preflight cannot authorize an action or prove host acceptance. Support cancellation and recovery for delayed controlled edits, accept equivalent serialized state and isolate stale callbacks. Publish schema-linked, fingerprinted agent documentation from canonical sources, and preserve the production artifact gate that ties it to the built page.
+
 Run `npm run glass:agent-check` for the export/contract/documentation gate and `npm run glass:verify` for package changes. Run relevant browser contracts for changed interaction paths as required below. Static contract coverage, runtime test coverage and human **Unvalidated** status are separate evidence.
 
 ## Build the actual kit

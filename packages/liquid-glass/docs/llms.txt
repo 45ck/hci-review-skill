@@ -12,6 +12,8 @@ This is a private React workspace package, not a published npm release. Use the 
 - [Compact component index](/agent-index.json): choose by purpose, kind and public export; follow its `contract` URL for one complete entry.
 - [Agent contracts](/agent-contracts.json): public export inventory, inputs, state, discovery, actions, restrictions and evidence.
 - [Contract schema](/agent-contracts.schema.json): the versioned machine-readable contract format.
+- [Custom action inputs](/agent-action-inputs.json): exact JSON argument shapes and examples for both custom primitives. Validate the shape before dispatch; inspect live state for revisions, valid IDs and host acceptance.
+- [Release identity](/agent-release.json): package version, source provenance, content fingerprints and all emitted agent documents. Compare the page's `quantive-agent-contract-set` meta value with `release.contractSet` before using cached contracts.
 
 - [Component and recipe registry](/registry/components.json): all SDK families, custom components and compiled composition recipes. This documentation does not provide another action endpoint.
 
@@ -35,7 +37,13 @@ For a local checkout, the registry and schema sit at packages/liquid-glass/agent
 
 Read only the contract needed: `npm run glass:contract -- --search viewport`, then `npm run glass:contract -- liquid-viewport`. Hosted consumers can fetch `/contracts/liquid-viewport.json`. The full registry is available for tooling; it need not be loaded into every agent conversation.
 
+Preflight custom action arguments without operating a UI: `npm run glass:contract -- validate liquid-viewport panBy '[80,-40]'`. The canonical entry's `runtime.actionSchema` is relative to the package directory. Hosted index entries and contract envelopes expose a separate root-relative `actionSchema` URL so it resolves correctly from `/contracts/<id>.json`. Schema-valid inputs can still be refused by current state, revision checks, permissions or the controlled host. SDK aliases continue to use the installed upstream documentation and live action discovery.
+
+The compact index and individual contract envelopes link their own schemas. Each index entry carries the SHA-256 digest and UTF-8 byte length of its complete contract file. The release metadata lists the other emitted document files and their fingerprints. These are consistency checks, not authenticity signatures, browser test results or human approval. A dirty build reports its base commit without claiming a clean source tree.
+
 The runtime is createAgent from @ui-sdk/react/agent: snapshot, query, act and subscribe. Contracts describe intended use; only executed tests establish that the described behaviour works. See the engineering guide for observable postconditions and limitations.
+
+For model edits, distinguish `requested`, `applied`, `rejected`, `unchanged` and `applied-error`. A resolved host Promise is not acceptance: accepted document props are authoritative, including equivalent serialized copies. Inspect `pendingRevision`, use `cancelPending` to abandon an unpublished proposal, and pass the callback's AbortSignal to asynchronous host work. A failure after an applied change does not roll that change back.
 
 ## Composition layers
 

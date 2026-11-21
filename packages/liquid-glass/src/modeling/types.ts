@@ -3,7 +3,7 @@ import type { DiagramEdge, DiagramModel, DiagramNode } from "../developer/types"
 
 export const MODEL_DOCUMENT_LIMITS = Object.freeze({ bytes: 1_000_000, operations: 100, history: 50 });
 export type ModelDocumentReason = "model-transaction" | "model-undo" | "model-redo" | "model-select";
-export type ModelDocumentChangeDetails = ChangeDetails<ModelDocumentReason>;
+export type ModelDocumentChangeDetails = ChangeDetails<ModelDocumentReason> & { signal: AbortSignal };
 export interface ModelDocumentInput { event?: Event }
 export type ModelNodePatch = { [Key in keyof Omit<DiagramNode, "id">]?: DiagramNode[Key] | null };
 export type ModelEdgePatch = { [Key in keyof Omit<DiagramEdge, "id">]?: DiagramEdge[Key] | null };
@@ -77,7 +77,7 @@ export interface ModelDocumentResult {
 }
 
 export interface ModelActionResult extends Omit<ModelDocumentResult, "document"> {
-  status: "applied" | "requested" | "unchanged" | "rejected";
+  status: "applied" | "applied-error" | "requested" | "unchanged" | "rejected";
   requestedRevision?: number;
 }
 
@@ -117,4 +117,5 @@ export interface ModelDocumentHandle {
   undo: (expectedRevision: number, input?: ModelDocumentInput) => ModelActionResult;
   redo: (expectedRevision: number, input?: ModelDocumentInput) => ModelActionResult;
   select: (nodeId: string | null, input?: ModelDocumentInput) => ModelActionResult;
+  cancelPending: () => ModelActionResult;
 }

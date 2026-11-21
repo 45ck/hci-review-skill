@@ -1,0 +1,2743 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Liquid Glass custom action inputs",
+  "description": "Structural preflight for supported custom primitive calls. It performs no UI action and does not establish authorization, contextual validity or accepted state. Exact tuples describe the supported agent interface; JavaScript may tolerate ignored extra arguments. SDK alias actions inherit their installed upstream contracts. x-invalidExamples documents rejected invocation shapes and is not a JSON Schema assertion keyword.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/liquid-viewport"
+    },
+    {
+      "$ref": "#/$defs/model-document"
+    }
+  ],
+  "$defs": {
+    "liquid-viewport": {
+      "type": "object",
+      "description": "Supported agent invocation shape. Requests still pass through the actual viewport primitive and controlled host.",
+      "properties": {
+        "contract": {
+          "const": "liquid-viewport"
+        },
+        "action": {
+          "enum": [
+            "setViewport",
+            "panBy",
+            "zoomTo",
+            "zoomBy",
+            "fit",
+            "actualSize",
+            "focusSelection",
+            "setPanMode",
+            "setExpanded"
+          ]
+        },
+        "args": {
+          "type": "array"
+        }
+      },
+      "required": [
+        "contract",
+        "action",
+        "args"
+      ],
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "properties": {
+            "action": {
+              "const": "setViewport"
+            },
+            "args": {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "x": {
+                      "type": "number",
+                      "minimum": -10000000,
+                      "maximum": 10000000
+                    },
+                    "y": {
+                      "type": "number",
+                      "minimum": -10000000,
+                      "maximum": 10000000
+                    },
+                    "zoom": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    }
+                  },
+                  "required": [
+                    "x",
+                    "y",
+                    "zoom"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Finite requested camera values. Positive zoom requests are clamped by the runtime to 0.1–4; this input schema does not falsely reject supported out-of-range requests."
+                }
+              ],
+              "minItems": 1,
+              "maxItems": 1,
+              "items": false
+            }
+          },
+          "description": "Request the complete camera; observe the accepted, possibly clamped result.",
+          "examples": [
+            {
+              "contract": "liquid-viewport",
+              "action": "setViewport",
+              "args": [
+                {
+                  "x": 0,
+                  "y": 0,
+                  "zoom": 1
+                }
+              ]
+            },
+            {
+              "contract": "liquid-viewport",
+              "action": "setViewport",
+              "args": [
+                {
+                  "x": -10000000,
+                  "y": 10000000,
+                  "zoom": 8
+                }
+              ]
+            }
+          ],
+          "x-invalidExamples": [
+            {
+              "value": {
+                "contract": "liquid-viewport",
+                "action": "setViewport",
+                "args": [
+                  {
+                    "x": 0,
+                    "y": 0,
+                    "zoom": 0
+                  }
+                ]
+              },
+              "reason": "Zoom must be positive."
+            },
+            {
+              "value": {
+                "contract": "liquid-viewport",
+                "action": "setViewport",
+                "args": [
+                  {
+                    "x": 10000001,
+                    "y": 0,
+                    "zoom": 1
+                  }
+                ]
+              },
+              "reason": "Coordinate exceeds the accepted absolute bound."
+            }
+          ]
+        },
+        {
+          "properties": {
+            "action": {
+              "const": "panBy"
+            },
+            "args": {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "minItems": 2,
+              "maxItems": 2,
+              "items": false
+            }
+          },
+          "description": "Pan by finite deltas; the resulting camera may still be refused by its bounds or host.",
+          "examples": [
+            {
+              "contract": "liquid-viewport",
+              "action": "panBy",
+              "args": [
+                0,
+                0
+              ]
+            },
+            {
+              "contract": "liquid-viewport",
+              "action": "panBy",
+              "args": [
+                80,
+                -40
+              ]
+            }
+          ],
+          "x-invalidExamples": [
+            {
+              "value": {
+                "contract": "liquid-viewport",
+                "action": "panBy",
+                "args": [
+                  "80",
+                  -40
+                ]
+              },
+              "reason": "Use numeric deltas."
+            },
+            {
+              "value": {
+                "contract": "liquid-viewport",
+                "action": "panBy",
+                "args": [
+                  80
+                ]
+              },
+              "reason": "Both deltas are required."
+            }
+          ]
+        },
+        {
+          "properties": {
+            "action": {
+              "const": "zoomTo"
+            },
+            "args": {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                }
+              ],
+              "minItems": 1,
+              "maxItems": 1,
+              "items": false
+            }
+          },
+          "description": "Request a positive zoom; the SDK clamps accepted output to 0.1–4.",
+          "examples": [
+            {
+              "contract": "liquid-viewport",
+              "action": "zoomTo",
+              "args": [
+                1
+              ]
+            },
+            {
+              "contract": "liquid-viewport",
+              "action": "zoomTo",
+              "args": [
+                8
+              ]
+            }
+          ],
+          "x-invalidExamples": [
+            {
+              "value": {
+                "contract": "liquid-viewport",
+                "action": "zoomTo",
+                "args": [
+                  0
+                ]
+              },
+              "reason": "Zoom must be positive."
+            },
+            {
+              "value": {
+                "contract": "liquid-viewport",
+                "action": "zoomTo",
+                "args": [
+                  "2"
+                ]
+              },
+              "reason": "Use a number."
+            }
+          ]
+        },
+        {
+          "properties": {
+            "action": {
+              "const": "zoomBy"
+            },
+            "args": {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                }
+              ],
+              "minItems": 1,
+              "maxItems": 1,
+              "items": false
+            }
+          },
+          "description": "Multiply the current zoom; observe the clamped accepted output.",
+          "examples": [
+            {
+              "contract": "liquid-viewport",
+              "action": "zoomBy",
+              "args": [
+                1.2
+              ]
+            },
+            {
+              "contract": "liquid-viewport",
+              "action": "zoomBy",
+              "args": [
+                0.5
+              ]
+            }
+          ],
+          "x-invalidExamples": [
+            {
+              "value": {
+                "contract": "liquid-viewport",
+                "action": "zoomBy",
+                "args": [
+                  -1
+                ]
+              },
+              "reason": "Factor must be positive."
+            },
+            {
+              "value": {
+                "contract": "liquid-viewport",
+                "action": "zoomBy",
+                "args": []
+              },
+              "reason": "A factor is required."
+            }
+          ]
+        },
+        {
+          "properties": {
+            "action": {
+              "const": "fit"
+            },
+            "args": {
+              "type": "array",
+              "minItems": 0,
+              "maxItems": 0,
+              "items": false
+            }
+          },
+          "description": "Fit document bounds in the mounted surface.",
+          "examples": [
+            {
+              "contract": "liquid-viewport",
+              "action": "fit",
+              "args": []
+            }
+          ],
+          "x-invalidExamples": [
+            {
+              "value": {
+                "contract": "liquid-viewport",
+                "action": "fit",
+                "args": [
+                  true
+                ]
+              },
+              "reason": "This action takes no arguments."
+            }
+          ]
+        },
+        {
+          "properties": {
+            "action": {
+              "const": "actualSize"
+            },
+            "args": {
+              "type": "array",
+              "minItems": 0,
+              "maxItems": 0,
+              "items": false
+            }
+          },
+          "description": "Request zoom 1 around the current surface.",
+          "examples": [
+            {
+              "contract": "liquid-viewport",
+              "action": "actualSize",
+              "args": []
+            }
+          ],
+          "x-invalidExamples": [
+            {
+              "value": {
+                "contract": "liquid-viewport",
+                "action": "actualSize",
+                "args": [
+                  true
+                ]
+              },
+              "reason": "This action takes no arguments."
+            }
+          ]
+        },
+        {
+          "properties": {
+            "action": {
+              "const": "focusSelection"
+            },
+            "args": {
+              "type": "array",
+              "minItems": 0,
+              "maxItems": 0,
+              "items": false
+            }
+          },
+          "description": "Fit the current selection; no selection can produce no change.",
+          "examples": [
+            {
+              "contract": "liquid-viewport",
+              "action": "focusSelection",
+              "args": []
+            }
+          ],
+          "x-invalidExamples": [
+            {
+              "value": {
+                "contract": "liquid-viewport",
+                "action": "focusSelection",
+                "args": [
+                  true
+                ]
+              },
+              "reason": "This action takes no arguments."
+            }
+          ]
+        },
+        {
+          "properties": {
+            "action": {
+              "const": "setPanMode"
+            },
+            "args": {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": "boolean"
+                }
+              ],
+              "minItems": 1,
+              "maxItems": 1,
+              "items": false
+            }
+          },
+          "description": "Set the shared pan interaction mode.",
+          "examples": [
+            {
+              "contract": "liquid-viewport",
+              "action": "setPanMode",
+              "args": [
+                true
+              ]
+            },
+            {
+              "contract": "liquid-viewport",
+              "action": "setPanMode",
+              "args": [
+                false
+              ]
+            }
+          ],
+          "x-invalidExamples": [
+            {
+              "value": {
+                "contract": "liquid-viewport",
+                "action": "setPanMode",
+                "args": [
+                  "true"
+                ]
+              },
+              "reason": "Use a JSON boolean."
+            },
+            {
+              "value": {
+                "contract": "liquid-viewport",
+                "action": "setPanMode",
+                "args": [
+                  true,
+                  false
+                ]
+              },
+              "reason": "Provide exactly one argument."
+            }
+          ]
+        },
+        {
+          "properties": {
+            "action": {
+              "const": "setExpanded"
+            },
+            "args": {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": "boolean"
+                }
+              ],
+              "minItems": 1,
+              "maxItems": 1,
+              "items": false
+            }
+          },
+          "description": "Request expanded state through the controlled host callback.",
+          "examples": [
+            {
+              "contract": "liquid-viewport",
+              "action": "setExpanded",
+              "args": [
+                true
+              ]
+            },
+            {
+              "contract": "liquid-viewport",
+              "action": "setExpanded",
+              "args": [
+                false
+              ]
+            }
+          ],
+          "x-invalidExamples": [
+            {
+              "value": {
+                "contract": "liquid-viewport",
+                "action": "setExpanded",
+                "args": [
+                  "true"
+                ]
+              },
+              "reason": "Use a JSON boolean."
+            },
+            {
+              "value": {
+                "contract": "liquid-viewport",
+                "action": "setExpanded",
+                "args": [
+                  true,
+                  false
+                ]
+              },
+              "reason": "Provide exactly one argument."
+            }
+          ]
+        }
+      ]
+    },
+    "model-document": {
+      "type": "object",
+      "description": "Supported agent invocation shape. Current revision, IDs, geometry, cross-view rules, host policy and controlled acceptance remain runtime checks. The runtime additionally limits transactions to 1 MB UTF-8 JSON and 40 levels, rejects prototype-changing keys, and measures text limits in UTF-16 code units.",
+      "properties": {
+        "contract": {
+          "const": "model-document"
+        },
+        "action": {
+          "enum": [
+            "inspect",
+            "preview",
+            "applyTransaction",
+            "undo",
+            "redo",
+            "select",
+            "cancelPending"
+          ]
+        },
+        "args": {
+          "type": "array"
+        }
+      },
+      "required": [
+        "contract",
+        "action",
+        "args"
+      ],
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "properties": {
+            "action": {
+              "const": "inspect"
+            },
+            "args": {
+              "type": "array",
+              "minItems": 0,
+              "maxItems": 0,
+              "items": false
+            }
+          },
+          "description": "Read current document, revision, live operation choices, pending proposal and result.",
+          "examples": [
+            {
+              "contract": "model-document",
+              "action": "inspect",
+              "args": []
+            }
+          ],
+          "x-invalidExamples": [
+            {
+              "value": {
+                "contract": "model-document",
+                "action": "inspect",
+                "args": [
+                  "node-1"
+                ]
+              },
+              "reason": "Inspection takes no arguments."
+            }
+          ]
+        },
+        {
+          "properties": {
+            "action": {
+              "const": "preview"
+            },
+            "args": {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "$ref": "#/$defs/model-transaction"
+                }
+              ],
+              "minItems": 1,
+              "maxItems": 1,
+              "items": false
+            }
+          },
+          "description": "Validate a proposed transaction against the current document without applying it.",
+          "examples": [
+            {
+              "contract": "model-document",
+              "action": "preview",
+              "args": [
+                {
+                  "expectedRevision": 0,
+                  "operations": [
+                    {
+                      "type": "rename-node",
+                      "nodeId": "node-1",
+                      "name": "Renamed node"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "contract": "model-document",
+              "action": "preview",
+              "args": [
+                {
+                  "expectedRevision": 0,
+                  "operations": [
+                    {
+                      "type": "rename-node",
+                      "nodeId": "node-1",
+                      "name": "Renamed node"
+                    }
+                  ],
+                  "label": "Rename node",
+                  "selectedId": null
+                }
+              ]
+            }
+          ],
+          "x-invalidExamples": [
+            {
+              "value": {
+                "contract": "model-document",
+                "action": "preview",
+                "args": [
+                  {
+                    "expectedRevision": -1,
+                    "operations": [
+                      {
+                        "type": "rename-node",
+                        "nodeId": "node-1",
+                        "name": "Renamed node"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "reason": "Revision must be a nonnegative safe integer."
+            },
+            {
+              "value": {
+                "contract": "model-document",
+                "action": "preview",
+                "args": [
+                  {
+                    "expectedRevision": 0,
+                    "operations": []
+                  }
+                ]
+              },
+              "reason": "At least one operation is required."
+            },
+            {
+              "value": {
+                "contract": "model-document",
+                "action": "preview",
+                "args": [
+                  {
+                    "expectedRevision": 0,
+                    "operations": [
+                      {
+                        "type": "rename-node",
+                        "nodeId": "node-1",
+                        "name": ""
+                      }
+                    ]
+                  }
+                ]
+              },
+              "reason": "Element label must be nonblank."
+            }
+          ]
+        },
+        {
+          "properties": {
+            "action": {
+              "const": "applyTransaction"
+            },
+            "args": {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "$ref": "#/$defs/model-transaction"
+                }
+              ],
+              "minItems": 1,
+              "maxItems": 1,
+              "items": false
+            }
+          },
+          "description": "Request an atomic revision-checked transaction; observe applied, requested, rejected or applied-error settlement.",
+          "examples": [
+            {
+              "contract": "model-document",
+              "action": "applyTransaction",
+              "args": [
+                {
+                  "expectedRevision": 0,
+                  "operations": [
+                    {
+                      "type": "rename-node",
+                      "nodeId": "node-1",
+                      "name": "Renamed node"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "contract": "model-document",
+              "action": "applyTransaction",
+              "args": [
+                {
+                  "expectedRevision": 0,
+                  "operations": [
+                    {
+                      "type": "rename-node",
+                      "nodeId": "node-1",
+                      "name": "Renamed node"
+                    }
+                  ],
+                  "label": "Rename node",
+                  "selectedId": null
+                }
+              ]
+            }
+          ],
+          "x-invalidExamples": [
+            {
+              "value": {
+                "contract": "model-document",
+                "action": "applyTransaction",
+                "args": [
+                  {
+                    "expectedRevision": -1,
+                    "operations": [
+                      {
+                        "type": "rename-node",
+                        "nodeId": "node-1",
+                        "name": "Renamed node"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "reason": "Revision must be a nonnegative safe integer."
+            },
+            {
+              "value": {
+                "contract": "model-document",
+                "action": "applyTransaction",
+                "args": [
+                  {
+                    "expectedRevision": 0,
+                    "operations": []
+                  }
+                ]
+              },
+              "reason": "At least one operation is required."
+            },
+            {
+              "value": {
+                "contract": "model-document",
+                "action": "applyTransaction",
+                "args": [
+                  {
+                    "expectedRevision": 0,
+                    "operations": [
+                      {
+                        "type": "rename-node",
+                        "nodeId": "node-1",
+                        "name": ""
+                      }
+                    ]
+                  }
+                ]
+              },
+              "reason": "Element label must be nonblank."
+            }
+          ]
+        },
+        {
+          "properties": {
+            "action": {
+              "const": "undo"
+            },
+            "args": {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "$ref": "#/$defs/safe-revision"
+                }
+              ],
+              "minItems": 1,
+              "maxItems": 1,
+              "items": false
+            }
+          },
+          "description": "Request history traversal at the current accepted revision.",
+          "examples": [
+            {
+              "contract": "model-document",
+              "action": "undo",
+              "args": [
+                0
+              ]
+            },
+            {
+              "contract": "model-document",
+              "action": "undo",
+              "args": [
+                3
+              ]
+            }
+          ],
+          "x-invalidExamples": [
+            {
+              "value": {
+                "contract": "model-document",
+                "action": "undo",
+                "args": [
+                  -1
+                ]
+              },
+              "reason": "Revision must be nonnegative."
+            },
+            {
+              "value": {
+                "contract": "model-document",
+                "action": "undo",
+                "args": [
+                  1.5
+                ]
+              },
+              "reason": "Revision must be an integer."
+            },
+            {
+              "value": {
+                "contract": "model-document",
+                "action": "undo",
+                "args": [
+                  9007199254740992
+                ]
+              },
+              "reason": "Revision must be a safe integer."
+            }
+          ]
+        },
+        {
+          "properties": {
+            "action": {
+              "const": "redo"
+            },
+            "args": {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "$ref": "#/$defs/safe-revision"
+                }
+              ],
+              "minItems": 1,
+              "maxItems": 1,
+              "items": false
+            }
+          },
+          "description": "Request history traversal at the current accepted revision.",
+          "examples": [
+            {
+              "contract": "model-document",
+              "action": "redo",
+              "args": [
+                0
+              ]
+            },
+            {
+              "contract": "model-document",
+              "action": "redo",
+              "args": [
+                3
+              ]
+            }
+          ],
+          "x-invalidExamples": [
+            {
+              "value": {
+                "contract": "model-document",
+                "action": "redo",
+                "args": [
+                  -1
+                ]
+              },
+              "reason": "Revision must be nonnegative."
+            },
+            {
+              "value": {
+                "contract": "model-document",
+                "action": "redo",
+                "args": [
+                  1.5
+                ]
+              },
+              "reason": "Revision must be an integer."
+            },
+            {
+              "value": {
+                "contract": "model-document",
+                "action": "redo",
+                "args": [
+                  9007199254740992
+                ]
+              },
+              "reason": "Revision must be a safe integer."
+            }
+          ]
+        },
+        {
+          "properties": {
+            "action": {
+              "const": "select"
+            },
+            "args": {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/stable-id"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              ],
+              "minItems": 1,
+              "maxItems": 1,
+              "items": false
+            }
+          },
+          "description": "Select a live node ID or clear selection; read-only documents still allow selection.",
+          "examples": [
+            {
+              "contract": "model-document",
+              "action": "select",
+              "args": [
+                "node-1"
+              ]
+            },
+            {
+              "contract": "model-document",
+              "action": "select",
+              "args": [
+                null
+              ]
+            }
+          ],
+          "x-invalidExamples": [
+            {
+              "value": {
+                "contract": "model-document",
+                "action": "select",
+                "args": [
+                  " "
+                ]
+              },
+              "reason": "Selection IDs must be nonblank."
+            },
+            {
+              "value": {
+                "contract": "model-document",
+                "action": "select",
+                "args": [
+                  7
+                ]
+              },
+              "reason": "Use a stable string ID or null."
+            }
+          ]
+        },
+        {
+          "properties": {
+            "action": {
+              "const": "cancelPending"
+            },
+            "args": {
+              "type": "array",
+              "minItems": 0,
+              "maxItems": 0,
+              "items": false
+            }
+          },
+          "description": "Cancel an unpublished proposal and abort its host signal; already applied content is not rolled back.",
+          "examples": [
+            {
+              "contract": "model-document",
+              "action": "cancelPending",
+              "args": []
+            }
+          ],
+          "x-invalidExamples": [
+            {
+              "value": {
+                "contract": "model-document",
+                "action": "cancelPending",
+                "args": [
+                  true
+                ]
+              },
+              "reason": "Cancellation takes no arguments."
+            }
+          ]
+        }
+      ]
+    },
+    "safe-revision": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "stable-id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 10000,
+      "pattern": "\\S"
+    },
+    "diagram-node": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 10000,
+          "pattern": "\\S"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "allOf": [
+            {
+              "pattern": "\\S"
+            },
+            {
+              "pattern": "^[^\\u0000-\\u001f\\u007f]*$"
+            },
+            {
+              "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+            }
+          ],
+          "description": "Unique element label; the runtime additionally enforces 80 UTF-16 code units."
+        },
+        "kind": {
+          "enum": [
+            "class",
+            "component",
+            "interface",
+            "uwe",
+            "object",
+            "package",
+            "device",
+            "artifact",
+            "actor",
+            "useCase",
+            "activity",
+            "decision",
+            "initial",
+            "final",
+            "fork",
+            "state",
+            "lifeline",
+            "interaction",
+            "timing",
+            "port",
+            "task",
+            "startEvent",
+            "endEvent",
+            "gateway",
+            "pool",
+            "dmnDecision",
+            "inputData",
+            "businessKnowledge",
+            "knowledgeSource",
+            "casePlan",
+            "stage",
+            "milestone",
+            "eventListener",
+            "criterion",
+            "role",
+            "valueProposition",
+            "table",
+            "ifmlAction",
+            "ifmlEvent",
+            "part",
+            "merge",
+            "ifmlViewContainer",
+            "ifmlViewComponent",
+            "planningTable",
+            "comment",
+            "objectNode",
+            "c4Person",
+            "c4Element",
+            "c4Boundary",
+            "c4Database",
+            "c4Deployment"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 10000,
+          "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+        },
+        "x": {
+          "type": "number",
+          "minimum": 0
+        },
+        "y": {
+          "type": "number",
+          "minimum": 0
+        },
+        "width": {
+          "type": "number",
+          "minimum": 8
+        },
+        "height": {
+          "type": "number",
+          "minimum": 8
+        },
+        "stereotype": {
+          "type": "string",
+          "maxLength": 2000,
+          "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+        },
+        "abstract": {
+          "type": "boolean"
+        },
+        "compartments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string",
+                "maxLength": 2000,
+                "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+              },
+              "entries": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 2000,
+                  "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+                },
+                "maxItems": 100
+              }
+            },
+            "required": [
+              "entries"
+            ],
+            "additionalProperties": false
+          },
+          "maxItems": 30
+        },
+        "constraints": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 2000,
+            "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+          },
+          "maxItems": 100
+        },
+        "parentId": {
+          "type": "string",
+          "maxLength": 2000,
+          "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+        },
+        "ownerId": {
+          "type": "string",
+          "maxLength": 2000,
+          "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+        },
+        "multiplicity": {
+          "type": "string",
+          "maxLength": 2000,
+          "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+        },
+        "marker": {
+          "type": "string",
+          "maxLength": 2000,
+          "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+        },
+        "discretionary": {
+          "type": "boolean"
+        },
+        "activations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "y": {
+                "type": "number",
+                "minimum": 0
+              },
+              "height": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              }
+            },
+            "required": [
+              "y",
+              "height"
+            ],
+            "additionalProperties": false
+          },
+          "maxItems": 100
+        },
+        "table": {
+          "type": "object",
+          "properties": {
+            "columns": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 2000,
+                "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+              },
+              "minItems": 1,
+              "maxItems": 100
+            },
+            "rows": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 2000,
+                  "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+                },
+                "maxItems": 100
+              },
+              "maxItems": 100
+            },
+            "hitPolicy": {
+              "type": "string",
+              "maxLength": 80,
+              "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+            },
+            "inputColumnCount": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": [
+            "columns",
+            "rows"
+          ],
+          "additionalProperties": false
+        },
+        "entityId": {
+          "allOf": [
+            {
+              "type": "string",
+              "maxLength": 200,
+              "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+            },
+            {
+              "pattern": "\\S"
+            }
+          ],
+          "description": "Nonblank text; runtime also measures UTF-16 length."
+        },
+        "references": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "modelId": {
+                "allOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 200,
+                    "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+                  },
+                  {
+                    "pattern": "\\S"
+                  }
+                ],
+                "description": "Nonblank text; runtime also measures UTF-16 length."
+              },
+              "nodeId": {
+                "allOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 200,
+                    "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+                  },
+                  {
+                    "pattern": "\\S"
+                  }
+                ],
+                "description": "Nonblank text; runtime also measures UTF-16 length."
+              },
+              "relation": {
+                "enum": [
+                  "refines",
+                  "realizes",
+                  "traces",
+                  "drill-down"
+                ]
+              },
+              "label": {
+                "allOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 200,
+                    "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+                  },
+                  {
+                    "pattern": "\\S"
+                  }
+                ],
+                "description": "Nonblank text; runtime also measures UTF-16 length."
+              }
+            },
+            "required": [
+              "modelId",
+              "relation",
+              "label"
+            ],
+            "additionalProperties": false
+          },
+          "maxItems": 32
+        },
+        "architecture": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "enum": [
+                "Person",
+                "Software System",
+                "Container",
+                "Component",
+                "Deployment Node",
+                "Infrastructure Node",
+                "Container Instance",
+                "Software System Instance"
+              ]
+            },
+            "technology": {
+              "type": "string",
+              "maxLength": 200,
+              "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+            },
+            "external": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "kind",
+        "description",
+        "x",
+        "y",
+        "width",
+        "height"
+      ],
+      "additionalProperties": false
+    },
+    "node-patch": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "allOf": [
+            {
+              "pattern": "\\S"
+            },
+            {
+              "pattern": "^[^\\u0000-\\u001f\\u007f]*$"
+            },
+            {
+              "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+            }
+          ],
+          "description": "Unique element label; the runtime additionally enforces 80 UTF-16 code units."
+        },
+        "kind": {
+          "enum": [
+            "class",
+            "component",
+            "interface",
+            "uwe",
+            "object",
+            "package",
+            "device",
+            "artifact",
+            "actor",
+            "useCase",
+            "activity",
+            "decision",
+            "initial",
+            "final",
+            "fork",
+            "state",
+            "lifeline",
+            "interaction",
+            "timing",
+            "port",
+            "task",
+            "startEvent",
+            "endEvent",
+            "gateway",
+            "pool",
+            "dmnDecision",
+            "inputData",
+            "businessKnowledge",
+            "knowledgeSource",
+            "casePlan",
+            "stage",
+            "milestone",
+            "eventListener",
+            "criterion",
+            "role",
+            "valueProposition",
+            "table",
+            "ifmlAction",
+            "ifmlEvent",
+            "part",
+            "merge",
+            "ifmlViewContainer",
+            "ifmlViewComponent",
+            "planningTable",
+            "comment",
+            "objectNode",
+            "c4Person",
+            "c4Element",
+            "c4Boundary",
+            "c4Database",
+            "c4Deployment"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 10000,
+          "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+        },
+        "x": {
+          "type": "number",
+          "minimum": 0
+        },
+        "y": {
+          "type": "number",
+          "minimum": 0
+        },
+        "width": {
+          "type": "number",
+          "minimum": 8
+        },
+        "height": {
+          "type": "number",
+          "minimum": 8
+        },
+        "stereotype": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 2000,
+              "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "abstract": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "compartments": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "label": {
+                    "type": "string",
+                    "maxLength": 2000,
+                    "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+                  },
+                  "entries": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 2000,
+                      "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+                    },
+                    "maxItems": 100
+                  }
+                },
+                "required": [
+                  "entries"
+                ],
+                "additionalProperties": false
+              },
+              "maxItems": 30
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "constraints": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 2000,
+                "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+              },
+              "maxItems": 100
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "parentId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 2000,
+              "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ownerId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 2000,
+              "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "multiplicity": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 2000,
+              "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "marker": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 2000,
+              "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "discretionary": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "activations": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "y": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "height": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  }
+                },
+                "required": [
+                  "y",
+                  "height"
+                ],
+                "additionalProperties": false
+              },
+              "maxItems": 100
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "table": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "columns": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "maxLength": 2000,
+                    "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+                  },
+                  "minItems": 1,
+                  "maxItems": 100
+                },
+                "rows": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 2000,
+                      "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+                    },
+                    "maxItems": 100
+                  },
+                  "maxItems": 100
+                },
+                "hitPolicy": {
+                  "type": "string",
+                  "maxLength": 80,
+                  "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+                },
+                "inputColumnCount": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "columns",
+                "rows"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "entityId": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200,
+                  "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+                },
+                {
+                  "pattern": "\\S"
+                }
+              ],
+              "description": "Nonblank text; runtime also measures UTF-16 length."
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "references": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "modelId": {
+                    "allOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 200,
+                        "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+                      },
+                      {
+                        "pattern": "\\S"
+                      }
+                    ],
+                    "description": "Nonblank text; runtime also measures UTF-16 length."
+                  },
+                  "nodeId": {
+                    "allOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 200,
+                        "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+                      },
+                      {
+                        "pattern": "\\S"
+                      }
+                    ],
+                    "description": "Nonblank text; runtime also measures UTF-16 length."
+                  },
+                  "relation": {
+                    "enum": [
+                      "refines",
+                      "realizes",
+                      "traces",
+                      "drill-down"
+                    ]
+                  },
+                  "label": {
+                    "allOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 200,
+                        "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+                      },
+                      {
+                        "pattern": "\\S"
+                      }
+                    ],
+                    "description": "Nonblank text; runtime also measures UTF-16 length."
+                  }
+                },
+                "required": [
+                  "modelId",
+                  "relation",
+                  "label"
+                ],
+                "additionalProperties": false
+              },
+              "maxItems": 32
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "architecture": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "enum": [
+                    "Person",
+                    "Software System",
+                    "Container",
+                    "Component",
+                    "Deployment Node",
+                    "Infrastructure Node",
+                    "Container Instance",
+                    "Software System Instance"
+                  ]
+                },
+                "technology": {
+                  "type": "string",
+                  "maxLength": 200,
+                  "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+                },
+                "external": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "diagram-edge": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 10000,
+          "pattern": "\\S"
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 10000,
+          "pattern": "\\S"
+        },
+        "target": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 10000,
+          "pattern": "\\S"
+        },
+        "kind": {
+          "enum": [
+            "association",
+            "composition",
+            "aggregation",
+            "generalization",
+            "dependency",
+            "realization",
+            "navigationLink",
+            "processLink",
+            "sequenceFlow",
+            "messageFlow",
+            "informationRequirement",
+            "knowledgeRequirement",
+            "authorityRequirement",
+            "caseLink",
+            "synchronousMessage",
+            "returnMessage",
+            "controlFlow",
+            "transition",
+            "extension",
+            "deliverableFlow",
+            "intangibleFlow",
+            "dataFlow",
+            "navigationFlow",
+            "sentryOnPart",
+            "valuePropositionFlow",
+            "communicationMessage",
+            "c4Relationship",
+            "commentLink",
+            "objectFlow"
+          ]
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 2000,
+          "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 10000,
+          "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+        },
+        "sourceSide": {
+          "enum": [
+            "top",
+            "right",
+            "bottom",
+            "left"
+          ]
+        },
+        "targetSide": {
+          "enum": [
+            "top",
+            "right",
+            "bottom",
+            "left"
+          ]
+        },
+        "sourceOffset": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "targetOffset": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "waypoints": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "x",
+              "y"
+            ],
+            "additionalProperties": false
+          },
+          "maxItems": 100
+        },
+        "labelPosition": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "x",
+            "y"
+          ],
+          "additionalProperties": false
+        },
+        "sourceMultiplicity": {
+          "type": "string",
+          "maxLength": 2000,
+          "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+        },
+        "targetMultiplicity": {
+          "type": "string",
+          "maxLength": 2000,
+          "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+        },
+        "directed": {
+          "type": "boolean"
+        },
+        "sourcePoint": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "x",
+            "y"
+          ],
+          "additionalProperties": false
+        },
+        "targetPoint": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "x",
+            "y"
+          ],
+          "additionalProperties": false
+        },
+        "technology": {
+          "type": "string",
+          "maxLength": 200,
+          "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000
+        }
+      },
+      "required": [
+        "id",
+        "source",
+        "target",
+        "kind",
+        "description"
+      ],
+      "additionalProperties": false
+    },
+    "edge-patch": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 10000,
+          "pattern": "\\S"
+        },
+        "target": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 10000,
+          "pattern": "\\S"
+        },
+        "kind": {
+          "enum": [
+            "association",
+            "composition",
+            "aggregation",
+            "generalization",
+            "dependency",
+            "realization",
+            "navigationLink",
+            "processLink",
+            "sequenceFlow",
+            "messageFlow",
+            "informationRequirement",
+            "knowledgeRequirement",
+            "authorityRequirement",
+            "caseLink",
+            "synchronousMessage",
+            "returnMessage",
+            "controlFlow",
+            "transition",
+            "extension",
+            "deliverableFlow",
+            "intangibleFlow",
+            "dataFlow",
+            "navigationFlow",
+            "sentryOnPart",
+            "valuePropositionFlow",
+            "communicationMessage",
+            "c4Relationship",
+            "commentLink",
+            "objectFlow"
+          ]
+        },
+        "label": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 2000,
+              "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 10000,
+          "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+        },
+        "sourceSide": {
+          "anyOf": [
+            {
+              "enum": [
+                "top",
+                "right",
+                "bottom",
+                "left"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "targetSide": {
+          "anyOf": [
+            {
+              "enum": [
+                "top",
+                "right",
+                "bottom",
+                "left"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sourceOffset": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "targetOffset": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "waypoints": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "number"
+                  },
+                  "y": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "maxItems": 100
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "labelPosition": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "x": {
+                  "type": "number"
+                },
+                "y": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "x",
+                "y"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sourceMultiplicity": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 2000,
+              "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "targetMultiplicity": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 2000,
+              "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "directed": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sourcePoint": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "x": {
+                  "type": "number"
+                },
+                "y": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "x",
+                "y"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "targetPoint": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "x": {
+                  "type": "number"
+                },
+                "y": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "x",
+                "y"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "technology": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 200,
+              "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "order": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "diagram-model": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "allOf": [
+            {
+              "type": "string",
+              "maxLength": 10000,
+              "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+            },
+            {
+              "pattern": "\\S"
+            }
+          ],
+          "description": "Nonblank text; runtime also measures UTF-16 length."
+        },
+        "name": {
+          "allOf": [
+            {
+              "type": "string",
+              "maxLength": 10000,
+              "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+            },
+            {
+              "pattern": "\\S"
+            }
+          ],
+          "description": "Nonblank text; runtime also measures UTF-16 length."
+        },
+        "notation": {
+          "enum": [
+            "UML class",
+            "UML component",
+            "UML object",
+            "UML package",
+            "UML deployment",
+            "UML composite structure",
+            "UML profile",
+            "UML use case",
+            "UML activity",
+            "UML state machine",
+            "UML sequence",
+            "UML communication",
+            "UML interaction overview",
+            "UML timing",
+            "UWE navigation",
+            "UWE presentation",
+            "BPMN process",
+            "DMN requirements",
+            "DMN decision table",
+            "CMMN case",
+            "BMM motivation",
+            "SBVR vocabulary",
+            "VDML value delivery",
+            "IFML interaction",
+            "SysML block",
+            "SysML requirements",
+            "BACM capabilities",
+            "UWE requirements",
+            "UWE requirement activity",
+            "UWE content",
+            "UWE process structure",
+            "UWE process flow",
+            "UWE user and roles",
+            "UWE basic rights",
+            "UWE navigation states",
+            "UWE application modes",
+            "C4 system landscape",
+            "C4 system context",
+            "C4 container",
+            "C4 component",
+            "C4 code",
+            "C4 dynamic",
+            "C4 deployment"
+          ]
+        },
+        "description": {
+          "allOf": [
+            {
+              "type": "string",
+              "maxLength": 10000,
+              "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+            },
+            {
+              "pattern": "\\S"
+            }
+          ],
+          "description": "Nonblank text; runtime also measures UTF-16 length."
+        },
+        "width": {
+          "type": "number",
+          "minimum": 100,
+          "maximum": 20000
+        },
+        "height": {
+          "type": "number",
+          "minimum": 100,
+          "maximum": 20000
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/diagram-node"
+          },
+          "maxItems": 500
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/diagram-edge"
+          },
+          "maxItems": 1500
+        },
+        "standard": {
+          "type": "object",
+          "properties": {
+            "acronym": {
+              "allOf": [
+                {
+                  "type": "string",
+                  "maxLength": 10000,
+                  "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+                },
+                {
+                  "pattern": "\\S"
+                }
+              ],
+              "description": "Nonblank text; runtime also measures UTF-16 length."
+            },
+            "version": {
+              "allOf": [
+                {
+                  "type": "string",
+                  "maxLength": 10000,
+                  "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+                },
+                {
+                  "pattern": "\\S"
+                }
+              ],
+              "description": "Nonblank text; runtime also measures UTF-16 length."
+            },
+            "sourceUrl": {
+              "type": "string",
+              "pattern": "^https://",
+              "maxLength": 10000
+            },
+            "coverage": {
+              "enum": [
+                "notation-subset",
+                "concept-projection"
+              ]
+            },
+            "scope": {
+              "allOf": [
+                {
+                  "type": "string",
+                  "maxLength": 10000,
+                  "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+                },
+                {
+                  "pattern": "\\S"
+                }
+              ],
+              "description": "Nonblank text; runtime also measures UTF-16 length."
+            }
+          },
+          "required": [
+            "acronym",
+            "version",
+            "sourceUrl",
+            "coverage",
+            "scope"
+          ],
+          "additionalProperties": false
+        },
+        "profileId": {
+          "allOf": [
+            {
+              "type": "string",
+              "maxLength": 200,
+              "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+            },
+            {
+              "pattern": "\\S"
+            }
+          ],
+          "description": "Nonblank text; runtime also measures UTF-16 length."
+        },
+        "parentModelId": {
+          "allOf": [
+            {
+              "type": "string",
+              "maxLength": 200,
+              "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+            },
+            {
+              "pattern": "\\S"
+            }
+          ],
+          "description": "Nonblank text; runtime also measures UTF-16 length."
+        },
+        "legend": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 2000,
+            "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+          },
+          "maxItems": 100
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "notation",
+        "description",
+        "width",
+        "height",
+        "nodes",
+        "edges"
+      ],
+      "additionalProperties": false
+    },
+    "model-operation": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "rename-node"
+            },
+            "nodeId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 10000,
+              "pattern": "\\S"
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80,
+              "allOf": [
+                {
+                  "pattern": "\\S"
+                },
+                {
+                  "pattern": "^[^\\u0000-\\u001f\\u007f]*$"
+                },
+                {
+                  "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\ud800-\\udfff\\ufffe\\uffff]*$"
+                }
+              ],
+              "description": "Unique element label; the runtime additionally enforces 80 UTF-16 code units."
+            }
+          },
+          "required": [
+            "type",
+            "nodeId",
+            "name"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "update-node"
+            },
+            "nodeId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 10000,
+              "pattern": "\\S"
+            },
+            "patch": {
+              "$ref": "#/$defs/node-patch"
+            }
+          },
+          "required": [
+            "type",
+            "nodeId",
+            "patch"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "add-node"
+            },
+            "node": {
+              "$ref": "#/$defs/diagram-node"
+            }
+          },
+          "required": [
+            "type",
+            "node"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "remove-node"
+            },
+            "nodeId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 10000,
+              "pattern": "\\S"
+            }
+          },
+          "required": [
+            "type",
+            "nodeId"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "add-edge"
+            },
+            "edge": {
+              "$ref": "#/$defs/diagram-edge"
+            }
+          },
+          "required": [
+            "type",
+            "edge"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "update-edge"
+            },
+            "edgeId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 10000,
+              "pattern": "\\S"
+            },
+            "patch": {
+              "$ref": "#/$defs/edge-patch"
+            }
+          },
+          "required": [
+            "type",
+            "edgeId",
+            "patch"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "remove-edge"
+            },
+            "edgeId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 10000,
+              "pattern": "\\S"
+            }
+          },
+          "required": [
+            "type",
+            "edgeId"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "replace-model"
+            },
+            "model": {
+              "$ref": "#/$defs/diagram-model"
+            }
+          },
+          "required": [
+            "type",
+            "model"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "model-transaction": {
+      "type": "object",
+      "properties": {
+        "expectedRevision": {
+          "$ref": "#/$defs/safe-revision"
+        },
+        "operations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/model-operation"
+          },
+          "minItems": 1,
+          "maxItems": 100
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160,
+          "pattern": "\\S"
+        },
+        "selectedId": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/stable-id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "expectedRevision",
+        "operations"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

@@ -12,10 +12,11 @@
   },
   "scripts": {
     "glass:dev": "npm run dev -w @quantitative-hci/glass-gallery",
-    "glass:build": "npm run build -w @quantitative-hci/glass-gallery",
-    "glass:agent-check": "node scripts/check-agent-contracts.mjs && node --test tests/test_agent_contracts.mjs tests/test_graphics_controlled.mjs",
+    "glass:build": "npm run build -w @quantitative-hci/glass-gallery && npm run glass:docs-check",
+    "glass:agent-check": "node scripts/check-agent-contracts.mjs && node --test tests/test_agent_contracts.mjs tests/test_graphics_controlled.mjs tests/test_model_controlled.mjs tests/test_agent_documents.mjs tests/test_agent_action_inputs.mjs",
     "glass:contract": "node scripts/agent-contract.mjs",
     "glass:check": "npm run glass:agent-check && node scripts/check-glass-standard.mjs && node scripts/check-standards-models.mjs && node scripts/check-modelling-profiles.mjs && node packages/liquid-glass/src/modeling/check-document.mjs && node scripts/check-agent-tasks.mjs",
-    "glass:verify": "npm run glass:check && npm run glass:build"
+    "glass:verify": "npm run glass:check && npm run glass:build",
+    "glass:docs-check": "node scripts/agent-documents.mjs"
   }
 }

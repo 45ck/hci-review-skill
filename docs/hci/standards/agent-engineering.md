@@ -20,6 +20,10 @@ Choose an existing primitive or composition before adding a new one. Put reusabl
 
 Add or update the registry in the same change as a public export. Record purpose, `useWhen`, inputs, state, actual runtime discovery and actions, restrictions, documentation and scoped evidence. Classify aliases, utilities, providers and passive presentation honestly. An evidence path identifies a check; it is not a claim that the check was executed or that it covers every scenario.
 
+Custom primitives also publish positional action input schemas and valid/invalid examples in `packages/liquid-glass/agent-action-inputs.json`. Keep those shapes aligned with the shared runtime validators. Structural preflight never replaces current revision, identity, permission or host acceptance checks. When a controlled host is asynchronous, expose pending state and cancellation, accept equivalent document values, prevent stale callbacks from settling newer requests, and distinguish a failed callback after application from an unapplied proposal.
+
+Generate hosted contracts from the canonical package sources. Preserve schema-linked indexes/envelopes, deterministic documentation identity and source provenance. The build must check every emitted agent file, its fingerprint and the loaded page's matching identity. These fields identify content; they do not certify behavior, authenticity or human approval.
+
 `npm run glass:agent-check` checks the registry/schema, public export inventory, source declarations and declared references. Run `npm run glass:verify` for package changes and the applicable browser checks under the root `AGENTS.md` for interaction changes. A new public control must have a representative task with an observable result; extending only the catalogue or metadata does not complete it.
 
 Do not expose a parallel browser mutation path to avoid SDK confirmation, cancellation, read-only or disabled behaviour. Validate custom arguments, document revisions and atomic edits in the common implementation. Host authorization is separate from UI source attribution. Respect the existing demo policy for actions marked as requiring a person.

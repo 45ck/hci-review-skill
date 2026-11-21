@@ -221,6 +221,11 @@
                   },
                   "uniqueItems": true
                 }
+              },
+              "actionSchema": {
+                "type": "string",
+                "pattern": "^\\./agent-action-inputs\\.json#/\\$defs/[a-z][a-z0-9-]*$",
+                "description": "Local package JSON Schema fragment for supported custom action invocations. Structural preflight is not contextual acceptance."
               }
             },
             "required": [

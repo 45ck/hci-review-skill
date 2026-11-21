@@ -25,6 +25,8 @@ Start with the [agent documentation index](packages/liquid-glass/docs/llms.txt),
 
 The [repository standard](docs/hci/standards/agent-engineering.md) applies to future additions. `npm run glass:agent-check` checks the declared export and contract coverage. Runtime tests must separately prove that an agent can discover controls and observe real accepted changes. Neither kind of check changes a component's **Unvalidated** human review status.
 
+Custom primitives publish [JSON action input schemas](packages/liquid-glass/agent-action-inputs.json). Preflight without mutating a page: `npm run glass:contract -- validate liquid-viewport panBy '[80,-40]'`. Model edits expose pending state, cancellation and accepted-result feedback, including serialized host acceptance and failures after application. Hosted `/agent-release.json` identifies the documentation set and source; the production build verifies every emitted contract and its fingerprint against canonical inputs.
+
 ## Liquid Glass UI kit
 
 Use the shared **WebGPU Liquid Glass kit** for new high-fidelity internal interfaces without an established product design system. Real [Vercel UI SDK](https://github.com/vercel-labs/ui) controls retain their behaviour while a shared renderer applies the reference-based material to actual buttons, fields, panels and popups.

@@ -4856,7 +4856,8 @@
           "setExpanded": [
             "value:boolean"
           ]
-        }
+        },
+        "actionSchema": "./agent-action-inputs.json#/$defs/liquid-viewport"
       },
       "restrictions": [
         "Zoom remains 0.1\u20134; dimensions and positions must be finite.",
@@ -4877,6 +4878,10 @@
         {
           "path": "tests/glass_standards_contract.py",
           "scope": "Pan/zoom/fit/fullscreen and agent operation; verify resulting camera values."
+        },
+        {
+          "path": "tests/test_agent_action_inputs.mjs",
+          "scope": "Structural action schemas and representative accepted/rejected values compared with the actual shared viewport/model APIs; no authorization or host acceptance claim."
         }
       ],
       "validation": "unvalidated"
@@ -4902,12 +4907,12 @@
         "Build a controlled or uncontrolled model editing composition."
       ],
       "inputs": [
-        "label, document/defaultDocument, onDocumentChange",
+        "label, document/defaultDocument, onDocumentChange returning void or Promise<void>",
         "models, validateModel, onResult, disabled, readOnly, children/ref"
       ],
       "state": [
         "value snapshot with revision/model/selection/history",
-        "lastResult and pending controlled revision"
+        "lastResult with applied, requested, unchanged, rejected or applied-error status; pendingRevision number or null"
       ],
       "runtime": {
         "discovery": "sdk",
@@ -4918,9 +4923,10 @@
           "applyTransaction",
           "undo",
           "redo",
-          "select"
+          "select",
+          "cancelPending"
         ],
-        "outcome": "Inspect the resulting state and DOM after host acceptance; action dispatch alone does not prove the task completed.",
+        "outcome": "Inspect accepted document content and revision. Requested remains pending until equivalent proposal props are observed. Cancellation aborts unpublished work; a host failure after acceptance is applied-error and does not roll back published content.",
         "primitive": {
           "source": "packages/liquid-glass/src/modeling/primitive.ts",
           "symbol": "liquidModelDocument",
@@ -4931,16 +4937,17 @@
             "applyTransaction",
             "undo",
             "redo",
-            "select"
+            "select",
+            "cancelPending"
           ]
         },
         "actionParameters": {
           "inspect": [],
           "preview": [
-            "transaction: unknown; inspect().transactionExample describes supported JSON"
+            "transaction: {expectedRevision:number,operations:ModelOperation[],label?:string,selectedId?:string|null}; inspect() supplies current revision, IDs and examples"
           ],
           "applyTransaction": [
-            "transaction: {expectedRevision:number,label:string,operations:ModelOperation[]}"
+            "transaction: {expectedRevision:number,operations:ModelOperation[],label?:string,selectedId?:string|null}"
           ],
           "undo": [
             "expectedRevision:number"
@@ -4950,13 +4957,16 @@
           ],
           "select": [
             "nodeId:string|null"
-          ]
-        }
+          ],
+          "cancelPending": []
+        },
+        "actionSchema": "./agent-action-inputs.json#/$defs/model-document"
       },
       "restrictions": [
         "A requested proposal is not an accepted change; inspect lastResult and revision.",
         "Disabled/readOnly SDK gating also suppresses inspect in beta.13.",
-        "Apply needs expectedRevision; stale or invalid operations leave the document unchanged."
+        "Apply needs expectedRevision; stale or invalid operations leave the document unchanged.",
+        "Await or cancel pending controlled work before another mutation. Host callbacks receive AbortSignal; hosts must honor it before publishing late async results. Already published props remain authoritative."
       ],
       "policies": [
         "shared-state",
@@ -4977,6 +4987,10 @@
         {
           "path": "packages/liquid-glass/src/modeling/check-document.mjs",
           "scope": "Pure document transaction regressions."
+        },
+        {
+          "path": "tests/test_agent_action_inputs.mjs",
+          "scope": "Structural action schemas and representative accepted/rejected values compared with the actual shared viewport/model APIs; no authorization or host acceptance claim."
         }
       ],
       "validation": "unvalidated"
@@ -5065,11 +5079,11 @@
         "Compose the documented Standards workflow or reuse this part."
       ],
       "inputs": [
-        "documents,onDocumentsChange",
+        "documents,onDocumentsChange returning void or Promise<void>",
         "activeModelId,onActiveModelChange,defaultModelId,profiles,disabled,readOnly"
       ],
       "state": [
-        "active model, selected element, revisioned documents"
+        "active model, selected element, revisioned documents, pending proposal and accepted result"
       ],
       "runtime": {
         "discovery": "sdk-children",
@@ -5342,19 +5356,19 @@
       "sources": [
         "packages/liquid-glass/src/standards/workbench-data.tsx"
       ],
-      "purpose": "Undo, redo and export the current model.",
+      "purpose": "Undo, redo, export and cancel an unpublished model change through the shared document API.",
       "useWhen": [
         "Compose the documented Standards workflow or reuse this part."
       ],
       "inputs": [
-        "document,api,onNotice,disabled,readOnly"
+        "document,api,onNotice,disabled,readOnly,pendingRevision"
       ],
       "state": [
-        "revision and available undo/redo"
+        "revision, available undo/redo and pending controlled proposal"
       ],
       "runtime": {
         "discovery": "sdk-children",
-        "mutationPath": "SDK Buttons invoke the shared API or prepare copy/download.",
+        "mutationPath": "SDK Buttons invoke the shared API or prepare copy/download. Cancel pending model change calls api.cancelPending; it never undoes accepted content.",
         "actions": [],
         "outcome": "Inspect the resulting state and DOM after host acceptance; action dispatch alone does not prove the task completed.",
         "controls": [

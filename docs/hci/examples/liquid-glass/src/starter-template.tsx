@@ -1,14 +1,30 @@
-import { useState } from "react";
+"use client";
+
+import { useEffect, useState } from "react";
+import { createAgent, registerTools, type AgentAction } from "@ui-sdk/react/agent";
 import { LiquidGlassProvider } from "@quantitative-hci/liquid-glass/webgpu";
 import { LiquidIcon } from "@quantitative-hci/liquid-glass/icons";
 import { Button } from "@ui-sdk/react/button";
 import { Field, FieldLabel } from "@ui-sdk/react/field";
 import { Input } from "@ui-sdk/react/input";
+import "@ui-sdk/core/web.css";
 import "@quantitative-hci/liquid-glass/kit.css";
+
+const allowAgentAction = (step: AgentAction) => !step.confirm;
+let starterAgent: ReturnType<typeof createAgent> | undefined;
+
+export function getStarterAgent() {
+  if (typeof window === "undefined") throw new Error("Create the UI agent in the browser.");
+  return starterAgent ??= createAgent({ allow: allowAgentAction });
+}
 
 export default function LiquidGlassTemplate() {
   const [name, setName] = useState("My project");
   const [saved, setSaved] = useState("");
+  useEffect(() => {
+    const agent = getStarterAgent();
+    return registerTools(agent, { allow: allowAgentAction });
+  }, []);
   return (
     <LiquidGlassProvider
       backdrop={

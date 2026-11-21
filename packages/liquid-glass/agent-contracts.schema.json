@@ -1,0 +1,319 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/45ck/hci-review-skill/main/packages/liquid-glass/agent-contracts.schema.json",
+  "title": "Quantive agent engineering contracts",
+  "description": "Static authoring and routing inventory. Evidence references are scoped tests, not assertions that those tests passed for this revision.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "minLength": 1
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "package": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sdk": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "repository": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "name",
+        "version",
+        "repository"
+      ],
+      "additionalProperties": false
+    },
+    "policies": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "entries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "kind": {
+            "enum": [
+              "sdk-family",
+              "sdk-utility",
+              "primitive",
+              "composition",
+              "presentation",
+              "decoration",
+              "provider",
+              "pure-utility",
+              "host-hook"
+            ]
+          },
+          "exports": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "symbols": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "uniqueItems": true,
+                  "minItems": 1
+                }
+              },
+              "required": [
+                "path",
+                "symbols"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true,
+            "minItems": 1
+          },
+          "purpose": {
+            "type": "string",
+            "minLength": 1
+          },
+          "useWhen": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true,
+            "minItems": 1
+          },
+          "inputs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true,
+            "minItems": 1
+          },
+          "state": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true,
+            "minItems": 1
+          },
+          "runtime": {
+            "type": "object",
+            "properties": {
+              "discovery": {
+                "enum": [
+                  "upstream",
+                  "sdk",
+                  "sdk-children",
+                  "dom",
+                  "none"
+                ]
+              },
+              "mutationPath": {
+                "type": "string",
+                "minLength": 1
+              },
+              "actions": {
+                "type": "array",
+                "description": "Actions of this contract's own registered primitive. SDK aliases, compositions and passive APIs leave this empty and discover upstream or child actions instead.",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "uniqueItems": true
+              },
+              "outcome": {
+                "type": "string",
+                "minLength": 1
+              },
+              "upstream": {
+                "type": "string",
+                "minLength": 1
+              },
+              "controls": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "uniqueItems": true,
+                "minItems": 1
+              },
+              "primitive": {
+                "type": "object",
+                "properties": {
+                  "source": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "symbol": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "actions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "uniqueItems": true,
+                    "minItems": 1
+                  }
+                },
+                "required": [
+                  "source",
+                  "symbol",
+                  "name",
+                  "actions"
+                ],
+                "additionalProperties": false
+              },
+              "actionParameters": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "uniqueItems": true
+                }
+              }
+            },
+            "required": [
+              "discovery",
+              "mutationPath",
+              "actions",
+              "outcome"
+            ],
+            "additionalProperties": false
+          },
+          "restrictions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true,
+            "minItems": 1
+          },
+          "policies": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true,
+            "minItems": 1
+          },
+          "docs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true,
+            "minItems": 1
+          },
+          "evidence": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "scope": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "path",
+                "scope"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "validation": {
+            "enum": [
+              "unvalidated",
+              "upstream-foundation",
+              "not-applicable"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "exports",
+          "sources",
+          "purpose",
+          "useWhen",
+          "inputs",
+          "state",
+          "runtime",
+          "restrictions",
+          "policies",
+          "docs",
+          "evidence",
+          "validation"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "package",
+    "sdk",
+    "policies",
+    "entries"
+  ],
+  "additionalProperties": false
+}

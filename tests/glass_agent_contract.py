@@ -146,6 +146,34 @@ async def verify_agent_contract(page, expect):
         await expect(page.locator(".agent-inspector, .agent-command-console, .reference-lens-stage")).to_have_count(0)
         outcomes["shellNames"] = list(shell)
 
+        browser_stage("agent contract: copied starter retains the actual SDK bridge")
+        await page.evaluate("""() => {
+            window.__starterClipboardDescriptor = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+            Object.defineProperty(navigator, 'clipboard', {configurable: true,
+                value: {writeText: async text => {window.__agentStarterSource = text;}}});
+        }""")
+        try:
+            await act(await entry("button", "Copy starter"), "press", [])
+            copied = await page.evaluate("window.__agentStarterSource")
+            assert isinstance(copied, str), "Copy starter did not return source"
+            for required in ["@ui-sdk/react/agent", "export function getStarterAgent", "createAgent({ allow:",
+                             "useEffect(() =>", "return registerTools(", "!step.confirm"]:
+                assert required in copied, f"Copied starter lost its agent contract: {required}"
+            outcomes["starter"] = {"actualCopyAction": True, "sdkBridgeIncluded": True,
+                                   "clientLifecycleAndCleanupIncluded": True,
+                                   "confirmationPolicyIncluded": True,
+                                   "scope": "Copied source wiring; TypeScript/build checks compile the template."}
+        finally:
+            await page.evaluate("""() => {
+                if (window.__starterClipboardDescriptor) {
+                    Object.defineProperty(navigator, 'clipboard', window.__starterClipboardDescriptor);
+                } else {
+                    Reflect.deleteProperty(navigator, 'clipboard');
+                }
+                delete window.__starterClipboardDescriptor;
+                delete window.__agentStarterSource;
+            }""")
+
         project = await entry("input", "Project name")
         project_value = "Agent-created studio"
         await act(project, "setValue", [project_value])

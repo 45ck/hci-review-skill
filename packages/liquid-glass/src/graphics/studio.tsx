@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type PointerEvent } from "react";
+import { sourceOf, type ChangeSource } from "@ui-sdk/core";
 import { Button } from "@ui-sdk/react/button";
 import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from "@ui-sdk/react/collapsible";
 import { Field, FieldDescription, FieldLabel } from "@ui-sdk/react/field";
@@ -14,19 +15,22 @@ import { Textarea } from "@ui-sdk/react/textarea";
 import { LiquidViewport, type LiquidViewportHandle } from "../developer/viewport";
 import { ValidationBadge } from "../validation";
 import { graphicToStandaloneSvg } from "./export";
+import { createGraphicChangeController, type GraphicChangeInput } from "./controlled-change";
 import { createGraphicAgentContext, graphicLayerBounds, graphicTextLines, validateGraphicDocument } from "./model";
 import type { GraphicAgentContext, GraphicAsset, GraphicChangeDetails, GraphicDocument, GraphicLayer, GraphicLayerKind, GraphicVariant } from "./types";
 
 export interface LiquidGraphicStudioProps {
   model: GraphicDocument;
   assets: readonly GraphicAsset[];
-  onModelChange: (model: GraphicDocument, details: GraphicChangeDetails) => void;
-  onAssetsChange?: (assets: GraphicAsset[]) => void;
+  onModelChange: (model: GraphicDocument, details: GraphicChangeDetails) => void | Promise<void>;
+  onAssetsChange?: (assets: GraphicAsset[]) => void | Promise<void>;
   onImageRequest?: (context: GraphicAgentContext) => void | Promise<void>;
   selectedId?: string;
   onSelectionChange?: (id: string) => void;
   className?: string;
 }
+
+type GraphicInteraction = { source: ChangeSource; event?: Event };
 
 type LayerDraft = {
   name: string; x: number | null; y: number | null; width: number | null; height: number | null;
@@ -71,10 +75,10 @@ function layerDraft(layer: GraphicLayer | undefined): LayerDraft {
 
 function Choice({ label, value, options, onChange, disabled = false }: {
   label: string; value: string; options: readonly { value: string; label: string }[];
-  onChange: (value: string) => void; disabled?: boolean;
+  onChange: (value: string, input: GraphicInteraction) => void; disabled?: boolean;
 }) {
-  return <Select value={value} items={[...options]} disabled={disabled} onValueChange={(next) => {
-    if (typeof next === "string" && options.some((option) => option.value === next)) onChange(next);
+  return <Select value={value} items={[...options]} disabled={disabled} onValueChange={(next, details) => {
+    if (typeof next === "string" && options.some((option) => option.value === next)) onChange(next, { source: details.source, event: details.event });
   }}><SelectLabel>{label}</SelectLabel><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>
     {options.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
   </SelectContent></Select>;
@@ -117,8 +121,7 @@ export function LiquidGraphicStudio({ model, assets, onModelChange, onAssetsChan
   const [localSelection, setLocalSelection] = useState(model.layers.at(-1)?.id ?? "");
   const selected = model.layers.find((layer) => layer.id === (selectedId ?? localSelection)) ?? model.layers.at(-1);
   const [draft, setDraft] = useState<LayerDraft>(() => layerDraft(selected));
-  const [undo, setUndo] = useState<GraphicDocument[]>([]);
-  const [redo, setRedo] = useState<GraphicDocument[]>([]);
+  const [, refreshHistory] = useState(0);
   const [variants, setVariants] = useState<GraphicVariant[]>([]);
   const [variantName, setVariantName] = useState("Direction 1");
   const [variantId, setVariantId] = useState("");
@@ -130,30 +133,104 @@ export function LiquidGraphicStudio({ model, assets, onModelChange, onAssetsChan
   const [error, setError] = useState("");
   const [feedback, setFeedback] = useState("");
   const [importing, setImporting] = useState(false);
+  const [waitingForAsset, setWaitingForAsset] = useState(false);
   const [importFiles, setImportFiles] = useState<File[]>([]);
   const [preview, setPreview] = useState<GraphicLayer | null>(null);
   const [canvasZoom, setCanvasZoom] = useState(1);
   const viewport = useRef<LiquidViewportHandle>(null);
   const importBusy = useRef(false);
+  const mounted = useRef(true);
+  const importRun = useRef(0);
+  const pendingAsset = useRef<{ asset: GraphicAsset; targetId?: string; baseId: string; baseRevision: number; input: GraphicInteraction } | null>(null);
+  const propertySubmit = useRef<GraphicInteraction | null>(null);
+  const backgroundSubmit = useRef<GraphicInteraction | null>(null);
+  const selectionHandler = useRef(onSelectionChange);
+  selectionHandler.current = onSelectionChange;
+  const controllerRef = useRef<ReturnType<typeof createGraphicChangeController> | null>(null);
+  if (!controllerRef.current) controllerRef.current = createGraphicChangeController(model, result => {
+    if (!mounted.current) return;
+    refreshHistory(value => value + 1);
+    if (result.status === "applied" && result.selectedId) {
+      setLocalSelection(result.selectedId);
+      selectionHandler.current?.(result.selectedId);
+    }
+    if (result.status === "rejected" || result.status === "cancelled" || result.status === "applied-error") {
+      setError(result.message);
+      setFeedback("");
+    } else {
+      setError("");
+      setFeedback(result.message);
+    }
+  });
+  const controller = controllerRef.current;
+  const { undo, redo, pending } = controller.state();
+  const mutationBusy = Boolean(pending) || importing;
   const drag = useRef<{ pointer: number; x: number; y: number; screenX: number; screenY: number; layer: GraphicLayer; revision: number; kind: "move" | "resize"; next: GraphicLayer | null } | null>(null);
   const errors = useMemo(() => validateGraphicDocument(model, assets), [model, assets]);
   const currentModel = useRef(model);
   currentModel.current = model;
+  const currentAssets = useRef(assets);
+  currentAssets.current = assets;
   const visibleModel = preview ? { ...model, layers: model.layers.map((layer) => layer.id === preview.id ? preview : layer) } : model;
   const format = formats.find((item) => item.width === model.width && item.height === model.height)?.value ?? "custom";
 
   useEffect(() => { setDraft(layerDraft(selected)); setError(""); }, [selected?.id, model.revision]);
   useEffect(() => { setBackground(model.background); }, [model.background]);
-  useEffect(() => { setUndo([]); setRedo([]); setVariants([]); setVariantId(""); }, [model.id]);
+  useEffect(() => {
+    setVariants([]); setVariantId("");
+    importRun.current++;
+    pendingAsset.current = null;
+    importBusy.current = false;
+    setImporting(false); setWaitingForAsset(false); setImportFiles([]);
+  }, [model.id]);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      importRun.current++;
+      pendingAsset.current = null;
+      controller.cancel();
+    };
+  }, [controller]);
+  useEffect(() => { controller.observe(model); }, [controller, model]);
+  useEffect(() => {
+    const waiting = pendingAsset.current;
+    if (!waiting) return;
+    const acceptedAsset = assets.find(asset => asset.id === waiting.asset.id);
+    if (!acceptedAsset) return;
+    pendingAsset.current = null;
+    importBusy.current = false;
+    setImporting(false);
+    setWaitingForAsset(false);
+
+    setImportFiles([]);
+    if (!(Object.keys(waiting.asset) as (keyof GraphicAsset)[]).every(key => acceptedAsset[key] === waiting.asset[key])) {
+      setError("The host supplied a different image asset. Inspect it before using it.");
+      return;
+    }
+    setNewAssetId(acceptedAsset.id);
+    const current = currentModel.current;
+    const target = current.layers.find(layer => layer.id === waiting.targetId);
+    if (current.id !== waiting.baseId || current.revision !== waiting.baseRevision) {
+      setFeedback(`Image asset ${acceptedAsset.name} accepted. The composition changed before replacement; choose the asset to use it.`);
+      return;
+    }
+    if (target?.kind === "image" && !target.locked) {
+      commit({ ...current, layers: current.layers.map(layer => layer.id === target.id ? { ...target, assetId: acceptedAsset.id } : layer) },
+        { reason: "image-import", layerId: target.id, source: waiting.input.source, event: waiting.input.event, message: `Imported ${acceptedAsset.name} into ${target.name}.` }, assets);
+    } else setFeedback(`Image asset ${acceptedAsset.name} accepted. Choose Image and add a layer to use it.`);
+  }, [assets, model]);
 
   function choose(id: string) {
-    if (!model.layers.some((layer) => layer.id === id)) return;
+    if (controller.state().pending || importBusy.current || !model.layers.some((layer) => layer.id === id)) return;
     setLocalSelection(id);
     onSelectionChange?.(id);
     setError("");
   }
 
-  function commit(next: GraphicDocument, details: GraphicChangeDetails, availableAssets: readonly GraphicAsset[] = assets) {
+  function commit(next: GraphicDocument, details: GraphicChangeInput, availableAssets: readonly GraphicAsset[] = assets) {
+    controller.observe(currentModel.current);
+    if (importBusy.current) { setError("Wait for the image import or cancel it before editing."); return; }
     const current = currentModel.current;
     const problems = validateGraphicDocument(next, availableAssets);
     if (next.id !== current.id) problems.push("Keep the current composition ID.");
@@ -162,28 +239,19 @@ export function LiquidGraphicStudio({ model, assets, onModelChange, onAssetsChan
         if (JSON.stringify(next.layers.find((item) => item.id === layer.id)) !== JSON.stringify(layer)) problems.push(`Unlock ${layer.name} before editing it.`);
       }
     }
-    if (problems.length) { setError(problems[0]); return false; }
-    const updated = { ...next, revision: current.revision + 1 };
-    if (details.reason !== "undo" && details.reason !== "redo") {
-      setUndo((items) => [...items.slice(-39), structuredClone(current)]);
-      setRedo([]);
-    }
-    currentModel.current = updated;
-    onModelChange(updated, details);
-    setError("");
-    setFeedback(`${details.reason === "properties" ? "Applied layer changes" : "Updated composition"}. Revision ${updated.revision}.`);
-    return true;
+    if (problems.length) { setError(problems[0]); return; }
+    controller.request(next, details, onModelChange);
   }
 
-  function updateLayer(layer: GraphicLayer, reason: GraphicChangeDetails["reason"]) {
-    return commit({ ...currentModel.current, layers: currentModel.current.layers.map((item) => item.id === layer.id ? layer : item) }, { reason, layerId: layer.id });
+  function updateLayer(layer: GraphicLayer, reason: GraphicChangeDetails["reason"], input: GraphicInteraction) {
+    return commit({ ...currentModel.current, layers: currentModel.current.layers.map((item) => item.id === layer.id ? layer : item) }, { reason, layerId: layer.id, source: input.source, event: input.event });
   }
 
-  function applyProperties() {
+  function applyProperties(input: GraphicInteraction) {
     if (!selected) return;
     const base = { ...selected, name: draft.name.trim(), x: number(draft.x), y: number(draft.y), width: number(draft.width), height: number(draft.height), rotation: number(draft.rotation), opacity: number(draft.opacity) / 100 };
     const updated: GraphicLayer = selected.kind === "image" ? { ...base, kind: "image", assetId: draft.assetId, fit: draft.fit, radius: number(draft.radius) } : selected.kind === "text" ? { ...base, kind: "text", text: draft.text, fontSize: number(draft.fontSize), fontFamily: draft.fontFamily, fontWeight: draft.fontWeight, fill: draft.fill, align: draft.align } : { ...base, kind: "shape", shape: draft.shape, fill: draft.fill, radius: number(draft.radius) };
-    updateLayer(updated, "properties");
+    updateLayer(updated, "properties", input);
   }
 
   function patchDraft<K extends keyof LayerDraft>(key: K, value: LayerDraft[K]) { setDraft((current) => ({ ...current, [key]: value })); }
@@ -201,25 +269,25 @@ export function LiquidGraphicStudio({ model, assets, onModelChange, onAssetsChan
     return `${prefix}-${count}`;
   }
 
-  function addLayer() {
+  function addLayer(input: GraphicInteraction) {
     const base = { id: freshId(newKind), name: uniqueName(newKind === "text" ? "New text" : newKind === "image" ? "New image" : "New shape"), x: model.width * 0.15, y: model.height * 0.2, width: model.width * 0.55, height: model.height * 0.3, rotation: 0, opacity: 1, visible: true, locked: false };
     const layer: GraphicLayer = newKind === "text" ? { ...base, kind: "text", text: "Make something worth seeing.", fontSize: 56, fontFamily: "sans-serif", fontWeight: 600, fill: "#163348", align: "left" } : newKind === "image" ? { ...base, kind: "image", assetId: newAssetId, fit: "cover", radius: 24 } : { ...base, kind: "shape", shape: "rectangle", fill: "#d9f0e8", radius: 24 };
-    if (commit({ ...model, layers: [...model.layers, layer] }, { reason: "add", layerId: layer.id })) { setLocalSelection(layer.id); onSelectionChange?.(layer.id); }
+    commit({ ...model, layers: [...model.layers, layer] }, { reason: "add", layerId: layer.id, selectedId: layer.id, source: input.source, event: input.event });
   }
 
-  function duplicateLayer() {
+  function duplicateLayer(input: GraphicInteraction) {
     if (!selected) return;
     const layer = { ...structuredClone(selected), id: freshId(selected.kind), name: uniqueName(`${selected.name} copy`), x: selected.x + 24, y: selected.y + 24, locked: false };
-    if (commit({ ...model, layers: [...model.layers, layer] }, { reason: "duplicate", layerId: selected.id })) { setLocalSelection(layer.id); onSelectionChange?.(layer.id); }
+    commit({ ...model, layers: [...model.layers, layer] }, { reason: "duplicate", layerId: selected.id, selectedId: layer.id, source: input.source, event: input.event });
   }
 
-  function deleteLayer() {
+  function deleteLayer(input: GraphicInteraction) {
     if (!selected || model.layers.length <= 1) return;
     const remaining = model.layers.filter((layer) => layer.id !== selected.id);
-    if (commit({ ...model, layers: remaining }, { reason: "delete", layerId: selected.id })) choose(remaining.at(-1)!.id);
+    commit({ ...model, layers: remaining }, { reason: "delete", layerId: selected.id, selectedId: remaining.at(-1)!.id, source: input.source, event: input.event });
   }
 
-  function reorder(offset: number) {
+  function reorder(offset: number, input: GraphicInteraction) {
     if (!selected) return;
     const index = model.layers.findIndex((layer) => layer.id === selected.id);
     const destination = clamp(index + offset, 0, model.layers.length - 1);
@@ -227,11 +295,11 @@ export function LiquidGraphicStudio({ model, assets, onModelChange, onAssetsChan
     const next = [...model.layers];
     next.splice(index, 1);
     next.splice(destination, 0, selected);
-    commit({ ...model, layers: next }, { reason: "reorder", layerId: selected.id });
+    commit({ ...model, layers: next }, { reason: "reorder", layerId: selected.id, source: input.source, event: input.event });
   }
 
   function startDrag(event: PointerEvent<HTMLButtonElement>, layer: GraphicLayer, kind: "move" | "resize") {
-    if (event.button !== 0 || layer.locked) return;
+    if (event.button !== 0 || layer.locked || controller.state().pending || importBusy.current) return;
     const point = viewport.current?.toCanvas(event.clientX, event.clientY);
     if (!point) return;
     event.stopPropagation();
@@ -263,7 +331,7 @@ export function LiquidGraphicStudio({ model, assets, onModelChange, onAssetsChan
     setPreview(null);
     if (!cancel && active.next) {
       if (active.revision !== currentModel.current.revision) setError("The composition changed during this gesture. Try the move again.");
-      else updateLayer(active.next, active.kind);
+      else updateLayer(active.next, active.kind, { source: sourceOf(event.nativeEvent), event: event.nativeEvent });
     }
   }
 
@@ -283,30 +351,59 @@ export function LiquidGraphicStudio({ model, assets, onModelChange, onAssetsChan
     } catch (issue) { setError(issue instanceof Error ? issue.message : "Could not export this composition."); }
   }
 
-  async function importImage(file: File) {
-    if (!onAssetsChange || importBusy.current) return;
+  function cancelImport() {
+    importRun.current++;
+    pendingAsset.current = null;
+    importBusy.current = false;
+    setImporting(false);
+    setWaitingForAsset(false);
+
+    setImportFiles([]);
+    setFeedback("Stopped waiting for the image import. Asset updates already requested from the host may still arrive.");
+    setError("");
+  }
+
+  async function importImage(file: File, input: GraphicInteraction) {
+    if (!onAssetsChange || importBusy.current || controller.state().pending) return;
     if (assets.length >= 24) { setError("This session can contain up to 24 image assets."); return; }
     if (!["image/png", "image/jpeg", "image/webp"].includes(file.type) || file.size > 5_000_000 || file.size < 1) { setError("Choose a PNG, JPEG or WebP image up to 5 MB."); return; }
+    const run = ++importRun.current;
+    const base = currentModel.current;
+    const targetId = selected?.id;
+    let submittedAsset: GraphicAsset | undefined;
     importBusy.current = true;
     setImporting(true);
+
+    setError("");
+    setFeedback("Reading the image.");
     try {
       const bitmap = await createImageBitmap(file);
       const { width, height } = bitmap; bitmap.close();
+      if (run !== importRun.current) return;
       if (width > 8192 || height > 8192 || width < 1 || height < 1) throw new Error("Choose an image no larger than 8192 pixels in either dimension.");
       const src = await new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = () => reject(new Error("Could not read this image.")); reader.readAsDataURL(file); });
+      if (run !== importRun.current) return;
       const id = `import-${crypto.randomUUID()}`;
       const asset: GraphicAsset = { id, name: file.name.slice(0, 100), src, alt: `Imported image: ${file.name.slice(0, 100)}`, width, height, provenance: "Imported by the user in this session." };
-      const nextAssets = [...assets, asset];
-      onAssetsChange(nextAssets);
-      setNewAssetId(id);
-      const target = currentModel.current.layers.find((layer) => layer.id === selected?.id);
-      if (target?.kind === "image" && !target.locked) {
-        commit({ ...currentModel.current, layers: currentModel.current.layers.map((layer) => layer.id === target.id ? { ...target, assetId: id } : layer) }, { reason: "image-import", layerId: target.id }, nextAssets);
-        setFeedback(`Imported ${asset.name} into ${target.name}.`);
-      } else setFeedback(`Imported ${asset.name}. Choose Image and add a layer to use it.`);
-      setError("");
-    } catch (issue) { setError(issue instanceof Error ? issue.message : "Could not import this image."); }
-    finally { importBusy.current = false; setImporting(false); setImportFiles([]); }
+      submittedAsset = asset;
+      pendingAsset.current = { asset, targetId, baseId: base.id, baseRevision: base.revision, input };
+      setWaitingForAsset(true);
+      setFeedback(`Waiting for the host to accept image asset ${asset.name}.`);
+      if (currentAssets.current.length >= 24) throw new Error("This session can contain up to 24 image assets.");
+      await onAssetsChange([...currentAssets.current, asset]);
+    } catch (issue) {
+      if (run !== importRun.current) return;
+      pendingAsset.current = null;
+      importBusy.current = false;
+      setImporting(false);
+      setWaitingForAsset(false);
+
+      setImportFiles([]);
+      const message = issue instanceof Error ? issue.message : "Could not import this image.";
+      const submittedId = submittedAsset?.id;
+      const alreadyAccepted = submittedId && currentAssets.current.some(asset => asset.id === submittedId);
+      setError(alreadyAccepted ? `The image asset was already accepted; its host callback later failed: ${message} Host data was not rolled back.` : message);
+    }
   }
 
   async function copyAgentContext(operation: "compose" | "edit-image") {
@@ -329,24 +426,24 @@ export function LiquidGraphicStudio({ model, assets, onModelChange, onAssetsChan
   if (errors.length || !selected) return <section className={`qg-graphic-studio ${className}`} data-validation="unvalidated"><ValidationBadge /><p role="alert">{errors[0] ?? "Add a layer to this composition."}</p></section>;
   const selectedIndex = model.layers.findIndex((layer) => layer.id === selected.id);
   const selection = preview?.id === selected.id ? preview : selected;
-  const canEdit = !selected.locked;
+  const canEdit = !selected.locked && !mutationBusy;
   const assetOptions = assets.map((asset) => ({ value: asset.id, label: asset.name }));
   const handleSize = 32 / canvasZoom;
   const radians = selection.rotation * Math.PI / 180;
   const handleX = selection.x + selection.width / 2 + (selection.width * Math.cos(radians) - selection.height * Math.sin(radians)) / 2;
   const handleY = selection.y + selection.height / 2 + (selection.width * Math.sin(radians) + selection.height * Math.cos(radians)) / 2;
 
-  return <section className={`qg-graphic-studio ${className}`} data-graphic-studio={model.id} data-graphic-revision={model.revision} data-validation="unvalidated" aria-label="Graphic composition studio">
+  return <section className={`qg-graphic-studio ${className}`} data-graphic-studio={model.id} data-graphic-revision={model.revision} data-graphic-change-status={pending ? "pending" : "ready"} data-graphic-pending-revision={pending?.proposal.revision} data-validation="unvalidated" aria-label="Graphic composition studio">
     <header className="qgs-header">
       <div className="qgs-heading"><h2>{model.name}</h2><ValidationBadge /></div>
       <div className="qgs-history">
-        <Button aria-label="Undo graphic change" disabled={!undo.length} onClick={() => {
+        <Button aria-label="Undo graphic change" disabled={!undo.length || mutationBusy} onClick={(event, details) => {
           const previous = undo.at(-1); if (!previous) return;
-          if (commit(previous, { reason: "undo" })) { setUndo((items) => items.slice(0, -1)); setRedo((items) => [...items.slice(-39), structuredClone(model)]); }
+          commit(previous, { reason: "undo", source: details.source, event: event.nativeEvent });
         }}>Undo</Button>
-        <Button aria-label="Redo graphic change" disabled={!redo.length} onClick={() => {
+        <Button aria-label="Redo graphic change" disabled={!redo.length || mutationBusy} onClick={(event, details) => {
           const next = redo.at(-1); if (!next) return;
-          if (commit(next, { reason: "redo" })) { setRedo((items) => items.slice(0, -1)); setUndo((items) => [...items.slice(-39), structuredClone(model)]); }
+          commit(next, { reason: "redo", source: details.source, event: event.nativeEvent });
         }}>Redo</Button>
         <Button onClick={() => copy(model, "Current graphic JSON copied.")}>Copy graphic JSON</Button>
         <Button onClick={exportSvg}>Download graphic SVG</Button>
@@ -357,50 +454,50 @@ export function LiquidGraphicStudio({ model, assets, onModelChange, onAssetsChan
         <LiquidViewport ref={viewport} label="Graphic canvas" width={model.width} height={model.height} selectionRect={graphicLayerBounds(selection)} resetKey={`${model.id}-${model.width}-${model.height}`} className="qgs-viewport" onViewportChange={(value) => setCanvasZoom(value.zoom)}>
           <div className="qgs-world" style={{ width: model.width, height: model.height, "--qgs-inverse-zoom": 1 / canvasZoom } as CSSProperties} data-graphic-world="">
             <GraphicArtwork model={visibleModel} assets={assets} namespace={namespace} />
-            {visibleModel.layers.filter((layer) => layer.visible).map((layer) => <Button key={layer.id} className="qgs-layer-hit" data-viewport-interactive="" data-liquid-glass="off" data-graphic-layer={layer.id} data-selected={layer.id === selected.id ? "" : undefined} data-locked={layer.locked ? "" : undefined} aria-label={`Select graphic layer ${layer.name}`} aria-pressed={layer.id === selected.id} tabIndex={layer.id === selected.id ? 0 : -1} onClick={() => choose(layer.id)}
+            {visibleModel.layers.filter((layer) => layer.visible).map((layer) => <Button key={layer.id} className="qgs-layer-hit" disabled={mutationBusy} focusableWhenDisabled data-viewport-interactive="" data-liquid-glass="off" data-graphic-layer={layer.id} data-selected={layer.id === selected.id ? "" : undefined} data-locked={layer.locked ? "" : undefined} aria-label={`Select graphic layer ${layer.name}`} aria-pressed={layer.id === selected.id} tabIndex={layer.id === selected.id ? 0 : -1} onClick={() => choose(layer.id)}
               style={{ left: layer.x, top: layer.y, width: layer.width, height: layer.height, transform: `rotate(${layer.rotation}deg)` } as CSSProperties}
               onPointerDown={(event) => startDrag(event, layer, "move")} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={(event) => endDrag(event, true)} onLostPointerCapture={(event) => endDrag(event, true)}
               onKeyDown={(event) => {
                 const movement = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[event.key];
-                if (!movement || layer.locked) return;
+                if (!movement || layer.locked || mutationBusy) return;
                 event.preventDefault(); event.stopPropagation();
                 const step = event.shiftKey ? 10 : 1;
-                updateLayer({ ...layer, x: layer.x + movement[0] * step, y: layer.y + movement[1] * step }, "move");
+                updateLayer({ ...layer, x: layer.x + movement[0] * step, y: layer.y + movement[1] * step }, "move", { source: sourceOf(event.nativeEvent), event: event.nativeEvent });
               }}>
               {layer.id === selected.id && <span className="qgs-layer-tag" aria-hidden="true">{layer.name}{layer.locked ? " · locked" : ""}</span>}
             </Button>)}
-            {selected.visible && !selected.locked && <Button className="qgs-resize-handle" data-viewport-interactive="" data-liquid-glass="off" aria-label={`Resize graphic layer ${selected.name}`} style={{ left: handleX - handleSize / 2, top: handleY - handleSize / 2, width: handleSize, height: handleSize, fontSize: 17 / canvasZoom }}
+            {selected.visible && !selected.locked && <Button className="qgs-resize-handle" disabled={mutationBusy} focusableWhenDisabled data-viewport-interactive="" data-liquid-glass="off" aria-label={`Resize graphic layer ${selected.name}`} style={{ left: handleX - handleSize / 2, top: handleY - handleSize / 2, width: handleSize, height: handleSize, fontSize: 17 / canvasZoom }}
               onPointerDown={(event) => startDrag(event, selected, "resize")} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={(event) => endDrag(event, true)} onLostPointerCapture={(event) => endDrag(event, true)}
               onKeyDown={(event) => {
                 const movement = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[event.key];
-                if (!movement) return; event.preventDefault(); event.stopPropagation();
+                if (!movement || mutationBusy) return; event.preventDefault(); event.stopPropagation();
                 const step = event.shiftKey ? 10 : 1;
-                updateLayer(resizedLayer(selected, clamp(selected.width + movement[0] * step, 1, 8192), clamp(selected.height + movement[1] * step, 1, 8192)), "resize");
+                updateLayer(resizedLayer(selected, clamp(selected.width + movement[0] * step, 1, 8192), clamp(selected.height + movement[1] * step, 1, 8192)), "resize", { source: sourceOf(event.nativeEvent), event: event.nativeEvent });
               }}><span aria-hidden="true">↘</span></Button>}
           </div>
         </LiquidViewport>
         <div className="qgs-artboard-controls">
-          <Choice label="Graphic format" value={format} options={[...formats, { value: "custom", label: `${model.width} × ${model.height} · custom` }]} onChange={(value) => {
+          <Choice label="Graphic format" disabled={mutationBusy} value={format} options={[...formats, { value: "custom", label: `${model.width} × ${model.height} · custom` }]} onChange={(value, input) => {
             const preset = formats.find((item) => item.value === value); if (!preset) return;
             const sx = preset.width / model.width, sy = preset.height / model.height;
-            commit({ ...model, width: preset.width, height: preset.height, layers: model.layers.map((layer) => ({ ...layer, x: rounded(layer.x * sx), y: rounded(layer.y * sy), width: rounded(layer.width * sx), height: rounded(layer.height * sy), ...(layer.kind === "text" ? { fontSize: rounded(clamp(layer.fontSize * Math.min(sx, sy), 8, 240)) } : {}) })) }, { reason: "artboard" });
+            commit({ ...model, width: preset.width, height: preset.height, layers: model.layers.map((layer) => ({ ...layer, x: rounded(layer.x * sx), y: rounded(layer.y * sy), width: rounded(layer.width * sx), height: rounded(layer.height * sy), ...(layer.kind === "text" ? { fontSize: rounded(clamp(layer.fontSize * Math.min(sx, sy), 8, 240)) } : {}) })) }, { reason: "artboard", source: input.source, event: input.event });
           }} />
-          <form className="qgs-background" onSubmit={(event) => { event.preventDefault(); commit({ ...model, background }, { reason: "artboard" }); }} noValidate>
-            <Field><FieldLabel>Graphic background</FieldLabel><Input value={background} onValueChange={setBackground} maxLength={7} spellCheck={false} /></Field><Button type="submit">Apply background</Button>
+          <form className="qgs-background" onSubmit={(event) => { event.preventDefault(); const input = backgroundSubmit.current ?? { source: sourceOf(event.nativeEvent), event: event.nativeEvent }; backgroundSubmit.current = null; commit({ ...model, background }, { reason: "artboard", source: input.source, event: input.event }); }} noValidate>
+            <Field><FieldLabel>Graphic background</FieldLabel><Input value={background} onValueChange={setBackground} maxLength={7} spellCheck={false} /></Field><Button type="submit" disabled={mutationBusy} onClick={(event, details) => { backgroundSubmit.current = { source: details.source, event: event.nativeEvent }; }}>Apply background</Button>
           </form>
         </div>
         <p className="qgs-help">Select and drag a layer to move it. Arrow keys move the focused layer; Shift moves ten pixels. The same geometry is editable in the layer controls.</p>
       </div>
       <aside className="qgs-inspector" aria-label="Graphic layer controls" data-liquid-glass="" data-liquid-kind="panel">
         <div className="qgs-inspector-heading"><h3>Layers</h3><span>{model.layers.length} / 64</span></div>
-        <Listbox aria-label="Graphic layers" className="qgs-layer-list" value={selected.id} items={[...model.layers].reverse().map((layer) => ({ value: layer.id, label: layer.name }))} onValueChange={(value) => { if (typeof value === "string") choose(value); }}>
+        <Listbox disabled={mutationBusy} aria-label="Graphic layers" className="qgs-layer-list" value={selected.id} items={[...model.layers].reverse().map((layer) => ({ value: layer.id, label: layer.name }))} onValueChange={(value) => { if (typeof value === "string") choose(value); }}>
           {[...model.layers].reverse().map((layer) => <ListboxItem key={layer.id} value={layer.id} data-graphic-layer-option={layer.id}><span>{layer.name}</span><small aria-hidden="true">{layer.visible ? layer.kind : "hidden"}{layer.locked ? " · locked" : ""}</small><ListboxItemIndicator>✓</ListboxItemIndicator></ListboxItem>)}
         </Listbox>
         <div className="qgs-layer-switches">
-          <Field><FieldLabel>Layer visible</FieldLabel><Switch checked={selected.visible} onCheckedChange={(visible) => updateLayer({ ...selected, visible }, "visibility")}><SwitchThumb /></Switch></Field>
-          <Field><FieldLabel>Layer locked</FieldLabel><Switch checked={selected.locked} onCheckedChange={(locked) => updateLayer({ ...selected, locked }, "lock")}><SwitchThumb /></Switch></Field>
+          <Field><FieldLabel>Layer visible</FieldLabel><Switch disabled={mutationBusy} checked={selected.visible} onCheckedChange={(visible, details) => updateLayer({ ...selected, visible }, "visibility", details)}><SwitchThumb /></Switch></Field>
+          <Field><FieldLabel>Layer locked</FieldLabel><Switch disabled={mutationBusy} checked={selected.locked} onCheckedChange={(locked, details) => updateLayer({ ...selected, locked }, "lock", details)}><SwitchThumb /></Switch></Field>
         </div>
-        <form className="qgs-properties" onSubmit={(event) => { event.preventDefault(); applyProperties(); }} noValidate data-selected-graphic-layer={selected.id}>
+        <form className="qgs-properties" onSubmit={(event) => { event.preventDefault(); const input = propertySubmit.current ?? { source: sourceOf(event.nativeEvent), event: event.nativeEvent }; propertySubmit.current = null; applyProperties(input); }} noValidate data-selected-graphic-layer={selected.id}>
           <Field><FieldLabel>Layer name</FieldLabel><Input value={draft.name} onValueChange={(value) => patchDraft("name", value)} maxLength={60} disabled={!canEdit} /></Field>
           <div className="qgs-number-grid">
             <Numeric label="Layer X" value={draft.x} min={-10000} max={10000} onChange={(value) => patchDraft("x", value)} disabled={!canEdit} />
@@ -420,23 +517,23 @@ export function LiquidGraphicStudio({ model, assets, onModelChange, onAssetsChan
           {selected.kind === "shape" && <Choice label="Shape geometry" value={draft.shape} options={[{ value: "rectangle", label: "Rectangle" }, { value: "ellipse", label: "Ellipse" }]} onChange={(value) => patchDraft("shape", value as LayerDraft["shape"])} disabled={!canEdit} />}
           {selected.kind !== "image" && <Field><FieldLabel>Layer colour</FieldLabel><Input value={draft.fill} onValueChange={(value) => patchDraft("fill", value)} maxLength={7} disabled={!canEdit} spellCheck={false} /></Field>}
           {selected.kind !== "text" && <Numeric label="Corner radius" value={draft.radius} min={0} max={512} onChange={(value) => patchDraft("radius", value)} disabled={!canEdit} />}
-          <Button type="submit" data-variant="solid" disabled={!canEdit}>Apply layer changes</Button>
+          <Button type="submit" data-variant="solid" disabled={!canEdit} onClick={(event, details) => { propertySubmit.current = { source: details.source, event: event.nativeEvent }; }}>Apply layer changes</Button>
         </form>
         <div className="qgs-layer-actions">
-          <Button disabled={!canEdit || selectedIndex === model.layers.length - 1} onClick={() => reorder(1)}>Bring layer forward</Button>
-          <Button disabled={!canEdit || selectedIndex === 0} onClick={() => reorder(-1)}>Send layer backward</Button>
-          <Button disabled={model.layers.length >= 64} onClick={duplicateLayer}>Duplicate layer</Button>
-          <Button disabled={!canEdit || model.layers.length <= 1} onClick={deleteLayer}>Delete layer</Button>
+          <Button disabled={!canEdit || selectedIndex === model.layers.length - 1} onClick={(event, details) => reorder(1, { source: details.source, event: event.nativeEvent })}>Bring layer forward</Button>
+          <Button disabled={!canEdit || selectedIndex === 0} onClick={(event, details) => reorder(-1, { source: details.source, event: event.nativeEvent })}>Send layer backward</Button>
+          <Button disabled={model.layers.length >= 64 || mutationBusy} onClick={(event, details) => duplicateLayer({ source: details.source, event: event.nativeEvent })}>Duplicate layer</Button>
+          <Button disabled={!canEdit || model.layers.length <= 1} onClick={(event, details) => deleteLayer({ source: details.source, event: event.nativeEvent })}>Delete layer</Button>
         </div>
       </aside>
     </div>
-    <div className="qgs-feedback" aria-live="polite"><p role={error ? "alert" : "status"} data-graphic-feedback="" data-error={error ? "" : undefined}>{error || feedback || `${selected.name} selected · revision ${model.revision}`}</p></div>
+    <div className="qgs-feedback" aria-live="polite"><p role={error ? "alert" : "status"} data-graphic-feedback="" data-error={error ? "" : undefined}>{error || feedback || `${selected.name} selected · revision ${model.revision}`}</p>{pending && <Button onClick={() => controller.cancel()}>Cancel pending graphic change</Button>}{importing && <Button onClick={cancelImport}>Cancel image import</Button>}</div>
     <div className="qgs-workflows">
       <Collapsible className="qgs-workflow" aria-label="Add graphic content"><CollapsibleTrigger>Add content</CollapsibleTrigger><CollapsiblePanel>
         <Choice label="New layer type" value={newKind} options={[{ value: "text", label: "Text" }, { value: "image", label: "Image" }, { value: "shape", label: "Shape" }]} onChange={(value) => setNewKind(value as GraphicLayerKind)} />
         {newKind === "image" && <Choice label="New image asset" value={newAssetId} options={assetOptions} onChange={setNewAssetId} />}
-        <Button disabled={model.layers.length >= 64 || (newKind === "image" && !assets.length)} onClick={addLayer}>Add graphic layer</Button>
-        {onAssetsChange && <FileInput aria-label="Import graphic image" value={importFiles} accept={["image/png", "image/jpeg", "image/webp"]} maxSize={5_000_000} disabled={importing || assets.length >= 24} onValueChange={(files) => { setImportFiles(files); if (files[0]) void importImage(files[0]); }} onReject={() => setError("Choose a PNG, JPEG or WebP image up to 5 MB.")}><FileInputTrigger>{importing ? "Reading image…" : "Import image"}</FileInputTrigger></FileInput>}
+        <Button disabled={mutationBusy || model.layers.length >= 64 || (newKind === "image" && !assets.length)} onClick={(event, details) => addLayer({ source: details.source, event: event.nativeEvent })}>Add graphic layer</Button>
+        {onAssetsChange && <FileInput aria-label="Import graphic image" value={importFiles} accept={["image/png", "image/jpeg", "image/webp"]} maxSize={5_000_000} disabled={mutationBusy || assets.length >= 24} onValueChange={(files, details) => { setImportFiles(files); if (files[0]) void importImage(files[0], { source: details.source, event: details.event }); }} onReject={() => setError("Choose a PNG, JPEG or WebP image up to 5 MB.")}><FileInputTrigger>{waitingForAsset ? "Waiting for image…" : importing ? "Reading image…" : "Import image"}</FileInputTrigger></FileInput>}
         <p>Imported images stay in this session. Importing replaces the selected unlocked image layer.</p>
       </CollapsiblePanel></Collapsible>
       <Collapsible className="qgs-workflow" aria-label="Graphic variants"><CollapsibleTrigger>Save a direction</CollapsibleTrigger><CollapsiblePanel>
@@ -448,7 +545,7 @@ export function LiquidGraphicStudio({ model, assets, onModelChange, onAssetsChan
           const variant = { id: `variant-${variants.length + 1}`, name, document: structuredClone(model) };
           setVariants((items) => [...items, variant]); setVariantId(variant.id); setVariantName(`Direction ${variants.length + 2}`); setFeedback(`Saved ${name} in this session.`); setError("");
         }}>Save graphic variant</Button>
-        {variants.length > 0 && <><Choice label="Saved graphic variant" value={variantId} options={variants.map((item) => ({ value: item.id, label: item.name }))} onChange={setVariantId} /><Button onClick={() => { const variant = variants.find((item) => item.id === variantId); if (variant) commit(structuredClone(variant.document), { reason: "variant" }); }}>Restore graphic variant</Button></>}
+        {variants.length > 0 && <><Choice label="Saved graphic variant" value={variantId} options={variants.map((item) => ({ value: item.id, label: item.name }))} onChange={setVariantId} /><Button disabled={mutationBusy} onClick={(event, details) => { const variant = variants.find((item) => item.id === variantId); if (variant) commit(structuredClone(variant.document), { reason: "variant", source: details.source, event: event.nativeEvent }); }}>Restore graphic variant</Button></>}
       </CollapsiblePanel></Collapsible>
       <Collapsible className="qgs-workflow" aria-label="Graphic agent context"><CollapsibleTrigger>Work with an image agent</CollapsibleTrigger><CollapsiblePanel>
         <Field><FieldLabel>Graphic edit brief</FieldLabel><Textarea value={brief} rows={3} maxLength={2000} onValueChange={setBrief} /><FieldDescription>Copy the brief with the selected layer and current composition. Import the returned image to continue editing.</FieldDescription></Field>
@@ -458,7 +555,7 @@ export function LiquidGraphicStudio({ model, assets, onModelChange, onAssetsChan
       </CollapsiblePanel></Collapsible>
     </div>
     <Collapsible className="qgs-structured" aria-label="Structured graphic edits"><CollapsibleTrigger>Structured edits</CollapsibleTrigger><CollapsiblePanel>
-      <div className="qgs-structured-actions"><Button onClick={() => { setJsonDraft(JSON.stringify(model, null, 2)); setFeedback(`Loaded revision ${model.revision} into the JSON draft.`); setError(""); }}>Load current graphic JSON</Button><Button onClick={() => {
+      <div className="qgs-structured-actions"><Button onClick={() => { setJsonDraft(JSON.stringify(model, null, 2)); setFeedback(`Loaded revision ${model.revision} into the JSON draft.`); setError(""); }}>Load current graphic JSON</Button><Button disabled={mutationBusy} onClick={(event, details) => {
         try {
           if (jsonDraft.length > 1_000_000 || new TextEncoder().encode(jsonDraft).length > 1_000_000) { setError("Limit graphic JSON to 1 MB."); return; }
           const candidate: unknown = JSON.parse(jsonDraft);
@@ -466,7 +563,7 @@ export function LiquidGraphicStudio({ model, assets, onModelChange, onAssetsChan
           if (problems.length) { setError(problems[0]); return; }
           const next = candidate as GraphicDocument;
           if (next.revision !== model.revision) { setError(`This draft is revision ${next.revision}; the composition is revision ${model.revision}. Load the current graphic JSON before editing.`); return; }
-          if (commit(next, { reason: "json" })) setFeedback("Applied the structured edit through shared validation. Undo restores the previous composition.");
+          commit(next, { reason: "json", source: details.source, event: event.nativeEvent, message: "Applied the structured edit through shared validation. Undo restores the previous composition." });
         } catch { setError("Enter valid composition JSON."); }
       }}>Apply graphic JSON</Button></div>
       <Field><FieldLabel>Graphic JSON draft</FieldLabel><Textarea value={jsonDraft} onValueChange={setJsonDraft} rows={12} maxLength={1_000_000} spellCheck={false} /><FieldDescription>Stable layer IDs and a matching revision keep edits attached to the intended composition. Locked layers must be unlocked first. Drafts can contain up to 1 MB of JSON.</FieldDescription></Field>

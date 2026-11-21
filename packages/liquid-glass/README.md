@@ -4,6 +4,8 @@
 
 The workspace pins `@ui-sdk/core` and `@ui-sdk/react` to **0.1.0-beta.13**. Import the SDK's components directly. Existing package component re-exports remain compatibility aliases.
 
+**Agent engineering comes first.** Choose components by their task, typed inputs, state and observable result. Start with [docs/llms.txt](docs/llms.txt), the [agent engineering guide](docs/agent-engineering.md) and [agent-contracts.json](agent-contracts.json), validated against [its schema](agent-contracts.schema.json). The contracts distinguish primitives with their own SDK actions, compositions of SDK controls, passive presentation and pure utilities. React is the supported rendering adapter for this kit.
+
 **Review status:** custom Quantive components, glass styling, icons and compositions are **Unvalidated**: no human UI/UX team has reviewed or approved them. **SDK foundation** identifies upstream behaviour provenance; it is not an approval of this adaptation. The [custom component manifest](custom-component-manifest.json) records this distinction. Automated checks do not promote review status.
 
 ## Interactions and page sections
@@ -79,6 +81,8 @@ import "@quantitative-hci/liquid-glass/graphics.css";
 ```
 
 `LiquidGraphicStudio` owns no remote service: the host supplies the document, assets and change callbacks. It supports image/text/shape layers, transform fields and dragging, ordering, visibility/locking, image fit, upload, undo/redo, saved directions, revision-checked JSON and self-contained SVG. Its optional `onImageRequest` integration receives an inspectable brief, selected-layer context and the document. The demo prepares that handoff; it does not call an image model or imply a generated image has returned. See the [graphics API](src/graphics/README.md) for the exact callback and context contract.
+
+The graphics `onModelChange` callback receives the SDK interaction source, event and cancellable details. The editor waits for the controlled host to return the proposed document before advancing history, selection or success feedback. Pending changes can be cancelled through a named SDK control; asynchronous hosts should observe `details.signal`. Asset imports wait for the separate asset callback and supplied asset props before proposing a model replacement. See the graphics guide for rejection, cancellation and host responsibilities.
 
 ## Image components
 
@@ -230,19 +234,23 @@ Use one provider per document. Avoid putting it under a transformed or clipped a
 
 ## Agent operation
 
-Initialize the actual SDK bridge once in browser code:
+Initialize the actual SDK bridge once in browser code. This example follows the demo policy of refusing marked actions:
 
 ```ts
-import { createAgent, registerTools } from "@ui-sdk/react/agent";
+import { createAgent, registerTools, type AgentAction } from "@ui-sdk/react/agent";
 
-const allow = (step) => !step.confirm;
+const allow = (step: AgentAction) => !step.confirm;
 export const agent = createAgent({ allow });
 const unregister = registerTools(agent, { allow });
 
 if (import.meta.hot) import.meta.hot.dispose(unregister);
 ```
 
-The agent uses the SDK's `snapshot`, `query` and `act` APIs against the same controls and callbacks a person uses. Give every control a meaningful accessible name. Preserve confirmation, secret and hidden annotations and application validation. Importing a shader or registering browser tools alone does not prove an agent completed a task; verify resulting state.
+The agent uses the SDK's `snapshot`, `query`, `act` and `subscribe` APIs against the same controls and callbacks a person uses. `registerTools` is optional and does nothing when WebMCP is unavailable; dispose its registration when the application lifecycle ends. The existing `/agent` package entry is an upstream compatibility re-export, not another bridge. The SDK bridge itself has no `destroy` method.
+
+Give every control a meaningful accessible name. Standalone native controls do not become registered SDK controls merely by having labels or `data-agent-*` attributes. Keep shared validation in the change path, since imperative agent actions need not run keyboard or pointer listeners. Preserve confirmation, secret and hidden marks. Verify actual values or document revisions: a successful `act` call can still contain a cancelled or host-pending change. See the [operating and verification recipe](docs/agent-engineering.md#operate-and-verify) and [existing browser contract](../../tests/glass_agent_contract.py).
+
+Run `npm run glass:agent-check` from the repository root to check export inventory, contract structure and declared references. Run `npm run glass:verify` and the relevant browser contracts for implementation changes. A static contract record is documentation and a coverage gate; it does not prove that an interface works in a browser or that a person can use it successfully.
 
 ## Capture, performance and limits
 

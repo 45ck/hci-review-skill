@@ -17,6 +17,14 @@
 
 A structured HCI and UX review skill pack for prototypes, flows, interface systems, research planning, and usability evaluation. It focuses on models, journeys, terminology, state handling, consistency, failure paths, heuristics, cognitive walkthroughs, personas, task analysis, prototype planning, and usability studies.
 
+## Agent-first engineering
+
+**Build reusable behaviours, visual components and design tools that agents can discover, compose, operate and verify.** The Liquid Glass kit extends [Vercel UI SDK](https://github.com/vercel-labs/ui), whose mission centres on behaviours agents use to build interfaces. Accessible human interaction remains part of every component contract.
+
+Start with the [agent documentation index](packages/liquid-glass/docs/llms.txt), [engineering guide](packages/liquid-glass/docs/agent-engineering.md) and [machine-readable contracts](packages/liquid-glass/agent-contracts.json). Contracts identify public exports, inputs, state, actual actions or composed SDK controls, restrictions and evidence. Passive materials and pure data utilities are classified explicitly; they do not advertise artificial actions. The kit currently provides React rendering; upstream's other adapters do not establish support in this extension.
+
+The [repository standard](docs/hci/standards/agent-engineering.md) applies to future additions. `npm run glass:agent-check` checks the declared export and contract coverage. Runtime tests must separately prove that an agent can discover controls and observe real accepted changes. Neither kind of check changes a component's **Unvalidated** human review status.
+
 ## Liquid Glass UI kit
 
 Use the shared **WebGPU Liquid Glass kit** for new high-fidelity internal interfaces without an established product design system. Real [Vercel UI SDK](https://github.com/vercel-labs/ui) controls retain their behaviour while a shared renderer applies the reference-based material to actual buttons, fields, panels and popups.
@@ -38,6 +46,7 @@ Use the [interface foundations](docs/hci/standards/interface-foundations.md) to 
 ```bash
 npm ci --ignore-scripts
 npm run glass:dev
+npm run glass:agent-check
 npm run glass:verify
 ```
 

@@ -1,16 +1,39 @@
-# Quantive Liquid Glass: agent composition guide
+# Quantitative HCI Liquid Glass
 
-This is a private React workspace package layered on Vercel UI SDK 0.1.0-beta.13. It is not published to npm. Use the checked-out workspace and its locked dependencies. Preserve all upstream imports, 55 SDK families, current component behavior, the shared material and the existing application state.
+> Agent-first behaviours, visual components and design tools built on Vercel UI SDK. React rendering; @ui-sdk/core and @ui-sdk/react pinned to 0.1.0-beta.13. Custom work remains Unvalidated by a human UI/UX team.
 
-## Read first
+This is a private React workspace package, not a published npm release. Use the checked-out workspace and locked dependencies. Preserve existing application state and the shared material.
 
-- node_modules/@ui-sdk/core/skills/ui-sdk/SKILL.md
-- node_modules/@ui-sdk/react/docs/llms.txt, then the component pages needed for the task
-- AGENTS.md and docs/hci/standards/interface-foundations.md
-- packages/liquid-glass/component-recipes.json
-- packages/liquid-glass/custom-component-manifest.json
+## Start here
 
-The hosted registry is /registry/components.json. It describes all SDK families, custom components and these composition recipes. /llms.txt is this guide. These files contain documentation; they do not provide an alternate action endpoint.
+- [Engineering guide](agent-engineering.md): choose, compose, extend, operate and verify.
+- [Package guide](https://github.com/45ck/hci-review-skill/blob/main/packages/liquid-glass/README.md): provider, material and component recipes.
+- [Package instructions](https://github.com/45ck/hci-review-skill/blob/main/packages/liquid-glass/AGENTS.md): requirements for future package changes.
+- [Compact component index](/agent-index.json): choose by purpose, kind and public export; follow its `contract` URL for one complete entry.
+- [Agent contracts](/agent-contracts.json): public export inventory, inputs, state, discovery, actions, restrictions and evidence.
+- [Contract schema](/agent-contracts.schema.json): the versioned machine-readable contract format.
+
+- [Component and recipe registry](/registry/components.json): all SDK families, custom components and compiled composition recipes. This documentation does not provide another action endpoint.
+
+## Choose a component
+
+- [Interactions and Sections](https://github.com/45ck/hci-review-skill/blob/main/docs/hci/standards/interaction-sections.md): scoped effects, real context menus, semantic sections and cancellable chapter selection.
+- [Models and transactions](https://github.com/45ck/hci-review-skill/blob/main/packages/liquid-glass/src/modeling/README.md): inspect, preview, revision-checked edits, controlled acceptance and history.
+- [Agent tasks](https://github.com/45ck/hci-review-skill/blob/main/packages/liquid-glass/src/agents/README.md): capabilities, timeline, tool review, context and artifacts; local component schema, not protocol transport.
+- [Graphics](https://github.com/45ck/hci-review-skill/blob/main/packages/liquid-glass/src/graphics/README.md): layers, transforms, exports and host-owned image requests.
+- [Package guide: Standards, shared canvas and images](https://github.com/45ck/hci-review-skill/blob/main/packages/liquid-glass/README.md): composition and appearance APIs.
+- [Modeling architecture](https://github.com/45ck/hci-review-skill/blob/main/docs/hci/standards/agent-first-modeling.md): shared document, UWE/C4 scope and evaluation.
+- [Engineering standard](https://github.com/45ck/hci-review-skill/blob/main/docs/hci/standards/agent-engineering.md): required evidence and future additions.
+
+## Installed upstream authority
+
+Read node_modules/@ui-sdk/core/skills/ui-sdk/SKILL.md and node_modules/@ui-sdk/react/docs/llms.txt first. Open only the needed component, rendering, agent and testing pages. Use installed declaration files to resolve exact types. Import SDK controls directly from @ui-sdk/react/<component>; never @ui-sdk/core/internal/*.
+
+For a local checkout, the registry and schema sit at packages/liquid-glass/agent-contracts.json and packages/liquid-glass/agent-contracts.schema.json. Their hosted copies are served at the root paths above. Resolve source/docs/evidence paths in registry entries from the repository root, not from the hosted URL.
+
+Read only the contract needed: `npm run glass:contract -- --search viewport`, then `npm run glass:contract -- liquid-viewport`. Hosted consumers can fetch `/contracts/liquid-viewport.json`. The full registry is available for tooling; it need not be loaded into every agent conversation.
+
+The runtime is createAgent from @ui-sdk/react/agent: snapshot, query, act and subscribe. Contracts describe intended use; only executed tests establish that the described behaviour works. See the engineering guide for observable postconditions and limitations.
 
 ## Composition layers
 

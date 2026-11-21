@@ -7,6 +7,10 @@
     "*.css"
   ],
   "exports": {
+    "./agent-contracts.json": "./agent-contracts.json",
+    "./agent-contracts.schema.json": "./agent-contracts.schema.json",
+    "./docs/llms.txt": "./docs/llms.txt",
+    "./docs/agent-engineering.md": "./docs/agent-engineering.md",
     ".": "./src/index.ts",
     "./material": "./src/material.tsx",
     "./webgpu": "./src/webgpu.tsx",

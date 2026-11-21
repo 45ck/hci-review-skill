@@ -17,6 +17,7 @@ from time import perf_counter
 from urllib.parse import urlparse
 
 from glass_agent_contract import verify_agent_contract, verify_agent_tasks_contract
+from glass_agent_inventory_contract import SPECIMEN_NAMES, verify_foundation_specimen
 from glass_appearance_contract import verify_appearance_contract
 from glass_browser_diagnostics import start_browser_profile
 from glass_developer_contract import verify_developer_contract, verify_visual_contract
@@ -303,15 +304,16 @@ async def run(args):
             assert all(catalogue.count(item) == 1 for item in custom_collections), f"Expected each custom collection exactly once: {catalogue}"
             actual = sorted(item for item in catalogue if item not in ["overview", *custom_collections])
             assert actual == expected_ids, actual
-            unnamed = []
+            assert set(SPECIMEN_NAMES) == set(expected_ids), "Every catalogue family needs a reviewed discovery expectation"
+            specimens = []
             for item in components:
                 browser_stage("catalogue: open specimen", component=item["id"])
                 await choose(item["id"])
                 await expect(page.locator(".demo-error")).to_have_count(0)
-                entries = await page.evaluate("window.quantitativeHciAgent.snapshot().filter(entry => !entry.offPage && entry.component !== 'more')")
-                unnamed.extend({"specimen": item["id"], "component": entry["component"], "ref": entry["ref"]} for entry in entries if not entry.get("label", "").strip())
-            assert not unnamed, f"Unnamed SDK entries: {json.dumps(unnamed)}"
-            return {"familiesOpened": len(components), "customCollectionsPresent": custom_collections, "unnamed": unnamed, "oneFamilyMountedAtATime": True}
+                specimens.append(await verify_foundation_specimen(page, expect, item["id"]))
+            return {"familiesOpened": len(components), "customCollectionsPresent": custom_collections,
+                    "specimens": specimens, "unnamed": [], "oneFamilyMountedAtATime": True,
+                    "scope": "Named specimen discovery and SDK-owned controls; action outcomes are covered by the focused interaction scenarios."}
 
         await record("all_55_families_render_and_have_agent_names", all_components, timeout=35)
 

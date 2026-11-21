@@ -20,6 +20,7 @@ from glass_agent_contract import verify_agent_contract
 from glass_browser_diagnostics import start_browser_profile
 from glass_optics_contract import (
     SCREENSHOT_TIMEOUT_MS,
+    _assert_rect_alignment,
     _difference,
     begin_browser_check,
     browser_check_trace,
@@ -300,16 +301,45 @@ async def run(args):
             assert await dialog.evaluate("node => node.contains(document.activeElement)"), "Focus did not enter the collection dialog"
             gpu = await root.get_attribute("data-liquid-status") == "ready"
             popup_evidence = {"gpuExpected": gpu}
+            popup_evidence["scrolling"] = await dialog.evaluate("""node => ({
+                clientWidth: node.clientWidth, clientHeight: node.clientHeight,
+                scrollWidth: node.scrollWidth, scrollHeight: node.scrollHeight,
+                overflowX: getComputedStyle(node).overflowX,
+                overflowY: getComputedStyle(node).overflowY
+            })""")
+            scrolling = popup_evidence["scrolling"]
+            assert scrolling["scrollWidth"] <= scrolling["clientWidth"], f"Collection dialog has horizontal overflow: {scrolling}"
+            assert scrolling["scrollHeight"] <= scrolling["clientHeight"], f"The short collection dialog acquired vertical overflow: {scrolling}"
+            assert scrolling["overflowY"] in {"auto", "scroll"}, f"Native popup scrolling was suppressed: {scrolling}"
             if gpu:
                 await expect(dialog.locator("canvas[data-liquid-canvas='popup']")).to_have_count(1, timeout=5000)
                 popup_canvas = dialog.locator("canvas[data-liquid-canvas='popup']")
                 await expect(popup_canvas).to_be_visible()
-                popup_evidence.update(await popup_canvas.evaluate("""node => ({
-                    topLayerHost: Boolean(node.closest(':popover-open,dialog:modal')),
-                    pointerEvents: getComputedStyle(node).pointerEvents,
-                    ariaHidden: node.getAttribute('aria-hidden')
-                })"""))
+                popup_evidence.update(await popup_canvas.evaluate("""node => {
+                    const host = node.closest(':popover-open,dialog:modal');
+                    if (!(host instanceof HTMLElement)) throw new Error('Popup canvas has no top-layer host');
+                    const bounds = node.getBoundingClientRect();
+                    const outer = host.getBoundingClientRect();
+                    const scaleX = outer.width / host.offsetWidth;
+                    const scaleY = outer.height / host.offsetHeight;
+                    const client = {
+                        x: outer.x + host.clientLeft * scaleX, y: outer.y + host.clientTop * scaleY,
+                        width: host.clientWidth * scaleX, height: host.clientHeight * scaleY
+                    };
+                    return {
+                        topLayerHost: true,
+                        pointerEvents: getComputedStyle(node).pointerEvents,
+                        ariaHidden: node.getAttribute('aria-hidden'),
+                        canvas: [bounds.x, bounds.y, bounds.width, bounds.height],
+                        renderedLayer: JSON.parse(node.getAttribute('data-liquid-render-rect') || 'null'),
+                        clientViewport: client,
+                        canvasOverflowPx: Math.max(0, client.x - bounds.left, client.y - bounds.top,
+                            bounds.right - client.x - client.width, bounds.bottom - client.y - client.height)
+                    };
+                }"""))
                 assert popup_evidence["topLayerHost"] and popup_evidence["pointerEvents"] == "none" and popup_evidence["ariaHidden"] == "true", popup_evidence
+                assert popup_evidence["canvasOverflowPx"] <= 0.5, f"Material canvas extends outside the popup client viewport: {popup_evidence}"
+                popup_evidence["canvasAlignmentErrorPx"] = _assert_rect_alignment(popup_evidence["canvas"], popup_evidence["renderedLayer"], "collection popup canvas")
             field = dialog.get_by_label("Collection name", exact=True)
             assert await field.evaluate("""node => {
                 const box = node.getBoundingClientRect();

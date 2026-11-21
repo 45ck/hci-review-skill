@@ -801,7 +801,8 @@ async def _arm_drawer_frames(page, target_y):
                 progress: Math.abs(actual[1] - start[1]) / Math.max(0.5, Math.abs(targetY - start[1])),
                 nativeAnimations: animations,
                 drawer: actual, renderedDrawer: JSON.parse(drawer.getAttribute('data-liquid-render-rect') || 'null'),
-                host: box(host), renderedLayer: JSON.parse(canvas.getAttribute('data-liquid-render-rect') || 'null'),
+                host: box(host), canvas: box(canvas),
+                renderedLayer: JSON.parse(canvas.getAttribute('data-liquid-render-rect') || 'null'),
                 render,
                 motion: Number(root.dataset.liquidMotionRevision),
                 capture: Number(root.dataset.liquidCaptureRevision),
@@ -893,7 +894,7 @@ async def verify_drawer_motion_contract(page, expect, *, output_dir="test-result
             assert any(frame["nativeAnimations"] and minimum + 0.5 < frame["drawer"][1] < maximum - 0.5 for frame in frames), f"{policy} Drawer lacked a rendered native intermediate position: {samples}"
             for frame in frames:
                 frame["drawerAlignmentErrorPx"] = _assert_rect_alignment(frame["drawer"], frame["renderedDrawer"], f"{policy} Drawer surface")
-                frame["layerAlignmentErrorPx"] = _assert_rect_alignment(frame["host"], frame["renderedLayer"], f"{policy} popup host")
+                frame["layerAlignmentErrorPx"] = _assert_rect_alignment(frame["canvas"], frame["renderedLayer"], f"{policy} popup canvas")
                 assert frame["capture"] == before["capture"], "Native Drawer settling recaptured the backdrop"
                 if frame["nativeAnimations"]:
                     assert frame["state"] == "running", "Native Drawer settle was reported idle while moving"

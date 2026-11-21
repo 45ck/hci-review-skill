@@ -55,7 +55,7 @@ export function createLiquidGlassEngine(config: EngineOptions) {
   const nativeAnimations = new Map<Animation, { target: Element; deadline: number; complete: () => void }>();
   const expiredAnimations = new WeakSet<Animation>();
   const geometryObserved = new Set<Element>();
-  const popupGeometry = new Map<HTMLElement, { rect: DOMRect; left: number; top: number; width: number; height: number }>();
+  const popupGeometry = new Map<HTMLElement, DOMRect>();
   const motion = createLiquidMotion({
     root: config.root,
     backdrop: config.backdrop,
@@ -211,16 +211,6 @@ export function createLiquidGlassEngine(config: EngineOptions) {
             geometryResize.unobserve(element);
             geometryObserved.delete(element);
           }
-        for (const popup of groups.keys()) {
-          const style = getComputedStyle(popup);
-          popupGeometry.set(popup, {
-            rect: popup.getBoundingClientRect(),
-            left: -(parseFloat(style.borderLeftWidth) || 0),
-            top: -(parseFloat(style.borderTopWidth) || 0),
-            width: popup.offsetWidth,
-            height: popup.offsetHeight,
-          });
-        }
         geometryDirty = false;
         if (discoverAnimations) discoverNativeAnimations(now);
       }
@@ -277,17 +267,24 @@ export function createLiquidGlassEngine(config: EngineOptions) {
           canvas.setAttribute("aria-hidden", "true");
           canvas.setAttribute("data-html2canvas-ignore", "");
           canvas.style.cssText =
-            "position:absolute;pointer-events:none;z-index:-1;border-radius:inherit;display:block;";
+            "position:absolute;left:0;top:0;width:100%;height:100%;border:0;padding:0;margin:0;pointer-events:none;z-index:-1;border-radius:inherit;display:block;";
           renderer.attach(canvas);
           popups.set(popup, canvas);
         }
-        if (canvas.parentElement !== popup) popup.prepend(canvas);
-        const geometry = popupGeometry.get(popup)!;
-        const rect = geometry.rect;
-        canvas.style.left = `${geometry.left}px`;
-        canvas.style.top = `${geometry.top}px`;
-        canvas.style.width = `${geometry.width}px`;
-        canvas.style.height = `${geometry.height}px`;
+        if (canvas.parentElement !== popup) {
+          popup.prepend(canvas);
+          popupGeometry.delete(popup);
+        }
+        let rect = popupGeometry.get(popup);
+        if (!rect) {
+          // Fill the padding viewport without adding border/rounding overflow.
+          // Native scrolling keeps working; only the decoration follows its
+          // visible viewport. Measure after placement to retain exact transforms.
+          canvas.style.left = `${popup.scrollLeft}px`;
+          canvas.style.top = `${popup.scrollTop}px`;
+          rect = canvas.getBoundingClientRect();
+          popupGeometry.set(popup, rect);
+        }
         canvas.style.visibility = "visible";
         renderer.draw(
           canvas,

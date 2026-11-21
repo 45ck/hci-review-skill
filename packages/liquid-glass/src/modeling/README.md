@@ -56,11 +56,32 @@ For linked model sets, provide `models={documents.map(item => item.model)}`. Thi
 
 ### Acceptance and cancellation
 
-`onDocumentChange(next, details)` is the single acceptance boundary. Use `details.cancel()` to reject a request. It preserves the model, selection, undo history and redo history. `details.source` comes from the UI SDK (`agent`, pointer/keyboard input, or application code); action arguments cannot claim a different source.
+`onDocumentChange(next, details)` is the single acceptance boundary and may return `void` or `Promise<void>`. Existing one-argument React setters remain compatible. Use `details.cancel()` to reject an unpublished request, either immediately or after asynchronous validation. It preserves the model, selection, undo history and redo history. `details.source` comes from the UI SDK (`agent`, pointer/keyboard input, or application code); action arguments cannot claim a different source.
 
-A controlled callback usually schedules a React update. Before the new prop is received, the synchronous action result has `status: "requested"`, `changed: false`, the current `revision`, and a `requestedRevision`. This means the host received a proposal. It does not claim that the edit was applied. When the host supplies the exact proposed document, `lastResult` settles to `"applied"`, including selection changes that keep the same revision. Use the render context or `api.inspect().lastResult` to observe settlement. `onResult` reports the immediate action outcome.
+A controlled callback usually schedules a React update. Before the new prop is received, the synchronous action result has `status: "requested"`, `changed: false`, the current `revision`, and a `requestedRevision`. This means the host received a proposal. It does not claim that the edit was applied. When the host supplies the proposed document or a structurally equivalent JSON copy, `lastResult` settles to `"applied"`, including selection changes that keep the same revision. Object key order does not matter. The full document must match: matching only its revision or model while omitting the proposed selection/history is not acceptance. Use the render context or `api.inspect().lastResult` to observe settlement. `onResult` reports both immediate outcomes and later settlement.
 
-Another mutation is refused while a proposal is pending. Supplying a different document clears the pending request and reports `controlled-not-accepted`; the next command must use that document's current revision. If the host refuses an edit, call `details.cancel()` explicitly instead of silently ignoring the callback. External edits should use the same engine and preserve revision monotonicity. A document without an `onDocumentChange` handler is effectively read-only.
+Another mutation or selection is refused while a proposal is pending. The render context exposes `pendingRevision` (`null` when idle); `inspect()` exposes it while pending. Resolving a callback's Promise without publishing props leaves the proposal pending. Re-rendering with an equivalent copy of the old document also leaves it pending. There is no implicit timeout. `api.cancelPending()` releases an unpublished request and aborts `details.signal`; the workbench offers the same operation through **Cancel pending model change**. Hosts should pass that signal to cancellable work and check it before publishing accepted data. Cancel is a no-op once the proposed data has already been observed; it never rolls back applied content.
+
+Supplying a different document clears the pending request, aborts its signal and reports `controlled-not-accepted`; the next command must use that document's current revision. A callback that throws or rejects before acceptance reports `host-callback-failed`, clears pending state and leaves the document/history unchanged. If a host refuses an edit, cancel or reject explicitly instead of silently ignoring the callback. External edits should use the same engine and preserve revision monotonicity. A document without an `onDocumentChange` handler is effectively read-only.
+
+Observed props are authoritative even while the callback's Promise is unresolved. If that callback later rejects, the latest matching request reports `status: "applied-error"`, `ok: false`, `changed: true`, the actual revision and issue code `host-callback-failed-after-application`. The edit and history remain applied; the workbench says that the host reported an error after application. A stale callback cannot change a newer request's outcome. Unmounting aborts pending work, suppresses its late notifications and does not invent a rollback of previously accepted content. `StandardsWorkbench.onDocumentsChange` forwards the same Promise and signal contract.
+
+For asynchronous persistence, publish the accepted document only after the host's check succeeds:
+
+```tsx
+<LiquidModelDocument
+  label="Model document"
+  document={document}
+  onDocumentChange={async (next, details) => {
+    await saveDocument(next, { signal: details.signal });
+    if (!details.signal.aborted) setDocument(next);
+  }}
+>
+  {({ pendingRevision }) => <p>{pendingRevision === null ? "Ready" : `Waiting for revision ${pendingRevision}`}</p>}
+</LiquidModelDocument>
+```
+
+Here `saveDocument` is the host's authenticated persistence function. UI cancellation cannot retract data the host has already published; authorization, revision checks and actual server cancellation remain host responsibilities.
 
 `readOnly` blocks content mutations; the direct component handle still allows inspection and selection. `disabled` blocks selection as well. The pinned UI SDK also removes **all agent actions** from a read-only or disabled component, including custom inspection actions. Its compact snapshot and queried choices remain available. The provider preserves that upstream policy.
 
@@ -76,6 +97,7 @@ The SDK discovers one named `model-document` component. It exposes:
 | `undo` | Current revision | Restore the previous checkpoint with a new revision |
 | `redo` | Current revision | Restore the next checkpoint with a new revision |
 | `select` | Existing node ID or `null` | Change selection without creating an edit checkpoint or incrementing revision |
+| `cancelPending` | None | Cancel an unpublished proposal and abort its host signal; return an unchanged no-op when no proposal is pending |
 
 Use the existing `createAgent` bridge's `snapshot`, `query`, `act` and `subscribe`. There is no separate global mutation API. `query({ within: documentRef })` discovers stable element IDs and labels. The compact snapshot contains model identity, revision, selection, counts and undo/redo depths. It excludes the full model and history; request `inspect` when those details are needed. `inspect` exposes supported operation names, required fields and patch field names so an agent can form a transaction from the current model.
 
@@ -132,6 +154,6 @@ This module manages an in-memory editing session. It does not provide server per
 
 Run `node packages/liquid-glass/src/modeling/check-document.mjs` for the pure source gate. It exercises descendant geometry, route transforms, atomic rollback, stable IDs, monotonic history, bounded history, cancellation-free preview, no-op redo preservation, cross-view integrity and malformed inputs.
 
-The browser harness includes `model_document_atomic_agent_commands_and_human_history`, using the real production workbench and actual SDK bridge. It checks discovery, preview, atomic apply, stale and invalid rejection, selection settlement, no-op behavior, shared human/agent history and source attribution. A mounted React/SDK probe also verified host cancellation, read-only and disabled guards, and pending controlled-change recovery; those host policies are not exposed as demo switches.
+`node --test tests/test_model_controlled.mjs` instantiates the actual public SDK primitive with real engine documents. Its portable tests cover accepted serialized copies, reordered object keys, ignored/resolved-but-unpublished proposals, asynchronous cancellation and rejection, applied-then-failed callbacks, stale completions, disposal, read-only/disabled guards, source attribution and history. These committed regressions replace the earlier temporary environment-local host probe as repeatable evidence.
 
-The environment-local probe was compiled with `node_modules/.bin/tsc -p node_modules/.cache/model-document-probe/tsconfig.json` and run with `node node_modules/.cache/model-document-probe/probe.mjs` (both exit 0). It reused an already installed jsdom 27.4.0 from another workspace. The probe is temporary evidence, not a portable CI dependency; the committed pure gate and production browser contract are the repeatable project checks.
+The browser harness includes `model_document_atomic_agent_commands_and_human_history`, using the real production workbench and actual SDK bridge. The gallery host supplies cloned accepted documents. It checks discovery, preview, atomic apply, stale and invalid rejection, selection settlement, cancel-without-pending behavior, shared human/agent history and source attribution. Asynchronous host policies remain tested at the real headless primitive; they are not exposed as artificial demo switches.

@@ -39,7 +39,11 @@
     "./fonts.css": "./src/fonts.css",
     "./styles.css": "./src/styles.css",
     "./tokens.css": "./src/tokens.css",
-    "./*": "./src/components/*.ts"
+    "./*": "./src/components/*.ts",
+    "./agent-action-inputs.json": "./agent-action-inputs.json",
+    "./agent-index.schema.json": "./agent-index.schema.json",
+    "./agent-contract.schema.json": "./agent-contract.schema.json",
+    "./agent-release.schema.json": "./agent-release.schema.json"
   },
   "dependencies": {
     "@ui-sdk/core": "0.1.0-beta.13",

@@ -2,6 +2,7 @@ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { dirname, extname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { parseSync } from "rolldown/utils";
+import { actionSchemaDocumentIssues, primitiveActionSchemaIssues } from "./agent-action-validation.mjs";
 
 const defaultRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const packagePath = "packages/liquid-glass";
@@ -141,6 +142,18 @@ function validateAgentContracts({ root = defaultRoot, manifest = readJson(join(r
     if (path.includes("\\") || path.startsWith("/") || path.split("/").includes("..")) return false;
     return existsSync(join(root, path)) && statSync(join(root, path)).isFile();
   };
+  let actionSchemas;
+  const customEntries = manifest.entries.filter(entry => entry.kind === "primitive");
+  if (customEntries.length) {
+    const path = `${packagePath}/agent-action-inputs.json`;
+    if (!safeFile(path)) fail("action-schema", `missing action input schema ${path}`);
+    else {
+      const candidate = readJson(join(root, path));
+      const issues = actionSchemaDocumentIssues(candidate);
+      errors.push(...issues.map(issue => `action-schema: ${issue}`));
+      if (!issues.length) actionSchemas = candidate;
+    }
+  }
   if (manifest.package !== pkg.name) fail("package", "manifest package differs from package.json");
   for (const name of ["@ui-sdk/core", "@ui-sdk/react"]) if (pkg.dependencies[name] !== manifest.sdk.version) fail("sdk", `${name} must use the exact manifest version`);
   const sdkImports = (files, visited = new Set(), result = new Set()) => {
@@ -201,8 +214,18 @@ function validateAgentContracts({ root = defaultRoot, manifest = readJson(join(r
     if (["presentation", "decoration", "provider", "pure-utility", "host-hook"].includes(entry.kind) && (entry.runtime.actions.length || !["dom", "none"].includes(entry.runtime.discovery))) fail(entry.id, "passive and host-only APIs cannot claim SDK actions or discovery");
     if (entry.kind === "composition" && (entry.runtime.discovery !== "sdk-children" || !entry.runtime.controls?.length)) fail(entry.id, "compositions must name their actual SDK child-control route");
     if (entry.kind === "composition" && entry.runtime.actions.length) fail(entry.id, "compositions discover child actions and cannot claim their own root actions");
-    if (entry.kind !== "primitive" && (entry.runtime.primitive || entry.runtime.actionParameters)) fail(entry.id, "only custom primitives can declare a primitive binding or action parameters");
+    if (entry.kind !== "primitive" && (entry.runtime.primitive || entry.runtime.actionParameters || entry.runtime.actionSchema)) fail(entry.id, "only custom primitives can declare a primitive binding or action parameters/schema");
     if (entry.kind === "primitive" && (entry.runtime.discovery !== "sdk" || !entry.runtime.primitive)) fail(entry.id, "custom primitives need a real SDK primitive binding");
+    if (entry.kind === "primitive") {
+      if (entry.runtime.actionSchema !== `./agent-action-inputs.json#/$defs/${entry.id}`) fail(entry.id, "custom primitive needs its own resolvable action schema fragment");
+      if (actionSchemas) {
+        errors.push(...primitiveActionSchemaIssues(actionSchemas, entry.id, entry.runtime.actions));
+        for (const branch of actionSchemas.$defs?.[entry.id]?.oneOf ?? []) {
+          const name = branch.properties?.action?.const;
+          if (entry.runtime.actionParameters?.[name]?.length !== (branch.properties?.args?.prefixItems?.length ?? 0)) fail(entry.id, `action parameter arity differs from its schema: ${name}`);
+        }
+      }
+    }
     for (const control of entry.runtime.controls ?? []) {
       if (!sdkEntry(control)) fail(entry.id, `unresolved installed SDK public entry ${control}`);
       if (!sdkImports(entry.sources).has(control)) fail(entry.id, `declared SDK control ${control} is not imported by its implementation graph`);

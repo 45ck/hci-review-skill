@@ -14,15 +14,17 @@ export interface ModelToolbarProps {
   onNotice?: (message: string) => void;
   disabled?: boolean;
   readOnly?: boolean;
+  pendingRevision?: number | null;
 }
 
-export function ModelToolbar({ document, api, onNotice, disabled, readOnly }: ModelToolbarProps) {
+export function ModelToolbar({ document, api, onNotice, disabled, readOnly, pendingRevision }: ModelToolbarProps) {
   const { model, revision, past, future } = document;
   return <div className="standards-toolbar" aria-label="Model actions">
     <span className="standards-revision" data-model-revision={revision}>Revision {revision} · {model.nodes.length} elements</span>
     <div className="standards-export-actions">
       <Button disabled={disabled || readOnly || !past.length} onClick={event => { api.undo(revision, { event: event.nativeEvent }); }}>Undo diagram change</Button>
       <Button disabled={disabled || readOnly || !future.length} onClick={event => { api.redo(revision, { event: event.nativeEvent }); }}>Redo diagram change</Button>
+      {pendingRevision !== undefined && pendingRevision !== null && <Button disabled={disabled} onClick={() => { api.cancelPending(); }}>Cancel pending model change</Button>}
       <Button disabled={disabled} onClick={async () => {
         try { await navigator.clipboard.writeText(JSON.stringify(model, null, 2)); onNotice?.("Diagram JSON copied from the current model."); }
         catch { onNotice?.("Clipboard unavailable. Open Model data to copy the JSON."); }
@@ -56,10 +58,10 @@ export interface ModelValidationPanelProps {
 export function ModelValidationPanel({ issues, result, notice }: ModelValidationPanelProps) {
   const errors = issues.filter(issue => issue.severity !== "warning");
   const warnings = issues.filter(issue => issue.severity === "warning");
-  const feedback = notice || (result?.ok && result.changed ? result.summary.label : "");
+  const feedback = notice || (result?.status === "requested" ? `Waiting for the host to accept revision ${result.requestedRevision}. The current document is unchanged.` : result?.ok && result.changed ? result.summary.label : "");
   return <section className="standards-validation" aria-label="Model validation" data-model-outcome={result?.status ?? "idle"}>
     {errors.length > 0 && <div className="standards-error" role="alert" data-developer-error="">
-      <strong>{result?.ok === false ? "Change could not be applied" : "Model needs attention"}</strong><ul>{errors.slice(0, 8).map((issue, index) => <li key={`${issue.code}-${index}`}>{issue.message}</li>)}</ul>
+      <strong>{result?.status === "applied-error" ? "Change applied; host reported an error" : result?.ok === false ? "Change could not be applied" : "Model needs attention"}</strong><ul>{errors.slice(0, 8).map((issue, index) => <li key={`${issue.code}-${index}`}>{issue.message}</li>)}</ul>
     </div>}
     {warnings.length > 0 && <div className="standards-warning" role="status"><strong>Review this model</strong><ul>{warnings.slice(0, 8).map((issue, index) => <li key={`${issue.code}-${index}`}>{issue.message}</li>)}</ul></div>}
     <output className="standards-feedback" data-developer-feedback="" aria-live="polite">{feedback}</output>

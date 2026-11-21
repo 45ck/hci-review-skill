@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Agent documentation content identity",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "const": "/agent-release.schema.json"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "package": {
+      "$ref": "./agent-contracts.schema.json#/properties/package"
+    },
+    "sdk": {
+      "$ref": "./agent-contracts.schema.json#/properties/sdk"
+    },
+    "release": {
+      "$ref": "./agent-contract.schema.json#/$defs/release"
+    },
+    "scope": {
+      "type": "string",
+      "minLength": 1
+    },
+    "resources": {
+      "type": "object",
+      "properties": {
+        "index": {
+          "const": "/agent-index.json"
+        },
+        "contracts": {
+          "const": "/agent-contracts.json"
+        },
+        "actionInputs": {
+          "const": "/agent-action-inputs.json"
+        },
+        "guide": {
+          "const": "/llms.txt"
+        },
+        "engineering": {
+          "const": "/agent-engineering.md"
+        },
+        "recipes": {
+          "const": "/registry/components.json"
+        }
+      },
+      "required": [
+        "index",
+        "contracts",
+        "actionInputs",
+        "guide",
+        "engineering",
+        "recipes"
+      ],
+      "additionalProperties": false
+    },
+    "counts": {
+      "type": "object",
+      "properties": {
+        "contracts": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sdkFamilies": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "customPrimitives": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "contracts",
+        "sdkFamilies",
+        "customPrimitives"
+      ],
+      "additionalProperties": false
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "$ref": "./agent-contract.schema.json#/$defs/file"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    }
+  },
+  "required": [
+    "$schema",
+    "schemaVersion",
+    "package",
+    "sdk",
+    "release",
+    "scope",
+    "resources",
+    "counts",
+    "files"
+  ],
+  "additionalProperties": false
+}

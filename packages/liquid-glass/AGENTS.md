@@ -11,6 +11,8 @@ The root `AGENTS.md` applies. Read [`docs/llms.txt`](docs/llms.txt), the relevan
 - Use meaningful accessible names, stable item IDs and discoverable choices. Agent and human operations must reach the same accepted state. Keyboard-only or pointer-only validation is insufficient.
 - Preserve secret, hidden, confirmation, read-only and disabled semantics. UI source attribution is not authentication. The host remains responsible for authoritative authorization and persistence.
 - Update contract records, docs, examples and targeted tests with every public change. Do not register an action that only returns a success message; verify its observable effect.
+- Keep custom action input schemas and valid/invalid examples aligned with the shared implementation. Preserve structural-only preflight, live revision/identity validation and actual controlled acceptance. Pending work needs cancellation and stale-result isolation; a callback failure after accepted props must not be described as an unapplied change.
+- Generate hosted metadata from canonical inputs and preserve its schemas, fingerprints and page identity. The production documentation gate must fail for missing, stale or orphan contract files. Content identity and source provenance do not claim test success or human approval.
 
 ## Verification and scope
 

@@ -115,15 +115,41 @@ Keep `data-agent-hidden`, `data-agent-secret` and `data-agent-confirm` semantics
 
 ## Required checks
 
+### Preflight custom actions
+
+The custom viewport and model-document primitives publish JSON Schema argument contracts in [`agent-action-inputs.json`](/agent-action-inputs.json). Each canonical contract's `runtime.actionSchema` selects the matching primitive definition relative to the package directory. Hosted index entries and individual envelopes provide a root-relative `actionSchema` URL for direct retrieval. The schema validates an object containing `contract`, `action` and the positional `args` array. It includes examples and the supported structural constraints; the UI SDK does not automatically enforce this schema for custom methods.
+
+Use the local CLI before constructing a runtime call:
+
+```bash
+npm run glass:contract -- validate liquid-viewport panBy '[80,-40]'
+npm run glass:contract -- validate model-document cancelPending '[]'
+```
+
+This only reads and validates data. A passing preflight does not establish that a node exists, a revision is current, a host will accept the proposal or an action is authorized. Query the mounted component, inspect current choices and use its shared validation path. After a stale-revision rejection, inspect and rebuild the intended transaction against the new document; do not blindly replay an old edit.
+
+Model callbacks can return a Promise and receive an AbortSignal. `requested` means that the host has not published matching props. Matching document values count as acceptance even if they were serialized and cloned. `cancelPending` abandons only an unpublished proposal; host code must observe the signal before publishing delayed data. `applied-error` records that the host published the change before its callback failed. Inspect the actual document and decide how to recover; do not retry a non-idempotent change solely because `ok` is false. Details and examples live in the [model document guide](https://github.com/45ck/hci-review-skill/blob/main/packages/liquid-glass/src/modeling/README.md).
+
+### Match documentation to the loaded kit
+
+The built page's `quantive-agent-contract-set` meta value identifies its canonical documentation inputs. [`agent-release.json`](/agent-release.json) publishes that identity as `release.contractSet`, the package version and source provenance. A clean Git build includes its commit and source tree; a dirty working copy names its base commit and reports `status: "dirty"` without claiming a clean tree. A build outside Git reports unavailable provenance.
+
+Fetch the compact index, compare its release identity with the loaded page and follow a contract URL. Verify the file's exact UTF-8 byte length and SHA-256 against the index when retaining cached contract data. Each envelope links its own published schema. The release file lists the other documentation assets and their fingerprints; it excludes itself to avoid a circular digest.
+
+The fingerprint covers documentation and package metadata, not the whole application implementation. Source provenance identifies the build separately. Neither field is a security signature or an assertion that tests or human review passed. The production build gate verifies exact canonical content, schema links, all individual contracts, no orphan contract files and the page's matching identity.
+
+### Run the gates
+
 From the repository root:
 
 ```bash
 npm run glass:agent-check
 npm run glass:verify
+npm run glass:docs-check
 python3 tests/test_glass_browser.py
 ```
 
-`glass:agent-check` checks declared export/contract coverage and source consistency; the registry is not a test result. `glass:verify` runs the project's source gates and production build. Run the browser harness against the production preview as specified in the root instructions for changed interaction, rendering, preference and layout paths.
+`glass:agent-check` checks declared export/contract coverage, action schemas, controlled-state regressions and generated-document tests; the registry is not a test result. `glass:verify` runs the project's source gates, production build and emitted documentation check. `glass:docs-check` repeats the artifact check after an existing build; changed canonical inputs require rebuilding first. Run the browser harness against the production preview as specified in the root instructions for changed interaction, rendering, preference and layout paths.
 
 For each changed interactive path, assert discovery, valid choices, the real accepted result and relevant invalid/disabled/read-only/cancelled cases. Check callback source attribution, controlled-host acceptance and preservation of state across the relevant navigation. Test keyboard and focus in addition to agent calls. Use upstream `mount`, `checkPattern`, `checkServer` and `checkDirection` for new primitives where applicable; use a real browser for layout, top-layer popups, contrast and focus transitions. A focused deliberate break should cause the relevant regression test to fail.
 

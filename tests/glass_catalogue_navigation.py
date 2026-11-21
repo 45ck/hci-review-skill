@@ -163,7 +163,7 @@ async def verify_catalogue_navigation(page, expect, *, base_url, output_dir):
             assert preview_frame is not None
             await preview_frame.wait_for_function("id => document.querySelector('[data-example-document]')?.dataset.exampleDocument === id && document.documentElement.dataset.liquidGlassKit === 'true'", arg=recipe["id"])
             if recipe["id"] == "application-shell":
-                await expect(preview_frame.locator(".qg-app")).to_be_visible()
+                await expect(preview_frame.locator(".qg-application-shell")).to_be_visible()
                 await expect(preview_frame.get_by_role("heading", name="Reviews", exact=True)).to_be_visible()
             dimensions = await preview_frame.evaluate("async () => { await document.fonts.ready; return {width: innerWidth, scroll: document.documentElement.scrollWidth}; }")
             assert dimensions["scroll"] <= dimensions["width"] + 1, f'{recipe["id"]} preview document overflows: {dimensions}'

@@ -90,6 +90,8 @@ async def run(args):
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     components = manifest["components"]
     expected_ids = sorted(item["id"] for item in components)
+    custom_collections = ["standards", "visual", "agents", "interactions", "sections", "layouts", "patterns", "assistant", "chat"]
+    expected_catalogue_ids = {"overview", *expected_ids, *custom_collections}
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
     report = {
@@ -287,7 +289,9 @@ async def run(args):
             await expect(root).to_have_attribute("data-liquid-font", "studio")
             await expect(root).to_have_attribute("data-liquid-icons", "isometric")
             await expect(page.locator("[data-kit-view='overview']")).to_be_visible()
-            await expect(page.locator("[data-catalogue-id]")).to_have_count(64)
+            await expect(page.locator("[data-catalogue-id]")).to_have_count(len(expected_catalogue_ids))
+            initial_catalogue = await page.locator("[data-catalogue-id]").evaluate_all("nodes => nodes.map(node => node.dataset.catalogueId)")
+            assert set(initial_catalogue) == expected_catalogue_ids, initial_catalogue
             await expect(page.locator("[data-component-id]")).to_have_count(0)
             await expect(page.locator(".agent-inspector, .agent-command-console, .reference-lens-stage")).to_have_count(0)
             await expect(page.get_by_role("button", name="Create project", exact=True)).to_be_enabled()
@@ -297,7 +301,7 @@ async def run(args):
             assert status != "error", await root.get_attribute("data-liquid-error")
             await settled_motion(page)
             await page.screenshot(path=str(output.parent / "overview-desktop.png"), animations="allow", timeout=SCREENSHOT_TIMEOUT_MS)
-            return {"catalogueChoices": 64, "families": 55, "default": "Liquid Glass overview", "appearance": {"font": "studio", "icons": "isometric", "initialStorageAbsent": True}, "rendererStatus": status, "screenshot": "overview-desktop.png", "viewport": {"width": 1440, "height": 1000}}
+            return {"catalogueChoices": len(expected_catalogue_ids), "families": 55, "default": "Liquid Glass overview", "appearance": {"font": "studio", "icons": "isometric", "initialStorageAbsent": True}, "rendererStatus": status, "screenshot": "overview-desktop.png", "viewport": {"width": 1440, "height": 1000}}
 
         await record("default_glass_kit_overview", initial, reset=False, timeout=45)
         await record("gpu_on_actual_controls_strength_and_backdrop", lambda: verify_optics_contract(page, expect, output_dir=output.parent, require_gpu=args.software_gpu), reset=False, timeout=60)
@@ -312,7 +316,6 @@ async def run(args):
 
         async def all_components():
             catalogue = await page.locator("[data-catalogue-id]").evaluate_all("nodes => nodes.map(node => node.dataset.catalogueId)")
-            custom_collections = ["standards", "visual", "agents", "interactions", "sections", "layouts", "patterns", "assistant", "chat"]
             assert all(catalogue.count(item) == 1 for item in custom_collections), f"Expected each custom collection exactly once: {catalogue}"
             actual = sorted(item for item in catalogue if item not in ["overview", *custom_collections])
             assert actual == expected_ids, actual

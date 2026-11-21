@@ -7086,6 +7086,7 @@
           "symbols": [
             "LiquidAppShell",
             "LiquidAppRail",
+            "LiquidAppWorkarea",
             "LiquidAppHeader",
             "LiquidAppContent",
             "LiquidAppInspector",

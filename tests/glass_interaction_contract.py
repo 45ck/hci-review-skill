@@ -90,6 +90,7 @@ async def verify_interactions_contract(page, expect, *, base_url, output_dir):
         await page.screenshot(path=str(output / name), animations="allow", timeout=SCREENSHOT_TIMEOUT_MS)
         screenshots.append(name)
 
+    completed = False
     try:
         browser_stage("interactions: exact pointer and fixed magnetic hit area")
         before, x, y = await pointer_on(switch_light)
@@ -282,6 +283,7 @@ async def verify_interactions_contract(page, expect, *, base_url, output_dir):
         await page.keyboard.press("Escape")
         await expect(trigger).to_be_focused()
 
+        completed = True
         return {"namedControls": named, "cursor": geometry, "precision": precision,
                 "fixedTarget": {"before": before, "after": after, **hit}, "idle": quiescent,
                 "scroll": {**scroll, "cursor": scroll_geometry}, "nativeContextMenu": outside,
@@ -295,7 +297,9 @@ async def verify_interactions_contract(page, expect, *, base_url, output_dir):
             window.__interactionFeedback?.observer.disconnect();
             delete window.__interactionFeedback;
         }""")
-        await page.keyboard.press("Escape")
-        await page.emulate_media(reduced_motion="no-preference", forced_colors="none")
-        if original_viewport:
-            await page.set_viewport_size(original_viewport)
+        # Keep failed visual state intact until the runner captures its fresh context.
+        if completed:
+            await page.keyboard.press("Escape")
+            await page.emulate_media(reduced_motion="no-preference", forced_colors="none")
+            if original_viewport:
+                await page.set_viewport_size(original_viewport)

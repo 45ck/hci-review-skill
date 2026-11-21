@@ -93,6 +93,7 @@ async def verify_sections_contract(page, expect, *, base_url, output_dir):
         await page.screenshot(path=str(output / name), animations="allow", timeout=SCREENSHOT_TIMEOUT_MS)
         screenshots.append(name)
 
+    completed = False
     try:
         await _act(page, chapter_control, "setValue", [choices[0]["value"]])
         first = await chapter_state(choices[0])
@@ -167,6 +168,7 @@ async def verify_sections_contract(page, expect, *, base_url, output_dir):
         await assert_copy_retained()
         forced_fit = await _page_fits(page)
 
+        completed = True
         return {
             "namedControls": named,
             "discoveredChapters": choices,
@@ -186,6 +188,8 @@ async def verify_sections_contract(page, expect, *, base_url, output_dir):
             window.__sectionsContract?.stop();
             delete window.__sectionsContract;
         }""")
-        await page.emulate_media(reduced_motion="no-preference", forced_colors="none")
-        if original_viewport:
-            await page.set_viewport_size(original_viewport)
+        # Keep failed visual state intact until the runner captures its fresh context.
+        if completed:
+            await page.emulate_media(reduced_motion="no-preference", forced_colors="none")
+            if original_viewport:
+                await page.set_viewport_size(original_viewport)

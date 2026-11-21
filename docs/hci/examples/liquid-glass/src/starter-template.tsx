@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { LiquidGlassProvider } from "@quantitative-hci/liquid-glass/webgpu";
+import { LiquidIcon } from "@quantitative-hci/liquid-glass/icons";
 import { Button } from "@ui-sdk/react/button";
 import { Field, FieldLabel } from "@ui-sdk/react/field";
 import { Input } from "@ui-sdk/react/input";
@@ -24,6 +25,8 @@ export default function LiquidGlassTemplate() {
       dispersion={0.008}
       motion="system"
       transparency="system"
+      fontSet="studio"
+      iconSet="isometric"
     >
       <main style={{ maxWidth: 540, margin: "10vh auto", padding: 24 }}>
         <section
@@ -36,7 +39,10 @@ export default function LiquidGlassTemplate() {
             <FieldLabel>Project name</FieldLabel>
             <Input value={name} onValueChange={setName} />
           </Field>
-          <Button onClick={() => setSaved(name)}>Save project</Button>
+          <Button onClick={() => setSaved(name)}>
+            <LiquidIcon name="folder" />
+            Save project
+          </Button>
           <output aria-live="polite">{saved ? "Saved " + saved : ""}</output>
         </section>
       </main>

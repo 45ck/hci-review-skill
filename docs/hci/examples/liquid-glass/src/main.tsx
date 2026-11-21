@@ -9,24 +9,13 @@ import {
 } from "react";
 import { createRoot } from "react-dom/client";
 import {
-  Activity,
-  Bell,
-  Bookmark,
   Check,
-  Code2,
-  Copy,
-  Folder,
-  Grid2X2,
-  Layers3,
   MoreHorizontal,
   Plus,
   RotateCcw,
   Search,
-  Settings2,
-  SlidersHorizontal,
-  Sparkles,
-  Volume2,
 } from "lucide-react";
+import { LiquidIcon, type LiquidIconName } from "@quantitative-hci/liquid-glass/icons";
 import { Button } from "@ui-sdk/react/button";
 import { Input } from "@ui-sdk/react/input";
 import { Field, FieldLabel } from "@ui-sdk/react/field";
@@ -75,6 +64,11 @@ import {
   LiquidGlassProvider,
   useLiquidGlass,
 } from "@quantitative-hci/liquid-glass/webgpu";
+import {
+  DEFAULT_LIQUID_APPEARANCE,
+  type LiquidFontSet,
+  type LiquidIconSet,
+} from "@quantitative-hci/liquid-glass/appearance";
 import { inputDemos } from "./demos-inputs";
 import { surfaceDemos } from "./demos-surfaces";
 import { KitBackdrop, type BackdropName } from "./kit-backdrop";
@@ -103,6 +97,15 @@ const appearanceOptions = [
   { value: "glass", label: "Glass" },
   { value: "solid", label: "Solid" },
 ];
+const fontOptions = [
+  { value: "studio", label: "Studio — Manrope" },
+  { value: "editorial", label: "Editorial — Fraunces" },
+  { value: "system", label: "System" },
+];
+const iconOptions = [
+  { value: "isometric", label: "Isometric" },
+  { value: "line", label: "Line" },
+];
 type MotionPreference = boolean | "system";
 type TransparencyPreference = "system" | "glass" | "solid";
 
@@ -123,6 +126,23 @@ function readTransparencyPreference(): TransparencyPreference {
     return value === "glass" || value === "solid" ? value : "system";
   } catch {
     return "system";
+  }
+}
+
+function readFontPreference(): LiquidFontSet {
+  try {
+    const value = localStorage.getItem("qg-kit-font");
+    return value === "editorial" || value === "system" ? value : DEFAULT_LIQUID_APPEARANCE.fontSet;
+  } catch {
+    return DEFAULT_LIQUID_APPEARANCE.fontSet;
+  }
+}
+
+function readIconPreference(): LiquidIconSet {
+  try {
+    return localStorage.getItem("qg-kit-icons") === "line" ? "line" : DEFAULT_LIQUID_APPEARANCE.iconSet;
+  } catch {
+    return DEFAULT_LIQUID_APPEARANCE.iconSet;
   }
 }
 
@@ -221,11 +241,13 @@ function Range({
 
 function Panel({
   title,
+  icon,
   children,
   probe,
   className = "",
 }: {
   title: string;
+  icon: LiquidIconName;
   children: ReactNode;
   probe?: string;
   className?: string;
@@ -237,7 +259,7 @@ function Panel({
       data-liquid-kind="panel"
       data-optics-probe={probe}
     >
-      <h2>{title}</h2>
+      <h2><LiquidIcon name={icon} size={36} /><span>{title}</span></h2>
       <div className="kit-panel-body">{children}</div>
     </section>
   );
@@ -261,7 +283,7 @@ function Overview() {
   const ToastDemo = demos.toast;
   return (
     <div className="kit-overview" data-kit-view="overview">
-      <Panel title="Buttons" probe="panel" className="kit-actions-panel">
+      <Panel title="Buttons" icon="sparkles" probe="panel" className="kit-actions-panel">
         <div className="kit-button-row">
           <Button
             data-optics-probe="button"
@@ -278,30 +300,30 @@ function Overview() {
             data-variant="solid"
             onClick={() => setMenuResult("Library opened")}
           >
-            <Folder size={17} aria-hidden="true" />
+            <LiquidIcon name="folder" />
             Open library
           </Button>
           <Button disabled>Unavailable</Button>
         </div>
         <div className="kit-button-row">
           <Toggle aria-label="Bookmark project">
-            <Bookmark size={18} aria-hidden="true" />
+            <LiquidIcon name="bookmark" />
           </Toggle>
           <Toggle aria-label="Favourite project">
-            <Sparkles size={18} aria-hidden="true" />
+            <LiquidIcon name="sparkles" />
           </Toggle>
           <Button
             aria-label="Duplicate project"
             onClick={() => setCreatedProject(projectName + " copy")}
           >
-            <Copy size={18} aria-hidden="true" />
+            <LiquidIcon name="copy" />
           </Button>
         </div>
         <output aria-label="Project result" className="kit-result">
           {createdProject ? "Created " + createdProject : ""}
         </output>
       </Panel>
-      <Panel title="Inputs">
+      <Panel title="Inputs" icon="inbox">
         <Field>
           <FieldLabel>Project name</FieldLabel>
           <Input
@@ -317,10 +339,10 @@ function Overview() {
           onChange={setAccess}
         />
       </Panel>
-      <Panel title="Preferences">
+      <Panel title="Preferences" icon="settings">
         <div className="kit-setting-row">
           <span>
-            <Bell size={17} aria-hidden="true" />
+            <LiquidIcon name="bell" />
             Notifications
           </span>
           <Switch
@@ -333,7 +355,7 @@ function Overview() {
         </div>
         <div className="kit-setting-row">
           <span>
-            <Volume2 size={17} aria-hidden="true" />
+            <LiquidIcon name="volume" />
             Sound
           </span>
           <Switch aria-label="Sound" checked={sound} onCheckedChange={setSound}>
@@ -342,7 +364,7 @@ function Overview() {
         </div>
         <Range label="Volume" value={volume} onChange={setVolume} />
       </Panel>
-      <Panel title="Navigation">
+      <Panel title="Navigation" icon="folder">
         <SegmentedControl
           aria-label="Workspace view"
           value={workspace}
@@ -359,35 +381,35 @@ function Overview() {
           {workspace === "files" ? (
             <>
               <div>
-                <Folder size={20} aria-hidden="true" />
+                <LiquidIcon name="folder" />
                 <span>Components</span>
                 <span>55</span>
               </div>
               <div>
-                <Layers3 size={20} aria-hidden="true" />
+                <LiquidIcon name="layers" />
                 <span>Templates</span>
                 <span>1</span>
               </div>
               <div>
-                <Grid2X2 size={20} aria-hidden="true" />
+                <LiquidIcon name="grid" />
                 <span>Assets</span>
                 <span>3</span>
               </div>
             </>
           ) : workspace === "activity" ? (
             <div>
-              <Activity size={20} aria-hidden="true" />
+              <LiquidIcon name="activity" />
               <span>No recent changes</span>
             </div>
           ) : (
             <div>
-              <Settings2 size={20} aria-hidden="true" />
+              <LiquidIcon name="settings" />
               <span>Workspace preferences</span>
             </div>
           )}
         </div>
       </Panel>
-      <Panel title="Overlays">
+      <Panel title="Overlays" icon="layers">
         <div className="kit-button-row">
           <Dialog open={collectionOpen} onOpenChange={setCollectionOpen}>
             <DialogTrigger>
@@ -462,7 +484,7 @@ function Overview() {
           {menuResult}
         </output>
       </Panel>
-      <Panel title="Selection">
+      <Panel title="Selection" icon="grid">
         <CheckboxDemo />
         <div className="kit-panel-divider" />
         <RadioDemo />
@@ -481,6 +503,10 @@ function MaterialSettings({
   setMotion,
   transparency,
   setTransparency,
+  fontSet,
+  setFontSet,
+  iconSet,
+  setIconSet,
 }: {
   refraction: number;
   setRefraction: (v: number) => void;
@@ -491,12 +517,16 @@ function MaterialSettings({
   setMotion: (v: MotionPreference) => void;
   transparency: TransparencyPreference;
   setTransparency: (v: TransparencyPreference) => void;
+  fontSet: LiquidFontSet;
+  setFontSet: (v: LiquidFontSet) => void;
+  iconSet: LiquidIconSet;
+  setIconSet: (v: LiquidIconSet) => void;
 }) {
   const { status, refresh, motion: resolvedMotion } = useLiquidGlass();
   return (
     <Popover>
       <PopoverTrigger aria-label="Material settings">
-        <SlidersHorizontal size={17} aria-hidden="true" />
+        <LiquidIcon name="settings" />
         <span>Material settings</span>
       </PopoverTrigger>
       <PopoverContent
@@ -506,6 +536,18 @@ function MaterialSettings({
       >
         <PopoverTitle>Glass material</PopoverTitle>
         <div className="kit-material-controls">
+          <Choice
+            label="Font set"
+            value={fontSet}
+            options={fontOptions}
+            onChange={(value) => setFontSet(value as LiquidFontSet)}
+          />
+          <Choice
+            label="Icon style"
+            value={iconSet}
+            options={iconOptions}
+            onChange={(value) => setIconSet(value as LiquidIconSet)}
+          />
           <Choice
             label="Appearance"
             value={transparency}
@@ -560,6 +602,8 @@ function MaterialSettings({
               setBackdrop("coast");
               setMotion("system");
               setTransparency("system");
+              setFontSet(DEFAULT_LIQUID_APPEARANCE.fontSet);
+              setIconSet(DEFAULT_LIQUID_APPEARANCE.iconSet);
             }}
           >
             Reset material
@@ -631,7 +675,7 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
       <header className="kit-header">
         <div className="kit-brand">
           <span className="kit-brand-symbol" data-liquid-glass="">
-            <Layers3 size={22} aria-hidden="true" />
+            <LiquidIcon name="layers" size={28} />
           </span>
           <strong>Quantive</strong>
           <span className="kit-brand-divider" />
@@ -647,8 +691,13 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
                   ? "Solid material"
                   : "Compatibility mode"}
           </span>
-          <Button onClick={() => copy(starterSource, "Starter copied")}>
-            <Code2 size={17} aria-hidden="true" />
+          <Button onClick={() => copy(
+            starterSource
+              .replace('fontSet="studio"', `fontSet="${props.fontSet}"`)
+              .replace('iconSet="isometric"', `iconSet="${props.iconSet}"`),
+            "Starter copied",
+          )}>
+            <LiquidIcon name="code" />
             Copy starter
           </Button>
         </div>
@@ -687,7 +736,7 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
                 data-catalogue-id="overview"
                 className="kit-overview-item"
               >
-                <Grid2X2 size={17} aria-hidden="true" />
+                <LiquidIcon name="grid" />
                 Overview
               </ListboxItem>
             )}
@@ -769,7 +818,7 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
                   aria-label="Copy component import"
                   onClick={() => copy(importLine, "Import copied")}
                 >
-                  <Copy size={16} aria-hidden="true" />
+                  <LiquidIcon name="copy" size={20} />
                 </Button>
               </div>
             </section>
@@ -799,14 +848,18 @@ function App() {
   const [transparency, setTransparency] = useState<TransparencyPreference>(
     readTransparencyPreference,
   );
+  const [fontSet, setFontSet] = useState<LiquidFontSet>(readFontPreference);
+  const [iconSet, setIconSet] = useState<LiquidIconSet>(readIconPreference);
   useEffect(() => {
     try {
       localStorage.setItem("qg-kit-motion", JSON.stringify(motion));
       localStorage.setItem("qg-kit-transparency", transparency);
+      localStorage.setItem("qg-kit-font", fontSet);
+      localStorage.setItem("qg-kit-icons", iconSet);
     } catch {
       // Storage can be unavailable in embedded or private browser contexts.
     }
-  }, [motion, transparency]);
+  }, [motion, transparency, fontSet, iconSet]);
   const backdropNode = useMemo(
     () => <KitBackdrop variant={backdrop} />,
     [backdrop],
@@ -818,6 +871,8 @@ function App() {
       dispersion={dispersion / 1000}
       motion={motion}
       transparency={transparency}
+      fontSet={fontSet}
+      iconSet={iconSet}
     >
       <KitShell
         refraction={refraction}
@@ -829,6 +884,10 @@ function App() {
         setMotion={setMotion}
         transparency={transparency}
         setTransparency={setTransparency}
+        fontSet={fontSet}
+        setFontSet={setFontSet}
+        iconSet={iconSet}
+        setIconSet={setIconSet}
       />
     </LiquidGlassProvider>
   );

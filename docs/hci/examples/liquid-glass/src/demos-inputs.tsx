@@ -13,8 +13,8 @@ import {
   Eye,
   EyeOff,
   Star,
-  Bookmark,
 } from "lucide-react";
+import { LiquidIcon } from "@quantitative-hci/liquid-glass/icons";
 import {
   Autocomplete,
   AutocompleteContent,
@@ -674,7 +674,7 @@ function ToggleDemo() {
     <div className="demo-row">
       <Toggle pressed={pressed} onPressedChange={setPressed}>
         <ToggleIcon>
-          <Bookmark aria-hidden="true" />
+          <LiquidIcon name="bookmark" />
         </ToggleIcon>
         {pressed ? "Saved" : "Save material"}
       </Toggle>

@@ -23,7 +23,11 @@ Use the shared **WebGPU Liquid Glass kit** for new high-fidelity internal interf
 
 **[Open the Liquid Glass UI kit](https://quantitative-hci-ui-sdk-demos.ajax414655.chatgpt.site/)** (owner access): use the default overview, adjust refraction and colour dispersion in Material settings, choose a backdrop, and explore all **55 component families** through the searchable catalogue.
 
+**Studio typography and Isometric icons are the defaults.** Material settings lets you switch between Studio (Manrope), Editorial (Fraunces headings with Manrope interface text) and System fonts, and between Isometric and Line icons. The demo remembers valid choices, and Copy starter includes your selected font and icon presets.
+
 The [implementation standard](docs/hci/standards/liquid-glass.md), [agent instructions](AGENTS.md), pinned SDK packages and browser contracts define the integration. GPU tests compare real control rectangles, strength changes, backdrop recapture and top-layer popups. The SDK agent bridge remains beneath the UI for verification; the hosted kit has no diagnostic workbench, inspector or settings pilot.
+
+Use the [interface foundations](docs/hci/standards/interface-foundations.md) to turn a real task into content, navigation, presentation and state decisions, then select the measurements that can justify a change. The [kit customization model](docs/hci/models/kit-customization-model.md) provides a concrete worked contract for font/icon choices, state retention and evaluation. Visual defaults and automated rendering checks are distinct from measured human usability.
 
 ```bash
 npm ci --ignore-scripts

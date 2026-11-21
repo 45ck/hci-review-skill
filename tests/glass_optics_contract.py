@@ -984,7 +984,11 @@ async def verify_drawer_motion_contract(page, expect, *, output_dir="test-result
                 await expect(drawer).to_have_attribute("data-dragging", re.compile(r".*"))
                 dragged = await drawer.bounding_box()
                 assert dragged and dragged["y"] - rest["y"] > 8, f"The real Drawer did not follow the pointer: {rest}, {dragged}"
-                await page.wait_for_timeout(180)
+                # Qualify the held-drag endpoint before mixing live DOM bounds
+                # with the published draw. A fixed delay can precede the last
+                # drag render on software GPU, even though native settle draws
+                # are synchronously sampled below. Keep alignment assertions.
+                await settled_motion(page, check_idle=False)
                 await _arm_drawer_frames(page, rest["y"])
             finally:
                 await page.mouse.up()

@@ -5,11 +5,11 @@ import {
   ChevronLeft,
   ChevronRight,
   File,
-  Folder,
   Italic,
   Link,
   Underline,
 } from "lucide-react";
+import { LiquidIcon } from "@quantitative-hci/liquid-glass/icons";
 import {
   Accordion,
   AccordionHeader,
@@ -363,7 +363,7 @@ export function TreeDemo() {
             <TreeItemIndicator>
               <ChevronRight aria-hidden />
             </TreeItemIndicator>
-            <Folder aria-hidden />
+            <LiquidIcon name="folder" />
             <span>Materials</span>
           </TreeItemLabel>
           <TreeGroup>

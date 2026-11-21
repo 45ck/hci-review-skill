@@ -4,6 +4,8 @@
 
 The [kit](../examples/liquid-glass/README.md) starts with usable glass controls and keeps all 55 component families in a searchable catalogue. The reference shader is integrated into actual surfaces. A separate optical lab, diagnostic workbench or CSS blur toggle does not satisfy this standard.
 
+The [interface foundations](interface-foundations.md) connect this material to task, content, navigation, presentation and state modelling, with quantitative evaluation. Use Studio typography (Manrope) and Isometric icons by default; provide Editorial (Fraunces headings with Manrope interface text), System fonts and Line icons through `fontSet` and `iconSet` on `LiquidGlassProvider`. Font and icon changes preserve the current task, labels, focus and hit targets. The demo stores validated choices, and its copied starter includes the selected presets. The [customization model](../models/kit-customization-model.md) defines the behaviour and evidence to review.
+
 ## Responsibilities
 
 | Layer | Owner | Requirement |

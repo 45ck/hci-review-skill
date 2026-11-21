@@ -10,7 +10,10 @@
     ".": "./src/index.ts",
     "./material": "./src/material.tsx",
     "./webgpu": "./src/webgpu.tsx",
+    "./appearance": "./src/appearance.tsx",
+    "./icons": "./src/icons.tsx",
     "./kit.css": "./src/kit.css",
+    "./fonts.css": "./src/fonts.css",
     "./styles.css": "./src/styles.css",
     "./tokens.css": "./src/tokens.css",
     "./*": "./src/components/*.ts"

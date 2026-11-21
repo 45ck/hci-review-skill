@@ -5,6 +5,7 @@ evidence. They do not establish human recognition, reading speed or preference.
 """
 
 import asyncio
+from collections import Counter
 from math import ceil, floor
 import re
 from pathlib import Path
@@ -212,7 +213,7 @@ async def verify_appearance_contract(page, expect, *, base_url, output_dir, requ
         return {text: label, rect: [rect.x - bounds.x, rect.y - bounds.y, rect.width, rect.height],
             buttonSize: [bounds.width, bounds.height],
             foreground: rgb(getComputedStyle(text.parentElement).color),
-            background: rgb(getComputedStyle(button).backgroundColor)};
+            computedBackground: rgb(getComputedStyle(button).backgroundColor)};
     }""")
     label_screenshot = "appearance-forced-colours-label.png"
     width, height, rgb = _png_rgb(await solid_button.screenshot(
@@ -225,6 +226,18 @@ async def verify_appearance_contract(page, expect, *, base_url, output_dir, requ
     pixels = [rgb[(row * width + column) * 3:(row * width + column) * 3 + 3]
               for row in range(top, bottom) for column in range(left, right)]
     assert pixels, f"Forced-colour label has no rendered text area: {forced_label}"
+    patch_left, patch_right = max(left, ceil(4 * scale_x)), min(right, width - ceil(4 * scale_x))
+    patch_top = max(ceil(4 * scale_y), ceil((y + text_height + 2) * scale_y))
+    patch_bottom = min(height - ceil(4 * scale_y), floor((y + text_height + 4) * scale_y))
+    patch = [tuple(rgb[(row * width + column) * 3:(row * width + column) * 3 + 3])
+             for row in range(patch_top, patch_bottom) for column in range(patch_left, patch_right)]
+    assert patch, f"No empty button interior beneath the label: {forced_label}"
+    background = Counter(patch).most_common(1)[0][0]
+    uniform = sum(max(abs(a - b) for a, b in zip(pixel, background)) <= 18 for pixel in patch) / len(patch)
+    forced_label.update({"background": list(background),
+                         "backgroundPatch": [patch_left, patch_top, patch_right, patch_bottom],
+                         "backgroundPatchPixels": len(patch), "backgroundPatchUniformFraction": round(uniform, 5)})
+    assert uniform > 0.9, f"Button background reference is not predominantly uniform: {forced_label}"
     assert max(abs(a - b) for a, b in zip(forced_label["foreground"], forced_label["background"])) > 36, forced_label
     fractions = {name: sum(max(abs(a - b) for a, b in zip(pixel, forced_label[name])) <= 18
                            for pixel in pixels) / len(pixels) for name in ("foreground", "background")}

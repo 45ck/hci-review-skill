@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { stripTypeScriptTypes } from "node:module";
 import { test } from "node:test";
+import { runInNewContext } from "node:vm";
 import fc from "fast-check";
+import { parseSync } from "rolldown/utils";
 import { captureLayoutSnapshot, compareLayoutSnapshots, inspectPopupPlacement } from "../packages/liquid-glass/src/quality/geometry.ts";
 import { observeLayoutShifts, summarizeLayoutShifts } from "../packages/liquid-glass/src/quality/observer.ts";
 
@@ -15,6 +19,62 @@ const snapshot = (targets = [target("anchor")], extra = {}) => ({
 const codes = report => report.findings.map(item => item.code);
 const shift = (startTime, value, hadRecentInput = false, sources = []) => ({ startTime, value, hadRecentInput, sources });
 const near = (actual, expected) => assert.ok(Math.abs(actual - expected) < 1e-10, `${actual} differs from ${expected}`);
+
+test("fixture settling samples stable geometry when paints are sparse without accepting motion or leaked work", async () => {
+  const source = readFileSync(new URL("../docs/hci/examples/liquid-glass/src/layout-quality-lab.tsx", import.meta.url), "utf8");
+  const parsed = parseSync("layout-quality-lab.tsx", source, { lang: "tsx" });
+  assert.deepEqual(parsed.errors, []);
+  const declaration = parsed.program.body.find(node => node.type === "FunctionDeclaration" && node.id?.name === "settle");
+  assert.ok(declaration, "Exercise the fixture's actual settling implementation");
+  const executable = stripTypeScriptTypes(source.slice(declaration.start, declaration.end));
+
+  for (const mode of ["sparse", "frames", "raced", "moving", "animation", "hidden", "aborted"]) {
+    let clock = 0, sequence = 0, measurements = 0;
+    const timers = new Map();
+    const frames = new Set();
+    const setTimer = (callback, delay) => {
+      const id = ++sequence;
+      timers.set(id, { callback, at: clock + delay });
+      return id;
+    };
+    const clearTimer = id => timers.delete(id);
+    const requestFrame = callback => {
+      const id = mode === "frames" || mode === "raced" ? setTimer(callback, mode === "raced" ? 50 : 16) : ++sequence;
+      frames.add(id);
+      return id;
+    };
+    const cancelFrame = id => { frames.delete(id); timers.delete(id); };
+    const settle = runInNewContext(`${executable}; settle`, {
+      window: { setTimeout: setTimer, clearTimeout: clearTimer },
+      document: { hidden: mode === "hidden" },
+      requestAnimationFrame: requestFrame, cancelAnimationFrame: cancelFrame, clearTimeout: clearTimer,
+    });
+    const target = {
+      isConnected: true,
+      getBoundingClientRect: () => { measurements++; return rect(mode === "moving" ? clock : 0, 0, 80, 44); },
+      getAnimations: () => mode === "animation" ? [{
+        playState: "running", effect: { getKeyframes: () => [{ translate: "0 0" }, { translate: "10px 0" }] },
+      }] : [],
+    };
+    const controller = new AbortController();
+    const result = settle(() => [target], controller.signal);
+    if (mode === "aborted") controller.abort();
+    while (timers.size) {
+      clock = Math.min(...[...timers.values()].map(timer => timer.at));
+      assert.ok(clock <= 1500, `${mode}: settling remains bounded`);
+      const due = [...timers].filter(([, timer]) => timer.at === clock);
+      for (const [id] of due) timers.delete(id);
+      for (const [, timer] of due) timer.callback();
+    }
+    const expected = mode === "sparse" || mode === "frames" || mode === "raced";
+    assert.equal(await result, expected, mode);
+    if (expected) assert.ok(measurements >= 4, `${mode}: retain three unchanged comparisons`);
+    if (mode === "raced") { assert.equal(measurements, 4); assert.equal(clock, 200); }
+    if (mode === "moving" || mode === "animation") assert.equal(clock, 1500, mode);
+    assert.equal(frames.size, 0, `${mode}: cancel pending animation frames`);
+    assert.equal(timers.size, 0, `${mode}: cancel pending timers`);
+  }
+});
 
 test("scrolling normal-flow probes does not masquerade as layout instability", () => {
   fc.assert(fc.property(

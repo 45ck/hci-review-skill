@@ -41,13 +41,25 @@ function Choice({ label, value, items, onChange }: { label: string; value: strin
 /** Finite, passive settling: no CSS animation suppression or control mutations. */
 function settle(elements: () => (Element | null)[], signal: AbortSignal): Promise<boolean> {
   return new Promise(resolve => {
-    let frame = 0, stable = 0, previous = "", finished = false;
+    let frame = 0, wake = 0, stable = 0, previous = "", finished = false;
     const finish = (value: boolean) => {
       if (finished) return;
-      finished = true; cancelAnimationFrame(frame); clearTimeout(timer); signal.removeEventListener("abort", aborted); resolve(value);
+      finished = true; cancelAnimationFrame(frame); window.clearTimeout(wake); clearTimeout(timer); signal.removeEventListener("abort", aborted); resolve(value);
     };
     const aborted = () => finish(false);
     const timer = window.setTimeout(() => finish(false), 1500);
+    const schedule = () => {
+      let sampled = false;
+      const sample = () => {
+        if (finished || sampled) return;
+        sampled = true;
+        cancelAnimationFrame(frame); window.clearTimeout(wake);
+        tick();
+      };
+      frame = requestAnimationFrame(sample);
+      // Software rendering can delay paint callbacks while geometry is already stable.
+      wake = window.setTimeout(sample, 50);
+    };
     const tick = () => {
       if (signal.aborted || document.hidden) { finish(false); return; }
       const nodes = elements().filter((node): node is Element => Boolean(node?.isConnected));
@@ -67,10 +79,10 @@ function settle(elements: () => (Element | null)[], signal: AbortSignal): Promis
       stable = nodes.length && geometry === previous && !animating ? stable + 1 : 0;
       previous = geometry;
       if (stable >= 3) finish(true);
-      else frame = requestAnimationFrame(tick);
+      else schedule();
     };
     signal.addEventListener("abort", aborted, { once: true });
-    if (signal.aborted) finish(false); else frame = requestAnimationFrame(tick);
+    if (signal.aborted) finish(false); else schedule();
   });
 }
 

@@ -25,6 +25,11 @@ async def verify_integrations_contract(page, expect, *, base_url, output_dir):
     await expect(stage.locator(".integration-provider")).to_contain_text("OPENROUTER_API_KEY")
     await _select(page, "tabs", "Integration source files", value="server")
     server_source = stage.get_by_label("Vercel AI SDK Server route source", exact=True)
+    browser_stage("integrations: wait for the outgoing source panel to unmount")
+    # SDK Tabs retains the inactive panel through its exit animation. Wait for
+    # that lifecycle before requiring the Copy button to be globally unique.
+    await expect(stage.locator('.integration-code [data-slot="tabs-panel"]')).to_have_count(1)
+    await expect(server_source).to_be_visible()
     await expect(server_source).to_contain_text("@openrouter/ai-sdk-provider")
     await expect(server_source).to_contain_text("toUIMessageStreamResponse")
 

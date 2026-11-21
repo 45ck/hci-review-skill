@@ -81,6 +81,7 @@ import { createModelDocument } from "@quantitative-hci/liquid-glass/modeling";
 import { AgentsShowcase } from "./agents-showcase";
 import { InteractionsShowcase } from "./interactions-showcase";
 import { SectionsShowcase } from "./sections-showcase";
+import { LayoutsShowcase } from "./layouts-showcase";
 import { PatternsShowcase } from "./patterns-showcase";
 import { AssistantShowcase } from "./assistant-showcase";
 import { ChatShowcase } from "./chat-showcase";
@@ -105,6 +106,7 @@ const demos: Record<string, ComponentType> = { ...inputDemos, ...surfaceDemos };
 const groups = [...new Set(manifest.components.map((item) => item.category))];
 const collections = [
   { id: "chat", name: "Chat workspace", keywords: "conversation chats prompt template thread history streaming assistant messages" },
+  { id: "layouts", name: "App layouts", keywords: "application app shell workspace account organisation multitenancy menu dashboard navigation review queue phone mobile settings projects people states" },
   { id: "patterns", name: "Patterns", keywords: "command palette search filter facets selection bulk actions drawer detail sheet empty state library" },
   { id: "assistant", name: "Assistant", keywords: "ai elements prompt composer attachment message conversation sources citation suggestions" },
   { id: "interactions", name: "Interactions", keywords: "cursor pointer mouse click ripple feedback magnetic right click context menu gestures" },
@@ -724,6 +726,7 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
         if (id === "visual") setGraphicsView(params.get("graphicsview") === "images" ? "images" : "canvas");
       } else {
         setSelected("overview");
+        setSearch("");
       }
     };
     restoreCollection();
@@ -918,11 +921,11 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
         <main className="kit-main" id="kit-main" tabIndex={-1}>
           <div className="kit-title-row">
             <div>
-              <p className="kit-eyebrow">
+              {active !== "layouts" && <p className="kit-eyebrow">
                 {active === "overview"
                   ? "The component collection"
                   : libraryPageTitle ? customComponent?.category ?? (example ? "Runnable example" : "Component library") : collection ? "Custom collection" : (component?.category ?? "Components")}
-              </p>
+              </p>}
               <h1>
                 {active === "overview"
                   ? "Liquid Glass"
@@ -974,13 +977,16 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
           {(active === "sections" || visitedCollections.includes("sections")) && <div hidden={active !== "sections"}>
             <SpecimenBoundary key="sections" name="Sections"><SectionsShowcase /></SpecimenBoundary>
           </div>}
+          {(active === "layouts" || visitedCollections.includes("layouts")) && <div hidden={active !== "layouts"}>
+            <SpecimenBoundary key="layouts" name="App layouts"><LayoutsShowcase active={active === "layouts"} /></SpecimenBoundary>
+          </div>}
           {(active === "patterns" || visitedCollections.includes("patterns")) && <div hidden={active !== "patterns"}>
             <SpecimenBoundary key="patterns" name="Patterns"><PatternsShowcase active={active === "patterns"} /></SpecimenBoundary>
           </div>}
           {(active === "assistant" || visitedCollections.includes("assistant")) && <div hidden={active !== "assistant"}>
             <SpecimenBoundary key="assistant" name="Assistant"><AssistantShowcase /></SpecimenBoundary>
           </div>}
-          {(["interactions", "sections", "patterns", "assistant", "chat"].includes(active ?? "")) && <RecipePanel collection={active!} onNavigate={navigateLibrary} />}
+          {(["layouts", "interactions", "sections", "patterns", "assistant", "chat"].includes(active ?? "")) && <RecipePanel collection={active!} onNavigate={navigateLibrary} />}
           {active === "overview" ? (
             <Overview onExplore={navigateLibrary} />
           ) : collection || libraryPageTitle ? null

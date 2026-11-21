@@ -13,7 +13,11 @@ async def verify_catalogue_navigation(page, expect, *, base_url, output_dir):
     foundation = json.loads((package / "component-manifest.json").read_text())["components"]
     custom = json.loads((package / "custom-component-manifest.json").read_text())["components"]
     recipes = json.loads((package / "component-recipes.json").read_text())["recipes"]
-    expected_ids = {entry["id"] for entry in foundation + custom}
+    foundation_ids = {entry["id"] for entry in foundation}
+    expected_ids = foundation_ids | {entry["id"] for entry in custom}
+    expected_collections = {"standards", "visual", "agents", "interactions", "sections", "layouts", "patterns", "assistant", "chat"}
+    assert len(expected_ids) == 115, f"Expected the combined 115-entry catalogue, got {len(expected_ids)}"
+    assert len(recipes) == 8 and "application-shell" in {recipe["id"] for recipe in recipes}, recipes
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
     original_viewport = page.viewport_size
@@ -35,6 +39,9 @@ async def verify_catalogue_navigation(page, expect, *, base_url, output_dir):
         await page.goto(base_url, wait_until="networkidle")
         await page.wait_for_function("() => typeof window.quantitativeHciAgent?.snapshot === 'function'")
         browser_stage("library: all canonical entries are browsable")
+        catalogue_ids = await page.locator("[data-catalogue-id]").evaluate_all("nodes => nodes.map(node => node.dataset.catalogueId)")
+        collection_ids = [value for value in catalogue_ids if value != "overview" and value not in foundation_ids]
+        assert set(collection_ids) == expected_collections and len(collection_ids) == 9, collection_ids
         await press("All components")
         stage = page.locator('[data-kit-view="catalogue"]')
         await expect(stage).to_be_visible()
@@ -73,6 +80,20 @@ async def verify_catalogue_navigation(page, expect, *, base_url, output_dir):
         await press("Show every component")
         await expect(cards).to_have_count(len(expected_ids))
 
+        browser_stage("library: App layouts component opens its registered showcase")
+        await _select(page, "select", "Component category", value="App layouts")
+        await expect(cards).to_have_count(1)
+        await expect(cards.first).to_have_attribute("data-library-component", "liquid-app-shell")
+        await press("Open LiquidAppShell")
+        layout_detail = page.locator('[data-library-detail="liquid-app-shell"]')
+        await expect(layout_detail).to_be_visible()
+        await expect(layout_detail).to_contain_text('@quantitative-hci/liquid-glass/layouts')
+        await press("Open live example")
+        await expect(page.locator(".qg-layout-study .qg-app")).to_be_visible()
+        assert "collection=layouts" in page.url, page.url
+        await press("All components")
+        await press("Clear filters")
+
         browser_stage("library: media component links reveal the images view")
         for component_id, component_name in (("image-card", "LiquidImageCard"), ("media-gallery", "LiquidMediaGallery"), ("image-comparison", "LiquidImageComparison")):
             await set_input("Find a library component", component_name)
@@ -106,7 +127,7 @@ async def verify_catalogue_navigation(page, expect, *, base_url, output_dir):
         examples = page.locator('[data-kit-view="examples"]')
         await expect(examples).to_be_visible()
         recipe_ids = await examples.locator("[data-library-example]").evaluate_all("nodes => nodes.map(node => node.dataset.libraryExample)")
-        assert set(recipe_ids) == {recipe["id"] for recipe in recipes}, recipe_ids
+        assert set(recipe_ids) == {recipe["id"] for recipe in recipes} and len(recipe_ids) == 8, recipe_ids
         await press("Try Assistant composer")
         example = page.locator('[data-example-id="assistant-composer"]')
         await expect(example).to_be_visible()
@@ -135,10 +156,14 @@ async def verify_catalogue_navigation(page, expect, *, base_url, output_dir):
             preview_frame = await preview_handle.content_frame()
             assert preview_frame is not None
             await preview_frame.wait_for_function("id => document.querySelector('[data-example-document]')?.dataset.exampleDocument === id && document.documentElement.dataset.liquidGlassKit === 'true'", arg=recipe["id"])
+            if recipe["id"] == "application-shell":
+                await expect(preview_frame.locator(".qg-app")).to_be_visible()
+                await expect(preview_frame.get_by_role("heading", name="Reviews", exact=True)).to_be_visible()
             dimensions = await preview_frame.evaluate("async () => { await document.fonts.ready; return {width: innerWidth, scroll: document.documentElement.scrollWidth}; }")
             assert dimensions["scroll"] <= dimensions["width"] + 1, f'{recipe["id"]} preview document overflows: {dimensions}'
             assert dimensions["width"] < 390, "Expected the actual nested preview width"
             preview_dimensions[recipe["id"]] = dimensions
+        assert len(preview_dimensions) == 8 and "application-shell" in preview_dimensions, preview_dimensions
         await press("All components")
         await page.locator("#kit-main").scroll_into_view_if_needed()
         mobile = await _page_fits(page)
@@ -153,9 +178,9 @@ async def verify_catalogue_navigation(page, expect, *, base_url, output_dir):
         detail_mobile = await _page_fits(page)
         await capture("library-detail-forced-colours.png")
         return {"canonicalEntries": len(expected_ids), "sdkFamilies": len(foundation), "customEntries": len(custom),
-                "recipes": len(recipes), "customContractReached": True, "historyPreservedFilter": True,
+                "collections": len(collection_ids), "recipes": len(recipes), "customContractReached": True, "historyPreservedFilter": True,
                 "searchDoesNotNavigate": True, "compiledPreviewAcceptedRequest": True,
-                "mediaLinksRevealImages": True, "compiledPreviewWidths": preview_dimensions,
+                "mediaLinksRevealImages": True, "appLayoutLinkRevealsShowcase": True, "compiledPreviewWidths": preview_dimensions,
                 "independentPreviewDocument": True, "mobile": mobile, "forcedColours": forced,
                 "detailMobile": detail_mobile, "screenshots": screenshots}
     finally:

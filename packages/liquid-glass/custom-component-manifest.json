@@ -400,6 +400,78 @@
       "category": "Chat",
       "exportPath": "@quantitative-hci/liquid-glass/chat",
       "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-app-shell",
+      "name": "LiquidAppShell",
+      "category": "App layouts",
+      "exportPath": "@quantitative-hci/liquid-glass/layouts",
+      "validation": "unvalidated",
+      "contract": "docs/hci/standards/app-layout-system.md"
+    },
+    {
+      "id": "liquid-app-rail",
+      "name": "LiquidAppRail",
+      "category": "App layouts",
+      "exportPath": "@quantitative-hci/liquid-glass/layouts",
+      "validation": "unvalidated",
+      "contract": "docs/hci/standards/app-layout-system.md"
+    },
+    {
+      "id": "liquid-app-header",
+      "name": "LiquidAppHeader",
+      "category": "App layouts",
+      "exportPath": "@quantitative-hci/liquid-glass/layouts",
+      "validation": "unvalidated",
+      "contract": "docs/hci/standards/app-layout-system.md"
+    },
+    {
+      "id": "liquid-app-content",
+      "name": "LiquidAppContent",
+      "category": "App layouts",
+      "exportPath": "@quantitative-hci/liquid-glass/layouts",
+      "validation": "unvalidated",
+      "contract": "docs/hci/standards/app-layout-system.md"
+    },
+    {
+      "id": "liquid-app-inspector",
+      "name": "LiquidAppInspector",
+      "category": "App layouts",
+      "exportPath": "@quantitative-hci/liquid-glass/layouts",
+      "validation": "unvalidated",
+      "contract": "docs/hci/standards/app-layout-system.md"
+    },
+    {
+      "id": "liquid-app-dock",
+      "name": "LiquidAppDock",
+      "category": "App layouts",
+      "exportPath": "@quantitative-hci/liquid-glass/layouts",
+      "validation": "unvalidated",
+      "contract": "docs/hci/standards/app-layout-system.md"
+    },
+    {
+      "id": "liquid-app-navigation",
+      "name": "LiquidAppNavigation",
+      "category": "App layouts",
+      "exportPath": "@quantitative-hci/liquid-glass/layouts",
+      "validation": "unvalidated",
+      "contract": "docs/hci/standards/app-layout-system.md"
+    },
+    {
+      "id": "liquid-workspace-switcher",
+      "name": "LiquidWorkspaceSwitcher",
+      "category": "App layouts",
+      "exportPath": "@quantitative-hci/liquid-glass/layouts",
+      "validation": "unvalidated",
+      "contract": "docs/hci/standards/app-layout-system.md"
+    },
+    {
+      "id": "liquid-app-workarea",
+      "name": "LiquidAppWorkarea",
+      "category": "App layouts",
+      "exportPath": "@quantitative-hci/liquid-glass/layouts",
+      "validation": "unvalidated",
+      "contract": "docs/hci/standards/app-layout-system.md"
     }
   ]
 }

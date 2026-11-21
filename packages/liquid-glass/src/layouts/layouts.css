@@ -1,0 +1,130 @@
+/* Quantive application shell composition.
+   Semantic controls remain actual Vercel UI SDK components; optics and type
+   come from LiquidGlassProvider and kit.css. */
+@layer liquid-kit {
+  .qg-application-shell {
+    --qg-app-rail-width: 224px;
+    --qg-app-inspector-width: 300px;
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    grid-template-columns: var(--qg-app-rail-width) minmax(0, 1fr);
+    min-width: 0;
+    min-height: 0;
+    font-family: var(--liquid-font-body);
+    color: var(--liquid-ink);
+  }
+  .qg-application-shell:has(> .qg-application-inspector) {
+    grid-template-columns: var(--qg-app-rail-width) minmax(0, 1fr) var(--qg-app-inspector-width);
+  }
+  .qg-application-workarea {
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .qg-application-header { flex-shrink: 0; }
+  .qg-application-content {
+    min-width: 0;
+    min-height: 0;
+    flex: 1;
+    overflow: auto;
+  }
+  .qg-application-dock { display: none; }
+  .qg-application-rail { min-width: 0; }
+  .qg-application-header { min-width: 0; }
+  .qg-application-content { min-width: 0; }
+  .qg-application-inspector { min-width: 0; min-height: 0; overflow: auto; }
+  .qg-application-dock { min-width: 0; }
+  .qg-application-navigation { display: flex; flex-direction: column; gap: 4px; }
+  .qg-application-navigation > [data-slot="button"] {
+    display: inline-flex;
+    justify-content: flex-start;
+    width: 100%;
+    min-width: 0;
+    text-align: left;
+    gap: 10px;
+  }
+  .qg-application-navigation > [data-slot="button"][aria-current="page"] {
+    background: var(--liquid-selection);
+    color: var(--liquid-ink);
+  }
+  .qg-application-navigation > [data-slot="button"] > span:not(.qg-icon) { min-width: 0; }
+  .qg-application-navigation .qg-app-nav-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .qg-application-navigation .qg-app-nav-count {
+    margin-left: auto;
+    font-variant-numeric: tabular-nums;
+  }
+  .qg-app-space-menu[data-slot="menu-trigger"] {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 100%;
+  }
+  .qg-app-space-menu .qg-app-space-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .qg-app-workspace-avatar {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    background: var(--liquid-blue);
+    color: white;
+    font-size: 11px;
+    font-weight: 750;
+  }
+  .qg-app-menu-role {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--liquid-muted);
+  }
+  @media (max-width: 920px) {
+    .qg-application-shell,
+    .qg-application-shell:has(> .qg-application-inspector) {
+      --qg-app-rail-width: 64px;
+      grid-template-columns: var(--qg-app-rail-width) minmax(0, 1fr);
+    }
+    .qg-application-inspector { display: none; }
+    .qg-application-rail .qg-app-nav-button:has(.qg-icon) { justify-content: center; }
+    .qg-application-rail .qg-app-nav-button:has(.qg-icon) > :is(.qg-app-nav-label, .qg-app-nav-count) { display: none; }
+    .qg-application-inspector[data-open="true"] {
+      display: block; position: absolute; right: 0; top: 0;
+      bottom: 0; z-index: 5; width: min(360px, 94%);
+      background: var(--liquid-panel-fallback);
+    }
+  }
+  @media (max-width: 600px) {
+    .qg-application-shell, .qg-application-shell:has(> .qg-application-inspector) {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .qg-application-rail { display: none; }
+    .qg-application-dock {
+      display: flex; flex-shrink: 0; justify-content: space-around;
+      min-height: 62px;
+    }
+    .qg-application-inspector[data-open="true"] {
+      inset: 0; width: 100%;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .qg-application-shell { scroll-behavior: auto; }
+  }
+  @media (forced-colors: active) {
+    .qg-application-navigation > [data-slot="button"][aria-current="page"] {
+      background: Highlight; color: HighlightText;
+    }
+    .qg-app-workspace-avatar {
+      background: Canvas; color: CanvasText; border: 1px solid CanvasText;
+    }
+  }
+}

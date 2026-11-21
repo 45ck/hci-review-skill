@@ -53,7 +53,9 @@
     "./chat/ai-sdk": "./src/chat/adapters/ai-sdk.ts",
     "./chat/ag-ui": "./src/chat/adapters/ag-ui.ts",
     "./chat/openai": "./src/chat/adapters/openai.ts",
-    "./chat/anthropic": "./src/chat/adapters/anthropic.ts"
+    "./chat/anthropic": "./src/chat/adapters/anthropic.ts",
+    "./layouts": "./src/layouts/index.ts",
+    "./layouts.css": "./src/layouts/layouts.css"
   },
   "dependencies": {
     "@ui-sdk/core": "0.1.0-beta.13",

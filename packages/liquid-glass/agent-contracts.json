@@ -8061,6 +8061,120 @@
         }
       ],
       "validation": "not-applicable"
+    },
+    {
+      "id": "liquid-app-shell-regions",
+      "kind": "presentation",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/layouts",
+          "symbols": [
+            "LiquidAppShell",
+            "LiquidAppRail",
+            "LiquidAppWorkarea",
+            "LiquidAppHeader",
+            "LiquidAppContent",
+            "LiquidAppInspector",
+            "LiquidAppDock"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/layouts/shell.tsx"
+      ],
+      "purpose": "Render semantic regions for responsive task-first applications while preserving host-provided content and state.",
+      "useWhen": [
+        "Compose a consistent workspace rail, header, content, inspector and mobile dock without inventing custom controls."
+      ],
+      "inputs": [
+        "children, className, standard HTML region attributes and optional accessible region labels",
+        "LiquidAppContent as: main (default) or section when embedded within an existing main landmark"
+      ],
+      "state": [
+        "Passive semantic regions; route, content, identity and authorisation remain external"
+      ],
+      "runtime": {
+        "discovery": "dom",
+        "mutationPath": "None; semantic regions do not mutate application state.",
+        "actions": [],
+        "outcome": "Rendered main, header, navigation, aside and dock remain discoverable to people and agents through their real child controls."
+      },
+      "restrictions": [
+        "Do not mistake the shell for a router, authentication service or tenant boundary.",
+        "Use the shared Liquid Glass provider and CSS; this module does not create a new renderer."
+      ],
+      "policies": [
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "docs": [
+        "docs/hci/standards/app-layout-system.md",
+        "packages/liquid-glass/docs/agent-engineering.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/glass_layouts_contract.py",
+          "scope": "Checks the hosted app composition regions and responsive task views; human usability and production tenancy remain unvalidated."
+        }
+      ],
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-app-navigation",
+      "kind": "composition",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/layouts",
+          "symbols": [
+            "LiquidAppNavigation",
+            "LiquidWorkspaceSwitcher"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/layouts/shell.tsx"
+      ],
+      "purpose": "Expose controlled workspace navigation and organisation switching through real Vercel UI SDK Button and Menu controls.",
+      "useWhen": [
+        "Provide consistent desktop navigation and an approved-workspace switcher in a tenant-aware application."
+      ],
+      "inputs": [
+        "items, activeId/value, onNavigate/onValueChange callbacks, optional counts, disabled state and accessible labels"
+      ],
+      "state": [
+        "Active route/workspace values are controlled by the host; the menu owns temporary open/close state"
+      ],
+      "runtime": {
+        "discovery": "sdk-children",
+        "mutationPath": "SDK Button clicks and MenuItem selections invoke controlled host callbacks; host must validate and accept or reject requested navigation and workspace transitions.",
+        "actions": [],
+        "outcome": "Read the host's resulting current route or workspace after the action; a click alone is not proof of an authorised switch.",
+        "controls": [
+          "@ui-sdk/react/button",
+          "@ui-sdk/react/menu"
+        ]
+      },
+      "restrictions": [
+        "Supply only workspaces the principal is allowed to see. Enforce tenant identity and resource authorisation on the server.",
+        "Never treat a client-side active workspace or role label as a permission grant.",
+        "Do not create a parallel DOM API for agents or bypass SDK controls."
+      ],
+      "policies": [
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "docs": [
+        "docs/hci/standards/app-layout-system.md",
+        "docs/hci/standards/agent-engineering.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/glass_layouts_contract.py",
+          "scope": "Checks workspace switch, view-only denial, navigable regions and SDK control operation using fictional in-memory fixtures."
+        }
+      ],
+      "validation": "unvalidated"
     }
   ]
 }

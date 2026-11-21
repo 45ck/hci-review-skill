@@ -24,6 +24,7 @@ from glass_developer_contract import verify_developer_contract, verify_visual_co
 from glass_graphics_contract import verify_graphics_contract
 from glass_interaction_contract import verify_interactions_contract
 from glass_sections_contract import verify_sections_contract
+from glass_layouts_contract import verify_layouts_contract
 from glass_patterns_contract import verify_patterns_contract
 from glass_assistant_contract import verify_assistant_contract
 from glass_catalogue_navigation import verify_catalogue_navigation
@@ -70,6 +71,7 @@ BROWSER_CHECK_NAMES = (
     "visual_media_gallery_comparison_and_dialogs",
     "interactions_pointer_keyboard_agent_and_preferences",
     "sections_chapters_navigation_and_preferences",
+    "layouts_real_sdk_responsive_tenant_and_state",
     "patterns_commands_filters_selection_and_details",
     "assistant_composition_cancellation_and_sources",
     "catalogue_components_examples_and_navigation",
@@ -310,7 +312,7 @@ async def run(args):
 
         async def all_components():
             catalogue = await page.locator("[data-catalogue-id]").evaluate_all("nodes => nodes.map(node => node.dataset.catalogueId)")
-            custom_collections = ["standards", "visual", "agents", "interactions", "sections", "patterns", "assistant", "chat"]
+            custom_collections = ["standards", "visual", "agents", "interactions", "sections", "layouts", "patterns", "assistant", "chat"]
             assert all(catalogue.count(item) == 1 for item in custom_collections), f"Expected each custom collection exactly once: {catalogue}"
             actual = sorted(item for item in catalogue if item not in ["overview", *custom_collections])
             assert actual == expected_ids, actual
@@ -546,6 +548,7 @@ async def run(args):
         await record("visual_media_gallery_comparison_and_dialogs", lambda: custom_components(verify_visual_contract), reset=False, timeout=40)
         await record("interactions_pointer_keyboard_agent_and_preferences", lambda: custom_components(verify_interactions_contract), reset=False, timeout=100)
         await record("sections_chapters_navigation_and_preferences", lambda: custom_components(verify_sections_contract), reset=False, timeout=90)
+        await record("layouts_real_sdk_responsive_tenant_and_state", lambda: custom_components(verify_layouts_contract), reset=False, timeout=85)
         await record("patterns_commands_filters_selection_and_details", lambda: custom_components(verify_patterns_contract), reset=False, timeout=100)
         await record("assistant_composition_cancellation_and_sources", lambda: custom_components(verify_assistant_contract), reset=False, timeout=100)
         await record("catalogue_components_examples_and_navigation", lambda: custom_components(verify_catalogue_navigation), reset=False, timeout=100)

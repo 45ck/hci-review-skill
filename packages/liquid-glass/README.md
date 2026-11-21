@@ -10,6 +10,21 @@ Custom action arguments have [JSON schemas](agent-action-inputs.json) with valid
 
 **Review status:** custom Quantive components, glass styling, icons and compositions are **Unvalidated**: no human UI/UX team has reviewed or approved them. **SDK foundation** identifies upstream behaviour provenance; it is not an approval of this adaptation. The [custom component manifest](custom-component-manifest.json) records this distinction. Automated checks do not promote review status.
 
+## Application layouts
+
+```tsx
+import {
+  LiquidAppShell, LiquidAppRail, LiquidAppWorkarea, LiquidAppHeader,
+  LiquidAppContent, LiquidAppInspector, LiquidAppDock,
+  LiquidAppNavigation, LiquidWorkspaceSwitcher,
+} from "@quantitative-hci/liquid-glass/layouts";
+import "@quantitative-hci/liquid-glass/layouts.css";
+```
+
+Compose the passive regions under the shared provider and `kit.css`. Navigation uses real SDK Buttons; the workspace switcher uses the SDK Menu with stable values and returned callback Promises. The host owns active route/workspace state, allowed memberships, persistence and authorization. `LiquidAppContent` defaults to `main`; use `as="section"` when embedding it within an existing main landmark. Compact inspector visibility is a CSS/host-state contract, with focus and dismissal owned by the host; use `LiquidDetailSheet` for a drawer's interaction behaviour.
+
+Read the [layout API and application contract](../../docs/hci/standards/app-layout-system.md), the `liquid-app-shell-regions` and `liquid-app-navigation` entries in [agent-contracts.json](agent-contracts.json), and the [compiled application-shell recipe](../../docs/hci/examples/liquid-glass/src/recipes/application-shell.tsx). The gallery opens this collection at `?collection=layouts` and demonstrates a review decision, undo, workspace switching and compact detail navigation with fictional local data. Custom layouts remain **Unvalidated**.
+
 ## Established library patterns
 
 ```tsx

@@ -59,6 +59,11 @@ for (const [entry, path] of Object.entries({
   "./modeling": "./src/modeling/index.ts",
   "./agents": "./src/agents/index.ts",
   "./agents.css": "./src/agents/agents.css",
+  "./interactions": "./src/interactions/index.ts",
+  "./interactions.css": "./src/interactions/interactions.css",
+  "./sections": "./src/sections/index.ts",
+  "./sections.css": "./src/sections/sections.css",
+  "./recipes": "./src/recipes.ts",
   "./fonts.css": "./src/fonts.css",
 })) {
   check(pkg.exports?.[entry] === path && existsSync(join(packageDir, path)), `Retain the public ${entry} entry.`);
@@ -95,7 +100,7 @@ for (const id of expected) {
 for (const path of sourceFiles) {
   const source = read(path);
   check(!/["']@ui-sdk\/react["']/.test(source) && !source.includes("@ui-sdk/core/internal/"), `${relative(root, path)}: use documented SDK entries.`);
-  check(!/["']@quantitative-hci\/liquid-glass\/(?!webgpu["']|appearance["']|icons["']|validation["']|developer(?:\.css)?["']|standards(?:\.css)?["']|viewport(?:\.css)?["']|graphics(?:\.css)?["']|media(?:\.css)?["']|modeling["']|agents(?:\.css)?["']|material["']|fonts\.css["']|kit\.css["']|styles\.css["']|tokens\.css["'])/.test(source), `${relative(root, path)}: use direct SDK primitives and documented shared kit APIs.`);
+  check(!/["']@quantitative-hci\/liquid-glass\/(?!webgpu["']|appearance["']|icons["']|validation["']|developer(?:\.css)?["']|standards(?:\.css)?["']|viewport(?:\.css)?["']|graphics(?:\.css)?["']|media(?:\.css)?["']|modeling["']|agents(?:\.css)?["']|interactions(?:\.css)?["']|sections(?:\.css)?["']|recipes["']|material["']|fonts\.css["']|kit\.css["']|styles\.css["']|tokens\.css["'])/.test(source), `${relative(root, path)}: use direct SDK primitives and documented shared kit APIs.`);
 }
 
 const customManifest = json(join(packageDir, "custom-component-manifest.json"));

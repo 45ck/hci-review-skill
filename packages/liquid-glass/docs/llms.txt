@@ -1,0 +1,55 @@
+# Quantive Liquid Glass: agent composition guide
+
+This is a private React workspace package layered on Vercel UI SDK 0.1.0-beta.13. It is not published to npm. Use the checked-out workspace and its locked dependencies. Preserve all upstream imports, 55 SDK families, current component behavior, the shared material and the existing application state.
+
+## Read first
+
+- node_modules/@ui-sdk/core/skills/ui-sdk/SKILL.md
+- node_modules/@ui-sdk/react/docs/llms.txt, then the component pages needed for the task
+- AGENTS.md and docs/hci/standards/interface-foundations.md
+- packages/liquid-glass/component-recipes.json
+- packages/liquid-glass/custom-component-manifest.json
+
+The hosted registry is /registry/components.json. It describes all SDK families, custom components and these composition recipes. /llms.txt is this guide. These files contain documentation; they do not provide an alternate action endpoint.
+
+## Composition layers
+
+1. Import genuine controls directly from @ui-sdk/react/<component>.
+2. Mount the existing LiquidGlassProvider from @quantitative-hci/liquid-glass/webgpu and kit.css at the app boundary. Reuse the provider when the app already has one. Supply the decorative backdrop deliberately: glass does not capture arbitrary application content.
+3. Add @quantitative-hci/liquid-glass/interactions with interactions.css around the intended region. Add @quantitative-hci/liquid-glass/sections with sections.css around meaningful page content.
+4. Keep one createAgent bridge from @ui-sdk/react/agent, with the host application's authorization policy. Use the SDK's snapshot, query, act and subscribe; discover fresh refs and current choices before acting. Observe the rendered state after an action, including a cancelled change.
+
+## Interactions
+
+- LiquidCursor({ children, variant: "glass" | "precision" | "native", disabled? }) scopes decoration. Glass uses a precise pointer dot and damped accent; precision follows directly. data-cursor-label supplies a short hint; data-cursor-media identifies a media region; data-cursor="native" explicitly preserves native behavior. Text entry, editable regions, canvas, disabled/pending controls and open native popups retain their native pointer. Keyboard input hides the decoration. The cursor respects effective motion and forced colours and never intercepts events.
+- LiquidClickFeedback({ children, effect: "ripple" | "spark" | "none" }) adds a finite, bounded response around real activations. It changes no application state. Do not infer completion of asynchronous work from a press effect; display the actual SDK pending/error state.
+- LiquidMagnetic({ children, distance? }) is for an aria-hidden decorative icon inside a genuine control. The label and hit target stay fixed. Never put another control or essential text inside it.
+- LiquidContextMenu({ label, triggerLabel?, children, actions, onAction }) composes MenuContextTrigger, MenuTrigger, MenuContent and MenuItem. Actions are { id, label, disabled?, destructive?, requiresConfirmation? }. Keep meaningful, unique IDs and labels. Preserve the visible trigger for discovery and touch; right-click is scoped to the region. Return asynchronous work from onAction so the SDK tracks pending/errors. Keep confirmation on the consequential item, not on opening or cancelling. Host callbacks still own authorization.
+
+Examples: docs/hci/examples/liquid-glass/src/recipes/cursor-feedback.tsx and context-actions.tsx. These examples are included in the TypeScript build and offered through Copy example in the demo.
+
+## Sections
+
+- LiquidSection({ title, eyebrow?, introduction?, actions?, headingLevel?, children }) supplies semantic section and heading structure. Supply real task content and actual SDK actions.
+- LiquidShowcaseSection adds media, mediaCaption and layout: "split" | "immersive". Media needs a truthful description/caption and an appropriate accessible alternative.
+- LiquidChapterSection({ title, chapters, value?, defaultValue?, onValueChange?, navigationLabel?, followScroll? }) keeps all chapter text readable and the selected media visible. Chapters are { id, label, title, content, media, mediaCaption }. IDs and labels must be unique. The SDK segmented control uses the same controlled value as scroll-following. onValueChange receives { source, reason: "selection" | "scroll", cancel }. Keep cancelled changes from updating the application state. Set followScroll=false for applications that own navigation elsewhere.
+- LiquidSectionContour({ variant: "wave" | "ridge" | "orbit", edge? }) is decorative SVG, hidden from assistive technology. It is not a diagram or an information-bearing connection.
+- LiquidReveal({ children, once? }) progressively adds a finite opacity response. Content remains present without JavaScript animation or when motion is reduced.
+
+Examples: docs/hci/examples/liquid-glass/src/recipes/showcase-section.tsx and chapter-story.tsx. All four examples include a standalone provider; compose the inner content into an existing provider when integrating with an established app. They intentionally do not initialize another agent bridge: reuse the host's single bridge described above, or initialize it once at the application boundary.
+
+## State, preferences and review
+
+Use meaningful accessible names and real UI SDK callbacks. Do not synthesize clicks to operate an agent-facing state model or expose a second mutation API. Decorative cursor/click/contour/reveal elements have no agent actions. Keep disabled controls disabled for all input routes. Respect data-agent-secret, data-agent-hidden and data-agent-confirm; the demo refuses actions requiring a person.
+
+Honor reduced motion, forced colours, touch input and the selected material. Avoid endless animation, wheel interception, shifting hit targets and cursor replacement over native controls. Suspend effects when the document or collection is hidden and remove observers/listeners during cleanup.
+
+All custom components remain Unvalidated until a recorded human UI/UX team review changes their status. SDK foundation identifies upstream behavior provenance only. Typechecking and browser checks do not establish improved human usability or WCAG conformance.
+
+## Verification
+
+Run npm run glass:verify and the repository's Python browser contract against the production build. Preserve all baseline scenarios and include interactions_pointer_keyboard_agent_and_preferences plus sections_chapters_navigation_and_preferences. Use the existing CI environment for software-WebGPU evidence. Record exact commands, source commit, browser, viewport, failed paths and limitations.
+
+## Sources and reuse
+
+The new React compositions adapt interaction vocabulary from CK.com and Wayrest: scoped cursor modes, fixed hit targets, decorative contours and natural scroll progress. References include https://ui-sdk.dev/docs/react/components/menu, https://magicui.design/docs/components/pointer and https://21st.dev/@automate_flows/components/liquid-glass-wordmark-footer. See docs/hci/standards/interaction-sections.md for precise provenance and scope. No premium Motion Cursor or redistribution-restricted React Bits source is included.

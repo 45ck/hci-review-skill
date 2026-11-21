@@ -6,6 +6,26 @@ The workspace pins `@ui-sdk/core` and `@ui-sdk/react` to **0.1.0-beta.13**. Impo
 
 **Review status:** custom Quantive components, glass styling, icons and compositions are **Unvalidated**: no human UI/UX team has reviewed or approved them. **SDK foundation** identifies upstream behaviour provenance; it is not an approval of this adaptation. The [custom component manifest](custom-component-manifest.json) records this distinction. Automated checks do not promote review status.
 
+## Interactions and page sections
+
+```tsx
+import { LiquidCursor, LiquidClickFeedback, LiquidContextMenu, LiquidMagnetic } from "@quantitative-hci/liquid-glass/interactions";
+import { LiquidSection, LiquidShowcaseSection, LiquidChapterSection, LiquidSectionContour, LiquidReveal } from "@quantitative-hci/liquid-glass/sections";
+import "@quantitative-hci/liquid-glass/interactions.css";
+import "@quantitative-hci/liquid-glass/sections.css";
+```
+
+Use these inside the same provider and `kit.css` shown below. Cursor and click decoration preserve real SDK controls and native input behavior. Context actions use the SDK menu's pointer, keyboard and agent paths, including disabled, pending and confirmation semantics. Magnetic movement affects only a decorative icon inside a stationary control. Sections combine semantic headings, actual actions and readable media; chapter selection shares a controlled value with natural scroll following. Reduced motion, forced colours and hidden regions stop decorative effects.
+
+The [interaction API](src/interactions/README.md) and [component contract](../../docs/hci/standards/interaction-sections.md) document exact props, state and boundaries. The gallery provides four [compiled TSX examples](../../docs/hci/examples/liquid-glass/src/recipes) with **Copy example** and **Copy agent brief**. These examples include a standalone provider; reuse an existing provider and the host's single agent bridge when integrating. This remains a private workspace package, not an npm release.
+
+```ts
+import { liquidComponentRecipes, findLiquidRecipes } from "@quantitative-hci/liquid-glass/recipes";
+const matchingRecipes = findLiquidRecipes("context menu");
+```
+
+The [recipe registry](component-recipes.json) records exports, CSS, dependencies, constraints and provenance. The gallery emits `/registry/components.json`, including all SDK/custom component manifests, and `/llms.txt` with the [agent composition guide](docs/llms.txt). These are documentation resources; actions continue through the original SDK bridge.
+
 ## Standards
 
 `LiquidDiagram` renders precise SVG from typed model data, with selection, readable element/relationship alternatives and a shared canvas. `LiquidViewport` uses the pinned UI SDK's `createViewport` behavior for drag pan, wheel pan, anchored pinch/Ctrl-wheel zoom, keyboard movement, fit, actual size, focus selection and full-window mode. Its named SDK controls and agent actions follow the same cancellable change path. Glass stays on the surrounding interface; exact notation stays crisp.

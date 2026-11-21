@@ -2,7 +2,9 @@
 
 A private UI kit that applies a shared WebGPU material to real Vercel UI SDK components. Its default overview contains working buttons, fields, choices, switches, sliders and a collection dialog. The searchable catalogue includes all **55 component families**, with one selected specimen shown at a time.
 
-Three custom collections extend that catalogue: **Graphics** for an editable design canvas, AI brief/context handoff and image components; **Standards** for 46 editable models and the complete current OMG specification catalogue; **Agents** for capability cards, task history, proposed tool changes and produced artifacts. Graphics and Standards share the SDK pan/zoom/fit/fullscreen canvas. Custom components, theme and compositions are **Unvalidated**: no human UI/UX team has reviewed or approved them. **SDK foundation** marks upstream behaviour provenance and makes no human approval claim about Quantive's adaptation.
+Five custom collections extend that catalogue: **Interactions** for cursors, click responses and genuine context actions; **Sections** for reusable showcases, natural-scroll chapters, contours and reveals; **Graphics** for an editable design canvas, AI brief/context handoff and image components; **Standards** for 46 editable models and the complete current OMG specification catalogue; **Agents** for capability cards, task history, proposed tool changes and produced artifacts. Graphics and Standards share the SDK pan/zoom/fit/fullscreen canvas. Custom components, theme and compositions are **Unvalidated**: no human UI/UX team has reviewed or approved them. **SDK foundation** marks upstream behaviour provenance and makes no human approval claim about Quantive's adaptation.
+
+Open `?collection=interactions` or `?collection=sections` for direct access. Each new collection includes **Use these components in a project**, with compiled TSX examples, copyable agent briefs and links to `/registry/components.json` and `/llms.txt`. The package remains a private workspace dependency.
 
 The GPU treatment and animation are enabled under normal device preferences. Refraction and colour dispersion are adjustable in **Material settings**, and **Backdrop** changes the scene sampled by the glass. **Appearance** offers Follow device, Glass and Solid. **Animate glass** shows the effective motion state; turning it on explicitly enables animation for this kit. These choices are remembered locally without changing device settings. Labels and interaction stay in the DOM.
 
@@ -33,6 +35,8 @@ Open the local address printed by Vite. The hosted site opens the kit directly; 
 | Material settings | Choose Glass if Follow device is showing Solid material, enable Animate glass, compare refraction and switch Backdrop. |
 | Motion | Move across a control, press it, switch Workspace view, toggle Sound and open New collection. Reflections, ripples, selection and popup depth respond. |
 | Catalogue | Search a family and select it from Component catalogue. Every item uses the real upstream component. |
+| Interactions | Compare Glass/Precision/Native cursors and Ripple/Spark/None feedback; right-click the coastal study or use Scene actions; operate the same menu with keyboard/agent actions; edit Study name and observe the local pending-save result. |
+| Sections | Compare Split/Immersive layouts, choose or scroll between chapters, toggle Follow story scroll and change the decorative contour. All chapter text remains readable. |
 | Graphics | Edit image/text/shape layers; change geometry, typography, fit and ordering; undo/redo, save directions, import raster images, export JSON/self-contained SVG and prepare an image-agent request. Image components retains the gallery, cards, details and comparison. |
 | Standards | Search/filter 46 views, follow UWE/C4 cross-view links, pan/zoom/fit/fullscreen, inspect elements, edit labels/geometry/properties, add/delete elements and relationships, preview atomic transactions, undo/redo, import validated JSON, and export JSON/SVG. Browse 291 attributed entries with exact coverage. |
 | Agents | Start the local sample, inspect its proposed change, approve it with the human control or reject/cancel it, then inspect the actual resulting artifact and task context. The demo uses fixture data and calls no provider. |
@@ -73,7 +77,9 @@ CI adds `--software-gpu`. This uses the established Chromium SwiftShader flags o
 | Evidence | What the suite checks |
 | --- | --- |
 | Catalogue | Overview plus all 55 families are discoverable; each family mounts without a render error and exposes named SDK entries. |
-| Custom components | Two new catalogue collections, model/node selection, validation and label identity, current JSON/SVG export, keyboard and real agent actions, loaded media, responsive and forced-colour views. |
+| Custom components | All five custom collections; model/node selection, validation and label identity, JSON/SVG export, keyboard and real agent actions, loaded media, responsive and forced-colour views. |
+| Cursors and clicks | Exact pointer hotspot, fixed hit targets, finite effects and idle cleanup, context-menu focus return, disabled/pending actions, native input and hidden-region fallbacks. |
+| Sections | Actual scroll-follow, shared keyboard/agent chapter selection, visible media/captions, narrow-screen focus retention and presentation preferences. |
 | Interaction | Real agent actions, keyboard selection, dialog dismissal and focus restoration. |
 | Optical contribution | Actual button, input and panel rectangles with GPU canvases visible and hidden. |
 | Material changes | Pixel changes after refraction-strength changes; a new capture revision and changed pixels after a backdrop change. |
@@ -91,6 +97,8 @@ The JSON report records browser metadata, status, pixel differences, timing and 
 - [Implementation standard](../../standards/liquid-glass.md)
 - [Reusable package](../../../../packages/liquid-glass/README.md)
 - [Standards and graphics component contract](../../standards/standards-components.md)
+- [Interaction and section contract](../../standards/interaction-sections.md)
+- [Agent composition guide](../../../../packages/liquid-glass/docs/llms.txt)
 - [Complete OMG coverage](../../standards/omg-coverage.md)
 - [Worked model exploration task](../../models/developer-model-exploration.md)
 - [HCI evaluation protocol](../../models/evaluation-protocol.md)

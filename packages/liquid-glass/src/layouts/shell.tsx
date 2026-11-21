@@ -1,8 +1,8 @@
 "use client";
 
 import type { HTMLAttributes, ReactNode } from "react";
-import { Button } from "@ui-sdk/react/button";
-import { Menu, MenuContent, MenuItem, MenuTrigger } from "@ui-sdk/react/menu";
+import { Button, type ButtonActionDetails } from "@ui-sdk/react/button";
+import { Menu, MenuContent, MenuItem, MenuTrigger, type MenuActionDetails } from "@ui-sdk/react/menu";
 import { LiquidIcon, type LiquidIconName } from "../icons";
 
 /**
@@ -31,8 +31,8 @@ export function LiquidAppHeader({ children, className = "", ...props }: RegionPr
     data-liquid-glass="" data-liquid-kind="panel" {...props}>{children}</header>;
 }
 
-export function LiquidAppContent({ children, className = "", ...props }: RegionProps) {
-  return <main className={["qg-application-content", className].filter(Boolean).join(" ")} {...props}>{children}</main>;
+export function LiquidAppContent({ children, className = "", as: Element = "main", ...props }: RegionProps & { as?: "main" | "section" }) {
+  return <Element className={["qg-application-content", className].filter(Boolean).join(" ")} {...props}>{children}</Element>;
 }
 
 export function LiquidAppInspector({ children, className = "", ...props }: RegionProps) {
@@ -59,7 +59,7 @@ export function LiquidAppNavigation({
 }: {
   items: readonly LiquidAppNavigationItem[];
   activeId: string;
-  onNavigate: (id: string) => void | Promise<void>;
+  onNavigate: (id: string, details: ButtonActionDetails) => void | Promise<void>;
   label?: string;
   className?: string;
 }) {
@@ -70,10 +70,10 @@ export function LiquidAppNavigation({
       aria-label={item.label}
       aria-current={activeId === item.id ? "page" : undefined}
       disabled={item.disabled}
-      onClick={() => onNavigate(item.id)}
+      onClick={(_, details) => onNavigate(item.id, details)}
     >
       {item.icon && <LiquidIcon name={item.icon} size={22} />}
-      <span>{item.label}</span>
+      <span className="qg-app-nav-label">{item.label}</span>
       {typeof item.count === "number" && item.count > 0 && <span className="qg-app-nav-count">{item.count}</span>}
     </Button>)}
   </nav>;
@@ -91,13 +91,16 @@ export function LiquidWorkspaceSwitcher({
 }: {
   items: readonly LiquidWorkspaceOption[];
   value: string;
-  onValueChange: (id: string) => void | Promise<void>;
+  onValueChange: (id: string, details: MenuActionDetails) => void | Promise<void>;
   disabled?: boolean;
   className?: string;
 }) {
   const current = items.find((item) => item.id === value);
   const title = current?.name ?? "Choose workspace";
-  return <Menu>
+  return <Menu onAction={(id, details) => {
+    if (disabled || id === value || !items.some((item) => item.id === id)) return;
+    return onValueChange(id, details);
+  }}>
     <MenuTrigger className={["qg-app-space-menu", className].filter(Boolean).join(" ")}
       aria-label={current ? `Current workspace: ${current.name}. Switch workspace` : "Choose workspace"}
       disabled={disabled}
@@ -111,8 +114,9 @@ export function LiquidWorkspaceSwitcher({
     <MenuContent>
       {items.map((item) => <MenuItem
         key={item.id}
+        value={item.id}
+        label={item.name}
         disabled={disabled || item.id === value}
-        onClick={() => onValueChange(item.id)}
       >
         <span className="qg-app-menu-space">{item.name}</span>
         {item.role && <span className="qg-app-menu-role">{item.role}</span>}

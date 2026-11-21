@@ -22,6 +22,7 @@ export type LayoutNavigationAction =
   | { type: "switch-space"; spaceId: LayoutSpaceId; firstRecordId: string | null }
   | { type: "inspect"; recordId: string }
   | { type: "close-detail" }
+  | { type: "dismiss-detail" }
   | { type: "filter"; value: LayoutFilter }
   | { type: "query"; value: string }
   | { type: "clear-project" }
@@ -59,6 +60,8 @@ export function transitionLayout(
       return { ...state, selectedId: action.recordId, detailOpen: true };
     case "close-detail":
       return { ...state, detailOpen: false };
+    case "dismiss-detail":
+      return { ...state, selectedId: null, detailOpen: false };
     case "filter":
       return { ...state, filter: action.value };
     case "query":

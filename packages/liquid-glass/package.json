@@ -1,6 +1,6 @@
 {
   "name": "@quantitative-hci/liquid-glass",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "sideEffects": [
@@ -39,7 +39,15 @@
     "./fonts.css": "./src/fonts.css",
     "./styles.css": "./src/styles.css",
     "./tokens.css": "./src/tokens.css",
+    "./patterns": "./src/patterns/index.ts",
+    "./patterns.css": "./src/patterns/patterns.css",
+    "./assistant": "./src/assistant/index.ts",
+    "./assistant.css": "./src/assistant/assistant.css",
     "./*": "./src/components/*.ts",
+    "./agent-action-inputs.json": "./agent-action-inputs.json",
+    "./agent-index.schema.json": "./agent-index.schema.json",
+    "./agent-contract.schema.json": "./agent-contract.schema.json",
+    "./agent-release.schema.json": "./agent-release.schema.json",
     "./layouts": "./src/layouts/index.ts",
     "./layouts.css": "./src/layouts/layouts.css"
   },

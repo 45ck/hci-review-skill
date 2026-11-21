@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { canRecordReview, initialLayoutNavigation, transitionLayout, type LayoutSpaceId as SpaceId, type LayoutRouteId as RouteId } from "./layouts-state";
 import {
-  ArrowLeft, Check, ChevronRight,
+  ArrowLeft, Check, ChevronDown, ChevronRight,
   MoreHorizontal, Search, X
 } from "lucide-react";
 import { LiquidIcon } from "@quantitative-hci/liquid-glass/icons";
@@ -94,19 +94,25 @@ const routes: ReadonlyArray<{ id: RouteId; label: string }> = [
   { id: "account", label: "Your account" }
 ];
 
-export function LayoutsShowcase() {
+export function LayoutsShowcase({ active = true }: { active?: boolean }) {
   const [device, setDevice] = useState<"wide" | "phone">("wide");
   const [layoutState, dispatch] = useReducer(transitionLayout, initialLayoutNavigation);
   const { spaceId, route, selectedId, detailOpen, filter, query, projectFilter, scenario } = layoutState;
   const [reviewed, setReviewed] = useState<Record<SpaceId, string[]>>({ northstar: [], fieldworks: [] });
   const [accountName, setAccountName] = useState("Alex Morgan");
   const [accountDraft, setAccountDraft] = useState("Alex Morgan");
+  const [accountTab, setAccountTab] = useState("profile");
   const [digest, setDigest] = useState(true);
   const [notice, setNotice] = useState("");
   const [lastReviewed, setLastReviewed] = useState<string | null>(null);
   const [command, setCommand] = useState("");
   const [commandOpen, setCommandOpen] = useState(false);
+  const [compact, setCompact] = useState(false);
+  const canvas = useRef<HTMLDivElement | null>(null);
   const detailHeading = useRef<HTMLHeadingElement | null>(null);
+  const reviewHeading = useRef<HTMLHeadingElement | null>(null);
+  const inspectTrigger = useRef<HTMLElement | null>(null);
+  const wasCompactDetailOpen = useRef(false);
   const space = spaces.find((item) => item.id === spaceId)!;
   const canReview = space.role === "Owner";
   const records = reviewsBySpace[spaceId];
@@ -120,30 +126,54 @@ export function LayoutsShowcase() {
   }), [spaceId, records, reviewed, filter, query, projectFilter]);
   const selected = matching.find((item) => item.id === selectedId) ?? null;
   const projectNames = [...new Set(records.map((record) => record.project))];
+  const compactDetailOpen = compact && detailOpen && route === "reviews" && selected !== null && scenario === "ready";
   useEffect(() => {
-    if (detailOpen && device === "phone") detailHeading.current?.focus();
-  }, [detailOpen, device]);
+    if (!active) { setCommandOpen(false); return; }
+    const element = canvas.current;
+    if (!element) return;
+    const observer = new ResizeObserver(([entry]) => setCompact(entry.contentRect.width <= 940));
+    setCompact(element.getBoundingClientRect().width <= 940);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [active]);
   useEffect(() => {
-    function onShortcut(event: KeyboardEvent) {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
-        event.preventDefault(); setCommandOpen(true);
-      }
-      if (event.key === "Escape" && detailOpen) dispatch({ type: "close-detail" });
+    const wasOpen = wasCompactDetailOpen.current;
+    wasCompactDetailOpen.current = compactDetailOpen;
+    if (!active) return;
+    if (compactDetailOpen) detailHeading.current?.focus({ preventScroll: true });
+    else if (wasOpen && route === "reviews") {
+      const trigger = inspectTrigger.current;
+      if (trigger?.isConnected && !trigger.closest("[hidden], [inert]")) trigger.focus({ preventScroll: true });
+      else reviewHeading.current?.focus({ preventScroll: true });
     }
-    window.addEventListener("keydown", onShortcut);
-    return () => window.removeEventListener("keydown", onShortcut);
-  }, [detailOpen]);
+  }, [active, compactDetailOpen, route, selectedId]);
+  useEffect(() => {
+    const element = canvas.current;
+    if (!active || !compactDetailOpen || !element) return;
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key !== "Escape" || event.defaultPrevented || !(event.target instanceof Element)) return;
+      if (event.target.closest('[data-slot="menu-content"], [data-slot="dialog-content"]')) return;
+      if (event.target.closest(".qg-app-detail")) {
+        event.preventDefault(); dispatch({ type: "close-detail" });
+      }
+    }
+    element.addEventListener("keydown", closeOnEscape);
+    return () => element.removeEventListener("keydown", closeOnEscape);
+  }, [active, compactDetailOpen]);
 
   function navigate(next: RouteId) {
     dispatch({ type: "navigate", route: next }); setNotice("");
-    if (next === "account") setAccountDraft(accountName);
+    if (next === "account") { setAccountDraft(accountName); setAccountTab("profile"); }
   }
   function switchSpace(next: SpaceId) {
     if (next === spaceId) return;
     dispatch({ type: "switch-space", spaceId: next, firstRecordId: reviewsBySpace[next][0]?.id ?? null });
     setLastReviewed(null); setNotice("Switched to " + spaces.find((item) => item.id === next)!.name + ".");
   }
-  function inspect(id: string) { dispatch({ type: "inspect", recordId: id }); }
+  function inspect(id: string, trigger: HTMLElement) {
+    inspectTrigger.current = trigger;
+    dispatch({ type: "inspect", recordId: id });
+  }
   function markReviewed() {
     if (!selected || !canRecordReview(space.role, selected.id, reviewed[spaceId])) return;
     const id = selected.id;
@@ -180,16 +210,16 @@ export function LayoutsShowcase() {
             State <ChevronDown size={15} aria-hidden="true" />
           </MenuTrigger>
           <MenuContent>
-            <MenuItem onClick={() => dispatch({ type: "scenario", value: "ready" })}>Ready</MenuItem>
-            <MenuItem onClick={() => dispatch({ type: "scenario", value: "empty" })}>No results</MenuItem>
-            <MenuItem onClick={() => dispatch({ type: "scenario", value: "loading" })}>Loading</MenuItem>
-            <MenuItem onClick={() => dispatch({ type: "scenario", value: "error" })}>Unavailable</MenuItem>
+            <MenuItem value="ready" onSelect={() => dispatch({ type: "scenario", value: "ready" })}>Ready</MenuItem>
+            <MenuItem value="empty" onSelect={() => dispatch({ type: "scenario", value: "empty" })}>No results</MenuItem>
+            <MenuItem value="loading" onSelect={() => dispatch({ type: "scenario", value: "loading" })}>Loading</MenuItem>
+            <MenuItem value="error" onSelect={() => dispatch({ type: "scenario", value: "error" })}>Unavailable</MenuItem>
           </MenuContent>
         </Menu>
         <span className="qg-layout-fixture">Fictional data</span>
       </div>
 
-      <div className="qg-layout-canvas" data-size={device}>
+      <div className="qg-layout-canvas" data-size={device} ref={canvas}>
         <LiquidAppShell className="qg-app" data-app-screen={route} data-details-open={detailOpen} data-preview-size={device} data-has-detail={route === "reviews" && selected !== null && scenario === "ready"}>
           <LiquidAppRail className="qg-app-rail" aria-label="Workspace navigation">
             <div className="qg-app-identity">
@@ -206,8 +236,11 @@ export function LayoutsShowcase() {
               <LiquidWorkspaceSwitcher items={spaces.map(item => ({ id: item.id, name: item.name, role: item.role, shortLabel: item.short }))}
                 value={spaceId} onValueChange={(id) => switchSpace(id as SpaceId)} />
               <span className="qg-app-header-spacer" />
-              <Dialog open={commandOpen} onOpenChange={setCommandOpen}>
-                <DialogTrigger aria-label="Search application pages" className="qg-app-icon-control">
+              <Dialog open={commandOpen} onOpenChange={(open, details) => {
+                if (open && !active) details.cancel();
+                else setCommandOpen(open);
+              }}>
+                <DialogTrigger aria-label="Search application pages" className="qg-app-icon-control" shortcut={active ? "mod+k" : undefined}>
                   <Search size={18} aria-hidden="true" />
                 </DialogTrigger>
                 <DialogBackdrop />
@@ -231,26 +264,26 @@ export function LayoutsShowcase() {
                   <LiquidIcon name="bell" size={24} />
                 </MenuTrigger>
                 <MenuContent>
-                  <MenuItem onClick={() => navigate("reviews")}>Open reviews ({totalOpen})</MenuItem>
-                  <MenuItem onClick={() => navigate("account")}>Notification preferences</MenuItem>
+                  <MenuItem value="reviews" onSelect={() => navigate("reviews")}>Open reviews ({totalOpen})</MenuItem>
+                  <MenuItem value="preferences" onSelect={() => { navigate("account"); setAccountTab("alerts"); }}>Notification preferences</MenuItem>
                 </MenuContent>
               </Menu>
               <Menu>
                 <MenuTrigger className="qg-app-account-trigger" aria-label="Open account menu">
-                  <span aria-hidden="true">AM</span>
+                  <span aria-hidden="true">{accountName.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase()}</span>
                 </MenuTrigger>
                 <MenuContent>
-                  <MenuItem onClick={() => navigate("account")}>Your account</MenuItem>
-                  <MenuItem onClick={() => navigate("workspace")}>Workspace settings</MenuItem>
+                  <MenuItem value="account" onSelect={() => navigate("account")}>Your account</MenuItem>
+                  <MenuItem value="workspace" onSelect={() => navigate("workspace")}>Workspace settings</MenuItem>
                 </MenuContent>
               </Menu>
             </LiquidAppHeader>
 
-            <LiquidAppContent className="qg-app-main" id="qg-layout-main">
+            <LiquidAppContent as="section" aria-label="Workspace page" className="qg-app-main" id="qg-layout-main" inert={compactDetailOpen}>
               {route === "reviews" && (
                 <div className="qg-app-page">
                   <div className="qg-app-heading">
-                    <h2>Reviews</h2>
+                    <h2 ref={reviewHeading} tabIndex={-1}>Reviews</h2>
                     <span className="qg-app-count">{totalOpen} need attention</span>
                   </div>
                   {projectFilter && <div className="qg-app-filter-chip">
@@ -291,7 +324,7 @@ export function LayoutsShowcase() {
                         const done = reviewed[spaceId].includes(record.id);
                         return <Button key={record.id} className="qg-app-review-row"
                           aria-label={"Inspect " + record.title} aria-pressed={selectedId === record.id}
-                          onClick={() => inspect(record.id)}>
+                          onClick={(event) => inspect(record.id, event.currentTarget)}>
                           <span className="qg-app-row-main">
                             <span className="qg-app-row-id">{record.id} · {record.project}</span>
                             <strong>{record.title}</strong>
@@ -348,7 +381,7 @@ export function LayoutsShowcase() {
               {route === "account" && (
                 <div className="qg-app-page qg-app-settings">
                   <div className="qg-app-heading"><h2>Your account</h2></div>
-                  <Tabs defaultValue="profile">
+                  <Tabs value={accountTab} onValueChange={(value) => { if (value) setAccountTab(value); }}>
                     <TabsList aria-label="Account settings">
                       <TabsTab value="profile">Profile</TabsTab>
                       <TabsTab value="alerts">Notifications</TabsTab>
@@ -395,9 +428,9 @@ export function LayoutsShowcase() {
               <Menu>
                 <MenuTrigger aria-label="More pages"><MoreHorizontal size={22} aria-hidden="true" />More</MenuTrigger>
                 <MenuContent>
-                  <MenuItem onClick={() => navigate("people")}>People</MenuItem>
-                  <MenuItem onClick={() => navigate("workspace")}>Workspace settings</MenuItem>
-                  <MenuItem onClick={() => navigate("account")}>Your account</MenuItem>
+                  <MenuItem value="people" onSelect={() => navigate("people")}>People</MenuItem>
+                  <MenuItem value="workspace" onSelect={() => navigate("workspace")}>Workspace settings</MenuItem>
+                  <MenuItem value="account" onSelect={() => navigate("account")}>Your account</MenuItem>
                 </MenuContent>
               </Menu>
             </LiquidAppDock>
@@ -413,9 +446,9 @@ export function LayoutsShowcase() {
                   <MenuTrigger className="qg-app-icon-control" aria-label="Review actions">
                     <MoreHorizontal size={18} aria-hidden="true" />
                   </MenuTrigger>
-                  <MenuContent>
-                    <MenuItem onClick={() => setNotice("Reference: " + selected.id)}>Show reference</MenuItem>
-                    <MenuItem onClick={() => dispatch({ type: "close-detail" })}>Close details</MenuItem>
+                  <MenuContent finalFocus={() => inspectTrigger.current?.isConnected ? inspectTrigger.current : reviewHeading.current}>
+                    <MenuItem value="reference" onSelect={() => setNotice("Reference: " + selected.id)}>Show reference</MenuItem>
+                    <MenuItem value="close" onSelect={() => dispatch({ type: "dismiss-detail" })}>Close details</MenuItem>
                   </MenuContent>
                 </Menu>
               </div>

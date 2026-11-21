@@ -5,6 +5,8 @@
   .qg-application-shell {
     --qg-app-rail-width: 224px;
     --qg-app-inspector-width: 300px;
+    position: relative;
+    isolation: isolate;
     display: grid;
     grid-template-columns: var(--qg-app-rail-width) minmax(0, 1fr);
     min-width: 0;
@@ -32,7 +34,7 @@
   .qg-application-rail { min-width: 0; }
   .qg-application-header { min-width: 0; }
   .qg-application-content { min-width: 0; }
-  .qg-application-inspector { min-width: 0; }
+  .qg-application-inspector { min-width: 0; min-height: 0; overflow: auto; }
   .qg-application-dock { min-width: 0; }
   .qg-application-navigation { display: flex; flex-direction: column; gap: 4px; }
   .qg-application-navigation > [data-slot="button"] {
@@ -48,6 +50,11 @@
     color: var(--liquid-ink);
   }
   .qg-application-navigation > [data-slot="button"] > span:not(.qg-icon) { min-width: 0; }
+  .qg-application-navigation .qg-app-nav-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   .qg-application-navigation .qg-app-nav-count {
     margin-left: auto;
     font-variant-numeric: tabular-nums;
@@ -88,6 +95,8 @@
       grid-template-columns: var(--qg-app-rail-width) minmax(0, 1fr);
     }
     .qg-application-inspector { display: none; }
+    .qg-application-rail .qg-app-nav-button:has(.qg-icon) { justify-content: center; }
+    .qg-application-rail .qg-app-nav-button:has(.qg-icon) > :is(.qg-app-nav-label, .qg-app-nav-count) { display: none; }
     .qg-application-inspector[data-open="true"] {
       display: block; position: absolute; right: 0; top: 0;
       bottom: 0; z-index: 5; width: min(360px, 94%);

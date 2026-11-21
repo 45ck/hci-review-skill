@@ -1,7 +1,7 @@
 # Quantive application layout system — architecture and decision record
 
-**Date:** 21 November 2026  
-**Status:** Design proposal / interactive offline concept. **Unvalidated** by human UI/UX review.  
+**Updated:** 22 November 2026
+**Status:** Implemented React package and gallery study; production application flows remain a roadmap. **Unvalidated** by human UI/UX review. Automated results belong to the matching build and browser reports.
 **Repository:** `45ck/hci-review-skill`, alongside the existing [interface foundations](interface-foundations.md), [Liquid Glass standard](liquid-glass.md) and [agent engineering standard](agent-engineering.md).
 
 ## Purpose
@@ -22,31 +22,45 @@ This is a layer **above** the 55 pinned Vercel UI SDK families, existing Quantiv
 | [Reddit UI library discussion](https://www.reddit.com/r/Frontend/comments/1opi3h3/is_anyone_else_tired_of_every_tailwindshadcn_app/) | Community warning that uncustomised defaults look alike | Treating anecdotal complaints as measured quantitative outcomes |
 | [Vercel UI SDK](https://github.com/vercel-labs/ui) | Typed behaviours, ARIA, keyboard, focus and one agent bridge | DOM-only actions with invented agent metadata |
 
-## First-class layout recipes
+## Layout families and roadmap
 
-1. **Operations console** — persistent workspace navigation on desktop; review queue or data collection with contextual detail; mobile top context, bottom navigation, drill-down detail. Prioritise decisions and recorded outcomes.
-2. **Content studio** — navigation + central document/canvas + optionally docked properties, history and collaborator presence; mobile focuses on one editing operation at a time. Keep pan/zoom behaviour with the existing Quantive canvas.
-3. **Customer portal** — clear current account, task status, documents, subscriptions, notifications, support and recovery; few navigation levels and no gratuitous administrative dashboard.
-4. **Mobile/field workflow** — task list, capture/upload, offline/pending state, explicit synchronization, human confirmation and one-hand reachable primary actions.
+1. **Operations console — implemented study.** Persistent workspace navigation on desktop; review queue and contextual detail; compact top context, bottom navigation and drill-down detail. The gallery records reversible decisions against fictional local records.
+2. **Content studio — future recipe.** Navigation + central document/canvas + optionally docked properties, history and collaborator presence; mobile focuses on one editing operation at a time. Keep pan/zoom behaviour with the existing Quantive canvas.
+3. **Customer portal — future recipe.** Clear current account, task status, documents, subscriptions, notifications, support and recovery; few navigation levels and no gratuitous administrative dashboard.
+4. **Mobile/field workflow — future recipe.** Task list, capture/upload, offline/pending state, explicit synchronization, human confirmation and one-hand reachable primary actions.
 
 Templates specify **regions, navigation, state, density and task affordances**, not hardcoded colours, fake metrics or domain copy. Use a single responsive design model rather than a mini desktop rendered on a phone.
 
-## Proposed reusable composition inventory
+## Public composition inventory
 
-| Family | Proposed names, not yet public exports | Required behaviour |
+All nine layout exports are available from `@quantitative-hci/liquid-glass/layouts`, with `@quantitative-hci/liquid-glass/layouts.css` loaded after `kit.css`.
+
+| Family | Implemented public exports | Responsibility |
 | --- | --- | --- |
-| Shell | `AppShell`, `WorkspaceRail`, `TopBar`, `ContentRegion`, `ContextInspector`, `MobileDock` | Slot composition, responsive adaptation, current route, keyboard paths, focus, safe areas |
-| Account | `AccountMenu`, `AccountSettings`, `SecuritySettings`, `SessionList` | Profile, security, notification and session flows; redaction for secrets; verified server changes |
-| Organisations | `WorkspaceSwitcher`, `OrganisationProfile`, `MemberDirectory`, `InviteDialog`, `RoleMatrix` | Active organisation, identity vs membership separation, permissions and clear switches |
-| Data/workflow | `DataCollection`, `RecordDetail`, `FilterBar`, `DecisionQueue`, `ReviewInspector`, `AuditTimeline` | Stable IDs, real tables/list transformations, editable review state, revision and error handling |
-| Feedback | `CommandPalette`, `NotificationCenter`, `LoadingBoundary`, `ErrorRecovery`, `EmptyState` | Observable loading, no-result, error, pending, success, denial and recovery states |
-| Administration | `BillingSettings`, `APIKeyManager`, `WebhookList`, `IntegrationManager`, `UsageView` | Sensitive action confirmation, masked keys, lifecycle, real usage units and sources |
+| Shell | `LiquidAppShell`, `LiquidAppRail`, `LiquidAppWorkarea` | Grid boundary, workspace navigation region and flexible central column |
+| Task regions | `LiquidAppHeader`, `LiquidAppContent`, `LiquidAppInspector`, `LiquidAppDock` | Semantic content and navigation surfaces; host-owned content, visibility and focus |
+| Navigation | `LiquidAppNavigation` | Controlled current page, optional icons/counts and disabled destinations on real SDK Buttons |
+| Workspace context | `LiquidWorkspaceSwitcher` | Controlled membership choice on the real SDK Menu; stable item IDs and host-owned acceptance |
 
-Reuse the existing UI SDK `Dialog`, `Menu`, `Tabs`, `Popover`, `Field`, `Input`, `Button`, `Table` where documented by the **installed 0.1.0-beta.13** version. A composition can expose the genuine SDK children and need not invent its own `definePrimitive` if no new behaviour exists. Keep the existing `LiquidGlassProvider` and one host `createAgent` bridge.
+Reuse the existing `/patterns` components for command search, filtering, selection, detail sheets and empty states: `LiquidCommandPalette`, `LiquidFilterBar`, `LiquidSelectionBar`, `LiquidDetailSheet` and `LiquidEmptyState`. Account/security/session management, membership invitations and roles, billing, audit, API keys and integrations are future product flows; the local gallery pages do not supply their backend implementations.
+
+Reuse the existing UI SDK `Dialog`, `Menu`, `Tabs`, `Popover`, `Field`, `Input` and `Button` as documented by the **installed 0.1.0-beta.13** version. Data tables can use appropriate native table semantics; this pinned SDK does not publish a `Table` family. A composition can expose genuine SDK children and need not invent its own `definePrimitive` if no new behaviour exists. Keep the existing `LiquidGlassProvider` and one host `createAgent` bridge.
+
+## Layout API and composition
+
+The seven passive regions accept `children`, `className` and their standard HTML attributes. `LiquidAppContent` defaults to a `main` element; choose `as="section"` and a meaningful accessible label when embedding it inside an existing main landmark. The wrappers do not register fictitious agent actions.
+
+`LiquidAppNavigation` accepts `items: { id, label, icon?, count?, disabled? }[]`, `activeId`, `onNavigate(id, details)`, optional `label` and `className`. The callback receives the SDK's `ButtonActionDetails`, including its input source. The host supplies the resulting active ID. Return asynchronous work so the Button retains its actual pending/error state.
+
+`LiquidWorkspaceSwitcher` accepts `items: { id, name, role?, shortLabel? }[]`, `value`, `onValueChange(id, details)`, optional `disabled` and `className`. Supply only approved memberships. The current item is disabled; remaining items use stable SDK Menu values. The callback receives the SDK's `MenuActionDetails` unchanged, and its returned Promise participates in the Menu's pending/error lifecycle. That type exposes the event; do not assume it provides the Button's source or a cancellable change object. Keep the controlled value unchanged when the host refuses a transition, and report the actual result.
+
+The shared CSS uses a 224px rail and optional 300px inspector, adjustable with `--qg-app-rail-width` and `--qg-app-inspector-width`. At viewport widths up to 920px the rail narrows and the inspector is hidden; `data-open="true"` displays it over the shell. At widths up to 600px the rail hides, the dock appears and an open inspector spans the shell. These are layout rules, not modal behaviour: the host owns focus restoration, dismissal and preventing interaction with covered content. Use the SDK-backed `LiquidDetailSheet` when the task needs a drawer's focus and dismissal behaviour. The embedded gallery adapts to its own container width and manages its compact detail view in application state.
+
+The [compiled application-shell recipe](../examples/liquid-glass/src/recipes/application-shell.tsx) is a small complete example with its own provider, navigation, workspace choice and reversible local review decision. Reuse the inner composition under an existing provider and bridge in an established app. The full gallery study adds projects, people, account pages, filtering and an inspector. The canonical `liquid-app-shell-regions` and `liquid-app-navigation` entries in [agent-contracts.json](../../../packages/liquid-glass/agent-contracts.json) describe discovery and evidence.
 
 ## Explicit app layout contract
 
-A product provides:
+This is the host integration model, rather than one object passed to `LiquidAppShell`. A product provides:
 
 - `identity`: authenticated principal, account route and account capability descriptor; **not** a client-side credential;
 - `workspaces`: stable id, display name, membership summary, active id and server-authorised switch handler;
@@ -108,15 +122,18 @@ Use **content/container constraints and real task affordances**, not just width 
 5. **Templates:** operations, content studio, customer portal, field workflow; each has a task story, UWE views, meaningful fixtures and device matrix.
 6. **Review:** update package manifest, recipe registry, agent contracts, source licences and `glass:agent-check` / `glass:verify`; production browser tests for rendered GPU pixels, keyboard, agent accepted result and mobile. Human approval is **separate**.
 
-## Implemented application foundation (draft PR, not promoted)
+## Implemented application foundation and evidence boundary
 
-The legacy offline CSS-only layout study was rejected because it did not use the real kit. It is **not** the component baseline.
+The source baseline is the React package and gallery composition described above.
 
-**Current code in this draft:**
+**Current implementation:**
+
 - Reusable package exports at `@quantitative-hci/liquid-glass/layouts`: `LiquidAppShell`, `LiquidAppRail`, `LiquidAppWorkarea`, `LiquidAppHeader`, `LiquidAppContent`, `LiquidAppInspector`, `LiquidAppDock`, `LiquidAppNavigation`, and `LiquidWorkspaceSwitcher`; import the companion `@quantitative-hci/liquid-glass/layouts.css`.
-- An actual Vercel UI SDK composition (`@ui-sdk/react` Button/Menu/Field/Tabs/SegmentedControl/Select/Switch/Dialog), using the gallery's real `LiquidGlassProvider`, Manrope/Fraunces font presets and Quantive Isometric/Line icon set.
+- An actual Vercel UI SDK composition (`@ui-sdk/react` Button/Menu/Field/Input/Tabs/SegmentedControl/Switch/Dialog), using the gallery's real `LiquidGlassProvider`, Manrope/Fraunces font presets and Quantive Isometric/Line icon set.
 - Task-first gallery view: `?collection=layouts` on the existing Quantive gallery. It demonstrates review work, organisational switching, person vs organisation settings, mobile detail, denied viewer operations, search/filter and recoverable states.
 - Explicit local state model in `docs/hci/examples/liquid-glass/src/layouts-state.ts` and tests in `tests/test_app_layout_state.mjs` and `tests/glass_layouts_contract.py`.
 - [Conceptual model and attention budget](../models/app-layout-conceptual-attention.md): labels, menus, task hierarchy, state invariants and what to measure.
 
-**Still required:** passing and recorded compile/agent/browser verification, render screenshots from the actual React gallery (not the old HTML), usable screen-reader/zoom work and human HCI review. The fixture has no production authentication, persistence, server tenancy, tenant revocation or payments. Package regions and SDK navigation are reusable **code**, not a complete backend app generator. Keep status **Unvalidated** until the separate human review is recorded.
+**Verification gate:** record the matching source commit and results of `npm run glass:agent-check`, `npm run glass:verify` and `python3 tests/test_glass_browser.py` against its production preview. The layout browser contract is `layouts_real_sdk_responsive_tenant_and_state`; screenshots must come from the actual React gallery. This document describes the required evidence and does not certify a particular run. Screen-reader/zoom evaluation and human HCI review need their own recorded scope and findings.
+
+The fixture has no production authentication, persistence, server tenancy, tenant revocation or payments. Package regions and SDK navigation are reusable code; product integration supplies those services. Keep status **Unvalidated** until the separate human review is recorded.

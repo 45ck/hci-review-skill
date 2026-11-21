@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "One component agent contract",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "const": "/agent-contract.schema.json"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "package": {
+      "$ref": "./agent-contracts.schema.json#/properties/package"
+    },
+    "sdk": {
+      "$ref": "./agent-contracts.schema.json#/properties/sdk"
+    },
+    "release": {
+      "$ref": "./agent-contract.schema.json#/$defs/release"
+    },
+    "policies": {
+      "$ref": "./agent-contracts.schema.json#/properties/policies"
+    },
+    "entry": {
+      "$ref": "./agent-contracts.schema.json#/properties/entries/items"
+    },
+    "actionSchema": {
+      "type": "string",
+      "pattern": "^/agent-action-inputs\\.json#/\\$defs/[a-z0-9-]+$"
+    }
+  },
+  "required": [
+    "$schema",
+    "schemaVersion",
+    "package",
+    "sdk",
+    "release",
+    "policies",
+    "entry"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "release": {
+      "type": "object",
+      "properties": {
+        "packageVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "contractSet": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "source": {
+          "type": "object",
+          "properties": {
+            "repository": {
+              "const": "https://github.com/45ck/hci-review-skill"
+            },
+            "status": {
+              "enum": [
+                "clean",
+                "dirty",
+                "unavailable"
+              ]
+            },
+            "commit": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40}$"
+            },
+            "tree": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40}$"
+            }
+          },
+          "required": [
+            "repository",
+            "status"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "packageVersion",
+        "contractSet",
+        "source"
+      ],
+      "additionalProperties": false
+    },
+    "file": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "^/[a-zA-Z0-9/._-]+$"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "path",
+        "sha256",
+        "bytes"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

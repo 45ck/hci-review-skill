@@ -114,6 +114,7 @@
   min-height: 42px; border-radius: 14px; padding: 5px 8px 5px 5px;
   display: flex; align-items: center; gap: 8px;
   max-width: min(260px, 58vw);
+  min-width: 0; flex-shrink: 1;
   color: #13354b;
   font-size: 14px; font-weight: 750;
 }

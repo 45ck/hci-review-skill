@@ -25,6 +25,8 @@ from glass_graphics_contract import verify_graphics_contract
 from glass_interaction_contract import verify_interactions_contract
 from glass_sections_contract import verify_sections_contract
 from glass_layouts_contract import verify_layouts_contract
+from glass_patterns_contract import verify_patterns_contract
+from glass_assistant_contract import verify_assistant_contract
 from glass_model_document_contract import verify_model_document_contract
 from glass_standards_contract import verify_standards_contract
 from glass_optics_contract import (
@@ -67,6 +69,8 @@ BROWSER_CHECK_NAMES = (
     "interactions_pointer_keyboard_agent_and_preferences",
     "sections_chapters_navigation_and_preferences",
     "layouts_real_sdk_responsive_tenant_and_state",
+    "patterns_commands_filters_selection_and_details",
+    "assistant_composition_cancellation_and_sources",
     "system_preferences_explicit_opt_in_and_forced_colours",
     "unavailable_gpu_css_motion_and_popup",
     "short_overview_motion_video",
@@ -277,7 +281,7 @@ async def run(args):
             await expect(root).to_have_attribute("data-liquid-font", "studio")
             await expect(root).to_have_attribute("data-liquid-icons", "isometric")
             await expect(page.locator("[data-kit-view='overview']")).to_be_visible()
-            await expect(page.locator("[data-catalogue-id]")).to_have_count(61)
+            await expect(page.locator("[data-catalogue-id]")).to_have_count(63)
             await expect(page.locator("[data-component-id]")).to_have_count(0)
             await expect(page.locator(".agent-inspector, .agent-command-console, .reference-lens-stage")).to_have_count(0)
             await expect(page.get_by_role("button", name="Create project", exact=True)).to_be_enabled()
@@ -287,7 +291,7 @@ async def run(args):
             assert status != "error", await root.get_attribute("data-liquid-error")
             await settled_motion(page)
             await page.screenshot(path=str(output.parent / "overview-desktop.png"), animations="allow", timeout=SCREENSHOT_TIMEOUT_MS)
-            return {"catalogueChoices": 61, "families": 55, "default": "Liquid Glass overview", "appearance": {"font": "studio", "icons": "isometric", "initialStorageAbsent": True}, "rendererStatus": status, "screenshot": "overview-desktop.png", "viewport": {"width": 1440, "height": 1000}}
+            return {"catalogueChoices": 63, "families": 55, "default": "Liquid Glass overview", "appearance": {"font": "studio", "icons": "isometric", "initialStorageAbsent": True}, "rendererStatus": status, "screenshot": "overview-desktop.png", "viewport": {"width": 1440, "height": 1000}}
 
         await record("default_glass_kit_overview", initial, reset=False, timeout=45)
         await record("gpu_on_actual_controls_strength_and_backdrop", lambda: verify_optics_contract(page, expect, output_dir=output.parent, require_gpu=args.software_gpu), reset=False, timeout=60)
@@ -302,7 +306,7 @@ async def run(args):
 
         async def all_components():
             catalogue = await page.locator("[data-catalogue-id]").evaluate_all("nodes => nodes.map(node => node.dataset.catalogueId)")
-            custom_collections = ["standards", "visual", "agents", "interactions", "sections", "layouts"]
+            custom_collections = ["standards", "visual", "agents", "interactions", "sections", "layouts", "patterns", "assistant"]
             assert all(catalogue.count(item) == 1 for item in custom_collections), f"Expected each custom collection exactly once: {catalogue}"
             actual = sorted(item for item in catalogue if item not in ["overview", *custom_collections])
             assert actual == expected_ids, actual
@@ -536,6 +540,8 @@ async def run(args):
         await record("interactions_pointer_keyboard_agent_and_preferences", lambda: custom_components(verify_interactions_contract), reset=False, timeout=100)
         await record("sections_chapters_navigation_and_preferences", lambda: custom_components(verify_sections_contract), reset=False, timeout=90)
         await record("layouts_real_sdk_responsive_tenant_and_state", lambda: custom_components(verify_layouts_contract), reset=False, timeout=85)
+        await record("patterns_commands_filters_selection_and_details", lambda: custom_components(verify_patterns_contract), reset=False, timeout=100)
+        await record("assistant_composition_cancellation_and_sources", lambda: custom_components(verify_assistant_contract), reset=False, timeout=100)
 
         async def preferences():
             preference_context = await new_context(viewport={"width": 1440, "height": 1000})

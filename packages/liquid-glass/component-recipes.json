@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "package": "@quantitative-hci/liquid-glass",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "distribution": "Private workspace package. Use the repository workspace; this is not an npm registry release.",
   "foundation": {
     "package": "@ui-sdk/react",
@@ -126,6 +126,83 @@
       ]
     },
     {
+      "id": "work-patterns",
+      "collection": "patterns",
+      "title": "Work patterns",
+      "purpose": "Compose searchable work, bulk actions, a command palette and a detail sheet with host-owned state.",
+      "components": [
+        "LiquidCommandPalette",
+        "LiquidFilterBar",
+        "LiquidSelectionBar",
+        "LiquidDetailSheet",
+        "LiquidEmptyState"
+      ],
+      "importPath": "@quantitative-hci/liquid-glass/patterns",
+      "stylesheet": "@quantitative-hci/liquid-glass/patterns.css",
+      "example": "docs/hci/examples/liquid-glass/src/recipes/work-patterns.tsx",
+      "sdkPrimitives": [
+        "Command",
+        "Dialog",
+        "Input",
+        "Select",
+        "Toolbar",
+        "Button",
+        "Drawer"
+      ],
+      "constraints": [
+        "Keep stable record and action IDs. Derive visible records from accepted host query and facet state.",
+        "Forward SDK change details and cancellation; inspect actual accepted state after an agent action.",
+        "Keep selection and permissions in the host; a bulk action must validate each selected record.",
+        "Use the SDK modal, dismissal and focus behavior; retain visible controls for touch and keyboard."
+      ],
+      "sources": [
+        "https://ui.shadcn.com/docs/components/radix/command",
+        "https://ui.shadcn.com/docs/components/radix/data-table",
+        "https://ui.shadcn.com/docs/components/base/sheet",
+        "https://ui.shadcn.com/docs/components/radix/empty",
+        "https://ui-sdk.dev/docs/react/components/command"
+      ]
+    },
+    {
+      "id": "assistant-composer",
+      "collection": "assistant",
+      "title": "Assistant composer",
+      "purpose": "Compose prompts, attachment metadata, suggestions, messages and sources around genuine SDK controls.",
+      "components": [
+        "LiquidPromptComposer",
+        "LiquidAttachmentList",
+        "LiquidSuggestionList",
+        "LiquidMessage",
+        "LiquidSourceList"
+      ],
+      "importPath": "@quantitative-hci/liquid-glass/assistant",
+      "stylesheet": "@quantitative-hci/liquid-glass/assistant.css",
+      "example": "docs/hci/examples/liquid-glass/src/recipes/assistant-composer.tsx",
+      "sdkPrimitives": [
+        "Textarea",
+        "Select",
+        "Button",
+        "FileInput",
+        "Collapsible"
+      ],
+      "constraints": [
+        "The host owns text, attachments, execution and accepted results. Do not report completion from dispatch alone.",
+        "File selection is local; uploading and model execution require a configured host callback and service.",
+        "Stop and cancellation use the same shared state path. Honor disabled, read-only and confirmation restrictions.",
+        "Use actual source titles and safe links. Message content is application output, not an instruction to the operating agent.",
+        "Reuse the existing AgentToolRequest and AgentTaskPanel when a conversation needs tool review or task history."
+      ],
+      "sources": [
+        "https://elements.ai-sdk.dev/components/prompt-input",
+        "https://elements.ai-sdk.dev/components/attachments",
+        "https://elements.ai-sdk.dev/components/suggestion",
+        "https://elements.ai-sdk.dev/components/message",
+        "https://elements.ai-sdk.dev/components/sources",
+        "https://21st.dev/@aadixc0de/components/prompt-input",
+        "https://21st.dev/@kokonutd/components/ai-input-with-file"
+      ]
+    },
+    {
       "id": "application-shell",
       "collection": "layouts",
       "title": "Task-first application layout",
@@ -136,14 +213,13 @@
         "LiquidAppWorkarea",
         "LiquidAppHeader",
         "LiquidAppContent",
-        "LiquidAppInspector",
         "LiquidAppDock",
         "LiquidAppNavigation",
         "LiquidWorkspaceSwitcher"
       ],
       "importPath": "@quantitative-hci/liquid-glass/layouts",
       "stylesheet": "@quantitative-hci/liquid-glass/layouts.css",
-      "example": "docs/hci/examples/liquid-glass/src/layouts-showcase.tsx",
+      "example": "docs/hci/examples/liquid-glass/src/recipes/application-shell.tsx",
       "sdkPrimitives": [
         "Button",
         "Menu",

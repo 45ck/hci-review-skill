@@ -8,13 +8,18 @@ import cursorSource from "./recipes/cursor-feedback.tsx?raw";
 import contextSource from "./recipes/context-actions.tsx?raw";
 import showcaseSource from "./recipes/showcase-section.tsx?raw";
 import chapterSource from "./recipes/chapter-story.tsx?raw";
+import workPatternsSource from "./recipes/work-patterns.tsx?raw";
+import assistantSource from "./recipes/assistant-composer.tsx?raw";
+import applicationShellSource from "./recipes/application-shell.tsx?raw";
 
 const sources: Record<string, string> = {
   "cursor-feedback": cursorSource, "context-actions": contextSource,
   "showcase-section": showcaseSource, "chapter-story": chapterSource,
+  "work-patterns": workPatternsSource, "assistant-composer": assistantSource,
+  "application-shell": applicationShellSource,
 };
 
-export function RecipePanel({ collection }: { collection: "interactions" | "sections" }) {
+export function RecipePanel({ collection }: { collection: string }) {
   const [result, setResult] = useState("");
   useEffect(() => setResult(""), [collection]);
   const recipes = liquidComponentRecipes.filter(recipe => recipe.collection === collection);

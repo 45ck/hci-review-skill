@@ -52,3 +52,13 @@ test("viewer permissions and duplicate review operations are denied", () => {
   assert.equal(canRecordReview("Owner", "", []), false);
   assert.equal(canRecordReview("Owner", "REL-204", []), true);
 });
+
+test("dismissing a desktop inspector clears selection without losing queue filters", () => {
+  const filtered = transitionLayout(initialLayoutNavigation, { type: "query", value: "retry" });
+  const detail = transitionLayout(filtered, { type: "inspect", recordId: "REL-204" });
+  const closed = transitionLayout(detail, { type: "dismiss-detail" });
+  assert.equal(closed.selectedId, null);
+  assert.equal(closed.detailOpen, false);
+  assert.equal(closed.query, "retry");
+  assert.equal(closed.spaceId, "northstar");
+});

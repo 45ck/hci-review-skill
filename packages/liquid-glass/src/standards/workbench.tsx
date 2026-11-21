@@ -16,7 +16,7 @@ import { ModelDataEditor, ModelHistory, ModelToolbar, ModelValidationPanel } fro
 
 export interface StandardsWorkbenchProps {
   documents: readonly ModelDocument[];
-  onDocumentsChange: (documents: ModelDocument[], details: ModelDocumentChangeDetails) => void;
+  onDocumentsChange: (documents: ModelDocument[], details: ModelDocumentChangeDetails) => void | Promise<void>;
   profiles?: readonly DiagramProfile[];
   activeModelId?: string;
   defaultModelId?: string;
@@ -34,7 +34,7 @@ interface WorkbenchDocumentProps extends ModelDocumentRenderContext {
   onSelectionRequested: () => void;
 }
 
-function WorkbenchDocument({ document, api, disabled, readOnly, lastResult, models, profiles, onNavigate, requestedSelection, onSelectionRequested }: WorkbenchDocumentProps) {
+function WorkbenchDocument({ document, api, disabled, readOnly, lastResult, pendingRevision, models, profiles, onNavigate, requestedSelection, onSelectionRequested }: WorkbenchDocumentProps) {
   const [notice, setNotice] = useState("");
   const [editorIssues, setEditorIssues] = useState<ModelIssue[]>([]);
   const model = document.model;
@@ -49,7 +49,7 @@ function WorkbenchDocument({ document, api, disabled, readOnly, lastResult, mode
   useEffect(() => { setNotice(""); setEditorIssues([]); }, [lastResult]);
   const issues = [...editorIssues, ...(lastResult?.ok === false ? lastResult.issues : []), ...profileIssues];
   return <>
-    <ModelToolbar document={document} api={api} disabled={disabled} readOnly={readOnly} onNotice={setNotice} />
+    <ModelToolbar document={document} api={api} disabled={disabled} readOnly={readOnly} pendingRevision={pendingRevision} onNotice={setNotice} />
     <ModelValidationPanel issues={issues} result={lastResult} notice={notice} />
     <div className="standards-workspace-grid">
       <section className="standards-model-panel" data-liquid-glass="" data-liquid-kind="panel" aria-label="Standards models">
@@ -87,7 +87,7 @@ export function StandardsWorkbench({ documents, onDocumentsChange, profiles = di
       <ModelNavigator models={models} activeModelId={current.model.id} onNavigate={navigate} disabled={disabled} />
       <LiquidModelDocument key={current.model.id} className="standards-document" label="Model document" document={current} models={models} validateModel={validateModel}
         disabled={disabled} readOnly={readOnly} onDocumentChange={(next, details) => {
-          onDocumentsChange(documents.map(document => document.model.id === next.model.id ? next : document), details);
+          return onDocumentsChange(documents.map(document => document.model.id === next.model.id ? next : document), details);
         }}>
         {context => <WorkbenchDocument {...context} models={models} profiles={profiles} onNavigate={navigate} requestedSelection={requestedSelection} onSelectionRequested={() => setRequestedSelection(null)} />}
       </LiquidModelDocument>

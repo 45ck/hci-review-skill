@@ -1,6 +1,6 @@
 # Standards, graphics and shared canvas
 
-**Standards** covers business, systems, software, knowledge, interchange, middleware, measurement and industry specifications. **Graphics** combines editable compositions with the existing image components. Both extend the pinned Vercel UI SDK and remain **Unvalidated**: no human UI/UX team has reviewed or approved these custom components.
+**Standards** covers business, systems, software, knowledge, interchange, middleware, measurement, industry and agent models. **Graphics** combines editable compositions with the existing image components. **Agents** makes capabilities, task history, tool requests and artifacts inspectable. All extend the pinned Vercel UI SDK and remain **Unvalidated**: no human UI/UX team has reviewed or approved these custom components.
 
 The full OMG catalogue is a discovery registry. A reference entry is not an implemented language, runtime, protocol or interchange format. Coverage is attached to an exact authority/version and must never silently transfer to a newer release. Read [OMG coverage](omg-coverage.md) for the complete inventory, supported subsets, primary sources and limitations.
 
@@ -8,13 +8,15 @@ The full OMG catalogue is a discovery registry. A reference entry is not an impl
 
 | Entry | Purpose |
 | --- | --- |
-| `@quantitative-hci/liquid-glass/standards` | Model/scene types, renderer, runtime validation, SVG serialization, full catalogue and deterministic search. |
+| `@quantitative-hci/liquid-glass/standards` | Reusable workbench, navigator, references, inspector, toolbar, history, data editor, validation panel, catalogue, profiles, renderer and SVG serialization. |
+| `@quantitative-hci/liquid-glass/modeling` | Pure revisioned document engine and actual UI SDK `LiquidModelDocument` primitive. |
+| `@quantitative-hci/liquid-glass/agents` | Capability, task status/timeline, tool request, artifact/context and composed task components; bounded task reducer. |
 | `@quantitative-hci/liquid-glass/viewport` | Shared SDK canvas camera and navigation controls. |
 | `@quantitative-hci/liquid-glass/graphics` | Controlled image/text/shape composition, validation, context and export. |
 | `@quantitative-hci/liquid-glass/media` | Image cards, gallery and comparison. |
 | `@quantitative-hci/liquid-glass/developer` | Compatibility export for existing consumers; new UI and examples say Standards. |
 
-Each has its corresponding CSS subpath. Keep all 55 upstream families available. Import interaction controls from documented `@ui-sdk/react/<component>` entries. New behavior uses documented `@ui-sdk/core` primitives and the existing `createAgent` bridge; never fork Vercel's foundation or add a hidden state-changing API.
+Visual collections have corresponding CSS subpaths; the headless `modeling` API does not need a stylesheet. Keep all 55 upstream families available. Import interaction controls from documented `@ui-sdk/react/<component>` entries. New behavior uses documented `@ui-sdk/core` primitives and the existing `createAgent` bridge; never fork Vercel's foundation or add a hidden state-changing API.
 
 ## Canvas controls by default
 
@@ -28,9 +30,9 @@ Camera actions use the same cancellable SDK change path whether invoked by point
 
 The model owns stable IDs, names, kinds, dimensions, compartment text, stereotypes, ownership/containment, table rows, relationships, routing points and specification metadata. SVG, selected-element details, relationship descriptions and exported JSON must agree. Label edits preserve identity. Deleting a container removes its descendants and connected relationships in one undoable operation.
 
-The initial 27 views cover all 14 UML diagram kinds, two UWE views, BPMN process, two DMN views, CMMN case, VDML value delivery, IFML interaction, two legacy SysML views, and BMM/SBVR/BACM concept projections. Keep normative shapes and marker direction where the specification defines them. Do not present an application-defined concept layout as an OMG-mandated notation. UWE is an LMU research profile, separately attributed from OMG.
+The 46 views include all 14 UML diagram kinds, 11 UWE views, seven C4 views, three agent views, BPMN process, two DMN views, CMMN case, VDML value delivery, IFML interaction, two legacy SysML views, and BMM/SBVR/BACM concept projections. Keep normative shapes and marker direction where the specification defines them. Do not present an application-defined concept layout as an OMG-mandated notation. UWE is an LMU research profile; C4 is Simon Brown's architecture method; A2A and local agent projections are separately attributed. See the [modeling architecture](agent-first-modeling.md) for the reusable component and transaction contracts.
 
-Geometry/runtime validation checks supported data types, finite dimensions, bounds, containment, stable identities, relationship endpoints and text suitable for SVG. It is not domain-semantic validation. The JSON editor uses that validation before replacing state; invalid edits leave the current document intact. History is bounded and works across normal kit navigation. The application schema is not XMI, BPMN XML, DMN XML or a round-trip standards interchange implementation.
+Geometry/runtime validation checks supported data types, finite dimensions, bounds, containment, stable identities, relationship endpoints and text suitable for SVG. Bounded profile checks additionally enforce supported UWE stereotypes and C4 abstraction/technology/direction rules; these do not validate the complete source metamodel. JSON and atomic operations use the same revisioned document engine. Invalid edits leave the model, selection and history intact. Undo/redo create new revisions and history stays across kit navigation. The application schema is not XMI, BPMN XML, DMN XML or a round-trip standards interchange implementation.
 
 Glass belongs on the frame and controls. Keep notation, labels, markers and separators crisp. Exact diagram geometry comes from typed data, never image generation. Supply readable element and relationship alternatives and table content; the picture is not the sole source of meaning. See [W3C complex-image guidance](https://www.w3.org/WAI/tutorials/images/complex/).
 

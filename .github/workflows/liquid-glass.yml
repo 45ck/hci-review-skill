@@ -14,13 +14,17 @@ on:
       - 'THIRD_PARTY_NOTICES.md'
       - 'scripts/check-glass-standard.mjs'
       - 'scripts/check-standards-models.mjs'
+      - 'scripts/check-agent-tasks.mjs'
+      - 'scripts/check-modelling-profiles.mjs'
       - 'tests/test_glass_browser.py'
       - 'tests/glass_agent_contract.py'
       - 'tests/glass_appearance_contract.py'
       - 'tests/glass_developer_contract.py'
       - 'tests/glass_standards_contract.py'
+      - 'tests/glass_model_document_contract.py'
       - 'tests/glass_graphics_contract.py'
       - 'docs/hci/standards/standards-components.md'
+      - 'docs/hci/standards/agent-first-modeling.md'
       - 'docs/hci/standards/omg-coverage.md'
       - 'docs/hci/standards/developer-components.md'
       - 'docs/hci/models/developer-model-exploration.md'
@@ -38,7 +42,7 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

@@ -17,7 +17,7 @@
       "validation": "unvalidated",
       "notation": [
         "UML (14 diagram kinds)",
-        "UWE navigation and presentation",
+        "UWE (11 labelled views)",
         "BPMN process",
         "DMN requirements and decision table",
         "CMMN case",
@@ -26,7 +26,10 @@
         "VDML value delivery",
         "IFML interaction",
         "SysML 1.7 blocks and requirements",
-        "BACM capability projection"
+        "BACM capability projection",
+        "C4 (7 view types)",
+        "A2A task-state projection",
+        "Agent architecture and interaction projections"
       ]
     },
     {
@@ -72,9 +75,10 @@
     },
     {
       "id": "diagram-label-editor",
-      "name": "Standards model editor",
+      "name": "StandardsWorkbench",
       "category": "Standards",
-      "validation": "unvalidated"
+      "validation": "unvalidated",
+      "exportPath": "@quantitative-hci/liquid-glass/standards"
     },
     {
       "id": "liquid-viewport",
@@ -86,7 +90,7 @@
     },
     {
       "id": "standards-catalogue",
-      "name": "Standards catalogue",
+      "name": "StandardsCatalogue",
       "category": "Standards",
       "exportPath": "@quantitative-hci/liquid-glass/standards",
       "validation": "unvalidated"
@@ -96,6 +100,132 @@
       "name": "LiquidGraphicStudio",
       "category": "Graphics",
       "exportPath": "@quantitative-hci/liquid-glass/graphics",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "model-document",
+      "name": "LiquidModelDocument",
+      "category": "Shared modeling",
+      "exportPath": "@quantitative-hci/liquid-glass/modeling",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "model-navigator",
+      "name": "ModelNavigator",
+      "category": "Standards",
+      "exportPath": "@quantitative-hci/liquid-glass/standards",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "model-references",
+      "name": "ModelReferences",
+      "category": "Standards",
+      "exportPath": "@quantitative-hci/liquid-glass/standards",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "model-inspector",
+      "name": "ModelInspector",
+      "category": "Standards",
+      "exportPath": "@quantitative-hci/liquid-glass/standards",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "model-toolbar",
+      "name": "ModelToolbar",
+      "category": "Standards",
+      "exportPath": "@quantitative-hci/liquid-glass/standards",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "model-history",
+      "name": "ModelHistory",
+      "category": "Standards",
+      "exportPath": "@quantitative-hci/liquid-glass/standards",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "model-validation",
+      "name": "ModelValidationPanel",
+      "category": "Standards",
+      "exportPath": "@quantitative-hci/liquid-glass/standards",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "model-data-editor",
+      "name": "ModelDataEditor",
+      "category": "Standards",
+      "exportPath": "@quantitative-hci/liquid-glass/standards",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "model-choice",
+      "name": "ModelChoice",
+      "category": "Standards",
+      "exportPath": "@quantitative-hci/liquid-glass/standards",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "diagram-metadata",
+      "name": "DiagramMetadata",
+      "category": "Standards",
+      "exportPath": "@quantitative-hci/liquid-glass/standards",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "diagram-details",
+      "name": "DiagramDetails",
+      "category": "Standards",
+      "exportPath": "@quantitative-hci/liquid-glass/standards",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "agent-task-status",
+      "name": "AgentTaskStatus",
+      "category": "Agents",
+      "exportPath": "@quantitative-hci/liquid-glass/agents",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "agent-capability-card",
+      "name": "AgentCapabilityCard",
+      "category": "Agents",
+      "exportPath": "@quantitative-hci/liquid-glass/agents",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "agent-task-timeline",
+      "name": "AgentTaskTimeline",
+      "category": "Agents",
+      "exportPath": "@quantitative-hci/liquid-glass/agents",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "agent-tool-request",
+      "name": "AgentToolRequest",
+      "category": "Agents",
+      "exportPath": "@quantitative-hci/liquid-glass/agents",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "agent-artifact-card",
+      "name": "AgentArtifactCard",
+      "category": "Agents",
+      "exportPath": "@quantitative-hci/liquid-glass/agents",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "agent-context-panel",
+      "name": "AgentContextPanel",
+      "category": "Agents",
+      "exportPath": "@quantitative-hci/liquid-glass/agents",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "agent-task-panel",
+      "name": "AgentTaskPanel",
+      "category": "Agents",
+      "exportPath": "@quantitative-hci/liquid-glass/agents",
       "validation": "unvalidated"
     }
   ]

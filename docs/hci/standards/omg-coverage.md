@@ -15,10 +15,13 @@ Source: [OMG — Catalogue of Specifications](https://www.omg.org/spec/), retrie
 | Formal publications | 263 | Publication status from OMG |
 | Beta publications | 23 | Publication status from OMG; beta is not treated as formal |
 | Additional historical version | 1 | SysML 1.7, explicitly pinned for the legacy profile adapter |
-| External research profile | 1 | UWE, attributed to LMU rather than OMG |
-| Combined UI inventory | 288 | Current OMG rows plus the two explicitly marked additions |
+| External research profile | 1 | UWE 3.0 subset, attributed to LMU rather than OMG |
+| External architecture method | 1 | C4, attributed to Simon Brown; a dated reference snapshot |
+| External protocol projection | 1 | A2A 0.3.0 task-state projection |
+| Local application patterns | 1 | Agent architecture and review/handoff projections |
+| Combined UI inventory | 291 | Current OMG rows plus five explicitly attributed additions |
 
-“Complete” refers to the current full table, **not** all historical versions, work-in-progress RFPs, withdrawn documents, or the contents of every specification. The current catalogue lists SysML 2.0. SysML 1.7 is kept as an additional version because its UML-profile notation is materially different from SysML 2.0. UWE is outside OMG's catalogue and is identified separately.
+“Complete” refers to the current full table, **not** all historical versions, work-in-progress RFPs, withdrawn documents, or the contents of every specification. The current catalogue lists SysML 2.0. SysML 1.7 is kept as an additional version because its UML-profile notation is materially different from SysML 2.0. UWE, C4, A2A and the local agent patterns are outside the OMG catalogue and carry their own authority, publication status and scope.
 
 The source HTML SHA-256 is `edcd0d540ca7351afbf722a6b94a9e50031ecc9a11ff1e2072321a4a63f54100`. The repository retains factual metadata and our coverage descriptions, not copies of specification prose or diagrams.
 
@@ -50,9 +53,9 @@ python packages/liquid-glass/src/standards/catalogue.refresh.py \
 | `concept-projection` | Interactive concept projection | An application-defined view of concepts from the standard. The layout and symbols are not represented as an authority-prescribed concrete notation. |
 | `reference-only` | Reference only | Searchable factual entry with a pinned primary-source link. No dedicated adapter, validator, runtime, or interchange support for that version. |
 
-Publication `status` is a separate field: `formal`, `beta`, or `research-profile`. “Formal” means the authority formally published the specification; it does not mean our component is validated or conformant. Conversely, a reference-only standard can be formally published.
+Publication `status` is a separate field: `formal`, `beta`, `research-profile`, `published-method`, `published-protocol` or `application-pattern`. “Formal” means the authority formally published the specification; it does not mean our component is validated or conformant. Conversely, a reference-only standard can be formally published.
 
-The current registry has **8 notation-subset entries, 3 concept-projection entries, and 277 reference-only entries**. Its implemented view contract comprises **27 view IDs**. These are bounds on the adapters, not counts of fully implemented standards.
+The current registry has **9 notation-subset entries, 5 concept-projection entries, and 277 reference-only entries**. Its implemented view contract comprises **46 view IDs**, including **11 UWE views, 7 C4 views and 3 agent views**. The original 27 IDs are retained. These are bounds on the adapters, not counts of fully implemented standards.
 
 ## Interactive coverage by pinned version
 
@@ -65,17 +68,23 @@ The current registry has **8 notation-subset entries, 3 concept-projection entri
 | [OMG VDML 1.1](https://www.omg.org/spec/VDML/1.1) | Notation subset | Limited roles, deliverables and value concepts using Clause 8 notation. No full eight-view suite, operational value calculation, or metamodel interchange. |
 | [OMG IFML 1.0](https://www.omg.org/spec/IFML/1.0) | Notation subset | View containers/components, events, actions and interaction flows. No platform generation, parameter-binding execution, full IFML semantics, or XMI interchange. |
 | [OMG SysML 1.7](https://www.omg.org/spec/SysML/1.7) | Notation subset; historical pin | Legacy block and requirements views. No claim of all SysML v1 diagrams, simulation, or SysML v2 support. The current [SysML 2.0](https://www.omg.org/spec/SysML/2.0) entry is reference-only. |
-| [LMU UWE tutorials](https://uwe.pst.ifi.lmu.de/) | Notation subset; external profile | Navigation and presentation profile examples. No claim of an OMG UWE specification, a tutorial version number, complete profile validation, or transformations. |
+| [LMU UWE 3.0](https://uwe.pst.ifi.lmu.de/publicationsMetamodelAndProfile.html), pin: 3.0 (implemented subset) | Notation subset; external profile | Eleven linked views cover requirements/use cases, requirement activities, content, navigation, presentation, process structure/flow, users/roles, basic rights, navigation states and application modes. No complete profile/OCL validation, XMI round trip, transformations, aspect-oriented adaptation/weaving or security runtime. |
+| [C4 model](https://c4model.com/), pin: 2026-11 reference snapshot | Notation subset; external method | Seven view types: landscape, context, container, component, UML code, dynamic and deployment. Explicit types, responsibilities, technologies, protocols, keys and cross-view links. A local notation choice for Simon Brown's method; no OMG or C4 certification, Structurizr DSL parser, provisioning or synchronization with production code. |
 | [OMG BMM 1.3](https://www.omg.org/spec/BMM/1.3) | Concept projection | Motivation concepts and named relationships. BMM's notation independence is preserved: the visual layout is application-defined. |
 | [OMG SBVR 1.5](https://www.omg.org/spec/SBVR/1.5) | Concept projection | Vocabulary and rule records in a structured text/table view. No formal logical parser, rule engine, or semantics validation. The table is not called normative SBVR graphical notation. |
 | [OMG BACM 1.1](https://www.omg.org/spec/BACM/1.1) | Concept projection | Capability/outcome view with explicitly named concepts and relationships. No full BACM metamodel, framework compliance, or mandated capability-map notation. BACM 1.2 beta is reference-only. |
+| [A2A 0.3.0](https://a2a-protocol.org/v0.3.0/specification/), pin: 0.3.0 (state projection) | Concept projection; external protocol | All nine JSON-RPC TaskState names in a UML state view. Transitions are selected application examples, not a normative transition table. No A2A transport, Agent Card validator or interoperability claim. |
+| [Quantitative HCI agent patterns](https://a2a-protocol.org/v0.3.0/specification/), pin: 1.0 (local projection) | Concept projection; local patterns | Shared-command architecture and reviewed tool handoff using UML components and sequences. A2A/MCP concepts inform the design; this is neither an OMG agent profile nor a protocol-mandated architecture. |
 
 ### Registered view identifiers
 
 | Family | Stable IDs |
 | --- | --- |
 | UML | `uml-class`, `uml-object`, `uml-package`, `uml-component`, `uml-deployment`, `uml-composite`, `uml-profile`, `uml-use-case`, `uml-activity`, `uml-state`, `uml-sequence`, `uml-communication`, `uml-interaction-overview`, `uml-timing` |
-| UWE | `uwe-navigation`, `uwe-presentation` |
+| UWE core | `uwe-requirements`, `uwe-requirement-activity`, `uwe-content`, `uwe-navigation`, `uwe-presentation`, `uwe-process-structure`, `uwe-process-flow` |
+| UWE security subset | `uwe-user-roles`, `uwe-basic-rights`, `uwe-navigation-states`, `uwe-application-modes` |
+| C4 | `c4-landscape`, `c4-context`, `c4-container`, `c4-component`, `c4-code`, `c4-dynamic`, `c4-deployment` |
+| Agent projections | `agent-architecture`, `agent-task-lifecycle`, `agent-handoff` |
 | BPMN | `bpmn-process` |
 | DMN | `dmn-requirements`, `dmn-table` |
 | CMMN | `cmmn-case` |
@@ -116,7 +125,37 @@ Glass surfaces belong to the viewport, controls and optional presentation treatm
 
 [SysML 1.7](https://www.omg.org/spec/SysML/1.7) and [SysML 2.0](https://www.omg.org/spec/SysML/2.0) are separate registry records. A legacy `«block»` or `«requirement»` view cannot establish support for the new language simply by relabelling its version. [UAF 1.3](https://www.omg.org/spec/UAF/1.3), [KerML 1.0](https://www.omg.org/spec/KerML/1.0), and [Systems Modeling API and Services 1.0](https://www.omg.org/spec/SystemsModelingAPI/1.0) remain reference-only until their own concrete scope is implemented and checked.
 
-UWE's [navigation tutorial](https://uwe.pst.ifi.lmu.de/teachingTutorialNavigation.html) distinguishes navigation classes, menus, indexes, queries and process links. Its [presentation tutorial](https://uwe.pst.ifi.lmu.de/teachingTutorialPresentation.html) describes pages/groups and elements such as text, inputs, buttons and images. These profile conventions are attributed to the LMU UWE project, separately from the underlying OMG UML specification.
+### UWE workflow and security scope
+
+The [LMU profile publication](https://uwe.pst.ifi.lmu.de/publicationsMetamodelAndProfile.html) identifies UWE 3.0 and its security additions. The implementation pin refers to that profile, while each view's profile metadata links to the relevant tutorial or primary research source. The original examples describe one proposed project-and-asset library. They do not reproduce LMU's diagrams or redistribute its profile archive.
+
+| Modelling concern | Implemented vocabulary and trace | Primary source |
+| --- | --- | --- |
+| Requirements | Browsing/processing use cases; detailed display, user, system and navigation actions; owned interaction pins and object flow | [Requirements tutorial](https://uwe.pst.ifi.lmu.de/teachingTutorialRequirements.html) |
+| Content | UML classes, attributes, operations, association multiplicities, composition and generalization | [Content tutorial](https://uwe.pst.ifi.lmu.de/teachingTutorialContent.html) |
+| Navigation | Navigation classes, menus, indexes, queries and process classes; process links distinguish invocation from browsing | [Navigation tutorial](https://uwe.pst.ifi.lmu.de/teachingTutorialNavigation.html) |
+| Presentation | Nested pages, groups and forms; repeated properties, input, button, image and text stereotypes; the palette includes further published presentation stereotypes | [Presentation tutorial](https://uwe.pst.ifi.lmu.de/teachingTutorialPresentation.html), [profile overview](https://uwe.pst.ifi.lmu.de/profileOverview.html) |
+| Processes | Separate structural class and activity-flow models, user/system responsibilities and an explicit retry merge | [Process tutorial](https://uwe.pst.ifi.lmu.de/teachingTutorialProcess.html) |
+| Users and rights | webUser/sessionClass classifiers, role instances, class-level access dependencies and authorizationConstraint comments | [Secure address book example](https://uwe.pst.ifi.lmu.de/exampleSecureAddressBook.html), [Busch dissertation, Appendix C](https://www.pst.ifi.lmu.de/~busch/thesisMarianneBusch.pdf) |
+| Navigation states and modes | Session/navigation-state stereotypes, session roles, transition guards and application-wide appMode states | [Profile overview](https://uwe.pst.ifi.lmu.de/profileOverview.html), [Busch dissertation, Appendix C](https://www.pst.ifi.lmu.de/~busch/thesisMarianneBusch.pdf) |
+
+Activity object nodes have ordinary UML object-node labels; role instances use underlined instance specifications. Data flows cannot silently become control flows. Queries and process classes require process links in the implemented navigation subset. Basic-rights checks are deliberately limited to role-instance → content-class dependencies with `create`, `readAll`, `updateAll`, `delete` or `executeAll`; attribute- and operation-specific rights are not claimed. Constraint text describes policy without evaluating OCL or enforcing access.
+
+The [UWE approach](https://uwe.pst.ifi.lmu.de/aboutUwe.html) also includes model exchange, transformations and aspect-oriented adaptation with model weaving. Covering the practical modelling workflow does **not** implement that complete toolchain. Application-mode examples must not be relabelled as full adaptation support.
+
+### C4 hierarchy and notation choice
+
+C4 is [notation independent](https://c4model.com/diagrams/notation). The local palette uses person silhouettes, labelled software boxes, data-store cylinders, dashed scope boundaries and deployment-node outlines. Its labels carry abstraction type, responsibility and technology; directed relationship labels carry intent and inter-container protocols. These choices are explained by a key in the UI and standalone SVG.
+
+The [landscape](https://c4model.com/diagrams/system-landscape) and [system-context](https://c4model.com/diagrams/system-context) views contain people and software systems. A [container view](https://c4model.com/diagrams/container) describes applications and data stores in one system; a [component view](https://c4model.com/diagrams/component) scopes components to one container. The [code view](https://c4model.com/diagrams/code) uses UML classes and interfaces. This authored code example is not generated from, or synchronized with, repository source.
+
+The [dynamic view](https://c4model.com/diagrams/dynamic) uses positive integer step numbers on directed relationships for a simple ordered scenario. The [deployment view](https://c4model.com/diagrams/deployment) shows one hypothetical environment, nested execution nodes and instances linked to logical containers. A C4 container is an application or data store, not necessarily a Docker container. Technology names in these examples describe a proposed architecture; they do not assert an existing backend or deployment.
+
+### Agent projection provenance
+
+[A2A 0.3.0, §6.3](https://a2a-protocol.org/v0.3.0/specification/#63-taskstate-enum) supplies the nine JSON-RPC TaskState names. The task-state view retains unknown as a distinct status and identifies terminal outcomes. Input requests and out-of-band authentication are described separately; the diagram does not define every legal protocol transition.
+
+The architecture and review/handoff views are local application designs expressed with existing UML component and sequence notation. Their source link identifies the A2A task/artifact concepts informing the design; it does not attribute the local command boundary or approval flow to the protocol authority. The UI/UX validation status remains **Unvalidated**.
 
 ## Coverage beyond the visual adapters
 
@@ -152,6 +191,10 @@ const dmnVersions = findStandards({ query: 'DMN' });
 ```
 
 Categories and kinds are **editorial navigation aids**, derived from family lists and conservative title rules. They are not official OMG classifications and do not promise a single exclusive type for a multifaceted specification. Every unmatched family remains in the inventory; classification never drops records. The source metadata is kept separate so a classification change cannot alter a fact from OMG.
+
+`diagramProfiles`, `getDiagramProfile()` and `validateDiagramProfile()` expose node/relationship palettes, stereotype subsets, provenance and bounded checks. Checks cover C4 abstraction levels, ownership, technology/protocol labels and step numbers, plus UWE invocation links, activity data flow and the supported access-rights endpoints. These are **not** complete domain-semantic validation. An unknown explicit profile yields a warning instead of silently claiming validation; hosts may supply additional profiles with `family: "custom"` against an existing supported notation.
+
+Optional `parentModelId`, node `entityId` and typed node `references` preserve hierarchy and traceability. References identify a target model and optional element, with a relation and readable label. The workbench validates target identities and parent cycles; these local navigation links are application data, not standardized XMI trace links.
 
 Consumer requirements:
 

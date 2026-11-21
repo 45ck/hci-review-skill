@@ -42,6 +42,10 @@ async def _named_controls(page):
     return [{"component": entry["component"], "label": entry["label"]} for entry in visible]
 
 
+async def _open_diagram_details(page):
+    await _act(page, await _entry(page, "collapsible", "Diagram details"), "setOpen", [True])
+
+
 async def _page_fits(page):
     dimensions = await page.evaluate("({width: innerWidth, scroll: document.documentElement.scrollWidth})")
     assert dimensions["scroll"] <= dimensions["width"] + 1, f"Page-level horizontal overflow: {dimensions}"
@@ -242,6 +246,7 @@ async def verify_developer_contract(page, expect, *, base_url, output_dir):
         element_choices = await _choices(page, await _entry(page, "select", "Diagram element"))
         assert {choice["value"] for choice in element_choices} == {node["id"] for node in model["nodes"]}, element_choices
         description = viewer.locator("[data-diagram-description]")
+        await _open_diagram_details(page)
         await expect(description).to_be_visible()
         readable = await description.inner_text()
         for node in model["nodes"]:
@@ -273,6 +278,7 @@ async def verify_developer_contract(page, expect, *, base_url, output_dir):
     assert initial_model is not None
     await _select(page, "select", "Diagram model", value="uml-class")
     viewer = page.locator('[data-diagram-id="uml-class"]')
+    await _open_diagram_details(page)
     browser_stage("developer: pointer, keyboard and agent share selection")
     await viewer.locator('[data-diagram-node="asset"]').click()
     await expect(viewer.locator('[data-diagram-selection="asset"]')).to_be_visible()
@@ -316,6 +322,7 @@ async def verify_developer_contract(page, expect, *, base_url, output_dir):
     assert await copy_model() == edited, "Switching models discarded the session edit"
     await _select(page, "listbox", "Component catalogue", value="visual")
     await _select(page, "listbox", "Component catalogue", value="standards")
+    await _open_diagram_details(page)
     assert await copy_model() == edited, "Leaving the developer section discarded the session model"
     await _act(page, await _entry(page, "collapsible", "Model data"), "setOpen", [True])
     code = await _entry(page, "textarea", "Diagram JSON")

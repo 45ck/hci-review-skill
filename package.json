@@ -13,7 +13,7 @@
   "scripts": {
     "glass:dev": "npm run dev -w @quantitative-hci/glass-gallery",
     "glass:build": "npm run build -w @quantitative-hci/glass-gallery",
-    "glass:check": "node scripts/check-glass-standard.mjs && node scripts/check-standards-models.mjs",
+    "glass:check": "node scripts/check-glass-standard.mjs && node scripts/check-standards-models.mjs && node scripts/check-modelling-profiles.mjs && node packages/liquid-glass/src/modeling/check-document.mjs && node scripts/check-agent-tasks.mjs",
     "glass:verify": "npm run glass:check && npm run glass:build"
   }
 }

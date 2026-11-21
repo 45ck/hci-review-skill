@@ -2,7 +2,7 @@
 
 A private UI kit that applies a shared WebGPU material to real Vercel UI SDK components. Its default overview contains working buttons, fields, choices, switches, sliders and a collection dialog. The searchable catalogue includes all **55 component families**, with one selected specimen shown at a time.
 
-Two custom collections extend that catalogue: **Graphics** for an editable design canvas, AI brief/context handoff, image cards, gallery, detail dialogs and comparison; **Standards** for 27 editable models and the complete current OMG specification catalogue. Both use the shared SDK pan/zoom/fit/fullscreen canvas. Custom components, theme and compositions are **Unvalidated**: no human UI/UX team has reviewed or approved them. **SDK foundation** marks upstream behaviour provenance and makes no human approval claim about Quantive's adaptation.
+Three custom collections extend that catalogue: **Graphics** for an editable design canvas, AI brief/context handoff and image components; **Standards** for 46 editable models and the complete current OMG specification catalogue; **Agents** for capability cards, task history, proposed tool changes and produced artifacts. Graphics and Standards share the SDK pan/zoom/fit/fullscreen canvas. Custom components, theme and compositions are **Unvalidated**: no human UI/UX team has reviewed or approved them. **SDK foundation** marks upstream behaviour provenance and makes no human approval claim about Quantive's adaptation.
 
 The GPU treatment and animation are enabled under normal device preferences. Refraction and colour dispersion are adjustable in **Material settings**, and **Backdrop** changes the scene sampled by the glass. **Appearance** offers Follow device, Glass and Solid. **Animate glass** shows the effective motion state; turning it on explicitly enables animation for this kit. These choices are remembered locally without changing device settings. Labels and interaction stay in the DOM.
 
@@ -34,7 +34,8 @@ Open the local address printed by Vite. The hosted site opens the kit directly; 
 | Motion | Move across a control, press it, switch Workspace view, toggle Sound and open New collection. Reflections, ripples, selection and popup depth respond. |
 | Catalogue | Search a family and select it from Component catalogue. Every item uses the real upstream component. |
 | Graphics | Edit image/text/shape layers; change geometry, typography, fit and ordering; undo/redo, save directions, import raster images, export JSON/self-contained SVG and prepare an image-agent request. Image components retains the gallery, cards, details and comparison. |
-| Standards | Choose from 27 models, pan/zoom/fit/fullscreen, select an element, inspect relationships, edit labels and geometry, add/delete elements and relationships, undo/redo, apply validated JSON, and export JSON/SVG. Browse 288 versioned entries with exact coverage and primary sources. |
+| Standards | Search/filter 46 views, follow UWE/C4 cross-view links, pan/zoom/fit/fullscreen, inspect elements, edit labels/geometry/properties, add/delete elements and relationships, preview atomic transactions, undo/redo, import validated JSON, and export JSON/SVG. Browse 291 attributed entries with exact coverage. |
+| Agents | Start the local sample, inspect its proposed change, approve it with the human control or reject/cancel it, then inspect the actual resulting artifact and task context. The demo uses fixture data and calls no provider. |
 | Popups | Open menus, dialogs, popovers and drawers; their controls must remain above the backdrop and operable. |
 | Accessibility preferences | Check forced colours, reduced transparency and reduced motion with the same labels, state and actions. |
 

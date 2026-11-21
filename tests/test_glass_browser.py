@@ -16,11 +16,12 @@ import traceback
 from time import perf_counter
 from urllib.parse import urlparse
 
-from glass_agent_contract import verify_agent_contract
+from glass_agent_contract import verify_agent_contract, verify_agent_tasks_contract
 from glass_appearance_contract import verify_appearance_contract
 from glass_browser_diagnostics import start_browser_profile
 from glass_developer_contract import verify_developer_contract, verify_visual_contract
 from glass_graphics_contract import verify_graphics_contract
+from glass_model_document_contract import verify_model_document_contract
 from glass_standards_contract import verify_standards_contract
 from glass_optics_contract import (
     SCREENSHOT_TIMEOUT_MS,
@@ -244,7 +245,7 @@ async def run(args):
             await expect(root).to_have_attribute("data-liquid-font", "studio")
             await expect(root).to_have_attribute("data-liquid-icons", "isometric")
             await expect(page.locator("[data-kit-view='overview']")).to_be_visible()
-            await expect(page.locator("[data-catalogue-id]")).to_have_count(58)
+            await expect(page.locator("[data-catalogue-id]")).to_have_count(59)
             await expect(page.locator("[data-component-id]")).to_have_count(0)
             await expect(page.locator(".agent-inspector, .agent-command-console, .reference-lens-stage")).to_have_count(0)
             await expect(page.get_by_role("button", name="Create project", exact=True)).to_be_enabled()
@@ -254,7 +255,7 @@ async def run(args):
             assert status != "error", await root.get_attribute("data-liquid-error")
             await settled_motion(page)
             await page.screenshot(path=str(output.parent / "overview-desktop.png"), animations="allow", timeout=SCREENSHOT_TIMEOUT_MS)
-            return {"catalogueChoices": 58, "families": 55, "default": "Liquid Glass overview", "appearance": {"font": "studio", "icons": "isometric", "initialStorageAbsent": True}, "rendererStatus": status, "screenshot": "overview-desktop.png", "viewport": {"width": 1440, "height": 1000}}
+            return {"catalogueChoices": 59, "families": 55, "default": "Liquid Glass overview", "appearance": {"font": "studio", "icons": "isometric", "initialStorageAbsent": True}, "rendererStatus": status, "screenshot": "overview-desktop.png", "viewport": {"width": 1440, "height": 1000}}
 
         await record("default_glass_kit_overview", initial, reset=False, timeout=45)
         await record("gpu_on_actual_controls_strength_and_backdrop", lambda: verify_optics_contract(page, expect, output_dir=output.parent, require_gpu=args.software_gpu), reset=False, timeout=60)
@@ -269,7 +270,7 @@ async def run(args):
 
         async def all_components():
             catalogue = await page.locator("[data-catalogue-id]").evaluate_all("nodes => nodes.map(node => node.dataset.catalogueId)")
-            custom_collections = ["standards", "visual"]
+            custom_collections = ["standards", "visual", "agents"]
             assert all(catalogue.count(item) == 1 for item in custom_collections), f"Expected each custom collection exactly once: {catalogue}"
             actual = sorted(item for item in catalogue if item not in ["overview", *custom_collections])
             assert actual == expected_ids, actual
@@ -494,7 +495,9 @@ async def run(args):
                 await custom_context.close()
 
         await record("uml_uwe_selection_editing_exports_and_access", lambda: custom_components(verify_developer_contract), reset=False, timeout=100)
-        await record("standards_catalogue_27_views_and_model_editing", lambda: custom_components(verify_standards_contract), reset=False, timeout=150)
+        await record("standards_catalogue_46_views_and_model_editing", lambda: custom_components(verify_standards_contract), reset=False, timeout=240)
+        await record("model_document_atomic_agent_commands_and_human_history", lambda: custom_components(verify_model_document_contract), reset=False, timeout=90)
+        await record("agent_tasks_review_and_artifacts", lambda: custom_components(verify_agent_tasks_contract), reset=False, timeout=90)
         await record("graphics_agent_human_edits_history_and_exports", lambda: custom_components(verify_graphics_contract), reset=False, timeout=90)
         await record("visual_media_gallery_comparison_and_dialogs", lambda: custom_components(verify_visual_contract), reset=False, timeout=40)
 

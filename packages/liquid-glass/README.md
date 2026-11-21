@@ -10,7 +10,7 @@ The workspace pins `@ui-sdk/core` and `@ui-sdk/react` to **0.1.0-beta.13**. Impo
 
 `LiquidDiagram` renders precise SVG from typed model data, with selection, readable element/relationship alternatives and a shared canvas. `LiquidViewport` uses the pinned UI SDK's `createViewport` behavior for drag pan, wheel pan, anchored pinch/Ctrl-wheel zoom, keyboard movement, fit, actual size, focus selection and full-window mode. Its named SDK controls and agent actions follow the same cancellable change path. Glass stays on the surrounding interface; exact notation stays crisp.
 
-The demo provides **27 editable views**: all 14 UML diagram kinds; UWE navigation/presentation; BPMN process; DMN requirements/table; CMMN case; VDML value delivery; IFML interaction; SysML 1.7 blocks/requirements; and explicit BMM, SBVR and BACM concept projections. Each adapter is a bounded subset, pinned to an exact version. [The full coverage registry](../../docs/hci/standards/omg-coverage.md) distinguishes 8 notation subsets, 3 concept projections and 277 reference-only records. The complete current OMG catalogue is indexed; indexing does not implement a specification's language, runtime or interchange format.
+The demo provides **46 editable views**: all 14 UML diagram kinds; 11 UWE views; seven C4 view types; three agent-model views; BPMN process; DMN requirements/table; CMMN case; VDML value delivery; IFML interaction; SysML 1.7 blocks/requirements; and explicit BMM, SBVR and BACM concept projections. Each adapter declares its implemented scope and source. [The full coverage registry](../../docs/hci/standards/omg-coverage.md) distinguishes 9 notation subsets, 5 concept projections and 277 reference-only records. The complete current OMG catalogue is indexed; indexing does not implement a specification's language, runtime or interchange format.
 ```tsx
 import { useState } from "react";
 import { LiquidDiagram, type DiagramModel } from "@quantitative-hci/liquid-glass/standards";
@@ -22,14 +22,25 @@ export function Architecture({ model }: { model: DiagramModel }) {
 }
 ```
 
-Use within the same `LiquidGlassProvider` and `kit.css` shown below. `DiagramModel` contains stable IDs, names, kinds, positions, compartments, stereotypes, containment, ownership, table rules, explicit routing points and typed relationships. `validateDiagramModel(candidate)` performs runtime structural/geometric checks. `diagramToSvg(model)` generates vector SVG with escaped labels. The gallery adds geometry and label edits, element/relationship creation, deletion, bounded undo/redo, and validated JSON application. Changes persist across collection navigation for the page session; export before reloading.
+Use within the same `LiquidGlassProvider` and `kit.css` shown below. `DiagramModel` contains stable IDs, names, kinds, positions, compartments, stereotypes, containment, ownership, table rules, routing points, relationships, profile metadata and cross-view references. `validateDiagramModel(candidate)` performs runtime structural/geometric checks; `validateDiagramProfile` adds bounded profile checks. `diagramToSvg(model)` generates vector SVG with escaped labels and a notation key. Changes persist across collection navigation for the page session; export before reloading.
+
+`StandardsWorkbench` is a reusable controlled composition, with separate `ModelNavigator`, `ModelReferences`, `ModelInspector`, `ModelToolbar`, `ModelHistory`, `ModelValidationPanel`, `ModelDataEditor` and `StandardsCatalogue` exports. It accepts `documents`, `onDocumentsChange`, optional controlled model selection, read-only/disabled state and an additive profile registry. Create documents with `createModelDocument` from `/modeling`. Use `LiquidModelDocument` independently when composing another editing experience. Atomic operations, revision checks, previews, cancellation and undo/redo share the real SDK command path. Read the [modeling API](src/modeling/README.md) and [architecture guide](../../docs/hci/standards/agent-first-modeling.md).
 
 ```ts
 import { findStandards, catalogueCounts } from "@quantitative-hci/liquid-glass/standards";
 const businessNotation = findStandards({ category: "business", coverage: "notation-subset" });
 ```
 
-The `/developer` and `/developer.css` entries remain compatibility aliases. Prefer `/standards` for new work. Read the [component contract](../../docs/hci/standards/standards-components.md), [sample models](../../docs/hci/examples/liquid-glass/src/standards-models.ts) and [exploration model](../../docs/hci/models/developer-model-exploration.md) before extending the adapters.
+The `/developer` and `/developer.css` entries remain compatibility aliases. Prefer `/standards` for new work. Read the [component contract](../../docs/hci/standards/standards-components.md), [combined sample models](../../docs/hci/examples/liquid-glass/src/model-catalogue.ts) and [exploration model](../../docs/hci/models/developer-model-exploration.md) before extending the adapters.
+
+## Agent task components
+
+```tsx
+import { AgentCapabilityCard, AgentTaskPanel, AgentToolRequest, AgentArtifactCard } from "@quantitative-hci/liquid-glass/agents";
+import "@quantitative-hci/liquid-glass/agents.css";
+```
+
+The package also exports `AgentTaskStatus`, `AgentTaskTimeline`, `AgentContextPanel`, types and a bounded task reducer. Task states use the pinned A2A 0.3.0 enum; tool presentation draws on MCP concepts. Components keep arguments, proposed changes, progress and returned artifacts inspectable through existing SDK controls. The demo runs a labelled local fixture with real state changes and actual resulting JSON. It does not call a provider or implement either protocol transport. See the [agent API](src/agents/README.md) for callbacks, source/review policy, validation, replay semantics and limits.
 
 ## Shared canvas
 

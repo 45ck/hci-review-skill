@@ -251,3 +251,8 @@ LICENSE                              MIT
 [MIT](LICENSE)
 
 Kit verification uses Node 24 (also pinned in CI) and Python 3. Model checks execute the real typed scene sources, validate all 46 registered views and their cross-view links, reject malformed imports, and parse every SVG as XML. Separate source checks exercise UWE/C4 semantics, revisioned atomic documents and ordered agent tasks; production browser checks exercise the actual SDK agent bridge and human controls.
+
+## Development and CI cost
+
+Follow [AGENTS.md](AGENTS.md) and the [CI cost guide](docs/hci/standards/ci-costs.md)
+for focused local checks, candidate batching, retry warnings and required QA.

@@ -25,6 +25,14 @@ async def verify_integrations_contract(page, expect, *, base_url, output_dir):
     await expect(stage.locator(".integration-provider")).to_contain_text("OPENROUTER_API_KEY")
     await _select(page, "tabs", "Integration source files", value="server")
     server_source = stage.get_by_label("Vercel AI SDK Server route source", exact=True)
+    await expect(stage.get_by_role("tab", name="Server route", exact=True)).to_have_attribute("aria-selected", "true")
+    await expect(server_source).to_be_visible()
+    # Tabs retains the previous panel through its exit lifecycle. Its inert
+    # controls remain discoverable as disabled until it hides or unmounts.
+    # Wait for that observable transition, then retain strict SDK uniqueness.
+    await expect(stage.get_by_label("Vercel AI SDK React UI source", exact=True)).to_be_hidden()
+    await expect(stage.locator('.integration-code [data-slot="tabs-panel"]:visible')).to_have_count(1)
+    await expect(stage.get_by_role("button", name="Copy integration code", exact=True)).to_have_count(1)
     await expect(server_source).to_contain_text("@openrouter/ai-sdk-provider")
     await expect(server_source).to_contain_text("toUIMessageStreamResponse")
 

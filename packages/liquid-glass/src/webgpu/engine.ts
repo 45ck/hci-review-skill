@@ -90,10 +90,11 @@ export function createLiquidGlassEngine(config: EngineOptions) {
     for (const element of candidates) {
       if (typeof element.getAnimations !== "function") continue;
       for (const animation of element.getAnimations()) {
+        // Follow finite CSS geometry animations too: a popup can finish its
+        // entry between document transition events, leaving cached draw bounds
+        // at the starting translate. The Animation itself gives a final refresh.
         if (nativeAnimations.has(animation) || expiredAnimations.has(animation) ||
-            (animation.playState !== "running" && !animation.pending) ||
-            (typeof CSSAnimation !== "undefined" && animation instanceof CSSAnimation) ||
-            (typeof CSSTransition !== "undefined" && animation instanceof CSSTransition)) continue;
+            (animation.playState !== "running" && !animation.pending)) continue;
         const effect = animation.effect;
         if (!(effect instanceof KeyframeEffect) || !(effect.target instanceof Element)) continue;
         const geometry = effect.getKeyframes().some((keyframe) => Object.keys(keyframe).some((property) =>

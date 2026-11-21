@@ -142,6 +142,23 @@ test("compositions must route through controls actually imported by their source
   rejects(f.check(), /declared SDK control.*is not imported/);
 });
 
+test("a composition cannot advertise child actions as its own root API", (t) => {
+  const f = fixture(t);
+  f.write("node_modules/@ui-sdk/react/package.json", JSON.stringify({ version: "0.1.0-beta.13", exports: { "./menu": "./menu.js" } }));
+  f.write("node_modules/@ui-sdk/react/menu.js", "export function Menu() {}\n");
+  f.write(sourcePath, 'import { Menu } from "@ui-sdk/react/menu"; export function formatCount(value:number) { return String(value); }');
+  f.manifest.entries[0].kind = "composition";
+  f.manifest.entries[0].validation = "unvalidated";
+  f.manifest.entries[0].runtime.discovery = "sdk-children";
+  f.manifest.entries[0].runtime.controls = ["@ui-sdk/react/menu"];
+  assert.deepEqual(f.check().errors, []);
+  f.manifest.entries[0].runtime.actions = ["select"];
+  rejects(f.check(), /compositions discover child actions and cannot claim their own root actions/);
+  f.manifest.entries[0].runtime.actions = [];
+  f.manifest.entries[0].runtime.actionParameters = {};
+  rejects(f.check(), /only custom primitives can declare a primitive binding or action parameters/);
+});
+
 test("schema rejects ambiguous fields and duplicate exports", (t) => {
   const f = fixture(t);
   f.manifest.entries[0].runtime.secretMagicAction = "run";

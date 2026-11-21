@@ -154,6 +154,7 @@
               },
               "actions": {
                 "type": "array",
+                "description": "Actions of this contract's own registered primitive. SDK aliases, compositions and passive APIs leave this empty and discover upstream or child actions instead.",
                 "items": {
                   "type": "string",
                   "minLength": 1

@@ -10,7 +10,11 @@ const agentDocuments = {
 const readAgentDocument = (path) => readFileSync(new URL(`../../../../packages/liquid-glass/${path}`, import.meta.url), "utf8");
 const agentContractAssets = () => {
   const registry = JSON.parse(readAgentDocument("agent-contracts.json"));
+  const foundation = JSON.parse(readAgentDocument("component-manifest.json"));
+  const custom = JSON.parse(readAgentDocument("custom-component-manifest.json"));
+  const recipes = JSON.parse(readAgentDocument("component-recipes.json"));
   return {
+    "registry/components.json": JSON.stringify({ ...recipes, sdkComponents: foundation.components, customComponents: custom.components }, null, 2) + "\n",
     "agent-index.json": JSON.stringify({
       schemaVersion: registry.schemaVersion,
       package: registry.package,
@@ -44,7 +48,7 @@ export default defineConfig({
       server.middlewares.use((request, response, next) => {
         const name = request.url?.split("?")[0].slice(1);
         if (!name) return next();
-        const contract = name === "agent-index.json" || /^contracts\/[a-z0-9-]+\.json$/.test(name)
+        const contract = name === "agent-index.json" || name === "registry/components.json" || /^contracts\/[a-z0-9-]+\.json$/.test(name)
           ? agentContractAssets()[name] : undefined;
         if (!contract && !Object.hasOwn(agentDocuments, name)) return next();
         response.setHeader("Content-Type", name.endsWith(".json") ? "application/json; charset=utf-8" : "text/plain; charset=utf-8");

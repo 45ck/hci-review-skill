@@ -4859,7 +4859,7 @@
         }
       },
       "restrictions": [
-        "Zoom remains 0.1\u20134; dimensions and positions must be finite.",
+        "Zoom remains 0.1–4; dimensions and positions must be finite.",
         "Controlled host may cancel or decline camera updates; check the resulting camera.",
         "Keyboard/controls provide non-drag alternatives."
       ],
@@ -6535,6 +6535,544 @@
         {
           "path": "tests/glass_agent_contract.py",
           "scope": "Local fixture task review and produced artifact outcomes; not a remote agent service."
+        }
+      ],
+      "validation": "not-applicable"
+    },
+    {
+      "id": "liquid-cursor",
+      "kind": "decoration",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/interactions",
+          "symbols": [
+            "LiquidCursor"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/interactions/cursor.tsx"
+      ],
+      "purpose": "Add scoped pointer decoration while preserving the real control hotspot and native input regions.",
+      "useWhen": [
+        "Decorate a region containing genuine SDK controls for a fine mouse pointer."
+      ],
+      "inputs": [
+        "children; variant:glass|precision|native; disabled; className and div attributes",
+        "LiquidGlassProvider resolved motion; optional data-cursor-label, data-cursor-media and native-region hints"
+      ],
+      "state": [
+        "Presentation-only native/tracking/idle cursor state, pointer position and decorative caption; no task state"
+      ],
+      "runtime": {
+        "discovery": "none",
+        "mutationPath": "Observes pointer, preference and visibility events to paint a noninteractive overlay. Child controls retain their SDK actions and application callbacks.",
+        "actions": [],
+        "outcome": "Read actual child-control/application state for task outcomes; pointer decoration exposes no independent action."
+      },
+      "restrictions": [
+        "Use a meaningful accessible name on the real control; a cursor hint is decorative.",
+        "Requires the provider and interactions stylesheet; touch, pen, keyboard, native input regions, motion-off and forced colours retain native interaction.",
+        "The decorative cursor must not move the actual hotspot, intercept input or establish task completion."
+      ],
+      "docs": [
+        "packages/liquid-glass/docs/agent-engineering.md",
+        "packages/liquid-glass/src/interactions/README.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/glass_interaction_contract.py",
+          "scope": "Pointer-dot alignment, stationary-pointer scroll geometry, native exclusions, finite idle work, preference fallbacks and hidden-collection cleanup in the browser showcase; not exhaustive pointer-device coverage."
+        }
+      ],
+      "policies": [
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-click-feedback",
+      "kind": "decoration",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/interactions",
+          "symbols": [
+            "LiquidClickFeedback"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/interactions/click-feedback.tsx"
+      ],
+      "purpose": "Show a bounded visual response after unprevented control activation.",
+      "useWhen": [
+        "Add ripple or spark feedback around existing SDK controls without changing their actions."
+      ],
+      "inputs": [
+        "children; effect:ripple|spark|none; className and div attributes",
+        "LiquidGlassProvider resolved motion; data-click-feedback=off excludes a subtree"
+      ],
+      "state": [
+        "Presentation-only transient bursts, capped at six and removed after 560 ms"
+      ],
+      "runtime": {
+        "discovery": "none",
+        "mutationPath": "Observes eligible unprevented native click events without dispatching or owning the underlying task action.",
+        "actions": [],
+        "outcome": "A burst indicates activation only. Observe application state and pending/error feedback to determine whether the action completed."
+      },
+      "restrictions": [
+        "Never use activation decoration as a success or controlled-host acceptance signal.",
+        "Real controls must provide their own accessible names, SDK actions and disabled/pending semantics.",
+        "Motion-off, forced colours, hidden regions and unavailable controls suppress decoration; cleanup removes transient DOM."
+      ],
+      "docs": [
+        "packages/liquid-glass/docs/agent-engineering.md",
+        "packages/liquid-glass/src/interactions/README.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/glass_interaction_contract.py",
+          "scope": "Bounded pointer bursts, centred keyboard activation feedback, disabled/pending behavior and reduced-motion/forced-colour suppression in the showcase; no claim that a burst proves task success."
+        }
+      ],
+      "policies": [
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-context-menu",
+      "kind": "composition",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/interactions",
+          "symbols": [
+            "LiquidContextMenu"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/interactions/context-menu.tsx"
+      ],
+      "purpose": "Expose the same named object actions through a context area and a visible SDK menu trigger.",
+      "useWhen": [
+        "Offer discoverable object actions with keyboard, pointer, touch and SDK-agent routes."
+      ],
+      "inputs": [
+        "children,label,actions,onAction; optional triggerLabel,disabled,className,areaClassName",
+        "Each action has stable id,label and optional disabled,destructive,requiresConfirmation; onAction receives upstream MenuActionDetails and may return async work"
+      ],
+      "state": [
+        "Menu open/active/pending state belongs to the SDK; task results belong to the host callback"
+      ],
+      "runtime": {
+        "discovery": "sdk-children",
+        "mutationPath": "MenuContextTrigger and visible MenuTrigger share one SDK Menu. The wrapper rejects unknown or disabled IDs and returns the host onAction result unchanged.",
+        "actions": [],
+        "outcome": "Discover current menu choices through the installed SDK, invoke a supported child action, and verify the resulting host state rather than dispatch alone.",
+        "controls": [
+          "@ui-sdk/react/menu"
+        ]
+      },
+      "restrictions": [
+        "Keep the visible trigger for discoverability and touch; required actions must not depend on right-click.",
+        "Use unique stable action IDs and specific labels; host authorization remains required.",
+        "requiresConfirmation supplies data-agent-confirm to the SDK policy; it does not grant approval itself.",
+        "Preserve upstream cancellation, pending and error behavior; return the host Promise when an action is asynchronous."
+      ],
+      "docs": [
+        "packages/liquid-glass/docs/agent-engineering.md",
+        "packages/liquid-glass/src/interactions/README.md",
+        "node_modules/@ui-sdk/react/docs/components/menu.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/glass_interaction_contract.py",
+          "scope": "Real menu choice/query/act and scene-state outcomes, pointer/keyboard alternatives, Escape focus return, unchanged disabled state, repeated pending-pointer suppression and narrow popup fit; not exhaustive confirmation-policy or controlled-cancellation coverage."
+        }
+      ],
+      "policies": [
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-magnetic",
+      "kind": "decoration",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/interactions",
+          "symbols": [
+            "LiquidMagnetic"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/interactions/magnetic.tsx"
+      ],
+      "purpose": "Move nonessential artwork slightly inside a stationary task control.",
+      "useWhen": [
+        "Add pointer emphasis to a decorative icon inside a real SDK button or link."
+      ],
+      "inputs": [
+        "children:decorative artwork; distance:CSS pixels clamped to 0–12; className",
+        "LiquidGlassProvider resolved motion and fine-pointer/forced-colour preferences"
+      ],
+      "state": [
+        "Presentation-only bounded x/y translation; no selected value or task action"
+      ],
+      "runtime": {
+        "discovery": "none",
+        "mutationPath": "Observes pointer movement on the containing target and changes only the decorative child translation.",
+        "actions": [],
+        "outcome": "Task outcome comes from the containing SDK control. Its hit rectangle, accessible label and focus remain the meaningful interface."
+      },
+      "restrictions": [
+        "Contents are aria-hidden: do not nest functional controls, meaningful text or essential information.",
+        "Keep the containing target, label and focus ring stationary.",
+        "Disabled/busy/focused controls and preference/visibility changes suppress or reset decoration."
+      ],
+      "docs": [
+        "packages/liquid-glass/docs/agent-engineering.md",
+        "packages/liquid-glass/src/interactions/README.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/glass_interaction_contract.py",
+          "scope": "Stationary outer target rectangle and successful hit testing while magnetic artwork moves, with preference fallback checks in the mounted showcase; not human targeting-performance evidence."
+        }
+      ],
+      "policies": [
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-section",
+      "kind": "presentation",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/sections",
+          "symbols": [
+            "LiquidSection"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/sections/sections.tsx"
+      ],
+      "purpose": "Compose a semantic labelled section with heading, introduction and supplied task actions.",
+      "useWhen": [
+        "Group related page content under a heading with a consistent action area."
+      ],
+      "inputs": [
+        "title,children; optional eyebrow,introduction,actions,headingLevel:2|3,className and section attributes"
+      ],
+      "state": [
+        "Semantic heading/section identity and supplied content; no independent mutable value"
+      ],
+      "runtime": {
+        "discovery": "dom",
+        "mutationPath": "Renders semantic section/header content. Any supplied actions retain their own SDK behavior and host callbacks.",
+        "actions": [],
+        "outcome": "Read section content and operate its actual supplied controls; the section has no root agent action."
+      },
+      "restrictions": [
+        "Choose headingLevel for the surrounding document and provide a meaningful title.",
+        "Place actual SDK controls in the actions slot; metadata does not register arbitrary child content.",
+        "Retain the visible Unvalidated badge and readable document order."
+      ],
+      "docs": [
+        "packages/liquid-glass/docs/agent-engineering.md",
+        "docs/hci/standards/interaction-sections.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/glass_sections_contract.py",
+          "scope": "Mounted semantic content remains readable across composition changes, preference fallbacks and narrow viewports; no independent section action or human usability validation is claimed."
+        }
+      ],
+      "policies": [
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-showcase-section",
+      "kind": "presentation",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/sections",
+          "symbols": [
+            "LiquidShowcaseSection"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/sections/sections.tsx"
+      ],
+      "purpose": "Present task media and its caption in a reusable split or immersive semantic section.",
+      "useWhen": [
+        "Combine explanatory text, real media and supplied SDK task actions."
+      ],
+      "inputs": [
+        "LiquidSection props plus media,mediaCaption; layout:split|immersive; optional children"
+      ],
+      "state": [
+        "Supplied content and layout; no independent mutable value"
+      ],
+      "runtime": {
+        "discovery": "dom",
+        "mutationPath": "Composes LiquidSection with figure/figcaption and supplied content. Layout does not introduce task actions.",
+        "actions": [],
+        "outcome": "Inspect the rendered media, caption and actual supplied child-control state."
+      },
+      "restrictions": [
+        "Supply appropriate accessible alternatives with the media; a caption does not automatically create image alt text.",
+        "Keep headings and real task actions meaningful in both layouts and fallback modes.",
+        "This presentation has no independent SDK registry entry or actions."
+      ],
+      "docs": [
+        "packages/liquid-glass/docs/agent-engineering.md",
+        "docs/hci/standards/interaction-sections.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/glass_sections_contract.py",
+          "scope": "Split/immersive layout changes, retained chapter selection/content and narrow-view fit in the section showcase; no exhaustive media-type accessibility claim."
+        }
+      ],
+      "policies": [
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-chapter-section",
+      "kind": "composition",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/sections",
+          "symbols": [
+            "LiquidChapterSection"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/sections/sections.tsx"
+      ],
+      "purpose": "Connect readable story chapters to related media through explicit SDK navigation and optional natural-scroll following.",
+      "useWhen": [
+        "Show chapter text continuously while associating a selected chapter with its media and caption."
+      ],
+      "inputs": [
+        "LiquidSection props plus chapters with unique id,label,title,content,media,mediaCaption",
+        "value or defaultValue; onValueChange(value,{source,reason:selection|scroll,cancel}); navigationLabel; followScroll defaults true"
+      ],
+      "state": [
+        "Selected chapter is controlled by value or local defaultValue state; all chapter articles remain in the DOM",
+        "SDK segmented-control value/choices track selected media; natural scroll may request another chapter through the same host callback"
+      ],
+      "runtime": {
+        "discovery": "sdk-children",
+        "mutationPath": "Explicit navigation uses the SDK SegmentedControl and preserves its source. Optional passive scroll observation requests the same chapter callback with source/reason scroll. Synchronous cancel prevents the local selection change.",
+        "actions": [],
+        "outcome": "Discover current segmented-control choices and observe accepted selected value, media and caption. Controlled hosts must publish value; dispatch success or scroll position alone does not prove acceptance.",
+        "controls": [
+          "@ui-sdk/react/segmented-control"
+        ]
+      },
+      "restrictions": [
+        "Use unique stable chapter IDs, specific labels and a task-specific navigationLabel; invalid duplicate chapter data is not a supported contract.",
+        "Call details.cancel synchronously to refuse a request; this callback does not expose an asynchronous acceptance or cancellation protocol.",
+        "followScroll=false disables scroll-driven selection. Explicit desktop navigation may still align the selected article in the viewport.",
+        "Preserve all readable chapter text and provide appropriate media alternatives; do not intercept wheel, touch scrolling or keyboard navigation.",
+        "No standalone chapter primitive/action is claimed; use the actual SDK child control."
+      ],
+      "docs": [
+        "packages/liquid-glass/docs/agent-engineering.md",
+        "docs/hci/standards/interaction-sections.md",
+        "node_modules/@ui-sdk/react/docs/components/segmented-control.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/glass_sections_contract.py",
+          "scope": "Accepted controlled selection through natural scroll, keyboard and SDK agent; agent source attribution, media/caption changes, retained text, focus and preference/narrow-layout behavior. Does not test controlled host refusal, cancellation or malformed chapter input."
+        }
+      ],
+      "policies": [
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-section-contour",
+      "kind": "decoration",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/sections",
+          "symbols": [
+            "LiquidSectionContour"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/sections/sections.tsx"
+      ],
+      "purpose": "Draw a noninteractive decorative boundary between sections.",
+      "useWhen": [
+        "Add visual continuity around section content without conveying essential information."
+      ],
+      "inputs": [
+        "variant:wave|ridge|orbit; edge:start|end; className"
+      ],
+      "state": [
+        "Presentation-only SVG variant and edge placement"
+      ],
+      "runtime": {
+        "discovery": "none",
+        "mutationPath": "Renders aria-hidden, unfocusable SVG paths without event handlers or task state.",
+        "actions": [],
+        "outcome": "No agent action or task completion is associated with the contour."
+      },
+      "restrictions": [
+        "Do not use the contour to carry essential information or interaction.",
+        "Use the sections stylesheet so decoration stays noninteractive and is suppressed in forced colours."
+      ],
+      "docs": [
+        "packages/liquid-glass/docs/agent-engineering.md",
+        "docs/hci/standards/interaction-sections.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/glass_sections_contract.py",
+          "scope": "Selected contour rendering, aria-hidden and pointer-events-none checks, plus forced-colour suppression in the showcase; no human visual-quality validation."
+        }
+      ],
+      "policies": [
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-reveal",
+      "kind": "decoration",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/sections",
+          "symbols": [
+            "LiquidReveal"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/sections/sections.tsx"
+      ],
+      "purpose": "Add brief entrance emphasis to content that remains readable without animation.",
+      "useWhen": [
+        "Apply optional visual emphasis as content enters the viewport."
+      ],
+      "inputs": [
+        "children; once defaults true; className and div attributes",
+        "LiquidGlassProvider resolved motion, IntersectionObserver and Web Animations availability"
+      ],
+      "state": [
+        "Presentation-only observer/animation lifecycle; content and child actions remain host-owned"
+      ],
+      "runtime": {
+        "discovery": "none",
+        "mutationPath": "Observes visibility and animates opacity without controlling task values or concealing required content.",
+        "actions": [],
+        "outcome": "Use the visible content and its real controls; entrance animation is not a task outcome."
+      },
+      "restrictions": [
+        "Content must remain readable when motion is off, forced colours are active or animation/observer APIs are unavailable.",
+        "Do not use a reveal as authorization, navigation state or completion feedback.",
+        "Decorative lifecycle cleanup does not register an SDK action."
+      ],
+      "docs": [
+        "packages/liquid-glass/docs/agent-engineering.md",
+        "docs/hci/standards/interaction-sections.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/glass_sections_contract.py",
+          "scope": "Readable content and absence of running reveal animations under reduced motion in the mounted showcase; not exhaustive observer/API-unavailable lifecycle coverage."
+        }
+      ],
+      "policies": [
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "validation": "unvalidated"
+    },
+    {
+      "id": "component-recipes",
+      "kind": "pure-utility",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/recipes",
+          "symbols": [
+            "liquidComponentRegistry",
+            "liquidComponentRecipes",
+            "findLiquidRecipes"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/recipes.ts"
+      ],
+      "purpose": "Expose and search the static component recipe registry for code composition.",
+      "useWhen": [
+        "Find a task-oriented example, its component imports, constraints and source file."
+      ],
+      "inputs": [
+        "Static component-recipes.json; findLiquidRecipes(query:string) uses case-insensitive whitespace-separated search terms"
+      ],
+      "state": [
+        "Registry metadata and the recipes matching every search term across ID, collection, title, purpose and components; no runtime task state"
+      ],
+      "runtime": {
+        "discovery": "none",
+        "mutationPath": "Returns local metadata or filtered recipe records; does not dispatch SDK actions, install packages or mutate application state.",
+        "actions": [],
+        "outcome": "Read the referenced example and current component contract, then discover mounted runtime controls through the host SDK bridge."
+      },
+      "restrictions": [
+        "This descriptive registry is not an action server, package installer or public npm release.",
+        "Referenced examples and metadata do not prove a mounted control is available or a runtime task succeeded.",
+        "Treat exported records as descriptive inputs; host authorization, persistence and current runtime state remain separate."
+      ],
+      "policies": [
+        "proof-boundary"
+      ],
+      "docs": [
+        "packages/liquid-glass/docs/agent-engineering.md",
+        "docs/hci/standards/interaction-sections.md",
+        "packages/liquid-glass/component-recipes.json"
+      ],
+      "evidence": [
+        {
+          "path": "scripts/check-agent-contracts.mjs",
+          "scope": "Public export, source and documentation coverage only; no recipe-search behavioral regression is claimed."
         }
       ],
       "validation": "not-applicable"

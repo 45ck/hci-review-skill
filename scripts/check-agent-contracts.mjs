@@ -200,6 +200,8 @@ function validateAgentContracts({ root = defaultRoot, manifest = readJson(join(r
     }
     if (["presentation", "decoration", "provider", "pure-utility", "host-hook"].includes(entry.kind) && (entry.runtime.actions.length || !["dom", "none"].includes(entry.runtime.discovery))) fail(entry.id, "passive and host-only APIs cannot claim SDK actions or discovery");
     if (entry.kind === "composition" && (entry.runtime.discovery !== "sdk-children" || !entry.runtime.controls?.length)) fail(entry.id, "compositions must name their actual SDK child-control route");
+    if (entry.kind === "composition" && entry.runtime.actions.length) fail(entry.id, "compositions discover child actions and cannot claim their own root actions");
+    if (entry.kind !== "primitive" && (entry.runtime.primitive || entry.runtime.actionParameters)) fail(entry.id, "only custom primitives can declare a primitive binding or action parameters");
     if (entry.kind === "primitive" && (entry.runtime.discovery !== "sdk" || !entry.runtime.primitive)) fail(entry.id, "custom primitives need a real SDK primitive binding");
     for (const control of entry.runtime.controls ?? []) {
       if (!sdkEntry(control)) fail(entry.id, `unresolved installed SDK public entry ${control}`);

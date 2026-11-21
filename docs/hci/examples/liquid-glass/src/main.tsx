@@ -78,6 +78,9 @@ import { StandardsShowcase } from "./standards-showcase";
 import { allDiagramModels } from "./model-catalogue";
 import { createModelDocument } from "@quantitative-hci/liquid-glass/modeling";
 import { AgentsShowcase } from "./agents-showcase";
+import { InteractionsShowcase } from "./interactions-showcase";
+import { SectionsShowcase } from "./sections-showcase";
+import { RecipePanel } from "./recipe-panel";
 import { GraphicsShowcase, initialGraphicDocument, initialGraphicAssets } from "./graphics-showcase";
 import type { GraphicAsset } from "@quantitative-hci/liquid-glass/graphics";
 import { VisualShowcase, visualAssets } from "./visual-showcase";
@@ -92,6 +95,8 @@ import "./gallery.css";
 const demos: Record<string, ComponentType> = { ...inputDemos, ...surfaceDemos };
 const groups = [...new Set(manifest.components.map((item) => item.category))];
 const collections = [
+  { id: "interactions", name: "Interactions", keywords: "cursor pointer mouse click ripple feedback magnetic right click context menu gestures" },
+  { id: "sections", name: "Sections", keywords: "hero story scroll chapter sticky reveal contour transition landing editorial composition" },
   { id: "visual", name: "Graphics", keywords: "image layers design canvas ai agent media gallery carousel card comparison photo showcase" },
   { id: "standards", name: "Standards", keywords: "omg business bpmn dmn cmmn bmm sbvr vdml bacm ifml sysml uml uwe c4 architecture agent diagram class component navigation presentation process requirements content roles model" },
   { id: "agents", name: "Agents", keywords: "a2a mcp agent task lifecycle tool request review artifact timeline capability collaboration" },
@@ -297,6 +302,20 @@ function Overview({ onExplore }: { onExplore: (id: string) => void }) {
   const ToastDemo = demos.toast;
   return (
     <div className="kit-overview" data-kit-view="overview">
+      <section className="kit-new-collections" aria-labelledby="kit-new-title" data-validation="unvalidated">
+        <div className="kit-new-art" aria-hidden="true">
+          <img src="/media/glass-study-small.webp" alt="" width="600" height="400" />
+          <svg viewBox="0 0 100 100"><circle cx="48" cy="45" r="31" /><circle cx="48" cy="45" r="21" /><path d="m43 30 3 33 9-11 14-3Z" /></svg>
+        </div>
+        <div className="kit-new-copy">
+          <h2 id="kit-new-title">Cursors, clicks and whole sections.</h2>
+          <p>Try the interactions. Compose them into a page.</p>
+          <div className="kit-button-row">
+            <Button onClick={() => onExplore("interactions")}>Explore interactions</Button>
+            <Button onClick={() => onExplore("sections")}>Explore sections</Button>
+          </div>
+        </div>
+      </section>
       <Panel title="Buttons" icon="sparkles" probe="panel" className="kit-actions-panel">
         <div className="kit-button-row">
           <Button
@@ -680,6 +699,29 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
   const [graphicDocument, setGraphicDocument] = useState(() => structuredClone(initialGraphicDocument));
   const [graphicAssets, setGraphicAssets] = useState<readonly GraphicAsset[]>(initialGraphicAssets);
   const [visitedCollections, setVisitedCollections] = useState<string[]>([]);
+  useEffect(() => {
+    const restoreCollection = () => {
+      const id = new URL(location.href).searchParams.get("collection");
+      if (id && [...collections, ...manifest.components].some(item => item.id === id)) {
+        setSelected(id);
+        setSearch("");
+      } else {
+        setSelected("overview");
+      }
+    };
+    restoreCollection();
+    window.addEventListener("popstate", restoreCollection);
+    return () => window.removeEventListener("popstate", restoreCollection);
+  }, []);
+  const selectCatalogue = (id: string) => {
+    setSelected(id);
+    setRestart(0);
+    setCopied("");
+    const url = new URL(location.href);
+    if (id === "overview") url.searchParams.delete("collection");
+    else url.searchParams.set("collection", id);
+    if (url.href !== location.href) history.pushState(null, "", url);
+  };
   const { status, motion: effectiveMotion } = useLiquidGlass();
   const matches = manifest.components.filter((item) =>
     (item.name + " " + item.category)
@@ -771,9 +813,7 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
             value={active ?? null}
             onValueChange={(value) => {
               if (typeof value === "string") {
-                setSelected(value);
-                setRestart(0);
-                setCopied("");
+                selectCatalogue(value);
               }
             }}
             items={[
@@ -866,8 +906,15 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
           {(active === "agents" || visitedCollections.includes("agents")) && <div hidden={active !== "agents"}>
             <SpecimenBoundary key="agents" name="Agents"><AgentsShowcase /></SpecimenBoundary>
           </div>}
+          {(active === "interactions" || visitedCollections.includes("interactions")) && <div hidden={active !== "interactions"}>
+            <SpecimenBoundary key="interactions" name="Interactions"><InteractionsShowcase /></SpecimenBoundary>
+          </div>}
+          {(active === "sections" || visitedCollections.includes("sections")) && <div hidden={active !== "sections"}>
+            <SpecimenBoundary key="sections" name="Sections"><SectionsShowcase /></SpecimenBoundary>
+          </div>}
+          {(active === "interactions" || active === "sections") && <RecipePanel collection={active} />}
           {active === "overview" ? (
-            <Overview onExplore={(id) => { setSelected(id); document.getElementById("kit-main")?.focus(); }} />
+            <Overview onExplore={(id) => { selectCatalogue(id); document.getElementById("kit-main")?.focus(); }} />
           ) : collection ? null
           : component && Demo ? (
             <section

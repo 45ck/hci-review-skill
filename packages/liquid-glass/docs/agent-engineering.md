@@ -13,6 +13,8 @@ Start with the [compact index](/agent-index.json) and follow an entry's `contrac
 | What the task needs | Start with | Agent interaction |
 | --- | --- | --- |
 | A familiar field, menu, dialog, list or slider | Documented `@ui-sdk/react/<component>` entry | The upstream component's named state and actions. |
+| Scoped cursor/click effects or context actions | Components from `/interactions` | Effects stay decorative; context actions use the real SDK Menu and host callbacks. |
+| Semantic showcase or chapter content | Components from `/sections`; examples from `/recipes` | Sections retain readable content; chapter selection uses the actual SDK segmented control and cancellable shared value. |
 | Pan, zoom, fit and focus a canvas | `LiquidViewport` from `/viewport` | A named `liquid-viewport` primitive and SDK controls. |
 | Edit linked standards models | `StandardsWorkbench` from `/standards`; `LiquidModelDocument` from `/modeling` | Shared revisioned document actions and named editor controls. |
 | Edit an image/text/shape composition | `LiquidGraphicStudio` from `/graphics` | The composed SDK controls and validated document change path. |
@@ -22,6 +24,8 @@ Start with the [compact index](/agent-index.json) and follow an entry's `contrac
 | Pure model, geometry or validation work | Documented utility export | Call the typed function in application code; it is not automatically a browser tool. |
 
 Import upstream controls directly. Existing kit component and `/agent` re-exports preserve compatibility; they do not fork behaviour. The `/developer` entries remain aliases for older callers; new modeling interfaces use `/standards`.
+
+The [component and recipe registry](/registry/components.json) complements the operation contracts with gallery metadata and compiled examples. Read the [Interactions and Sections standard](https://github.com/45ck/hci-review-skill/blob/main/docs/hci/standards/interaction-sections.md) for scoped effects, stationary hit targets, native text entry, readable chapter content and scroll-selection semantics. Reuse the existing provider and single agent bridge when composing an example into an application.
 
 **Controlled graphics acceptance:** `LiquidGraphicStudio` forwards the SDK input source and cancellable change details to its host. It records history, deferred selection and success when the host supplies the proposed document. Until then the request is visibly pending and can be cancelled; asynchronous hosts should honor `details.signal`. Published host props are authoritative even if a callback Promise is still pending, and a later callback failure does not pretend to roll them back. External replacements clear stale whole-document undo history. Asset and model acceptance are separate; observe the actual revision and content rather than inferring success from an SDK button press.
 

@@ -73,3 +73,14 @@ For copy, navigation, layout or state changes, run `npm run glass:semantic-check
 Shell, application-layout and review-tool changes invalidate the scoped records in `docs/hci/reviews/semantic-review.json`. Revisit the affected scenarios and update the recorded reasoning before replacing the source fingerprint. `node scripts/check-ui-review-evidence.mjs --fingerprints` only reports identity; it does not conduct or approve a review. Add a scope when extending the gate to another screen. Existing unscoped collections are not implied to have current contextual coverage.
 
 Keep finding decisions bound to the current report fingerprint and stable finding/option IDs. Copying OPTIONS is a proposed handoff, not permission to rewrite a page, release software or claim human approval. The developer tool excludes hidden/secret content and field values; preserve these boundaries. Record agent review and human review separately. Custom components stay Unvalidated until actual human evidence is recorded.
+
+## CI cost and delivery
+
+- Batch a coherent implementation candidate after focused local checks; avoid repeated cosmetic pushes or unchanged full reruns.
+- Use one integration owner for shared CI, dependency and lockfile changes; reconcile concurrent work before publishing.
+- Read failed logs, reproduce the smallest failure, then retry only the necessary failed job and its dependents with a stated reason.
+- Keep required QA, security, coverage and release gates. Never bypass hooks, use skip markers or weaken checks to reduce cost.
+- Request previews or manual heavy checks only for a concrete review or acceptance need under the existing delivery policy.
+- Record the commit, actual commands/results, run links and retry reason; mark unavailable checks NOT_RUN. Runner minutes and deployment counts are not invoices.
+- Keep `glass:verify` and required browser/GPU evidence. Focused manual browser diagnostics do not replace the full candidate gate.
+- Use the [CI cost guide](docs/hci/standards/ci-costs.md) for this repository's commands and warnings.

@@ -3,7 +3,11 @@
   "package": "@quantitative-hci/liquid-glass",
   "version": "0.2.0",
   "distribution": "Private workspace package. Use the repository workspace; this is not an npm registry release.",
-  "foundation": { "package": "@ui-sdk/react", "version": "0.1.0-beta.13", "repository": "https://github.com/vercel-labs/ui" },
+  "foundation": {
+    "package": "@ui-sdk/react",
+    "version": "0.1.0-beta.13",
+    "repository": "https://github.com/vercel-labs/ui"
+  },
   "policy": {
     "bridge": "Reuse one createAgent bridge from @ui-sdk/react/agent. Keep snapshot, query, act and subscribe as the SDK APIs.",
     "state": "People and agents use the same SDK callbacks and application state. Read current names, actions and choices before acting; verify the resulting state.",
@@ -13,44 +17,150 @@
   },
   "recipes": [
     {
-      "id": "cursor-feedback", "collection": "interactions", "title": "Cursor and feedback",
+      "id": "cursor-feedback",
+      "collection": "interactions",
+      "title": "Cursor and feedback",
       "purpose": "Add a scoped mouse cursor and bounded activation feedback around genuine SDK controls.",
-      "components": ["LiquidCursor", "LiquidClickFeedback", "LiquidMagnetic"],
-      "importPath": "@quantitative-hci/liquid-glass/interactions", "stylesheet": "@quantitative-hci/liquid-glass/interactions.css",
+      "components": [
+        "LiquidCursor",
+        "LiquidClickFeedback",
+        "LiquidMagnetic"
+      ],
+      "importPath": "@quantitative-hci/liquid-glass/interactions",
+      "stylesheet": "@quantitative-hci/liquid-glass/interactions.css",
       "example": "docs/hci/examples/liquid-glass/src/recipes/cursor-feedback.tsx",
-      "sdkPrimitives": ["Button"],
-      "constraints": ["Keep the clickable target and text stationary; magnetic motion is decorative only.", "Use data-cursor-label for context and data-cursor=native for native interaction regions.", "A cursor is decoration: it adds no hidden action or second state store."],
-      "sources": ["https://github.com/45ck/portfolio-monorepo/blob/21b9a48db79f81600ff9981812a6aa7528bfb6b8/packages/ui-portfolio/src/site-cursor.js", "https://magicui.design/docs/components/pointer"]
+      "sdkPrimitives": [
+        "Button"
+      ],
+      "constraints": [
+        "Keep the clickable target and text stationary; magnetic motion is decorative only.",
+        "Use data-cursor-label for context and data-cursor=native for native interaction regions.",
+        "A cursor is decoration: it adds no hidden action or second state store."
+      ],
+      "sources": [
+        "https://github.com/45ck/portfolio-monorepo/blob/21b9a48db79f81600ff9981812a6aa7528bfb6b8/packages/ui-portfolio/src/site-cursor.js",
+        "https://magicui.design/docs/components/pointer"
+      ]
     },
     {
-      "id": "context-actions", "collection": "interactions", "title": "Context actions",
+      "id": "context-actions",
+      "collection": "interactions",
+      "title": "Context actions",
       "purpose": "Offer the same actions from a scoped right-click region, visible trigger, keyboard and SDK agent.",
-      "components": ["LiquidContextMenu"],
-      "importPath": "@quantitative-hci/liquid-glass/interactions", "stylesheet": "@quantitative-hci/liquid-glass/interactions.css",
+      "components": [
+        "LiquidContextMenu"
+      ],
+      "importPath": "@quantitative-hci/liquid-glass/interactions",
+      "stylesheet": "@quantitative-hci/liquid-glass/interactions.css",
       "example": "docs/hci/examples/liquid-glass/src/recipes/context-actions.tsx",
-      "sdkPrimitives": ["Menu", "MenuContextTrigger", "MenuTrigger", "MenuContent", "MenuItem"],
-      "constraints": ["Keep the visible Actions trigger for discovery and touch.", "Set stable action IDs, specific labels and disabled states; return promises for asynchronous work.", "Preserve the browser context menu outside the explicitly marked region.", "Mark consequential actions with requiresConfirmation; enforce authorization in the application too."],
-      "sources": ["https://ui-sdk.dev/docs/react/components/menu", "https://ui-sdk.dev/docs/agents/connect-an-agent/reference"]
+      "sdkPrimitives": [
+        "Menu",
+        "MenuContextTrigger",
+        "MenuTrigger",
+        "MenuContent",
+        "MenuItem"
+      ],
+      "constraints": [
+        "Keep the visible Actions trigger for discovery and touch.",
+        "Set stable action IDs, specific labels and disabled states; return promises for asynchronous work.",
+        "Preserve the browser context menu outside the explicitly marked region.",
+        "Mark consequential actions with requiresConfirmation; enforce authorization in the application too."
+      ],
+      "sources": [
+        "https://ui-sdk.dev/docs/react/components/menu",
+        "https://ui-sdk.dev/docs/agents/connect-an-agent/reference"
+      ]
     },
     {
-      "id": "showcase-section", "collection": "sections", "title": "Showcase section",
+      "id": "showcase-section",
+      "collection": "sections",
+      "title": "Showcase section",
       "purpose": "Compose a semantic heading, readable introduction, real media and SDK actions in split or immersive layouts.",
-      "components": ["LiquidSection", "LiquidShowcaseSection", "LiquidReveal", "LiquidSectionContour"],
-      "importPath": "@quantitative-hci/liquid-glass/sections", "stylesheet": "@quantitative-hci/liquid-glass/sections.css",
+      "components": [
+        "LiquidSection",
+        "LiquidShowcaseSection",
+        "LiquidReveal",
+        "LiquidSectionContour"
+      ],
+      "importPath": "@quantitative-hci/liquid-glass/sections",
+      "stylesheet": "@quantitative-hci/liquid-glass/sections.css",
       "example": "docs/hci/examples/liquid-glass/src/recipes/showcase-section.tsx",
-      "sdkPrimitives": ["Button"],
-      "constraints": ["Supply real task content and an accurate media caption.", "Choose headingLevel to fit the containing page.", "Keep reveal content readable if motion is disabled or observers are unavailable.", "Contours are decorative and must not carry essential information."],
-      "sources": ["https://github.com/45ck/portfolio-monorepo/blob/21b9a48db79f81600ff9981812a6aa7528bfb6b8/apps/wayrest/src/components/home/SectionContour.astro", "https://21st.dev/@automate_flows/components/liquid-glass-wordmark-footer"]
+      "sdkPrimitives": [
+        "Button"
+      ],
+      "constraints": [
+        "Supply real task content and an accurate media caption.",
+        "Choose headingLevel to fit the containing page.",
+        "Keep reveal content readable if motion is disabled or observers are unavailable.",
+        "Contours are decorative and must not carry essential information."
+      ],
+      "sources": [
+        "https://github.com/45ck/portfolio-monorepo/blob/21b9a48db79f81600ff9981812a6aa7528bfb6b8/apps/wayrest/src/components/home/SectionContour.astro",
+        "https://21st.dev/@automate_flows/components/liquid-glass-wordmark-footer"
+      ]
     },
     {
-      "id": "chapter-story", "collection": "sections", "title": "Chapter story",
+      "id": "chapter-story",
+      "collection": "sections",
+      "title": "Chapter story",
       "purpose": "Connect readable story chapters to a persistent media surface with explicit navigation and optional scroll-following.",
-      "components": ["LiquidChapterSection"],
-      "importPath": "@quantitative-hci/liquid-glass/sections", "stylesheet": "@quantitative-hci/liquid-glass/sections.css",
+      "components": [
+        "LiquidChapterSection"
+      ],
+      "importPath": "@quantitative-hci/liquid-glass/sections",
+      "stylesheet": "@quantitative-hci/liquid-glass/sections.css",
       "example": "docs/hci/examples/liquid-glass/src/recipes/chapter-story.tsx",
-      "sdkPrimitives": ["SegmentedControl", "SegmentedControlItem", "SegmentedControlIndicator"],
-      "constraints": ["Provide unique chapter IDs and labels and a task-specific navigationLabel.", "Update controlled state through onValueChange; call details.cancel() to refuse a transition.", "Keep all chapter text in the document. Do not hijack wheel, touch scrolling or keyboard navigation.", "Use followScroll=false when the containing application should own chapter changes."],
-      "sources": ["https://github.com/45ck/portfolio-monorepo/blob/21b9a48db79f81600ff9981812a6aa7528bfb6b8/apps/wayrest/src/lib/home-motion.mjs"]
+      "sdkPrimitives": [
+        "SegmentedControl",
+        "SegmentedControlItem",
+        "SegmentedControlIndicator"
+      ],
+      "constraints": [
+        "Provide unique chapter IDs and labels and a task-specific navigationLabel.",
+        "Update controlled state through onValueChange; call details.cancel() to refuse a transition.",
+        "Keep all chapter text in the document. Do not hijack wheel, touch scrolling or keyboard navigation.",
+        "Use followScroll=false when the containing application should own chapter changes."
+      ],
+      "sources": [
+        "https://github.com/45ck/portfolio-monorepo/blob/21b9a48db79f81600ff9981812a6aa7528bfb6b8/apps/wayrest/src/lib/home-motion.mjs"
+      ]
+    },
+    {
+      "id": "application-shell",
+      "collection": "layouts",
+      "title": "Task-first application layout",
+      "purpose": "Compose responsive app regions and real SDK menus/navigation for one user job; personal account and organisation remain distinct.",
+      "components": [
+        "LiquidAppShell",
+        "LiquidAppRail",
+        "LiquidAppHeader",
+        "LiquidAppContent",
+        "LiquidAppInspector",
+        "LiquidAppDock",
+        "LiquidAppNavigation",
+        "LiquidWorkspaceSwitcher"
+      ],
+      "importPath": "@quantitative-hci/liquid-glass/layouts",
+      "stylesheet": "@quantitative-hci/liquid-glass/layouts.css",
+      "example": "docs/hci/examples/liquid-glass/src/layouts-showcase.tsx",
+      "sdkPrimitives": [
+        "Button",
+        "Menu",
+        "MenuItem",
+        "MenuTrigger"
+      ],
+      "constraints": [
+        "Use the existing LiquidGlassProvider, appearance settings and one host UI SDK agent bridge.",
+        "Supply approved workspace memberships; never infer authorisation from client-side role badges.",
+        "Keep the primary task and consequential action directly visible, especially in the mobile detail.",
+        "Preserve loading, denied, no-result, failure, stale, pending and recovery behaviour.",
+        "Do not add ornamental subtitles or fake status/analytics cards; describe only observable states."
+      ],
+      "sources": [
+        "https://github.com/vercel-labs/ui",
+        "https://ui.shadcn.com/blocks/sidebar",
+        "https://developer.apple.com/design/human-interface-guidelines/materials"
+      ]
     }
   ]
 }

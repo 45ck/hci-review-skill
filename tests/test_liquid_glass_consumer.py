@@ -2,6 +2,7 @@
 
 import argparse
 import asyncio
+import base64
 import hashlib
 import json
 import os
@@ -14,6 +15,34 @@ from urllib.request import urlopen
 
 ROOT = Path(__file__).resolve().parents[1]
 REPORT = ROOT / "test-results/package-consumer.json"
+AGENT_ACTION_SCRIPT = """async ({kind, label, action, args}) => {
+  const found = await window.consumerAgent.query({kind, text: label});
+  if (!Array.isArray(found)) throw new Error(JSON.stringify(found));
+  const matches = found.filter(entry => entry.component === kind && entry.label === label && !entry.offPage);
+  if (matches.length !== 1) throw new Error('Expected one ' + label + ': ' + JSON.stringify(found));
+  return await window.consumerAgent.act({steps: [{ref: matches[0].ref, action, args}]});
+}"""
+BFCACHE_STATE_SCRIPT = """(() => {
+  const state = window.__consumerTransport;
+  const input = [...document.querySelectorAll('input')].find(element => {
+    const label = element.getAttribute('aria-label') || (element.getAttribute('aria-labelledby') || '')
+      .split(/\\s+/).map(id => document.getElementById(id)?.textContent || '').join(' ').trim();
+    return label === 'Workspace name';
+  });
+  let snapshot;
+  try { snapshot = window.consumerAgent?.snapshot(); }
+  catch (error) { snapshot = {error: String(error)}; }
+  return {
+    url: location.href, title: document.title, readyState: document.readyState,
+    visitId: window.__consumerVisitId, pageShows: window.__consumerPageShows || [],
+    inputValue: input?.value, source: document.querySelector('[data-testid=source]')?.textContent,
+    transport: state ? {...state, active: Object.keys(state.active)} : null,
+    agentSnapshot: snapshot,
+    navigation: performance.getEntriesByType('navigation').map(entry => ({
+      type: entry.type, notRestoredReasons: entry.notRestoredReasons?.toJSON?.() ?? null
+    }))
+  };
+})()"""
 
 
 class BrowserEvidence:
@@ -136,13 +165,8 @@ def transport_script(enabled):
 
 
 async def act(page, kind, label, action, arguments):
-    return await page.evaluate("""async ({kind, label, action, args}) => {
-      const found = await window.consumerAgent.query({kind, text: label});
-      if (!Array.isArray(found)) throw new Error(JSON.stringify(found));
-      const matches = found.filter(entry => entry.component === kind && entry.label === label && !entry.offPage);
-      if (matches.length !== 1) throw new Error('Expected one ' + label + ': ' + JSON.stringify(found));
-      return await window.consumerAgent.act({steps: [{ref: matches[0].ref, action, args}]});
-    }""", {"kind": kind, "label": label, "action": action, "args": arguments})
+    return await page.evaluate(AGENT_ACTION_SCRIPT,
+                               {"kind": kind, "label": label, "action": action, "args": arguments})
 
 
 async def transport(page, count):
@@ -271,20 +295,143 @@ async def documentation(page, url):
     return {"basePath": "/studio/", "releaseMatchesPage": True, "contractFingerprint": True, "bundledFonts": len(fonts)}
 
 
-async def bfcache(page, url):
-    await page.goto(url, wait_until="networkidle")
-    await act(page, "input", "Workspace name", "setValue", ["Return preserved"])
-    await expect(page.get_by_label("Workspace name", exact=True)).to_have_value("Return preserved")
-    visit = await page.evaluate("window.__consumerVisitId")
-    await page.goto(url + "away.html", wait_until="load")
-    await page.go_back(wait_until="load")
-    await expect(page.get_by_label("Workspace name", exact=True)).to_have_value("Return preserved")
-    state = await page.evaluate("() => ({visit: window.__consumerVisitId, shows: window.__consumerPageShows})")
-    assert state["visit"] == visit and True in state["shows"], f"Browser did not restore this document from BFCache: {state}"
-    await transport(page, 3)
-    await act(page, "input", "Workspace name", "setValue", ["After browser return"])
-    await expect(page.get_by_label("Workspace name", exact=True)).to_have_value("After browser return")
-    return {"actualPersistedPageshow": True, "statePreserved": True, "bridgeOperational": True}
+async def cdp_send(session, method, parameters=None):
+    return await asyncio.wait_for(session.send(method, parameters or {}), timeout=5)
+
+
+async def cdp_evaluate(session, expression):
+    response = await cdp_send(session, "Runtime.evaluate", {
+        "expression": expression, "awaitPromise": True, "returnByValue": True,
+        "allowUnsafeEvalBlockedByCSP": False,
+    })
+    assert "exceptionDetails" not in response, response.get("exceptionDetails")
+    return response["result"].get("value")
+
+
+async def cdp_wait_state(session, predicate, description):
+    deadline = time.monotonic() + 5
+    last = None
+    while time.monotonic() < deadline:
+        try:
+            last = await cdp_evaluate(session, BFCACHE_STATE_SCRIPT)
+        except Exception as error:
+            if not any(text in str(error).lower() for text in (
+                "execution context was destroyed", "cannot find context", "cannot find default execution context",
+            )):
+                raise
+            last = {"contextTransition": str(error)}
+        else:
+            if predicate(last):
+                return last
+        await asyncio.sleep(0.05)
+    raise AssertionError(f"Timed out waiting for {description}: {last}")
+
+
+async def bfcache(browser, url, evidence):
+    # Playwright cannot synchronize a restored Page; this disposable context uses CDP only.
+    # https://playwright.dev/python/docs/navigations#backforward-cache-bfcache
+    context = await browser.new_context(viewport={"width": 1280, "height": 960})
+    session = None
+    evidence.stage = "bfcache"
+    evidence.record("stage-start", url=url, driver="CDP Page/Runtime")
+    details = {"stage": "bfcache", "driver": "CDP Page/Runtime", "url": url, "cdpEvents": []}
+
+    def record_cdp(name, event):
+        item = {"event": name, "details": event}
+        details["cdpEvents"].append(item)
+        details["cdpEvents"] = details["cdpEvents"][-100:]
+        evidence.record("cdp", page="bfcache", method=name, details=event)
+
+    def ready(state, expected_url):
+        snapshot = state.get("agentSnapshot")
+        return state.get("url") == expected_url and state.get("readyState") == "complete" and \
+            state.get("inputValue") is not None and state.get("transport") and \
+            len(state["transport"]["active"]) == 3 and isinstance(snapshot, list) and \
+            any(entry.get("component") == "input" and entry.get("label") == "Workspace name" and
+                not entry.get("offPage") for entry in snapshot)
+
+    def registered(state):
+        transport_state = state["transport"]
+        assert sorted(transport_state["active"]) == ["act", "query", "snapshot"], transport_state
+        assert not transport_state["duplicates"], transport_state
+
+    async def set_name(value):
+        arguments = {"kind": "input", "label": "Workspace name", "action": "setValue", "args": [value]}
+        result = await cdp_evaluate(session, f"({AGENT_ACTION_SCRIPT})({json.dumps(arguments)})")
+        assert result["ok"], result
+        state = await cdp_wait_state(session, lambda current: ready(current, url) and current.get("inputValue") == value,
+                                     f"the SDK to accept Workspace name {value!r}")
+        assert state["source"] == "agent", state
+        registered(state)
+        return state
+
+    try:
+        page = await context.new_page()
+        session = await context.new_cdp_session(page)
+        for name in ("Page.frameNavigated", "Page.loadEventFired", "Page.backForwardCacheNotUsed",
+                     "Runtime.exceptionThrown"):
+            session.on(name, lambda event, name=name: record_cdp(name, event))
+        session.on("Runtime.consoleAPICalled", lambda event: record_cdp("Runtime.consoleAPICalled", {
+            "type": event["type"], "text": " ".join(str(argument.get("value", argument.get("description", "")))
+                                                       for argument in event.get("args", []))[:6000],
+        }))
+        await cdp_send(session, "Page.enable")
+        await cdp_send(session, "Runtime.enable")
+        await cdp_send(session, "Page.addScriptToEvaluateOnNewDocument", {"source": transport_script(True)})
+        navigation = await cdp_send(session, "Page.navigate", {"url": url})
+        assert not navigation.get("errorText"), navigation
+        await cdp_wait_state(session, lambda state: ready(state, url), "the installed consumer to become ready")
+        details["before"] = before = await set_name("Return preserved")
+
+        away_url = url + "away.html"
+        navigation = await cdp_send(session, "Page.navigate", {"url": away_url})
+        assert not navigation.get("errorText"), navigation
+        await cdp_wait_state(session, lambda state: state.get("url") == away_url and state.get("readyState") == "complete",
+                             "the separate document to load")
+        history = await cdp_send(session, "Page.getNavigationHistory")
+        current = history["currentIndex"]
+        assert current > 0 and history["entries"][current]["url"] == away_url, history
+        previous = history["entries"][current - 1]
+        assert previous["url"] == url, history
+        details["history"] = history
+        await cdp_send(session, "Page.navigateToHistoryEntry", {"entryId": previous["id"]})
+        details["restored"] = restored = await cdp_wait_state(session,
+            lambda state: ready(state, url) and state.get("visitId") == before["visitId"] and
+                          True in state.get("pageShows", []),
+            "the same document's persisted pageshow after browser history return")
+        assert restored["visitId"] == before["visitId"] and True in restored["pageShows"], \
+            f"Browser did not restore this document from BFCache: {restored}"
+        assert restored["inputValue"] == "Return preserved", restored
+        registered(restored)
+        details["afterAction"] = await set_name("After browser return")
+        assert not [event for event in details["cdpEvents"] if event["event"] == "Runtime.exceptionThrown"], details["cdpEvents"]
+        details["status"] = "passed"
+        (evidence.output / "consumer-bfcache.json").write_text(json.dumps(details, indent=2) + "\n")
+        evidence.record("stage-passed", url=url, driver=details["driver"])
+        return {"driver": details["driver"], "actualPersistedPageshow": True, "sameVisitIdentity": True,
+                "statePreserved": True, "bridgeOperational": True, "evidence": "consumer-bfcache.json"}
+    except Exception as error:
+        details.update({"status": "failed", "error": str(error), "errorType": type(error).__name__})
+        prefix = evidence.output / "consumer-failure-bfcache"
+        if session is not None:
+            try:
+                details["dom"] = await cdp_evaluate(session, BFCACHE_STATE_SCRIPT)
+                prefix.with_suffix(".html").write_text(await cdp_evaluate(session, "document.documentElement.outerHTML"))
+            except Exception as capture_error:
+                details["domCaptureError"] = str(capture_error)
+            try:
+                screenshot = await cdp_send(session, "Page.captureScreenshot", {"format": "png", "captureBeyondViewport": True})
+                prefix.with_suffix(".png").write_bytes(base64.b64decode(screenshot["data"]))
+            except Exception as capture_error:
+                details["screenshotCaptureError"] = str(capture_error)
+        prefix.with_suffix(".json").write_text(json.dumps(details, indent=2) + "\n")
+        evidence.record("stage-failed", url=details.get("dom", {}).get("url", url), error=str(error))
+        print(json.dumps({"consumerFailure": "bfcache", "diagnostics": str(prefix.with_suffix(".json")),
+                          "error": str(error), "driver": details["driver"]}, indent=2), flush=True)
+        raise
+    finally:
+        evidence.save_events()
+        await context.close()
 
 
 async def hmr(page, url, directory):
@@ -363,8 +510,8 @@ async def run(args, directory, processes, browser_info):
                 results["documentation"] = await evidence.check("documentation", page, lambda: documentation(page, base))
                 await page.screenshot(path=str(ROOT / "test-results/consumer-desktop.png"), full_page=True)
                 results["copiedStarter"] = await evidence.check("copied-starter", page, lambda: starter(page, base))
-                results["bfcache"] = await evidence.check("bfcache", page, lambda: bfcache(page, base))
                 await context.close()
+                results["bfcache"] = await bfcache(browser, base, evidence)
                 context = await browser.new_context(viewport={"width": 390, "height": 844})
                 await context.add_init_script(transport_script(False))
                 page = evidence.watch(await context.new_page(), "without-webmcp")

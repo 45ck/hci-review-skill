@@ -36,6 +36,13 @@ async def verify_chat_contract(page, expect, *, base_url, output_dir):
           window.__chatRequest = window.quantitativeHciAgent.act({steps: [{ref, action:'press'}]});
         }""", control["ref"])
         await expect(stage).to_have_attribute("data-chat-state", "submitted")
+        # Host status can commit before the replacement SDK Stop button is discoverable.
+        await page.wait_for_function("""async () => {
+          const entries = await window.quantitativeHciAgent.query({kind: 'button'});
+          if (!Array.isArray(entries)) throw new Error('Chat control discovery did not return entries');
+          const matches = entries.filter(entry => !entry.offPage && entry.label === 'Stop demo response');
+          return matches.length === 1 && !matches[0].disabled && matches[0].actions?.includes('press');
+        }""", timeout=5000)
 
     async def conversation_snapshot():
         # innerText changes when an ancestor is hidden; compare exact DOM content instead.

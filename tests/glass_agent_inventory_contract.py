@@ -1,5 +1,6 @@
 """Require the real specimen, not just the gallery shell, in SDK discovery."""
 
+import asyncio
 import json
 
 
@@ -88,19 +89,61 @@ def assert_specimen_entries(specimen, snapshot):
 
 
 async def verify_foundation_specimen(page, expect, specimen):
-    snapshot = await page.evaluate("window.quantitativeHciAgent.snapshot()")
-    discovered = assert_specimen_entries(specimen, snapshot)
-    stage = page.locator(f'[data-component-id="{specimen}"] .component-stage')
-    unowned = await stage.evaluate("""root => [...root.querySelectorAll(
-        'button,input,textarea,select,[contenteditable="true"],[role="button"],[role="switch"],[role="slider"]'
-    )].filter(element => element.getClientRects().length > 0 &&
-        element.checkVisibility({visibilityProperty: true, opacityProperty: true}) &&
-        !element.closest('[aria-hidden="true"],[data-agent-hidden],[hidden],[inert]') &&
-        !element.hasAttribute('data-slot')
-    ).map(element => ({tag: element.tagName, role: element.getAttribute('role'),
-        name: element.getAttribute('aria-label') || element.textContent.trim().slice(0, 100)}))""")
+    observation = None
+    names = set()
+
+    async def registered_specimen():
+        nonlocal observation, names
+        while True:
+            # React may paint the specimen before its SDK registration. Batch
+            # read-only evidence, but require both within the existing 5 s bound.
+            observation = await page.evaluate("""specimen => {
+                const mounted = [...document.querySelectorAll('[data-component-id]')];
+                const root = mounted.find(node => node.dataset.componentId === specimen);
+                const stage = root?.querySelector('.component-stage');
+                const box = root?.getBoundingClientRect();
+                const visible = Boolean(box?.width && box.height &&
+                    root.checkVisibility({visibilityProperty: true}));
+                const snapshot = window.quantitativeHciAgent?.snapshot?.() ?? null;
+                const unowned = stage ? [...stage.querySelectorAll(
+                    'button,input,textarea,select,[contenteditable="true"],[role="button"],[role="switch"],[role="slider"]'
+                )].filter(element => element.getClientRects().length > 0 &&
+                    element.checkVisibility({visibilityProperty: true, opacityProperty: true}) &&
+                    !element.closest('[aria-hidden="true"],[data-agent-hidden],[hidden],[inert]') &&
+                    !element.hasAttribute('data-slot')
+                ).map(element => ({tag: element.tagName, role: element.getAttribute('role'),
+                    name: element.getAttribute('aria-label') || element.textContent.trim().slice(0, 100)})) : [];
+                return {mounted: mounted.map(node => node.dataset.componentId), visible,
+                    stageFound: Boolean(stage), snapshot, unowned,
+                    errors: [...document.querySelectorAll('.demo-error')].map(node => node.textContent)};
+            }""", specimen)
+            snapshot = observation["snapshot"]
+            names = {" ".join(entry.get("label", "").split()) for entry in snapshot or []
+                     if not entry.get("offPage")}
+            if (observation["mounted"] == [specimen] and observation["visible"]
+                    and observation["stageFound"] and not observation["errors"]
+                    and snapshot is not None
+                    and all(any(label in names for label in alternatives)
+                            for alternatives in SPECIMEN_NAMES[specimen])):
+                return observation
+            await asyncio.sleep(0.025)
+
+    try:
+        observation = await asyncio.wait_for(registered_specimen(), timeout=5)
+    except TimeoutError as error:
+        state = {key: observation[key] for key in ("mounted", "visible", "stageFound", "errors")} if observation else None
+        raise AssertionError(
+            f"{specimen}: specimen DOM and SDK registration did not become ready within 5000 ms; "
+            f"state={state}; available labels={sorted(names)}"
+        ) from error
+    assert observation["mounted"] == [specimen], observation
+    assert observation["visible"] and observation["stageFound"], observation
+    assert not observation["errors"], observation["errors"]
+    discovered = assert_specimen_entries(specimen, observation["snapshot"])
+    unowned = observation["unowned"]
     assert not unowned, f"{specimen}: visible controls lack an SDK part: {unowned}"
     if specimen == "separator":
+        stage = page.locator(f'[data-component-id="{specimen}"] .component-stage')
         await expect(stage.get_by_role("separator", name="Collection summary divider", exact=True)).to_be_visible()
         return {"family": specimen, "mode": "semantic-dom", "reason": "Upstream separator declares agent.shown false.",
                 "unownedControls": unowned}

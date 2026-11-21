@@ -263,15 +263,16 @@ async def run(args):
                     "stages": stages, "traceback": "".join(traceback.format_exception(error))[-7000:],
                     "failureEvidence": failure_artifacts}
             finally:
-                try:
-                    await asyncio.wait_for(page.evaluate("""() => {
-                        window.__glassMotionFrames?.cancel(); delete window.__glassMotionFrames;
-                        window.__glassDrawerFrames?.cancel(); delete window.__glassDrawerFrames;
-                        window.__glassSelectionEvidence?.stop(); delete window.__glassSelectionEvidence;
-                        window.__glassPopupTimeline?.stop('check fallback cleanup'); delete window.__glassPopupTimeline;
-                    }"""), timeout=2)
-                except Exception:
-                    pass
+                if not page.is_closed():
+                    try:
+                        await asyncio.wait_for(page.evaluate("""() => {
+                            window.__glassMotionFrames?.cancel(); delete window.__glassMotionFrames;
+                            window.__glassDrawerFrames?.cancel(); delete window.__glassDrawerFrames;
+                            window.__glassSelectionEvidence?.stop(); delete window.__glassSelectionEvidence;
+                            window.__glassPopupTimeline?.stop('check fallback cleanup'); delete window.__glassPopupTimeline;
+                        }"""), timeout=2)
+                    except Exception:
+                        pass
             result["durationSeconds"] = round(perf_counter() - check_started, 3)
             if check_profiles:
                 result["profiles"] = check_profiles
@@ -322,8 +323,7 @@ async def run(args):
             specimens = []
             for item in components:
                 browser_stage("catalogue: open specimen", component=item["id"])
-                await choose(item["id"])
-                await expect(page.locator(".demo-error")).to_have_count(0)
+                await page.locator(f"[data-catalogue-id='{item['id']}']").click()
                 specimens.append(await verify_foundation_specimen(page, expect, item["id"]))
             return {"familiesOpened": len(components), "customCollectionsPresent": custom_collections,
                     "specimens": specimens, "unnamed": [], "oneFamilyMountedAtATime": True,
@@ -530,13 +530,17 @@ async def run(args):
 
         await record("font_icon_presets_state_and_export", appearance, reset=False, timeout=45)
 
+        # Every remaining scenario owns a fresh context and uses reset=False;
+        # release the unused overview renderer before their GPU measurements.
+        await context.close()
+
         async def custom_components(operation):
             custom_context = await new_context(viewport={"width": 1440, "height": 1000})
             custom_page = await custom_context.new_page()
             await observe_errors(custom_page)
             try:
                 return await operation(custom_page, expect, base_url=args.base_url, output_dir=output.parent)
-            except Exception:
+            except (Exception, asyncio.CancelledError):
                 await failure_evidence(custom_page)
                 raise
             finally:
@@ -738,7 +742,6 @@ async def run(args):
         await record("short_overview_motion_video", record_motion_demo, reset=False, timeout=45)
         report["checks"].append({"name": "uncaught_page_errors", "passed": not page_errors, "errors": page_errors})
         report["checks"].append({"name": "console_errors", "passed": not console_errors, "errors": console_errors})
-        await context.close()
         await browser.close()
 
     report["durationSeconds"] = round(perf_counter() - started, 3)

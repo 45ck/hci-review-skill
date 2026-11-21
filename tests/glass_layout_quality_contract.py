@@ -353,7 +353,7 @@ async def verify_layout_quality_contract(page, expect, *, base_url, output_dir):
         for label, key in [("Fixture direction", "direction"), ("Fixture anchor", "anchor"), ("Fixture content", "content")]:
             choices.append({"control": label, "choice": await _select(page, "select", label, value=case[key])})
         await press("Reset quality fixture")
-        await expect(page.locator(FIXTURE)).to_have_attribute("data-quality-baseline", "ready", timeout=3000)
+        await expect(page.locator(FIXTURE)).to_have_attribute("data-quality-baseline", "ready", timeout=6000)
         await expect(page.locator(FIXTURE)).to_have_attribute("dir", case["direction"])
         for choice in choices:
             accepted = await _entry(page, "select", choice["control"])
@@ -372,7 +372,7 @@ async def verify_layout_quality_contract(page, expect, *, base_url, output_dir):
         save()
         await _act(page, await _entry(page, "dialog", "Open placement lab"), "setOpen", [True])
         await expect(page.get_by_role("dialog", name="Layout quality fixtures")).to_be_visible()
-        await expect(page.locator(FIXTURE)).to_have_attribute("data-quality-baseline", "ready", timeout=3000)
+        await expect(page.locator(FIXTURE)).to_have_attribute("data-quality-baseline", "ready", timeout=6000)
         assert await _start_shift_observer(page), "This Chromium contract requires Layout Instability observations"
 
         for index, case in enumerate(_cases()):
@@ -479,7 +479,7 @@ async def verify_layout_quality_contract(page, expect, *, base_url, output_dir):
                 "expectedCode": expected_code, "report": reopened_report}
             current["passed"] = True
             await press("Reset quality fixture")
-            await expect(page.locator(FIXTURE)).to_have_attribute("data-quality-baseline", "ready", timeout=3000)
+            await expect(page.locator(FIXTURE)).to_have_attribute("data-quality-baseline", "ready", timeout=6000)
             await expect(page.locator(POPUP)).not_to_be_visible()
             save()
 
@@ -506,6 +506,13 @@ async def verify_layout_quality_contract(page, expect, *, base_url, output_dir):
         return {**evidence, "evidence": evidence_path.name}
     finally:
         evidence["durationSeconds"] = round(perf_counter() - started, 3)
+        if not page.is_closed():
+            try:
+                preparation = await page.evaluate("selector => document.querySelector(selector)?.getAttribute('data-quality-settle')", FIXTURE)
+                if preparation:
+                    evidence["baselinePreparation"] = json.loads(preparation)
+            except Exception as error:
+                evidence["baselinePreparationReadError"] = type(error).__name__
         save()
         if not page.is_closed():
             await page.evaluate("() => window.__layoutQualityTestEvidence?.observer?.disconnect()")

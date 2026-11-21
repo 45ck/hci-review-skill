@@ -21,6 +21,8 @@ The existing `WebGPU Liquid Glass kit` workflow remains responsible for live mot
 
 Each test gets a fresh context with fixed locale, timezone, scale, viewport and presentation preferences. The browser may request only the reviewed loopback build. Fixture Select values are discovered and changed through the real SDK bridge, then checked against the accepted visible control value. Popups must remain inside the viewport. Runtime page and console errors fail the test.
 
+The phone inspector first verifies heading focus, then explicitly aligns the application canvas to the viewport's bottom edge and checks its bounds. This preserves the reviewed framing independently of earlier click/focus scrolling. A fully visible canvas must not retain an incidental scroll offset merely because `scrollIntoViewIfNeeded()` has nothing to do.
+
 ## Local pixel comparison
 
 Pinned development tools are `@playwright/test@1.65.1`, `@chromatic-com/playwright@1.0.0`, `chromatic@18.15.1` and `@types/node@24.19.2`. The Node visual runner and existing Python `playwright==1.65.2` harness are separate dependencies; their installed browser versions are evidence recorded by the respective runs. Node 24 satisfies the visual tools' engine requirements. `npm run glass:visual:typecheck` checks the visual configuration and test source with the dedicated strict TypeScript configuration.

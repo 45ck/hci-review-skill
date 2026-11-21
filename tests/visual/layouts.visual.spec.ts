@@ -185,8 +185,18 @@ const states: Array<{
       const inspector = page.locator(".qg-app-detail");
       await expect(inspector).toBeVisible();
       await expect(inspector.getByRole("heading", { name: "Payment retry", exact: true })).toBeFocused();
-      // Keep the compact task and its action in view instead of framing the outer catalogue.
-      await page.locator(".qg-layout-canvas").scrollIntoViewIfNeeded();
+      // Match the reviewed frame: keep the whole task above the viewport's bottom edge.
+      // "If needed" retained incidental click/focus scrolling when the canvas was already visible.
+      const canvas = page.locator(".qg-layout-canvas");
+      await canvas.evaluate((element) => element.scrollIntoView({
+        block: "end", inline: "nearest", behavior: "instant",
+      }));
+      const bounds = await canvas.boundingBox();
+      expect(bounds, "The compact canvas has measurable bounds").not.toBeNull();
+      if (!bounds) throw new Error("The compact canvas has no measurable bounds.");
+      expect(bounds.y).toBeGreaterThanOrEqual(0);
+      expect(Math.abs(bounds.y + bounds.height - page.viewportSize()!.height),
+        "The compact canvas is aligned to the reviewed bottom edge").toBeLessThanOrEqual(1);
     },
   },
   {

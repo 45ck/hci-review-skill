@@ -169,6 +169,7 @@ async def motion_diagnostics(page):
         const state = document.documentElement.dataset;
         return {
             policy: state.liquidMotion, state: state.liquidMotionState,
+            visibility: document.visibilityState,
             effects: Number(state.liquidActiveEffects),
             motion: Number(state.liquidMotionRevision),
             render: Number(state.liquidRenderRevision),
@@ -179,12 +180,35 @@ async def motion_diagnostics(page):
 
 async def settled_motion(page, *, check_idle=True):
     browser_stage("material: wait for idle", checkStableIdle=check_idle)
-    await page.wait_for_function("""() => {
-        const state = document.documentElement.dataset;
-        return state.liquidMotionState === 'idle' && Number(state.liquidActiveEffects) === 0;
-    }""", timeout=MOTION_SETTLE_TIMEOUT_MS)
-    await _painted(page)
-    before = await motion_diagnostics(page)
+    if await page.evaluate("document.visibilityState") != "visible":
+        await page.bring_to_front()
+    settled = await asyncio.wait_for(page.evaluate("""({timeoutMs, stableMs}) => new Promise(resolve => {
+        const deadline = performance.now() + timeoutMs;
+        let candidate = null;
+        let candidateSince = 0;
+        let polls = 0;
+        const poll = () => {
+            const now = performance.now();
+            const data = document.documentElement.dataset;
+            const state = {
+                policy: data.liquidMotion, state: data.liquidMotionState,
+                visibility: document.visibilityState,
+                effects: Number(data.liquidActiveEffects), motion: Number(data.liquidMotionRevision),
+                render: Number(data.liquidRenderRevision), capture: Number(data.liquidCaptureRevision)
+            };
+            polls++;
+            if (state.visibility === 'visible' && state.state === 'idle' && state.effects === 0) {
+                const signature = JSON.stringify(state);
+                if (candidate !== signature) { candidate = signature; candidateSince = now; }
+                if (now - candidateSince >= stableMs) { resolve({ok: true, state, polls}); return; }
+            } else { candidate = null; candidateSince = 0; }
+            if (now >= deadline) { resolve({ok: false, state, polls}); return; }
+            setTimeout(poll, 25);
+        };
+        setTimeout(poll, 0);
+    })""", {"timeoutMs": MOTION_SETTLE_TIMEOUT_MS, "stableMs": MOTION_IDLE_SAMPLE_MS}), timeout=MOTION_SETTLE_TIMEOUT_MS / 1000 + 1)
+    assert settled["ok"], f"Material did not reach qualified idle within {MOTION_SETTLE_TIMEOUT_MS} ms: {settled}"
+    before = settled["state"]
     if check_idle:
         browser_stage("material: observe stable idle", baseline=before, observationMs=MOTION_IDLE_SAMPLE_MS)
         await page.wait_for_timeout(MOTION_IDLE_SAMPLE_MS)
@@ -217,7 +241,7 @@ async def _arm_motion_frames(page, box, *, indicator=False):
             observedRenders: 0, activeRenders: 0, frameDeadlineMs: 4000, startedAt: performance.now()};
         const baseline = Number(root.dataset.liquidMotionRevision);
         const capture = Number(root.dataset.liquidCaptureRevision);
-        let previous = -Infinity;
+        let previous = -1;
         let timer;
         let finished = false;
         let cancelled = false;
@@ -277,7 +301,7 @@ async def _arm_motion_frames(page, box, *, indicator=False):
                 state.liquidMotionState !== 'running' ||
                 Number(state.liquidActiveEffects) < 1) return;
             probe.activeRenders++;
-            if (now - previous < 70) return;
+            if (Number(state.liquidRenderRevision) === previous) return;
             try {
                 probe.phase = `snapshot ${frames.length + 1}`;
                 const snapshot = createImageBitmap(source,
@@ -303,7 +327,7 @@ async def _arm_motion_frames(page, box, *, indicator=False):
                 });
                 probe.frameCount = frames.length;
                 probe.phase = 'waiting for next render';
-                previous = now;
+                previous = Number(state.liquidRenderRevision);
                 if (frames.length === 3) finish(null);
             } catch (error) { finish(String(error)); }
         });
@@ -454,7 +478,8 @@ async def verify_optics_contract(page, expect, *, output_dir="test-results", req
         probes[kind] = box
 
     async def capture(label):
-        return {kind: await page.screenshot(path=str(output / f"gpu-{label}-{kind}.png"), clip=box, animations="disabled", timeout=SCREENSHOT_TIMEOUT_MS) for kind, box in probes.items()}
+        await settled_motion(page, check_idle=False)
+        return {kind: await page.screenshot(path=str(output / f"gpu-{label}-{kind}.png"), clip=box, animations="allow", timeout=SCREENSHOT_TIMEOUT_MS) for kind, box in probes.items()}
 
     on = await capture("on")
     hide = await page.add_style_tag(content="canvas[data-liquid-canvas] { visibility: hidden !important; }")
@@ -482,7 +507,7 @@ async def verify_optics_contract(page, expect, *, output_dir="test-results", req
     assert capture_change["captureAfter"] > capture_change["captureBefore"], "Backdrop changed without a completed texture capture"
     for kind, difference in backdrop.items():
         assert difference["changedFraction"] > 0.01 and difference["meanChannelDifference"] > 0.25, f"Changed backdrop did not reach the actual {kind} surface: {difference}"
-    await page.screenshot(path=str(output / "gpu-effect-overview.png"), full_page=True, animations="disabled", timeout=SCREENSHOT_TIMEOUT_MS)
+    await page.screenshot(path=str(output / "gpu-effect-overview.png"), full_page=True, animations="allow", timeout=SCREENSHOT_TIMEOUT_MS)
     await expect(root).to_have_attribute("data-liquid-status", "ready")
     await configure_material(page, strength=30, backdrop="Coast")
     result.update({
@@ -772,8 +797,15 @@ async def verify_drawer_motion_contract(page, expect, *, output_dir="test-result
             finally:
                 await page.mouse.up()
             browser_stage("drawer: await native settle frames", policy=policy, deadlineMs=4000)
-            samples = await asyncio.wait_for(page.evaluate("window.__glassDrawerFrames.done"), timeout=5)
-            await page.evaluate("delete window.__glassDrawerFrames")
+            try:
+                samples = await asyncio.wait_for(page.evaluate("window.__glassDrawerFrames.done"), timeout=5)
+            except TimeoutError as error:
+                raise AssertionError(f"{policy}: native Drawer frame evidence exceeded 5000 ms") from error
+            finally:
+                try:
+                    await asyncio.wait_for(page.evaluate("window.__glassDrawerFrames?.cancel(); delete window.__glassDrawerFrames"), timeout=2)
+                except Exception as cleanup_error:
+                    browser_stage("drawer: cleanup unavailable", error=str(cleanup_error) or type(cleanup_error).__name__)
             assert not samples["error"], f"{policy}: {samples['error']}; observed {len(samples['frames'])}"
             frames = samples["frames"]
             assert len({frame["render"] for frame in frames}) == 3, f"{policy} Drawer did not redraw each sampled settle frame"

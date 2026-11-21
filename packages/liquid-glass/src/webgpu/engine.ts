@@ -311,7 +311,10 @@ export function createLiquidGlassEngine(config: EngineOptions) {
   }
 
   function schedule() {
-    if (!disposed && !frame && document.visibilityState !== "hidden") frame = requestAnimationFrame(paint);
+    if (!disposed && !frame && document.visibilityState !== "hidden") {
+      if (html.dataset.liquidMotionState !== "running") html.dataset.liquidMotionState = "running";
+      frame = requestAnimationFrame(paint);
+    }
   }
 
   const refresh = (): Promise<void> => {

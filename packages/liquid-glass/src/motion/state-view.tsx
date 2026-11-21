@@ -19,7 +19,8 @@ export function LiquidMotionState({ label, className = "", children, ...options 
       {children?.(state.value)}
       <output className="qgm-state-name" aria-label={`${label} current state`} aria-live="polite">{state.graph.states.find(item => item.id === state.value)?.label ?? state.value}</output>
       <div className="qgm-state-actions">
-        {state.graph.transitions.filter(edge => edge.from === state.value).map(edge => <Button key={edge.event}
+        {/* Keep the primary control mounted as its label/action changes, preserving keyboard focus. */}
+        {state.graph.transitions.filter(edge => edge.from === state.value).map((edge, index) => <Button key={index === 0 ? "primary" : `event:${edge.event}`}
           disabled={state.disabled || state.readOnly} focusableWhenDisabled onClick={() => handle.api.send(edge.event, state.value)}>{edge.label}</Button>)}
       </div>
     </>}</parts.Content>,

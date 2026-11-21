@@ -321,6 +321,7 @@ async def verify_motion_collection_contract(page, expect, *, base_url, output_di
         await resume.focus()
         await resume.press("Enter")
         await expect(workflow).to_have_attribute("data-motion-state", "running")
+        await expect(workflow.get_by_role("button", name="Pause workflow", exact=True)).to_be_focused()
         await _act(page, await _entry(page, "liquid-motion-state", "Motion workflow"), "send", ["complete", "running"])
         await expect(workflow).to_have_attribute("data-motion-state", "complete")
         await expect(scene).to_have_attribute("data-scene-state", "complete")

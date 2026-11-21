@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowLeft, Check, ChevronDown, ChevronRight, Menu as MenuGlyph,
+  ArrowLeft, Check, ChevronDown, ChevronRight,
   MoreHorizontal, Search, X
 } from "lucide-react";
 import { LiquidIcon } from "@quantitative-hci/liquid-glass/icons";
@@ -108,7 +108,6 @@ export function LayoutsShowcase() {
   const [lastReviewed, setLastReviewed] = useState<string | null>(null);
   const [command, setCommand] = useState("");
   const [commandOpen, setCommandOpen] = useState(false);
-  const [mobileMenu, setMobileMenu] = useState(false);
   const detailHeading = useRef<HTMLHeadingElement | null>(null);
   const space = spaces.find((item) => item.id === spaceId)!;
   const canReview = space.role === "Owner";
@@ -138,13 +137,13 @@ export function LayoutsShowcase() {
   }, [detailOpen]);
 
   function navigate(next: RouteId) {
-    setRoute(next); setMobileMenu(false); setDetailOpen(false); setNotice("");
+    setRoute(next); setDetailOpen(false); setNotice("");
     if (next === "account") setAccountDraft(accountName);
   }
   function switchSpace(next: SpaceId) {
     if (next === spaceId) return;
     setSpaceId(next); setSelectedId(reviewsBySpace[next][0]?.id ?? null);
-    setRoute("reviews"); setDetailOpen(false); setMobileMenu(false);
+    setRoute("reviews"); setDetailOpen(false);
     setProjectFilter(""); setQuery(""); setFilter("open"); setScenario("ready");
     setLastReviewed(null); setNotice("Switched to " + spaces.find((item) => item.id === next)!.name + ".");
   }
@@ -173,7 +172,6 @@ export function LayoutsShowcase() {
   return (
     <section className="qg-layout-study" data-validation="unvalidated" aria-label="Responsive application layout study">
       <div className="qg-layout-toolbar">
-        <span>App layout</span>
         <SegmentedControl aria-label="Preview width" value={device} onValueChange={(value) => {
           if (value === "wide" || value === "phone") { setDevice(value); setDetailOpen(false); }
         }}>
@@ -196,15 +194,15 @@ export function LayoutsShowcase() {
       </div>
 
       <div className="qg-layout-canvas" data-size={device}>
-        <div className="qg-app" data-app-screen={route} data-details-open={detailOpen} data-preview-size={device}>
+        <div className="qg-app" data-app-screen={route} data-details-open={detailOpen} data-preview-size={device} data-has-detail={route === "reviews" && selected !== null && scenario === "ready"}>
           <aside className="qg-app-rail" aria-label="Workspace navigation">
             <div className="qg-app-identity">
               <span className="qg-app-symbol"><LiquidIcon name="layers" size={26} /></span>
-              <strong>Northstar</strong>
+              <strong>Quantive</strong>
             </div>
             <nav className="qg-app-navigation" aria-label="Workspace pages">
               {navigation.map((item) => (
-                <Button key={item.id} className="qg-app-nav-button" aria-current={route === item.id ? "page" : undefined}
+                <Button key={item.id} className="qg-app-nav-button" aria-label={item.label} aria-current={route === item.id ? "page" : undefined}
                   onClick={() => navigate(item.id)}>
                   <LiquidIcon name={item.icon} size={22} /><span>{item.label}</span>
                   {item.id === "reviews" && totalOpen > 0 && <span className="qg-app-nav-count">{totalOpen}</span>}
@@ -419,7 +417,7 @@ export function LayoutsShowcase() {
               <Button onClick={() => navigate("projects")} aria-current={route === "projects" ? "page" : undefined}>
                 <LiquidIcon name="folder" size={24}/> Projects
               </Button>
-              <Menu open={mobileMenu} onOpenChange={setMobileMenu}>
+              <Menu>
                 <MenuTrigger aria-label="More pages"><MoreHorizontal size={22} aria-hidden="true" />More</MenuTrigger>
                 <MenuContent>
                   <MenuItem onClick={() => navigate("people")}>People</MenuItem>

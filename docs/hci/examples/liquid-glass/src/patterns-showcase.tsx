@@ -20,7 +20,7 @@ const initialWorks: Work[] = [
 ];
 const statuses = [{ id: "draft", label: "Draft" }, { id: "ready", label: "Ready" }, { id: "archived", label: "Archived" }];
 
-export function PatternsShowcase() {
+export function PatternsShowcase({ active = true }: { active?: boolean }) {
   const [works, setWorks] = useState(initialWorks);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<string[]>([]);
@@ -48,7 +48,7 @@ export function PatternsShowcase() {
     <section className="patterns-library" aria-label="Sample work library" data-liquid-glass="" data-liquid-kind="panel">
       <header className="patterns-library-header">
         <div className="patterns-library-label"><FolderOpen size={23} aria-hidden="true" /><div><h3>Saved work</h3><span>{works.length} local items</span></div></div>
-        <LiquidCommandPalette title="Library commands" triggerLabel="Search library commands" searchLabel="Find a library command" description="Jump to a view or restore the local sample." groups={[
+        <LiquidCommandPalette title="Library commands" triggerLabel="Search library commands" searchLabel="Find a library command" shortcut={active ? "mod+k" : null} description="Jump to a view or restore the local sample." groups={[
           { id: "views", label: "Views", items: [
             { id: "ready", label: "Show ready work", icon: <Check size={17} />, keywords: ["review", "complete"] },
             { id: "draft", label: "Show draft work", icon: <FileText size={17} />, keywords: ["unfinished"] },

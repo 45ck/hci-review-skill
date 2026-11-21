@@ -168,7 +168,17 @@ async def verify_patterns_contract(page, expect, *, base_url, output_dir):
         await expect(palette).not_to_be_visible()
         await _select(page, "listbox", "Component catalogue", value="patterns")
         await expect(stage).to_be_visible()
+        await expect(palette).not_to_be_visible()
+        returned_dialog = await _entry(page, "dialog", "Library commands")
+        assert returned_dialog.get("open") is False, f"An inactive shortcut opened the palette: {returned_dialog}"
+        assert await stage.get_by_role("button", name="Restore sample", exact=True).evaluate(
+            "node => !node.closest('[inert]')"
+        ), "Returning to Patterns left the library inert"
         await expect(stage.locator('[data-work-id="coast"] .patterns-work-name strong')).to_have_text("Coastal reference")
+        await page.keyboard.press("Control+k")
+        await expect(palette).to_be_visible()
+        await page.keyboard.press("Escape")
+        await expect(palette).not_to_be_visible()
 
         browser_stage("patterns: narrow layout and material fallbacks")
         await page.set_viewport_size({"width": 390, "height": 844})
@@ -187,6 +197,7 @@ async def verify_patterns_contract(page, expect, *, base_url, output_dir):
         completed = True
         return {"namedControls": named, "command": command, "disabledCommand": refusal, "cancelledQuery": cancelled,
                 "disabledSelectionAction": publish_refusal, "bulkArchiveOperations": 1,
+                "inactiveShortcutDialogOpen": returned_dialog["open"], "activeShortcutRebound": True,
                 "mobile": mobile, "forcedColoursMobile": forced_mobile, "screenshots": screenshots,
                 "validation": "unvalidated"}
     finally:

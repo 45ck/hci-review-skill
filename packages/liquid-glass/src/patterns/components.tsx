@@ -28,7 +28,7 @@ export type LiquidCommandPaletteProps = {
   onAction: (id: string, details: CommandActionDetails) => unknown;
   description?: string;
   placeholder?: string;
-  shortcut?: string;
+  shortcut?: string | null;
   open?: boolean;
   defaultOpen?: boolean;
   onOpenChange?: ComponentProps<typeof Dialog>["onOpenChange"];
@@ -41,7 +41,7 @@ export function LiquidCommandPalette({ title, triggerLabel, searchLabel, groups,
   const [controller] = useState(() => createDialogController());
   const search = useRef<HTMLInputElement>(null);
   return <Dialog controller={controller} open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange}>
-    <DialogTrigger className={`qgp-command-trigger ${className}`} shortcut={shortcut}>{triggerLabel}<DialogShortcut /></DialogTrigger>
+    <DialogTrigger className={`qgp-command-trigger ${className}`} shortcut={shortcut ?? undefined}>{triggerLabel}<DialogShortcut /></DialogTrigger>
     <DialogBackdrop className="qgp-backdrop" />
     <DialogContent className="qgp-command-dialog" data-validation="unvalidated" initialFocus={() => search.current} keepMounted>
       <header className="qgp-dialog-heading"><div><DialogTitle>{title}</DialogTitle><DialogDescription>{description}</DialogDescription></div><DialogClose aria-label={`Close ${title}`}>×</DialogClose></header>

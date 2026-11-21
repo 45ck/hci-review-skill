@@ -917,7 +917,7 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
             <SpecimenBoundary key="sections" name="Sections"><SectionsShowcase /></SpecimenBoundary>
           </div>}
           {(active === "patterns" || visitedCollections.includes("patterns")) && <div hidden={active !== "patterns"}>
-            <SpecimenBoundary key="patterns" name="Patterns"><PatternsShowcase /></SpecimenBoundary>
+            <SpecimenBoundary key="patterns" name="Patterns"><PatternsShowcase active={active === "patterns"} /></SpecimenBoundary>
           </div>}
           {(active === "assistant" || visitedCollections.includes("assistant")) && <div hidden={active !== "assistant"}>
             <SpecimenBoundary key="assistant" name="Assistant"><AssistantShowcase /></SpecimenBoundary>

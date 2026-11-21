@@ -16,6 +16,8 @@ These follow the established command palette, table filtering/bulk selection, de
 
 `LiquidCommandPalette` also accepts controlled query/onQueryChange and open/onOpenChange, defaultOpen, description, placeholder and className. The installed beta13 CommandActionDetails contains an optional event; unlike ButtonActionDetails it does **not** advertise a source field. Do not infer an authenticated actor from either shape. Dialog, Input and Select change callbacks retain their actual SDK source/cancel details.
 
+The default `shortcut` is `mod+k`; pass `shortcut={null}` to remove that global SDK trigger binding. Hosts that keep inactive pages mounted must disable their shortcuts explicitly, for example `shortcut={active ? "mod+k" : null}`. A hidden ancestor alone does not disable this SDK shortcut. The showcase wires its active collection state to this prop and verifies the dialog remains closed after returning, with the shortcut usable again while active.
+
 ## Controlled acceptance and operation
 
 Discover the current named SDK controls with `query`/`snapshot`; read the available actions and choices before using `act`. Observe the accepted visible result, not just dispatch success. The composition itself adds no new browser mutation endpoint. A host can refuse a query or facet change with `details.cancel()`, refuse a command by throwing/rejecting, and keep a controlled dialog open by cancelling its requested close. Reuse the host's existing authorization and persistence rules.

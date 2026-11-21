@@ -7111,7 +7111,7 @@
       ],
       "inputs": [
         "title,triggerLabel,searchLabel,groups with stable group and command IDs,onAction(id,CommandActionDetails)",
-        "Optional description,placeholder,shortcut,controlled open/defaultOpen/onOpenChange,query/onQueryChange,className; commands may include icon,keywords,shortcut,disabled,requiresConfirmation"
+        "Optional description,placeholder,shortcut:string|null (default mod+k; null removes the SDK shortcut binding),controlled open/defaultOpen/onOpenChange,query/onQueryChange,className; commands may include icon,keywords,shortcut,disabled,requiresConfirmation"
       ],
       "state": [
         "SDK Dialog owns modal state/focus; Command owns filtering, highlight and pending/error state; task effects belong to the host."
@@ -7128,6 +7128,7 @@
       },
       "restrictions": [
         "CommandActionDetails in SDK beta.13 supplies event, not source/cancel; do not invent missing attribution. Query and open changes retain their documented change details.",
+        "Hosts that retain hidden pages must pass shortcut:null while inactive; a hidden ancestor alone does not disable the SDK global shortcut. The showcase binds its collection activity to this prop.",
         "Provide unique command IDs and specific labels. Host callbacks must validate authorization and signal rejected action promises.",
         "requiresConfirmation marks the actual command for SDK policy; opening or closing is not the consequential action.",
         "No second root primitive or mutation endpoint is added."
@@ -7140,7 +7141,7 @@
       "evidence": [
         {
           "path": "tests/glass_patterns_contract.py",
-          "scope": "Grouped SDK command discovery/dispatch, accepted local effect, disabled/confirmation or host-refusal behavior where exercised, keyboard search and modal focus recovery; scoped to the local showcase."
+          "scope": "Grouped SDK command discovery/dispatch, accepted local effect, disabled/confirmation or host-refusal behavior where exercised, keyboard search and modal focus recovery, inactive shortcut isolation with closed state and interactive page after returning, and active shortcut rebinding; scoped to the local showcase."
         }
       ],
       "policies": [

@@ -363,6 +363,14 @@
       "exportPath": "@quantitative-hci/liquid-glass/layouts",
       "validation": "unvalidated",
       "contract": "docs/hci/standards/app-layout-system.md"
+    },
+    {
+      "id": "liquid-app-workarea",
+      "name": "LiquidAppWorkarea",
+      "category": "App layouts",
+      "exportPath": "@quantitative-hci/liquid-glass/layouts",
+      "validation": "unvalidated",
+      "contract": "docs/hci/standards/app-layout-system.md"
     }
   ]
 }

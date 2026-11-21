@@ -37,7 +37,7 @@
         "kind": "agent",
         "name": "ChatGPT, implementation review with independent contextual source review"
       },
-      "reviewedAt": "2026-11-21T22:03:21.085Z",
+      "reviewedAt": "2026-11-21T22:13:28.360Z",
       "task": "Open a developer review of the rendered region, understand and locate findings, select a proposed direction and copy a current agent instruction packet without implying that the page was changed.",
       "scenarios": [
         "Visible header trigger and review=1 URL; actual-page scope distinct from the deliberately flawed example.",
@@ -51,7 +51,7 @@
       "assessments": {
         "content": "Review UI is the visible trigger and dialog name. Findings separate the observed evidence, suggestion, severity and certainty. The footer states that choices have not applied page changes. Zero findings still requires contextual review; no overall quality score or semantic approval is claimed. OPTIONS is accompanied by stable mapping so an agent need not guess which finding each number describes. The sample is explicitly labelled as deliberately flawed and separate from the actual page. Hidden or protected referenced labels now produce a counted coverage limitation rather than exposing their text or declaring an unnamed control.",
         "navigation": "The existing gallery header mounts the tool, and review=1 opens it beside the active collection. It scans kit-main instead of replacing the gallery. Show on page locates the actual element and minimizes the panel; Back to findings restores it. Review actual page leaves the sample scope. Source scope, viewport and current freshness are exposed on the dialog and represented in the packet.",
-        "presentation": "The bounded desktop side panel and narrow bottom panel retain persistent actions and a scrollable findings area. Body advice and options use 14px text; metadata uses at least 12px. A visual preview identified translucent text interference, so panel and footer now derive an opaque color from the shared kit token. The existing SDK controls, typography, icons and forced-color treatment remain in use. Location mode reduces obstruction while showing the outlined target.",
+        "presentation": "The bounded desktop side panel and narrow bottom panel retain persistent actions and a scrollable findings area. Body advice and options use 14px text; metadata uses at least 12px. A visual preview identified translucent text interference, so panel and footer now derive an opaque color from the shared kit token. The existing SDK controls, typography, icons and forced-color treatment remain in use. Location mode reduces obstruction while showing the outlined target. The footer actions stack at widths of 380px or less to keep both complete button labels within the panel; 390px and wider retain the row. The browser contract checks actual header, toolbar and footer control bounds, including full-width stacking at 320px.",
         "interaction": "The component reuses the existing SDK Dialog, Button, RadioGroup, Radio and Textarea with one host bridge. Controlled selections are confirmed human directions; agent-sourced radio changes are cancelled at the shared callback. Selection and copying recheck the live fingerprint before proceeding. The packet is explicitly selection-only and does not rewrite content or authorize a release. The example keyboard/copy exercise is an automated test choice, not a recorded human preference.",
         "recovery": "A missing or uninspectable region displays an actionable message. Changed content disables old choices and export; a changed refresh clears them, while an unchanged refresh preserves them. Stale fingerprints and unknown decision IDs are rejected by the packet creator. Clipboard failure exposes selectable JSON. Outline observers clean up on close, change and return. Focus moves to Back to findings when minimized and uses SDK restoration when closed."
       },
@@ -63,7 +63,7 @@
         "The source fingerprint verifies current recorded scope and reasoning presence. It does not prove the assessment is correct, and the runtime fingerprint is not an authorization credential.",
         "Desktop preview interaction and source review are recorded here. The focused CI contract separately verifies mobile, forced colors, exclusion changes, SDK refusal and stale export. Human review status remains Unvalidated."
       ],
-      "fingerprint": "f56fa2b707fbc05a78febe6f0991c2e1f1e2b822f88a3e69c9af20576f180165"
+      "fingerprint": "098cbdcb5f7f55c12ba13d4f10842a02d7ac42f971e60ce9922c24a5be4f7f7f"
     }
   ]
 }

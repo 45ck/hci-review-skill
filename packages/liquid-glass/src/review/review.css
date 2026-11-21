@@ -77,6 +77,9 @@
     .qgr-toolbar, .qgr-scroll, .qgr-footer { padding-inline: .8rem; }
     .qgr-example { top: 1rem; left: .75rem; width: calc(100vw - 1.5rem); max-height: calc(100dvh - 12rem); }
   }
+  @media (max-width: 380px) {
+    .qgr-footer > div { display: grid; grid-template-columns: minmax(0, 1fr); }
+  }
   @media (forced-colors: active) {
     .qgr-panel[data-slot="dialog-content"], .qgr-footer, .qgr-example, .qgr-finding blockquote, .qgr-alert, .qgr-number, .qgr-option[data-selected="true"], .qgr-export textarea { color: CanvasText; background: Canvas; border-color: CanvasText; }
     .qgr-target { border-color: Highlight; box-shadow: none; }

@@ -189,8 +189,29 @@ async def verify_review_contract(page, expect, *, base_url, output_dir):
             await expect(panel).to_have_attribute("data-review-source", "page")
             bounds = await panel.bounding_box()
             assert bounds and bounds["x"] >= 0 and bounds["x"] + bounds["width"] <= width + 1, bounds
+            controls = {}
+            for label in ["Close review", "Refresh checks", "Show lint example", "Copy decisions JSON", "Clear choices"]:
+                control = panel.get_by_role("button", name=label, exact=True)
+                await expect(control).to_be_visible()
+                box = await control.bounding_box()
+                assert box and box["width"] > 0 and box["height"] > 0, (label, box)
+                assert box["x"] >= bounds["x"] - 1 and box["y"] >= bounds["y"] - 1, (label, box, bounds)
+                assert box["x"] + box["width"] <= bounds["x"] + bounds["width"] + 1, (label, box, bounds)
+                assert box["y"] + box["height"] <= bounds["y"] + bounds["height"] + 1, (label, box, bounds)
+                controls[label] = box
+            copy_box, clear_box = controls["Copy decisions JSON"], controls["Clear choices"]
+            if width == 320:
+                footer_actions = await panel.locator(".qgr-footer > div").bounding_box()
+                assert footer_actions, "Review footer actions have no visible bounds"
+                for box in [copy_box, clear_box]:
+                    assert abs(box["x"] - footer_actions["x"]) <= 1, (box, footer_actions)
+                    assert abs(box["width"] - footer_actions["width"]) <= 1, (box, footer_actions)
+                assert clear_box["y"] >= copy_box["y"] + copy_box["height"], (copy_box, clear_box)
+            else:
+                assert abs(copy_box["y"] - clear_box["y"]) <= 1, (copy_box, clear_box)
+                assert clear_box["x"] >= copy_box["x"] + copy_box["width"], (copy_box, clear_box)
             fit = await _page_fits(page)
-            viewports.append({"width": width, "panel": bounds, "page": fit})
+            viewports.append({"width": width, "panel": bounds, "controls": controls, "page": fit})
             if width == 390:
                 await capture("review-overlay-phone.png")
         await page.emulate_media(reduced_motion="reduce", forced_colors="active")

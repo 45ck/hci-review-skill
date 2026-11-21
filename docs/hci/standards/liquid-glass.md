@@ -45,6 +45,8 @@ Keep broad faces clear and concentrate refraction near the bevel. Directional up
 
 Motion is enabled under normal device preferences. A single bounded animation loop follows active light, ripple and geometry responses, then stops; it pauses for hidden documents and never recaptures the backdrop every frame. Disabled/read-only controls must not imply a successful action through a press response.
 
+Queued or in-flight backdrop capture counts as pending renderer work when reporting idle. Wait for capture without a polling animation loop, then publish idle after its final render work completes.
+
 ## Readability and fallbacks
 
 Use glass principally for controls, navigation and compact surfaces. Keep long text and dense data readable. Test final composited contrast against the supported scenes; a token value alone is insufficient. Apple's [materials guidance](https://developer.apple.com/design/human-interface-guidelines/materials) is a design reference.

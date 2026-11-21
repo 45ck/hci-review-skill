@@ -260,9 +260,11 @@ export function createLiquidGlassEngine(config: EngineOptions) {
       const layout = Number(options.motion === "enabled" && now < layoutSettlesUntil);
       const active = effect.active + geometryEffects + layout;
       const running = active + nativeAnimations.size;
-      const work = JSON.stringify({ effects: effect.active, css: geometryEffects, native: nativeAnimations.size, layout });
+      // Capture awaits keep the renderer busy without driving a polling RAF loop.
+      const capture = Number(Boolean(device && renderer && (captureTimer || pendingCapture)));
+      const work = JSON.stringify({ effects: effect.active, css: geometryEffects, native: nativeAnimations.size, layout, capture });
       if (html.dataset.liquidMotionWork !== work) html.dataset.liquidMotionWork = work;
-      const motionState = running ? "running" : "idle";
+      const motionState = running || capture ? "running" : "idle";
       if (html.dataset.liquidMotionState !== motionState) html.dataset.liquidMotionState = motionState;
       if (html.dataset.liquidActiveEffects !== String(running)) html.dataset.liquidActiveEffects = String(running);
       if (running && options.motion === "enabled") html.dataset.liquidMotionRevision = String(++motionRevision);
@@ -450,7 +452,9 @@ export function createLiquidGlassEngine(config: EngineOptions) {
       })
       .finally(() => {
         pendingCapture = null;
+        schedule();
       });
+    schedule();
     return pendingCapture;
   };
 
@@ -458,7 +462,9 @@ export function createLiquidGlassEngine(config: EngineOptions) {
     geometryDirty = true;
     clearTimeout(captureTimer);
     captureTimer = window.setTimeout(() => {
+      captureTimer = 0;
       void refresh();
+      schedule();
     }, 140);
     schedule();
   };
@@ -484,7 +490,7 @@ export function createLiquidGlassEngine(config: EngineOptions) {
       popupEntries.clear();
       html.dataset.liquidMotionState = "idle";
       html.dataset.liquidActiveEffects = "0";
-      html.dataset.liquidMotionWork = JSON.stringify({ effects: 0, css: 0, native: 0, layout: 0 });
+      html.dataset.liquidMotionWork = JSON.stringify({ effects: 0, css: 0, native: 0, layout: 0, capture: 0 });
       geometryDirty = true;
     } else invalidate();
   };

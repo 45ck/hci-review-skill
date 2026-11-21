@@ -80,6 +80,8 @@ import { createModelDocument } from "@quantitative-hci/liquid-glass/modeling";
 import { AgentsShowcase } from "./agents-showcase";
 import { InteractionsShowcase } from "./interactions-showcase";
 import { SectionsShowcase } from "./sections-showcase";
+import { PatternsShowcase } from "./patterns-showcase";
+import { AssistantShowcase } from "./assistant-showcase";
 import { RecipePanel } from "./recipe-panel";
 import { GraphicsShowcase, initialGraphicDocument, initialGraphicAssets } from "./graphics-showcase";
 import type { GraphicAsset } from "@quantitative-hci/liquid-glass/graphics";
@@ -95,6 +97,8 @@ import "./gallery.css";
 const demos: Record<string, ComponentType> = { ...inputDemos, ...surfaceDemos };
 const groups = [...new Set(manifest.components.map((item) => item.category))];
 const collections = [
+  { id: "patterns", name: "Patterns", keywords: "command palette search filter facets selection bulk actions drawer detail sheet empty state library" },
+  { id: "assistant", name: "Assistant", keywords: "ai elements prompt composer attachment message conversation sources citation suggestions" },
   { id: "interactions", name: "Interactions", keywords: "cursor pointer mouse click ripple feedback magnetic right click context menu gestures" },
   { id: "sections", name: "Sections", keywords: "hero story scroll chapter sticky reveal contour transition landing editorial composition" },
   { id: "visual", name: "Graphics", keywords: "image layers design canvas ai agent media gallery carousel card comparison photo showcase" },
@@ -308,11 +312,11 @@ function Overview({ onExplore }: { onExplore: (id: string) => void }) {
           <svg viewBox="0 0 100 100"><circle cx="48" cy="45" r="31" /><circle cx="48" cy="45" r="21" /><path d="m43 30 3 33 9-11 14-3Z" /></svg>
         </div>
         <div className="kit-new-copy">
-          <h2 id="kit-new-title">Cursors, clicks and whole sections.</h2>
-          <p>Try the interactions. Compose them into a page.</p>
+          <h2 id="kit-new-title">Patterns worth reusing.</h2>
+          <p>Commands, filters and conversations. Built on the same SDK.</p>
           <div className="kit-button-row">
-            <Button onClick={() => onExplore("interactions")}>Explore interactions</Button>
-            <Button onClick={() => onExplore("sections")}>Explore sections</Button>
+            <Button onClick={() => onExplore("patterns")}>Explore patterns</Button>
+            <Button onClick={() => onExplore("assistant")}>Explore assistant</Button>
           </div>
         </div>
       </section>
@@ -912,7 +916,13 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
           {(active === "sections" || visitedCollections.includes("sections")) && <div hidden={active !== "sections"}>
             <SpecimenBoundary key="sections" name="Sections"><SectionsShowcase /></SpecimenBoundary>
           </div>}
-          {(active === "interactions" || active === "sections") && <RecipePanel collection={active} />}
+          {(active === "patterns" || visitedCollections.includes("patterns")) && <div hidden={active !== "patterns"}>
+            <SpecimenBoundary key="patterns" name="Patterns"><PatternsShowcase active={active === "patterns"} /></SpecimenBoundary>
+          </div>}
+          {(active === "assistant" || visitedCollections.includes("assistant")) && <div hidden={active !== "assistant"}>
+            <SpecimenBoundary key="assistant" name="Assistant"><AssistantShowcase /></SpecimenBoundary>
+          </div>}
+          {(["interactions", "sections", "patterns", "assistant"].includes(active ?? "")) && <RecipePanel collection={active!} />}
           {active === "overview" ? (
             <Overview onExplore={(id) => { selectCatalogue(id); document.getElementById("kit-main")?.focus(); }} />
           ) : collection ? null

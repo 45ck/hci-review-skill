@@ -299,6 +299,86 @@
       "exportPath": "@quantitative-hci/liquid-glass/sections",
       "validation": "unvalidated",
       "contract": "docs/hci/standards/interaction-sections.md"
+    },
+    {
+      "id": "liquid-command-palette",
+      "name": "LiquidCommandPalette",
+      "category": "Patterns",
+      "exportPath": "@quantitative-hci/liquid-glass/patterns",
+      "validation": "unvalidated",
+      "contract": "docs/hci/standards/library-patterns.md"
+    },
+    {
+      "id": "liquid-filter-bar",
+      "name": "LiquidFilterBar",
+      "category": "Patterns",
+      "exportPath": "@quantitative-hci/liquid-glass/patterns",
+      "validation": "unvalidated",
+      "contract": "docs/hci/standards/library-patterns.md"
+    },
+    {
+      "id": "liquid-selection-bar",
+      "name": "LiquidSelectionBar",
+      "category": "Patterns",
+      "exportPath": "@quantitative-hci/liquid-glass/patterns",
+      "validation": "unvalidated",
+      "contract": "docs/hci/standards/library-patterns.md"
+    },
+    {
+      "id": "liquid-detail-sheet",
+      "name": "LiquidDetailSheet",
+      "category": "Patterns",
+      "exportPath": "@quantitative-hci/liquid-glass/patterns",
+      "validation": "unvalidated",
+      "contract": "docs/hci/standards/library-patterns.md"
+    },
+    {
+      "id": "liquid-empty-state",
+      "name": "LiquidEmptyState",
+      "category": "Patterns",
+      "exportPath": "@quantitative-hci/liquid-glass/patterns",
+      "validation": "unvalidated",
+      "contract": "docs/hci/standards/library-patterns.md"
+    },
+    {
+      "id": "liquid-prompt-composer",
+      "name": "LiquidPromptComposer",
+      "category": "Assistant",
+      "exportPath": "@quantitative-hci/liquid-glass/assistant",
+      "validation": "unvalidated",
+      "contract": "docs/hci/standards/library-patterns.md"
+    },
+    {
+      "id": "liquid-attachment-list",
+      "name": "LiquidAttachmentList",
+      "category": "Assistant",
+      "exportPath": "@quantitative-hci/liquid-glass/assistant",
+      "validation": "unvalidated",
+      "contract": "docs/hci/standards/library-patterns.md"
+    },
+    {
+      "id": "liquid-suggestion-list",
+      "name": "LiquidSuggestionList",
+      "category": "Assistant",
+      "exportPath": "@quantitative-hci/liquid-glass/assistant",
+      "validation": "unvalidated",
+      "contract": "docs/hci/standards/library-patterns.md"
+    },
+    {
+      "id": "liquid-message",
+      "name": "LiquidMessage",
+      "category": "Assistant",
+      "exportPath": "@quantitative-hci/liquid-glass/assistant",
+      "validation": "unvalidated",
+      "contract": "docs/hci/standards/library-patterns.md"
+    },
+    {
+      "id": "liquid-source-list",
+      "name": "LiquidSourceList",
+      "category": "Assistant",
+      "exportPath": "@quantitative-hci/liquid-glass/assistant",
+      "validation": "unvalidated",
+      "contract": "docs/hci/standards/library-patterns.md"
     }
   ]
 }

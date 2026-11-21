@@ -13,6 +13,8 @@ Start with the [compact index](/agent-index.json) and follow an entry's `contrac
 | What the task needs | Start with | Agent interaction |
 | --- | --- | --- |
 | A familiar field, menu, dialog, list or slider | Documented `@ui-sdk/react/<component>` entry | The upstream component's named state and actions. |
+| Search commands, filter work, act on a selection or inspect details | Compositions from `/patterns` | Actual SDK Command, fields, Toolbar and Drawer; verify accepted host records and state. |
+| Compose a prompt, manage attachments and show messages/references | Compositions from `/assistant` | Actual SDK fields, Buttons and Collapsible; host-owned submission, cancellation and output. |
 | Scoped cursor/click effects or context actions | Components from `/interactions` | Effects stay decorative; context actions use the real SDK Menu and host callbacks. |
 | Semantic showcase or chapter content | Components from `/sections`; examples from `/recipes` | Sections retain readable content; chapter selection uses the actual SDK segmented control and cancellable shared value. |
 | Pan, zoom, fit and focus a canvas | `LiquidViewport` from `/viewport` | A named `liquid-viewport` primitive and SDK controls. |

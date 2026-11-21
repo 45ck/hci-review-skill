@@ -1,9 +1,11 @@
 """Task evidence for custom diagram and image components, not UI/UX approval."""
 
+import asyncio
 import json
 from pathlib import Path
 import xml.etree.ElementTree as ET
 
+from glass_browser_diagnostics import start_browser_profile
 from glass_optics_contract import (
     SCREENSHOT_TIMEOUT_MS,
     _act,
@@ -23,15 +25,101 @@ async def _choices(page, control):
     return matches[0].get("items", [])
 
 
-async def _select(page, kind, label, *, choice=None, value=None):
+async def _select(page, kind, label, *, choice=None, value=None, record_settlement=False):
     control = await _entry(page, kind, label)
     choices = await _choices(page, control)
     matches = [item for item in choices if item.get("label") == choice] if choice is not None else [
         item for item in choices if item.get("value") == value
     ]
     assert len(matches) == 1, f"Choice is not discoverable in {label}: {choice or value}; {choices}"
-    await _act(page, control, "setValue", [matches[0]["value"]])
+    perform = _record_selection_action if record_settlement else _act
+    await perform(page, control, "setValue", [matches[0]["value"]])
     return matches[0]
+
+
+async def _record_selection_action(page, entry, action, args):
+    browser_stage("optics: act on SDK control", component=entry.get("component"), label=entry.get("label"), action=action)
+    assert action in entry["actions"], f"{entry} does not expose {action}"
+    try:
+        result = await asyncio.wait_for(page.evaluate("""async ({entry, action, args}) => {
+            const readState = () => {
+                const active = document.activeElement;
+                const viewport = document.querySelector('[data-diagram-id="uml-class"] .qgv-viewport');
+                const surface = viewport?.querySelector('.qgv-surface');
+                const model = document.querySelector('[data-model-id="uml-class"]');
+                return {
+                    visibility: document.visibilityState, hasFocus: document.hasFocus(),
+                    focus: {tag: active?.tagName, slot: active?.getAttribute('data-slot'),
+                        name: active?.getAttribute('aria-label')},
+                    selectedId: document.querySelector('[data-diagram-id="uml-class"] [data-diagram-node][aria-pressed="true"]')?.getAttribute('data-diagram-node'),
+                    modelRevision: model?.getAttribute('data-model-revision'),
+                    modelResult: model?.getAttribute('data-model-result'),
+                    camera: viewport ? {x: viewport.dataset.viewportX, y: viewport.dataset.viewportY,
+                        zoom: viewport.dataset.viewportZoom, expanded: viewport.dataset.viewportExpanded} : null,
+                    panMode: surface?.dataset.panMode,
+                    mouseCapture: surface?.hasPointerCapture?.(1) ?? false,
+                    busyControls: document.querySelectorAll('[data-pending], [aria-busy="true"]').length,
+                    renderer: Object.fromEntries([...document.documentElement.attributes]
+                        .filter(attribute => attribute.name.startsWith('data-liquid-'))
+                        .map(attribute => [attribute.name, attribute.value]))
+                };
+            };
+            const record = window.__glassDiagramSelectionAction = {
+                component: entry.component, label: entry.label, ref: entry.ref, action, args,
+                before: readState(), startedAt: performance.now(), timeOrigin: performance.timeOrigin,
+                phase: 'pending'
+            };
+            window.__glassReadDiagramSelectionState = readState;
+            try {
+                const result = await window.quantitativeHciAgent.act({steps: [{ref: entry.ref, action, args}]});
+                record.finishedAt = performance.now();
+                record.durationMilliseconds = record.finishedAt - record.startedAt;
+                record.phase = 'fulfilled';
+                record.result = {ok: result.ok, error: result.error, steps: result.steps};
+                record.after = readState();
+                return result;
+            } catch (error) {
+                record.finishedAt = performance.now();
+                record.durationMilliseconds = record.finishedAt - record.startedAt;
+                record.phase = 'rejected';
+                record.error = {name: error?.name, message: String(error?.message ?? error)};
+                record.after = readState();
+                throw error;
+            }
+        }""", {"entry": {key: entry[key] for key in ("component", "label", "ref")},
+                 "action": action, "args": args}), timeout=5)
+    except TimeoutError as error:
+        raise AssertionError("Optical SDK act exceeded 5000 ms") from error
+    assert result.get("ok"), f"Optical control action failed: {result}"
+    return result
+
+
+async def _save_selection_diagnostics(page, profile, output_dir):
+    metadata = await profile.finish()
+    evidence = {"profile": metadata.get("metadata"), "cpuProfile": metadata.get("profile")}
+    try:
+        evidence["action"] = await asyncio.wait_for(page.evaluate("""() => {
+            const record = window.__glassDiagramSelectionAction;
+            if (!record) return {phase: 'not-started'};
+            const observedAt = performance.now();
+            const result = {...record, observedAt, elapsedMilliseconds: observedAt - record.startedAt,
+                observedState: window.__glassReadDiagramSelectionState?.()};
+            delete window.__glassDiagramSelectionAction;
+            delete window.__glassReadDiagramSelectionState;
+            return result;
+        }"""), timeout=0.75)
+    except Exception as error:
+        evidence["stateError"] = {"type": type(error).__name__, "message": str(error)[:1000]}
+    filename = "diagram-selection-settlement.json"
+    try:
+        Path(output_dir, filename).write_text(json.dumps(evidence, indent=2) + "\n", encoding="utf-8")
+        evidence["file"] = filename
+    except Exception as error:
+        evidence["saveError"] = str(error)[:1000]
+    browser_stage("standards: selection diagnostics saved", evidence=evidence.get("file"),
+                  profile=evidence.get("profile"), phase=evidence.get("action", {}).get("phase"),
+                  durationMilliseconds=evidence.get("action", {}).get("durationMilliseconds"))
+    return evidence
 
 
 async def _named_controls(page):
@@ -75,7 +163,7 @@ async def _diagram_fits(viewer):
     return bounds
 
 
-async def _verify_viewport_contract(page, expect, viewer):
+async def _verify_viewport_contract(page, expect, viewer, *, output_dir):
     browser_stage("standards: shared camera, pointer capture, wheel and keyboard")
     viewport = viewer.locator(".qgv-viewport")
     surface = viewer.locator(".qgv-surface")
@@ -150,12 +238,16 @@ async def _verify_viewport_contract(page, expect, viewer):
     await _act(page, control, "zoomTo", [.001])
     assert (await _diagram_camera(viewer))["zoom"] == .1
     await _act(page, control, "fit", [])
-    selected_before_hand = await viewer.locator("[data-diagram-selection]").get_attribute("data-diagram-selection")
-    await _act(page, await _entry(page, "toggle", "Pan diagram tool"), "setPressed", [True])
-    await viewer.locator('[data-diagram-node="project"]').click()
-    assert await viewer.locator("[data-diagram-selection]").get_attribute("data-diagram-selection") == selected_before_hand, "Hand tool activated an element"
-    await _act(page, await _entry(page, "toggle", "Pan diagram tool"), "setPressed", [False])
-    await _select(page, "select", "Diagram element", value="image-asset")
+    profile = await start_browser_profile(page, output_dir=output_dir, name="diagram-selection")
+    try:
+        selected_before_hand = await viewer.locator("[data-diagram-selection]").get_attribute("data-diagram-selection")
+        await _act(page, await _entry(page, "toggle", "Pan diagram tool"), "setPressed", [True])
+        await viewer.locator('[data-diagram-node="project"]').click()
+        assert await viewer.locator("[data-diagram-selection]").get_attribute("data-diagram-selection") == selected_before_hand, "Hand tool activated an element"
+        await _act(page, await _entry(page, "toggle", "Pan diagram tool"), "setPressed", [False])
+        await _select(page, "select", "Diagram element", value="image-asset", record_settlement=True)
+    finally:
+        selection_diagnostics = await _save_selection_diagnostics(page, profile, output_dir)
     await _act(page, control, "setViewport", [{"x": -2000, "y": -1800, "zoom": 1}])
     await viewer.locator('[data-diagram-node="image-asset"]').focus()
     selected_bounds = await viewer.locator('[data-diagram-node="image-asset"]').bounding_box()
@@ -190,7 +282,8 @@ async def _verify_viewport_contract(page, expect, viewer):
     return {"initial": initial, "zoomed": increased, "pointerCaptureBeyondFrame": True,
             "wheelPanAndAnchoredZoom": True, "keyboard": ["arrows", "Shift+arrow", "+", "0", "Space", "F"],
             "agentActions": control["actions"], "boundedZoom": [10, 400], "handPreventsSelection": True,
-            "focusedNodeRevealed": True, "fullscreen": {"bounds": expanded, "escapeAndCloseRestoreFocus": True}}
+            "focusedNodeRevealed": True, "selectionDiagnostics": selection_diagnostics,
+            "fullscreen": {"bounds": expanded, "escapeAndCloseRestoreFocus": True}}
 
 
 async def verify_developer_contract(page, expect, *, base_url, output_dir):
@@ -332,7 +425,7 @@ async def verify_developer_contract(page, expect, *, base_url, output_dir):
     assert json.loads((await _entry(page, "textarea", "Diagram JSON"))["value"]) == edited, "The read-only representation exposed a mutation route"
     await _act(page, await _entry(page, "collapsible", "Model data"), "setOpen", [False])
 
-    navigation = await _verify_viewport_contract(page, expect, viewer)
+    navigation = await _verify_viewport_contract(page, expect, viewer, output_dir=output)
     browser_stage("developer: standalone SVG export")
     async with page.expect_download() as download_event:
         await page.get_by_role("button", name="Download diagram SVG", exact=True).click()

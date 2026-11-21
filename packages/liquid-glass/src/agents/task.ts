@@ -153,20 +153,53 @@ export function applyAgentTaskUpdate(task: AgentTask, update: AgentTaskUpdate): 
 }
 
 // Display redaction is a final defence; hosts must omit credentials before supplying component data.
+// Output is capped at 20,000 visits and 1 MB of compact UTF-8 JSON; [Display budget exceeded] marks truncation.
 export function redactAgentData(value: unknown): AgentJson {
-  const seen = new WeakSet<object>();
+  const ancestors = new WeakSet<object>();
+  const truncated = "[Display budget exceeded]", truncatedKey = "[Truncated]";
+  let remainingVisits = 20_000, remainingBytes = 1_000_000 - jsonBytes(truncated) - jsonBytes(truncatedKey) - 2;
+  let exhausted = false;
+  const reserve = (bytes: number): boolean => {
+    if (exhausted || bytes > remainingBytes) { exhausted = true; return false; }
+    remainingBytes -= bytes;
+    return true;
+  };
+  const scalar = (item: null | boolean | number | string): AgentJson => reserve(jsonBytes(item)) ? item : truncated;
   const visit = (item: unknown, depth: number): AgentJson => {
-    if (depth > 12) return "[Depth limit]";
-    if (typeof item === "string") return item.slice(0, 4000).replace(/\bBearer\s+[^\s"']+/gi, "Bearer [Redacted]");
-    if (item === null || typeof item === "boolean") return item;
-    if (typeof item === "number") return Number.isFinite(item) ? item : "[Invalid number]";
-    if (typeof item !== "object") return "[Unsupported value]";
-    if (seen.has(item)) return "[Repeated reference]";
-    seen.add(item);
-    if (Array.isArray(item)) return item.slice(0, 100).map(child => visit(child, depth + 1));
-    const result: Record<string, AgentJson> = Object.create(null);
-    for (const [key, child] of Object.entries(item).slice(0, 100)) result[key] = /password|secret|token|authorization|api.?key|credential|cookie/i.test(key) ? "[Redacted]" : visit(child, depth + 1);
-    return result;
+    if (exhausted || remainingVisits-- <= 0) { exhausted = true; return truncated; }
+    if (depth > 12) return scalar("[Depth limit]");
+    if (typeof item === "string") return scalar(item.slice(0, 4000).replace(/\bBearer\s+[^\s"']+/gi, "Bearer [Redacted]"));
+    if (item === null || typeof item === "boolean") return scalar(item);
+    if (typeof item === "number") return scalar(Number.isFinite(item) ? item : "[Invalid number]");
+    if (typeof item !== "object") return scalar("[Unsupported value]");
+    if (ancestors.has(item)) return scalar("[Repeated reference]");
+    if (!reserve(2)) return truncated;
+    ancestors.add(item);
+    try {
+      if (Array.isArray(item)) {
+        const result: AgentJson[] = [];
+        for (const child of item.slice(0, 100)) {
+          if (result.length && !reserve(1)) { result.push(truncated); break; }
+          result.push(visit(child, depth + 1));
+          if (exhausted) break;
+        }
+        return result;
+      }
+      const result: Record<string, AgentJson> = Object.create(null);
+      let entries = 0;
+      for (const key of Object.keys(item).slice(0, 100)) {
+        if (key.length > remainingBytes || !reserve(jsonBytes(key) + 1 + (entries ? 1 : 0))) {
+          exhausted = true; result[truncatedKey] = truncated; break;
+        }
+        const child = /password|secret|token|authorization|api.?key|credential|cookie/i.test(key) ? "[Redacted]" : (item as Record<string, unknown>)[key];
+        result[key] = visit(child, depth + 1);
+        entries++;
+        if (exhausted) break;
+      }
+      return result;
+    } finally {
+      ancestors.delete(item);
+    }
   };
   return visit(value, 0);
 }

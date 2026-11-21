@@ -31,6 +31,12 @@ on:
       - 'tests/glass_optics_contract.py'
       - 'tests/glass_browser_diagnostics.py'
   workflow_dispatch:
+    inputs:
+      browser_check:
+        description: "Exact browser scenario for focused diagnostics; leave empty for the full suite"
+        required: false
+        type: string
+        default: ""
 
 permissions:
   contents: read
@@ -66,6 +72,9 @@ jobs:
           python -m playwright install --with-deps chromium
       - name: Verify real controls and GPU pixels
         shell: bash
+        env:
+          GLASS_BROWSER_CHECK: ${{ inputs.browser_check || '' }}
+          GLASS_EVENT_NAME: ${{ github.event_name }}
         run: |
           mkdir -p test-results
           python -m http.server 4185 --bind 127.0.0.1 --directory docs/hci/examples/liquid-glass/dist >test-results/server.log 2>&1 &
@@ -75,7 +84,11 @@ jobs:
             if curl --fail --silent http://127.0.0.1:4185/ >/dev/null; then break; fi
             sleep 0.5
           done
-          python -B tests/test_glass_browser.py --software-gpu --output test-results/liquid-glass.json
+          browser_args=(--software-gpu --output test-results/liquid-glass.json)
+          if [[ "$GLASS_EVENT_NAME" == "workflow_dispatch" && -n "$GLASS_BROWSER_CHECK" ]]; then
+            browser_args+=(--check "$GLASS_BROWSER_CHECK")
+          fi
+          python -B tests/test_glass_browser.py "${browser_args[@]}"
       - name: Keep concise verification evidence
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

@@ -1,74 +1,17 @@
-# Quantitative HCI Liquid Glass standard
+# Specialist HCI review skills
 
-## Agent-first engineering is the default
+This repository owns the public HCI and UX review skills, research-planning workflows, and supporting templates. Keep the skill pack independently installable.
 
-Build reusable behaviours, visual components and design tools that agents can discover, compose, operate and verify. Preserve accessible human interaction and a predictable documented contract. This extends the [Vercel UI SDK mission](https://github.com/vercel-labs/ui); a catalogue entry or attractive demo alone does not satisfy it.
+Quantive's design system, quantitative modelling tools, component library, material renderer, internal standards, examples, and benchmarks belong in the private `45ck/quantitative-hci-and-internal-components` repository. Make changes to those systems there. Do not add their implementation or internal policy back to this repository.
 
-For every current or future package change, read `packages/liquid-glass/docs/llms.txt` and the relevant contract in `packages/liquid-glass/agent-contracts.json`. Follow `docs/hci/standards/agent-engineering.md`. Keep every public runtime export classified, documented and linked to evidence. Update its contract when inputs, actions, state, composition or restrictions change; update the schema and checker together when the contract format changes. Supported kit rendering is React. Do not infer support for another framework from upstream's adapters.
+## Skill changes
 
-Separate headless primitives, SDK compositions, passive presentation and pure utilities. New interactive behaviour belongs in a `definePrimitive` with explicit allowed actions and cancellable changes, rendered through the SDK's public adapter. Reuse an existing SDK control or behaviour before adding one. Compositions expose their genuine SDK children; passive surfaces and utilities get no invented agent actions. Keep public state and result schemas inspectable, and validate custom action inputs at the shared change path.
+- Maintain both `.claude/skills/` and `.agents/skills/` variants and the installer inventory. Preserve intentional platform differences, including the Beads variants.
+- Keep supporting templates under `docs/hci/templates/` and preserve the existing public MIT licence and source attribution.
+- Change specialist review methods only when the task calls for it. Public skills must not require access to the private Quantive repository or its runtime.
 
-Agent-ready means a real bridge can find the intended control, discover valid inputs, invoke a supported action and observe the accepted result. Assert those outcomes, including rejection and cancellation, rather than treating `act().ok`, a manifest, TypeScript or a screenshot as proof. Read installed SDK docs/types and preserve human keyboard, focus, selection, touch and fallback behaviour. Do not create a second mutation API or use DOM-only handlers for rules that agents must obey.
+## Verification
 
-Keep custom action JSON input schemas aligned with shared validation and current contracts. Structural preflight cannot authorize an action or prove host acceptance. Support cancellation and recovery for delayed controlled edits, accept equivalent serialized state and isolate stale callbacks. Publish schema-linked, fingerprinted agent documentation from canonical sources, and preserve the production artifact gate that ties it to the built page.
+Every pull request must pass the required `verify` job. It checks shell syntax and skill-pack integrity without installing skills into a contributor's home directory. Keep the workflow active for every pull request and preserve repository protection settings.
 
-Run `npm run glass:agent-check` for the export/contract/documentation gate and `npm run glass:verify` for package changes. Run relevant browser contracts for changed interaction paths as required below. Static contract coverage, runtime test coverage and human **Unvalidated** status are separate evidence.
-
-## Build the actual kit
-
-Use the shared Liquid Glass kit for new high-fidelity internal interfaces without an established product design system. The default theme combines real UI SDK controls with the reusable WebGPU material. Keep the same control semantics and layout in the solid fallback. Read `docs/hci/standards/liquid-glass.md` before changing the material or renderer.
-
-Use Studio typography (Manrope) and the custom Isometric icon set as the shared defaults. Keep Editorial (Fraunces headings with Manrope interface text), System fonts, and Line icons selectable through the same provider. The demo persists validated choices and Copy starter includes the current selection. Keep conventional micro-icons simple, decorative art outside the accessibility tree, and line icons available in forced colours. Preserve live control values and focus when presentation choices change.
-
-Keep custom components and compositions visibly labelled **Unvalidated**: no human UI/UX team has reviewed or approved them. Use `ValidationBadge` and the custom component manifest. This includes standards adapters, the shared canvas, graphics/media components, custom glass theme and icons. Label the 55 upstream families **SDK foundation** to identify Vercel UI SDK provenance; do not imply that upstream behaviour or automated tests validate our visual adaptations. Promotion requires recorded human review evidence, its scope, reviewers, date, findings and decision.
-
-Read `docs/hci/standards/standards-components.md`, `docs/hci/standards/omg-coverage.md` and `docs/hci/standards/agent-first-modeling.md` before changing Standards, Graphics or Agents. Keep all 46 registered views and the complete versioned OMG catalogue with honest per-version coverage. Preserve exact notation, text alternatives, stable identities, shared SDK actions, pan/zoom/fit/fullscreen and validated edits. Treat BMM/SBVR/BACM and agent views as concept projections, SysML 1.7 separately from 2.0, UWE as an LMU profile, and C4 as a separately attributed architecture method. Keep diagrams as SVG generated from data. Model edits go through the revisioned `LiquidModelDocument` transaction path with atomic validation, cancellation and bounded history; preserve links between views and the additive profile registry. Graphics uses editable layers, revision-checked operations, undo/redo, inspectable AI context, local artwork and provenance. Never imply the demo called an AI backend when it only prepared a request or ran a local fixture. Retain all three custom collections alongside all 55 SDK families; `/developer` stays a compatibility API, not a product section name.
-
-Read `docs/hci/standards/interface-foundations.md` for interface design work. Identify the real task and observable outcome, model the relevant content/navigation/presentation/state decisions, and choose the matching quantitative HCI checks before changing layout or styling. Reuse existing models. Keep a concise task, decision, evidence, result and next-decision record; automated geometry and pixel evidence do not establish human recognition or speed gains.
-
-Keep Interactions and Sections as additive collections alongside Standards, Graphics and Agents. Read `docs/hci/standards/interaction-sections.md` and `packages/liquid-glass/docs/llms.txt` before extending their components. Keep cursor/click/magnetic effects decorative, native text entry intact, context actions on the real SDK Menu, chapter text readable and hit targets stationary. Preserve finite motion, hidden-region cleanup and shared cancellable selection. Update the custom component manifest and recipe registry when exports change; copyable examples must remain compiled TSX, and the hosted registry and agent guide must be generated from the canonical package files. Reuse the host's existing provider and single SDK agent bridge.
-
-Keep Patterns and Assistant as additive collections. Read `docs/hci/standards/library-patterns.md` and their package guides before extending them. Preserve familiar library arrangements while reusing actual SDK Command, Dialog, Drawer, fields, selection and action behavior. Host state owns filtering, selected records, drafts, attachments and execution; file selection is not an upload and the local response fixture is not a model backend. Reuse existing agent task/tool components when needed. Keep source provenance, compiled recipes and scoped agent contracts current, and verify accepted results and refusal/cancellation through the actual SDK bridge.
-
-Keep the component catalogue and runnable examples generated from the canonical manifests, contracts and compiled recipe files. New public components must be findable by name and task. Read `docs/hci/standards/chat-integrations.md` before extending chat or integrations. Quantive sits above the host runtime: use genuine SDK controls and thin typed projections; keep runtime history, network protocols, tool execution and credentials with the host. Distinguish provider clients from agent harnesses, preserve unsupported-part feedback and cancellation boundaries, and never label a local fixture or typechecked recipe as a verified live connection.
-
-Before using UI SDK, follow `node_modules/@ui-sdk/core/skills/ui-sdk/SKILL.md`, read `node_modules/@ui-sdk/react/docs/llms.txt`, and read the relevant component and agent pages. The kit pins `@ui-sdk/react` and `@ui-sdk/core` to **0.1.0-beta.13**. Import primitives directly from documented `@ui-sdk/react/<component>` entries. Existing `@quantitative-hci/liquid-glass/<component>` exports remain compatibility aliases; do not fork SDK behaviour.
-
-Use `LiquidGlassProvider` from the shared package and its kit stylesheet. Mark intended optical surfaces with `data-liquid-glass`; `data-liquid-glass="off"` excludes a subtree. Reuse the renderer and supplied backdrop texture across normal surfaces, with local canvases for top-layer popups. Keep labels, text, focus, input handling and ARIA in the real DOM. Decorative canvases must never intercept input or enter the accessibility tree.
-
-Do not replace the kit with a component workbench, diagnostic inspector, standalone lens page or CSS-only blur presentation. The hosted demo starts with a usable overview and keeps all **55** component families discoverable. A selected family mounts its genuine SDK specimen. Preserve the manifest, public component aliases and source attribution.
-
-## Material and accessibility
-
-Put shared colours, radii, optical parameters, focus and fallback rules in the package. Keep text and dense content readable over the supported backdrops. Preserve primary, destructive, invalid, disabled, selected and pending states.
-
-Follow reduced transparency and reduced motion by default. Offer explicit per-app Glass and Animate glass choices when the user wants to preview the full material; never change device settings. Forced colours always suppress the GPU material and retain system-colour controls. Report the effective motion/material state accurately. Keyboard actions, Escape dismissal, focus restoration and pointer hit targets must work with or without WebGPU. A shader must not replace a control with a painted imitation.
-
-Enable the shared pointer light, bounded activation ripple, native selection-indicator travel, switch motion and popup response under normal preferences. Stop work after the response settles and while the document is hidden. Reuse the captured backdrop during animation; do not recapture it every frame. Keep labels and hit targets steady.
-
-The renderer samples the supplied decorative backdrop. Do not claim that it automatically refracts arbitrary live application content. Retain the source attribution and MIT notice for `arya3d/liquid-glass-webgpu` at `90cb73931bbaf38bd54b3263cd3fda1daef1869c`, and identify local adaptations. This is a web implementation inspired by the reference, not Apple's native renderer.
-
-## SDK agent semantics beneath the UI
-
-Create one client-side `createAgent` bridge from `@ui-sdk/react/agent`, register browser tools with an explicit policy when supported, and retain cleanup. Use SDK controls and change callbacks so a person and an agent update the same application state. Give every control a meaningful accessible name.
-
-Keep `snapshot`, `query`, `act` and subscriptions as the actual SDK APIs. The private `window.quantitativeHciAgent` facade supports verification; it does not need a diagnostic interface in the product. Respect secret, hidden and confirmation marks. This demo refuses actions marked as requiring a person. Do not add an alternative mutation path to bypass that policy.
-
-## Required evidence
-
-Run `npm run glass:verify` for kit changes and `python3 tests/test_glass_browser.py` against the production preview for interaction, agent, rendering, preference or layout changes. CI uses the documented software-WebGPU flags only for the reviewed loopback build and blocks outside requests.
-
-Verify GPU contribution on actual button, input and panel rectangles, optical-strength changes, backdrop recapture, top-layer popup visibility and focus, all 55 catalogue specimens, and the narrow overview layout. Verify changing motion pixels, constant capture revisions during interaction, eventual idle, and both system and explicit app preferences. Save screenshots of the overview, desktop popup, mobile overview and GPU comparisons. A `ready` attribute by itself is insufficient rendering evidence.
-
-Report actual commands, exit codes, browser, viewports, pixel checks and any unavailable path. Automated checks do not establish optical equivalence, WCAG conformance or improved human usability. Preserve original HCI calculators, protocols and recorded pilot results as independent research; the old workbench and pilot are not part of the hosted kit. Keep internal access private unless the user instructs otherwise.
-
-## CI cost and delivery
-
-- Batch a coherent implementation candidate after focused local checks; avoid repeated cosmetic pushes or unchanged full reruns.
-- Use one integration owner for shared CI, dependency and lockfile changes; reconcile concurrent work before publishing.
-- Read failed logs, reproduce the smallest failure, then retry only the necessary failed job and its dependents with a stated reason.
-- Keep required QA, security, coverage and release gates. Never bypass hooks, use skip markers or weaken checks to reduce cost.
-- Request previews or manual heavy checks only for a concrete review or acceptance need under the existing delivery policy.
-- Record the commit, actual commands/results, run links and retry reason; mark unavailable checks NOT_RUN. Runner minutes and deployment counts are not invoices.
-- Keep `glass:verify` and required browser/GPU evidence. Focused manual browser diagnostics do not replace the full candidate gate.
-- Use the [CI cost guide](docs/hci/standards/ci-costs.md) for this repository's commands and warnings.
+Runtime, browser, WebGPU, and component-contract checks belong with their source in the private repository. Record the actual checks run and any checks that could not run; do not claim automated checks establish human usability validation.

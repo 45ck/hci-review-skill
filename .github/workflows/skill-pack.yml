@@ -1,0 +1,87 @@
+name: HCI review skill pack
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: skill-pack-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check installer syntax
+        run: bash -n install.sh uninstall.sh
+      - name: Check skill-pack integrity
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          import shlex
+
+          installer = Path("install.sh").read_text(encoding="utf-8")
+          inventory = re.search(r"(?ms)^SKILLS=\(\n(.*?)^\)\s*$", installer)
+          if inventory is None:
+              raise SystemExit("Cannot find the installer skill inventory")
+          skills = shlex.split(inventory.group(1), comments=True)
+          if not skills or len(skills) != len(set(skills)):
+              raise SystemExit("Installer inventory is empty or contains duplicate skills")
+
+          for platform in (".claude", ".agents"):
+              root = Path(platform) / "skills"
+              packaged = {path.parent.name for path in root.glob("*/SKILL.md")}
+              if packaged != set(skills):
+                  raise SystemExit(
+                      f"{platform} inventory mismatch: "
+                      f"missing={sorted(set(skills) - packaged)}, "
+                      f"unlisted={sorted(packaged - set(skills))}"
+                  )
+              for skill in skills:
+                  path = root / skill / "SKILL.md"
+                  content = path.read_text(encoding="utf-8")
+                  frontmatter = re.match(r"\A---\n(.*?)\n---\n", content, re.S)
+                  if frontmatter is None:
+                      raise SystemExit(f"Missing frontmatter: {path}")
+                  name = re.search(r"(?m)^name:[ \t]*(.+)$", frontmatter.group(1))
+                  summary = re.search(
+                      r"(?m)^(?:description|purpose):[ \t]*(\S.*)$", frontmatter.group(1)
+                  )
+                  if name is None or name.group(1).strip().strip("\"'") != skill:
+                      raise SystemExit(f"Skill name does not match its directory: {path}")
+                  if summary is None or not summary.group(1).strip().strip("\"'"):
+                      raise SystemExit(f"Missing skill description or purpose: {path}")
+
+          templates = sorted(Path("docs/hci/templates").glob("*.md"))
+          if not templates:
+              raise SystemExit("No supporting HCI templates are packaged")
+          for path in templates:
+              if not path.read_text(encoding="utf-8").strip():
+                  raise SystemExit(f"Empty supporting template: {path}")
+
+          descriptors = sorted(Path(".agents/skills").glob("*/agents/openai.yaml"))
+          for path in descriptors:
+              if not path.read_text(encoding="utf-8").strip():
+                  raise SystemExit(f"Empty Codex descriptor: {path}")
+
+          for name in ("LICENSE", "README.md", "logo.svg", "banner.svg", "assets/social-preview.png"):
+              if not Path(name).read_bytes():
+                  raise SystemExit(f"Empty required package asset: {name}")
+
+          print(
+              f"Verified {len(skills)} skills on each platform, "
+              f"{len(templates)} templates and {len(descriptors)} Codex descriptors"
+          )
+          PY

@@ -16,10 +16,6 @@ Use ultrathink. Work from the current repository, current files, current screens
 - Surface the highest-risk UX/HCI problems early.
 - Leave durable artifacts that can guide implementation.
 
-## Visual default for new high-fidelity prototypes
-
-Use Apple-inspired Liquid Glass on navigation and controls when a new high-fidelity prototype has no established design system. Use solid surfaces for readable content and dense data. Keep the border highlight optional, preserve text contrast and keyboard focus, and provide an opaque fallback for reduced transparency. Respect the product’s design system, touch input and reduced motion. Evaluate the treatment against the task and the [Quantitative HCI example](https://github.com/45ck/hci-review-skill/tree/main/docs/hci/examples).
-
 ## Produce these outputs
 Write them to `docs/hci/` unless the user asked for another path.
 
@@ -172,12 +168,6 @@ Create `hci-scorecard.md` rating the prototype 1-5 on each dimension:
 8. Failure path coverage
 
 Include total score out of 40, top 3 strengths, top 3 weaknesses, and priority fixes.
-
-For relevant interface patterns, use the Quantitative HCI catalogue at
-`docs/hci/models/interface-design-models.md` in the Quantitative HCI repository.
-Record the model ID, baseline, observed value, unit, sample size, test context,
-and evidence. If a measurement is missing, record how to collect it. Keep
-measurements alongside the scorecard's judgement scores.
 
 ### 11) Synthesize
 Create `hci-summary.md` with:

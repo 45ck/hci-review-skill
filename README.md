@@ -1,11 +1,11 @@
-# Quantitative HCI
+# hci-review-skill
 
 <p align="center">
-  <img src="logo.svg" alt="Quantitative HCI logo" width="128" height="128" />
+  <img src="logo.svg" alt="hci-review-skill logo" width="128" height="128" />
 </p>
 
 <p align="center">
-  <img src="banner.svg" alt="Quantitative HCI banner" width="100%" />
+  <img src="banner.svg" alt="hci-review-skill banner" width="100%" />
 </p>
 
 <p align="center">
@@ -17,74 +17,9 @@
 
 A structured HCI and UX review skill pack for prototypes, flows, interface systems, research planning, and usability evaluation. It focuses on models, journeys, terminology, state handling, consistency, failure paths, heuristics, cognitive walkthroughs, personas, task analysis, prototype planning, and usability studies.
 
-## Agent-first engineering
+## Repository scope
 
-**Build reusable behaviours, visual components and design tools that agents can discover, compose, operate and verify.** The Liquid Glass kit extends [Vercel UI SDK](https://github.com/vercel-labs/ui), whose mission centres on behaviours agents use to build interfaces. Accessible human interaction remains part of every component contract.
-
-Start with the [agent documentation index](packages/liquid-glass/docs/llms.txt), [engineering guide](packages/liquid-glass/docs/agent-engineering.md) and [machine-readable contracts](packages/liquid-glass/agent-contracts.json). Contracts identify public exports, inputs, state, actual actions or composed SDK controls, restrictions and evidence. Passive materials and pure data utilities are classified explicitly; they do not advertise artificial actions. The kit currently provides React rendering; upstream's other adapters do not establish support in this extension.
-
-The [repository standard](docs/hci/standards/agent-engineering.md) applies to future additions. `npm run glass:agent-check` checks the declared export and contract coverage. Runtime tests must separately prove that an agent can discover controls and observe real accepted changes. Neither kind of check changes a component's **Unvalidated** human review status.
-
-Custom primitives publish [JSON action input schemas](packages/liquid-glass/agent-action-inputs.json). Preflight without mutating a page: `npm run glass:contract -- validate liquid-viewport panBy '[80,-40]'`. Model edits expose pending state, cancellation and accepted-result feedback, including serialized host acceptance and failures after application. Hosted `/agent-release.json` identifies the documentation set and source; the production build verifies every emitted contract and its fingerprint against canonical inputs.
-
-## Liquid Glass UI kit
-
-Use the shared **WebGPU Liquid Glass kit** for new high-fidelity internal interfaces without an established product design system. Real [Vercel UI SDK](https://github.com/vercel-labs/ui) controls retain their behaviour while a shared renderer applies the reference-based material to actual buttons, fields, panels and popups.
-
-**[Open the Liquid Glass UI kit](https://quantitative-hci-ui-sdk-demos.ajax414655.chatgpt.site/)** (owner access): use the default overview, adjust refraction and colour dispersion in Material settings, choose a backdrop, and explore all **55 component families** through the searchable catalogue.
-
-**Studio typography and Isometric icons are the defaults.** Material settings lets you switch between Studio (Manrope), Editorial (Fraunces headings with Manrope interface text) and System fonts, and between Isometric and Line icons. The demo remembers valid choices, and Copy starter includes your selected font and icon presets.
-
-**Patterns** adds familiar command-palette, filter-bar, selection-bar, detail-sheet and empty-state compositions. **Assistant** adds a prompt composer, attachments, suggestions, messages and sources. The ten components follow established shadcn/ui, Vercel AI Elements and selected 21st.dev patterns, using the kit's actual SDK controls and shared state. Search/filter/select/inspect and prompt/cancel/result flows are working local examples. The [library-pattern standard](docs/hci/standards/library-patterns.md) records the source references and boundaries; `/patterns` and `/assistant` provide reusable package entries. Seven compiled recipes are available from the Examples page, with runnable previews and source.
-
-**Chat workspace** adds controlled conversation, thread navigation and prompt-template components. Its three layouts share real local draft, streaming, Stop and error/retry behavior. **All components** exposes every canonical component entry, and **Examples** runs each compiled recipe in its own document. **AI integrations** provides typechecked Vercel AI SDK, CopilotKit headless, AG-UI, custom-host and direct OpenAI/Claude examples, including OpenRouter through the server provider recipe. Thin optional adapters project runtime messages; the UI does not introduce another agent engine or collect credentials. See the [chat integration standard](docs/hci/standards/chat-integrations.md).
-
-**Interactions** adds scoped custom cursors, bounded click feedback, an SDK context menu with right-click, keyboard and visible-button access, and decorative magnetic icons with fixed hit targets. **Sections** adds semantic section containers, split/immersive showcases, natural-scroll chapters, decorative contours and finite reveals. These original React components build on the interaction vocabulary of CK.com and Wayrest. Four compiled, copyable examples and a [machine-readable recipe registry](packages/liquid-glass/component-recipes.json) help people and agents compose the same components. Read the [interaction and section contract](docs/hci/standards/interaction-sections.md) and [agent composition guide](packages/liquid-glass/docs/llms.txt). The hosted site also serves `/registry/components.json` and `/llms.txt`.
-
-**Graphics** adds an editable image/text/shape canvas with stable layer IDs, transforms, undo/redo, variants, validated JSON, self-contained SVG export and an image-agent brief/context handoff. Existing image cards, gallery, detail dialogs and comparisons remain under **Image components**. **Standards** adds **46 editable views**, including 11 labelled UWE views, all seven C4 view types and three agent-model views. The catalogue has 291 entries: 286 official OMG versions plus explicitly attributed additions. Coverage is 9 notation subsets, 5 concept projections and 277 reference entries. A revisioned model document gives people and agents the same atomic edits, previews, validation and history. **Agents** adds reusable capability, status, timeline, tool-request, artifact and context components with an interactive local review workflow. No protocol transport, remote model provider or complete standards conformance is implied. See the [component contract](docs/hci/standards/standards-components.md), [coverage registry](docs/hci/standards/omg-coverage.md), [agent-first modeling architecture](docs/hci/standards/agent-first-modeling.md) and [worked exploration model](docs/hci/models/developer-model-exploration.md).
-
-Every custom component and composition is **Unvalidated**, meaning a human UI/UX team has not reviewed or approved it. The original 55 families are marked **SDK foundation**, identifying upstream Vercel behaviour rather than approval of our glass adaptation. Engineering checks and human review status remain distinct.
-
-The [implementation standard](docs/hci/standards/liquid-glass.md), [agent instructions](AGENTS.md), pinned SDK packages and browser contracts define the integration. GPU tests compare real control rectangles, strength changes, backdrop recapture and top-layer popups. The SDK agent bridge remains beneath the UI for verification; the hosted kit has no diagnostic workbench, inspector or settings pilot.
-
-Use the [interface foundations](docs/hci/standards/interface-foundations.md) to turn a real task into content, navigation, presentation and state decisions, then select the measurements that can justify a change. The [kit customization model](docs/hci/models/kit-customization-model.md) provides a concrete worked contract for font/icon choices, state retention and evaluation. Visual defaults and automated rendering checks are distinct from measured human usability.
-
-```bash
-npm ci --ignore-scripts
-npm run glass:dev
-npm run glass:agent-check
-npm run glass:verify
-```
-
-Read the [kit guide](docs/hci/examples/liquid-glass/README.md) for rendering boundaries, fallbacks and verification, and the [reusable package](packages/liquid-glass/README.md) for integration. The earlier toolbar study below remains an independent fixture with its own evidence.
-
-![Quantitative HCI example with a chromatic Liquid Glass toolbar rim and a scorecard showing a 19 ms median improvement](assets/spotlight-glass-preview.webp)
-
-Open [the example HTML](docs/hci/examples/spotlight-glass.html) locally to compare Glass and Solid on the same toolbar. The [design guidance](docs/hci/examples/README.md) covers surface selection, what to measure and how to run the browser audit. [Apple materials](https://developer.apple.com/design/human-interface-guidelines/materials) · [21st.dev border-only Spotlight](https://21st.dev/?q=spotlight+card&preview=%2F%40ibelick%2Fcomponents%2Fspotlight%2Fborder-only)
-
-## Quantitative models
-
-The [interface design catalogue](docs/hci/models/interface-design-models.md) covers 20 terms from typography, layout, interaction and motion. Each entry defines what to measure and how to interpret it.
-
-Run the calculator against the [synthetic examples](docs/hci/models/example-measurements.json) with Python 3.9+.
-
-```bash
-python3 docs/hci/models/measure.py docs/hci/models/example-measurements.json
-```
-
-Use the [evaluation protocol](docs/hci/models/evaluation-protocol.md) to collect matched observations and compare a candidate with a baseline. The paired calculator reports the median gain, its uncertainty and whether it clears the improvement you specified.
-
-```bash
-python3 -B docs/hci/models/compare.py docs/hci/models/example-comparison.json
-```
-
-The [Chromium benchmark](docs/hci/models/browser-benchmark.md) captures real browser measurements for 11 models across desktop, mobile and reduced-motion fixtures.
-
-The [UI SDK settings pilot](docs/hci/examples/ui-sdk-pilot/README.md) compares native controls, SDK controls, and structured agent actions using the same tasks. Its [fixed protocol](docs/hci/models/ui-sdk-pilot-protocol.md) separates task correctness, scripted execution cost, and bundle size from unmeasured model or human performance.
-
-[Measured pilot results](docs/hci/models/ui-sdk-pilot-results.md): 162/162 scripted tasks and 33/33 additional checks passed. The native reference was faster and smaller; no model-token, development-speed or human-usability gain was measured.
-
-The former settings demo lab is archived as a local source fixture. Its [demo guide](docs/hci/models/ui-sdk-demo-guide.md) preserves reproduction instructions; the hosted site now serves the Liquid Glass kit.
+This repository maintains the specialist HCI review skills, research-planning workflows, and their templates. Quantive's design system, quantitative modelling tools, and internal components are maintained separately in a private repository.
 
 ## Included skills
 
@@ -145,8 +80,8 @@ The former settings demo lab is archived as a local source fixture. Its [demo gu
 ### Option A: Install globally
 
 ```bash
-git clone https://github.com/45ck/hci-review-skill.git quantitative-hci
-cd quantitative-hci
+git clone https://github.com/45ck/hci-review-skill.git
+cd hci-review-skill
 bash install.sh
 ```
 
@@ -249,10 +184,3 @@ LICENSE                              MIT
 ## License
 
 [MIT](LICENSE)
-
-Kit verification uses Node 24 (also pinned in CI) and Python 3. Model checks execute the real typed scene sources, validate all 46 registered views and their cross-view links, reject malformed imports, and parse every SVG as XML. Separate source checks exercise UWE/C4 semantics, revisioned atomic documents and ordered agent tasks; production browser checks exercise the actual SDK agent bridge and human controls.
-
-## Development and CI cost
-
-Follow [AGENTS.md](AGENTS.md) and the [CI cost guide](docs/hci/standards/ci-costs.md)
-for focused local checks, candidate batching, retry warnings and required QA.

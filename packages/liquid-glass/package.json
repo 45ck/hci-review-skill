@@ -49,7 +49,9 @@
     "./agent-contract.schema.json": "./agent-contract.schema.json",
     "./agent-release.schema.json": "./agent-release.schema.json",
     "./layouts": "./src/layouts/index.ts",
-    "./layouts.css": "./src/layouts/layouts.css"
+    "./layouts.css": "./src/layouts/layouts.css",
+    "./review": "./src/review/index.ts",
+    "./review.css": "./src/review/review.css"
   },
   "dependencies": {
     "@ui-sdk/core": "0.1.0-beta.13",

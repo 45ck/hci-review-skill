@@ -84,6 +84,7 @@ import { LayoutsShowcase } from "./layouts-showcase";
 import { PatternsShowcase } from "./patterns-showcase";
 import { AssistantShowcase } from "./assistant-showcase";
 import { RecipePanel } from "./recipe-panel";
+import { ReviewLauncher } from "./review-launcher";
 import { GraphicsShowcase, initialGraphicDocument, initialGraphicAssets } from "./graphics-showcase";
 import type { GraphicAsset } from "@quantitative-hci/liquid-glass/graphics";
 import { VisualShowcase, visualAssets } from "./visual-showcase";
@@ -791,6 +792,7 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
                   ? "Solid material"
                   : "Compatibility mode"}
           </span>
+          <ReviewLauncher />
           <Button onClick={() => copy(
             starterSource
               .replace('fontSet="studio"', `fontSet="${props.fontSet}"`)
@@ -873,7 +875,7 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
           </Listbox>
           <p className="kit-catalogue-count">{manifest.components.length} SDK families · {collections.length} custom collections</p>
         </aside>
-        <main className="kit-main" id="kit-main" tabIndex={-1}>
+        <main className="kit-main" id="kit-main" data-review-scope={active ?? "overview"} tabIndex={-1}>
           <div className="kit-title-row">
             <div>
               {active !== "layouts" && <p className="kit-eyebrow">

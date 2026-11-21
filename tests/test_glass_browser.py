@@ -25,6 +25,7 @@ from glass_graphics_contract import verify_graphics_contract
 from glass_interaction_contract import verify_interactions_contract
 from glass_sections_contract import verify_sections_contract
 from glass_layouts_contract import verify_layouts_contract
+from glass_review_contract import verify_review_contract
 from glass_patterns_contract import verify_patterns_contract
 from glass_assistant_contract import verify_assistant_contract
 from glass_model_document_contract import verify_model_document_contract
@@ -69,6 +70,7 @@ BROWSER_CHECK_NAMES = (
     "interactions_pointer_keyboard_agent_and_preferences",
     "sections_chapters_navigation_and_preferences",
     "layouts_real_sdk_responsive_tenant_and_state",
+    "review_overlay_semantics_choices_and_freshness",
     "patterns_commands_filters_selection_and_details",
     "assistant_composition_cancellation_and_sources",
     "system_preferences_explicit_opt_in_and_forced_colours",
@@ -540,6 +542,7 @@ async def run(args):
         await record("interactions_pointer_keyboard_agent_and_preferences", lambda: custom_components(verify_interactions_contract), reset=False, timeout=100)
         await record("sections_chapters_navigation_and_preferences", lambda: custom_components(verify_sections_contract), reset=False, timeout=90)
         await record("layouts_real_sdk_responsive_tenant_and_state", lambda: custom_components(verify_layouts_contract), reset=False, timeout=85)
+        await record("review_overlay_semantics_choices_and_freshness", lambda: custom_components(verify_review_contract), reset=False, timeout=100)
         await record("patterns_commands_filters_selection_and_details", lambda: custom_components(verify_patterns_contract), reset=False, timeout=100)
         await record("assistant_composition_cancellation_and_sources", lambda: custom_components(verify_assistant_contract), reset=False, timeout=100)
 

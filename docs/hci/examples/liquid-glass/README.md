@@ -6,6 +6,8 @@ Eight custom collections extend that catalogue: **App layouts** for a review tas
 
 Open `?collection=layouts`, `?collection=patterns`, `?collection=assistant`, `?collection=interactions` or `?collection=sections` for direct access. These five collections include **Use these components in a project**, with compiled TSX examples, copyable agent briefs and links to `/registry/components.json` and `/llms.txt`. The package remains a private workspace dependency.
 
+**Review UI** in the header opens the optional developer tool alongside the current page. Add `review=1` to a collection URL to open it directly. It inspects rendered copy, names, headings and geometry, highlights findings, and exports selected directions as JSON with `OPTIONS` and stable decision identities. **Show lint example** demonstrates three deliberate defects in a separate scope. Choosing or copying a direction does not change the page. See the [semantic review standard](../../standards/semantic-review.md) and [reusable review API](../../../../packages/liquid-glass/docs/review.md).
+
 The GPU treatment and animation are enabled under normal device preferences. Refraction and colour dispersion are adjustable in **Material settings**, and **Backdrop** changes the scene sampled by the glass. **Appearance** offers Follow device, Glass and Solid. **Animate glass** shows the effective motion state; turning it on explicitly enables animation for this kit. These choices are remembered locally without changing device settings. Labels and interaction stay in the DOM.
 
 ## Run
@@ -36,6 +38,7 @@ Open the local address printed by Vite. The hosted site opens the kit directly; 
 | Motion | Move across a control, press it, switch Workspace view, toggle Sound and open New collection. Reflections, ripples, selection and popup depth respond. |
 | Catalogue | Search a family and select it from Component catalogue. Every item uses the real upstream component. |
 | App layouts | Inspect Payment retry, mark it reviewed and undo; switch to Fieldworks to inspect its Viewer-only tasks. Compare Desktop/Phone, follow the detail/back path, search pages, edit the local account name and recover loading, unavailable or empty examples. |
+| Review UI | Open the header tool, inspect the actual page or separate lint example, locate a finding, choose a direction and copy its current JSON. Change the page and verify that stale choices require a refresh. |
 | Patterns | Search and filter saved work, select records, apply bulk actions, inspect a detail sheet and use grouped commands through the real SDK palette. |
 | Assistant | Choose a suggestion, edit the prompt, manage local attachment metadata and send or stop a local preview; inspect the resulting message and sources. No model provider is called. |
 | Interactions | Compare Glass/Precision/Native cursors and Ripple/Spark/None feedback; right-click the coastal study or use Scene actions; operate the same menu with keyboard/agent actions; edit Study name and observe the local pending-save result. |
@@ -82,6 +85,7 @@ CI adds `--software-gpu`. This uses the established Chromium SwiftShader flags o
 | Catalogue | Overview plus all 55 families are discoverable; each family mounts without a render error and exposes named SDK entries. |
 | Custom components | All eight custom collections; model/node selection, validation and label identity, JSON/SVG export, keyboard and real agent actions, loaded media, responsive and forced-colour views. |
 | App layouts | Review and undo, workspace context reset, Viewer refusal, account preferences, compact detail/back navigation and explicit recovery states in the real gallery. |
+| Review UI | Rendered finding evidence, privacy exclusions, human choices, agent refusal, stable JSON mapping, stale-export refusal, focus, 390/320px viewports and forced colours. |
 | Library patterns | Accepted query/facet state, row selection and bulk effects, command actions, sheet focus/dismissal, empty recovery and narrow layout. |
 | Assistant | Shared prompt and suggestion state, attachments, accepted local responses, cancellation and refusal paths, source disclosure and narrow layout. |
 | Cursors and clicks | Exact pointer hotspot, fixed hit targets, finite effects and idle cleanup, context-menu focus return, disabled/pending actions, native input and hidden-region fallbacks. |
@@ -97,6 +101,8 @@ CI adds `--software-gpu`. This uses the established Chromium SwiftShader flags o
 The JSON report records browser metadata, status, pixel differences, timing and per-check outcomes. Screenshots include the desktop overview, desktop popup, mobile overview and GPU comparisons. Software rendering is functional evidence, not a hardware performance benchmark.
 
 `npm run glass:check` verifies source coverage, pins, direct imports, renderer integration and attribution. `npm run glass:build` typechecks and builds. The path-filtered CI job has bounded runtime, cancellation of superseded runs and seven-day artifacts.
+
+`npm run glass:semantic-check`, included in `glass:verify`, runs the shared-rule tests, static TSX lint and source-bound contextual receipt checks. Changes to the gallery shell, App layouts, review tool or their configured shared appearance dependencies invalidate the corresponding assessment in `docs/hci/reviews/semantic-review.json`. The gate verifies a current recorded assessment; it cannot prove that the assessment is correct or that a person has validated the interface. Add explicit scopes when extending this requirement to other screens.
 
 ## Related material
 

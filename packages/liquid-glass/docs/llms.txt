@@ -53,6 +53,18 @@ For model edits, distinguish `requested`, `applied`, `rejected`, `unchanged` and
 3. Add @quantitative-hci/liquid-glass/interactions with interactions.css around the intended region. Add @quantitative-hci/liquid-glass/sections with sections.css around meaningful page content.
 4. Keep one createAgent bridge from @ui-sdk/react/agent, with the host application's authorization policy. Use the SDK's snapshot, query, act and subscribe; discover fresh refs and current choices before acting. Observe the rendered state after an action, including a cancelled change.
 
+## Development review
+
+Import LiquidReviewOverlay and its review.css from @quantitative-hci/liquid-glass/review in an explicitly enabled development or internal preview. Reuse the current provider and SDK bridge. The gallery exposes **Review UI** and `?review=1`; the reviewed collection remains visible. This is separate from the fictional Reviews task in App layouts.
+
+Read [the review API](https://github.com/45ck/hci-review-skill/blob/main/packages/liquid-glass/docs/review.md) and `/contracts/liquid-review-overlay.json`. Real SDK Dialog, Button, RadioGroup and Textarea children provide operation. Agents can open, refresh, locate findings and inspect the packet. Human option choices remain confirmation-gated; do not bypass their refusal or describe selected options as approval.
+
+`scanReview(root)` extracts only the supplied rendered scope and excludes the review panel, hidden/secret subtrees and editable values. `analyzeReviewSnapshot(snapshot)` applies the same versioned rules to structured evidence. Findings distinguish measured checks from heuristics and contextual suggestions. A zero finding count does not establish semantic correctness, accessibility conformance or human usability.
+
+`createReviewPacket(report, {fingerprint, choices})` validates the current fingerprint and stable finding/option IDs. Its `OPTIONS` array is convenient shorthand; retain the full `decisions`, `fingerprint`, `ruleVersion`, `scope` and `viewport` fields for handoff. A packet records selections only and never applies an edit. Changed content or viewport requires a fresh scan and current choices. The fingerprint is a freshness check, not a signature or proof of human review.
+
+Run `npm run glass:semantic-check` with `glass:verify`. The source pass covers recoverable UI literals; rendered states and geometry need the browser review. The executable scenarios are in `tests/glass_review_contract.py`; rule and packet regressions are in `tests/test_semantic_review.mjs`.
+
 ## Application layouts
 
 Import LiquidAppShell, LiquidAppRail, LiquidAppWorkarea, LiquidAppHeader, LiquidAppContent, LiquidAppInspector, LiquidAppDock, LiquidAppNavigation and LiquidWorkspaceSwitcher from @quantitative-hci/liquid-glass/layouts; load layouts.css after kit.css. Compose them under the existing LiquidGlassProvider and single agent bridge. The contracts are /contracts/liquid-app-shell-regions.json and /contracts/liquid-app-navigation.json.

@@ -109,7 +109,7 @@ async def verify_layouts_contract(page, expect, *, base_url, output_dir):
     await page.get_by_role("menuitem", name="Workspace settings").click()
     await expect(app.get_by_role("heading", name="Workspace settings")).to_be_visible()
     await app.locator(".qg-app-bottom-nav").get_by_role("button", name="Reviews").click()
-    for label, recovery in [("Unavailable", "Retry"), ("Loading", "Show example data"), ("No results", "Show all reviews")]:
+    for label, recovery in [("Unavailable", "Retry"), ("Loading", "Show example data"), ("Empty", "Show all reviews")]:
         await stage.get_by_role("button", name="Preview application state").click()
         await page.get_by_role("menuitem", name=label, exact=True).click()
         await expect(app.get_by_role("button", name=recovery)).to_be_visible()

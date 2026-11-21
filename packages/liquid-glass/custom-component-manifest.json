@@ -451,6 +451,14 @@
       "exportPath": "@quantitative-hci/liquid-glass/layouts",
       "validation": "unvalidated",
       "contract": "docs/hci/standards/app-layout-system.md"
+    },
+    {
+      "id": "liquid-review-overlay",
+      "name": "LiquidReviewOverlay",
+      "category": "Review",
+      "exportPath": "@quantitative-hci/liquid-glass/review",
+      "validation": "unvalidated",
+      "contract": "docs/hci/standards/semantic-review.md"
     }
   ]
 }

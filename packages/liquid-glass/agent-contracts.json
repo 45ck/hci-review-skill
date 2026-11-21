@@ -7778,6 +7778,185 @@
         }
       ],
       "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-review-overlay",
+      "kind": "composition",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/review",
+          "symbols": [
+            "LiquidReviewOverlay"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/review/overlay.tsx"
+      ],
+      "purpose": "Review the current rendered page through measured checks, contextual suggestions and explicit human decision options.",
+      "useWhen": [
+        "Inspect a development or internal preview without replacing the host interface or changing its content."
+      ],
+      "inputs": [
+        "open:boolean, onOpenChange:DialogProps[onOpenChange], root:()=>HTMLElement|null; optional triggerLabel, shortcut, tools and className."
+      ],
+      "state": [
+        "Current scoped report, content/rule/viewport fingerprint, selected finding, explicit option choices, stale status and copyable selection-only packet."
+      ],
+      "runtime": {
+        "discovery": "sdk-children",
+        "mutationPath": "Actual SDK Dialog, Buttons, RadioGroup and Textarea share the mounted component state. Human decisions use the same cancellable selection path and refuse agent-sourced confirmation. The overlay reads and highlights host content; it does not rewrite or approve it.",
+        "actions": [],
+        "outcome": "Open the named Review UI dialog, refresh the current report, locate a finding and inspect the accepted selection packet. Changed reviewed content or viewport marks previous decisions stale; export requires current findings. Closing removes decoration and restores focus.",
+        "controls": [
+          "@ui-sdk/react/dialog",
+          "@ui-sdk/react/button",
+          "@ui-sdk/react/radio",
+          "@ui-sdk/react/textarea"
+        ]
+      },
+      "restrictions": [
+        "Mount only in an explicitly enabled development or authorized internal review surface; preserve the host provider and single SDK bridge.",
+        "Inspect only the supplied rendered scope. Exclude the overlay itself, hidden retained views, protected content and editable input values.",
+        "Contextual suggestions and option choices are not a semantic correctness certificate, accessibility conformance or human usability validation.",
+        "Human choice controls are confirmation-gated. Agents may inspect and refresh; they must not fabricate human decisions or bypass their refusal path.",
+        "Copying a packet does not apply changes. Recheck its fingerprint, stable finding IDs and option IDs before any later implementation."
+      ],
+      "policies": [
+        "sdk-foundation",
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "docs": [
+        "packages/liquid-glass/docs/review.md",
+        "docs/hci/standards/semantic-review.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/glass_review_contract.py",
+          "scope": "SDK opening and refresh, rendered-scope findings, human selection and agent refusal, packet identity, stale detection, keyboard focus and narrow layout."
+        },
+        {
+          "path": "tests/test_semantic_review.mjs",
+          "scope": "Rule positive/negative cases, stable selection packets and stale fingerprint rejection."
+        }
+      ],
+      "validation": "unvalidated"
+    },
+    {
+      "id": "semantic-review-data",
+      "kind": "pure-utility",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/review",
+          "symbols": [
+            "REVIEW_RULE_VERSION",
+            "analyzeReviewSnapshot",
+            "createReviewPacket"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/review/rules.ts"
+      ],
+      "purpose": "Apply versioned deterministic review rules to structured page evidence and export revision-bound option selections.",
+      "useWhen": [
+        "Share the same rule engine between browser review and cheap source checks, or validate a selection packet before handing it to an agent."
+      ],
+      "inputs": [
+        "ReviewSnapshot with scope, viewport and measured elements; ReviewReport and selections {fingerprint,choices} keyed by stable finding ID."
+      ],
+      "state": [
+        "ReviewReport findings with rule ID, certainty, evidence, target and options; ReviewPacket with OPTIONS, stable decision mapping, unresolved count and selection-only status."
+      ],
+      "runtime": {
+        "discovery": "none",
+        "mutationPath": "Pure analysis and serialization return new data. No host DOM, model, file or application state is changed.",
+        "actions": [],
+        "outcome": "Read returned findings and explicit limitations; invalid or stale selections are refused rather than mapped to a reordered decision."
+      },
+      "restrictions": [
+        "Heuristic wording findings require context; they are not automatic proof of poor copy.",
+        "A matching content fingerprint checks freshness only. It is neither an authenticity signature nor evidence of a human review.",
+        "Source extraction covers statically recoverable literals. Dynamic content and rendered geometry require the browser pass."
+      ],
+      "policies": [
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "docs": [
+        "packages/liquid-glass/docs/review.md",
+        "docs/hci/standards/semantic-review.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/test_semantic_review.mjs",
+          "scope": "Deterministic rule cases, bounded findings, stable fingerprints and invalid/stale selection refusal."
+        },
+        {
+          "path": "scripts/check-semantic-ui.mjs",
+          "scope": "Shared wording rules applied to static UI evidence; dynamic and geometry limits remain explicit."
+        }
+      ],
+      "validation": "not-applicable"
+    },
+    {
+      "id": "semantic-review-scan",
+      "kind": "host-hook",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/review",
+          "symbols": [
+            "scanReview"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/review/scan.ts"
+      ],
+      "purpose": "Extract a bounded rendered DOM scope into the shared review report without reading editable values or sending content anywhere.",
+      "useWhen": [
+        "Collect actual current-page names, wording and geometry for the optional development review overlay."
+      ],
+      "inputs": [
+        "A connected HTMLElement that defines the permitted review scope."
+      ],
+      "state": [
+        "ReviewReport with rendered element count, scope, viewport, rule version, stable fingerprint, anchored findings and coverage limitations."
+      ],
+      "runtime": {
+        "discovery": "none",
+        "mutationPath": "Reads the supplied DOM scope and calls the pure analyzer. It is not an SDK action or a remote service.",
+        "actions": [],
+        "outcome": "The report describes only included rendered evidence. Excluded protected content and unvisited states remain outside coverage."
+      },
+      "restrictions": [
+        "Do not pass a broader root than the intended review surface or export reports without considering their content.",
+        "Exclude review UI, hidden/secret subtrees and editable values. SDK hidden backing inputs must not create duplicate unnamed-control findings.",
+        "A scan cannot establish heading meaning, truthful application state, task success or complete accessibility conformance."
+      ],
+      "policies": [
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "docs": [
+        "packages/liquid-glass/docs/review.md",
+        "docs/hci/standards/semantic-review.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/glass_review_contract.py",
+          "scope": "Actual rendered fixture extraction and explicit hidden/secret/overlay exclusions."
+        },
+        {
+          "path": "tests/test_semantic_review.mjs",
+          "scope": "Structured evidence analysis and packet freshness boundaries."
+        }
+      ],
+      "validation": "not-applicable"
     }
   ]
 }

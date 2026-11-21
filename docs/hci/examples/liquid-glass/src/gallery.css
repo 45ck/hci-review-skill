@@ -80,6 +80,7 @@ p {
   display: flex;
   align-items: center;
   gap: 20px;
+  flex-wrap: wrap;
 }
 .kit-renderer-status {
   font-size: 12px;
@@ -683,6 +684,7 @@ p {
     min-height: 74px;
     padding: 16px 20px;
     gap: 12px;
+    flex-wrap: wrap;
   }
   .kit-brand {
     gap: 9px;
@@ -698,8 +700,8 @@ p {
   .kit-header-actions {
     gap: 8px;
   }
-  .kit-header-actions [data-slot="button"] {
-    font-size: 13px;
+  .kit-header-actions > [data-slot="button"] {
+    font-size: 14px;
     padding-inline: 12px;
   }
   .kit-layout {
@@ -785,6 +787,12 @@ p {
   }
   .kit-footer {
     flex-wrap: wrap;
+  }
+}
+@media (max-width: 480px) {
+  .kit-header-actions {
+    width: 100%;
+    justify-content: flex-start;
   }
 }
 @media (forced-colors: active) {

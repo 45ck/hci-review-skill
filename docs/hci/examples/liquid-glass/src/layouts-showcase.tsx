@@ -211,7 +211,7 @@ export function LayoutsShowcase({ active = true }: { active?: boolean }) {
           </MenuTrigger>
           <MenuContent>
             <MenuItem value="ready" onSelect={() => dispatch({ type: "scenario", value: "ready" })}>Ready</MenuItem>
-            <MenuItem value="empty" onSelect={() => dispatch({ type: "scenario", value: "empty" })}>No results</MenuItem>
+            <MenuItem value="empty" onSelect={() => dispatch({ type: "scenario", value: "empty" })}>Empty</MenuItem>
             <MenuItem value="loading" onSelect={() => dispatch({ type: "scenario", value: "loading" })}>Loading</MenuItem>
             <MenuItem value="error" onSelect={() => dispatch({ type: "scenario", value: "error" })}>Unavailable</MenuItem>
           </MenuContent>

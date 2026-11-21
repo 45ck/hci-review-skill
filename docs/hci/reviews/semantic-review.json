@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "reviews": [
+    {
+      "id": "gallery-layouts",
+      "reviewer": {
+        "kind": "agent",
+        "name": "ChatGPT, implementation review with independent contextual source review"
+      },
+      "reviewedAt": "2026-11-21T21:55:28.053Z",
+      "task": "Find an application layout, inspect the correct fictional workspace record, perform an allowed local review action, and return to the list or account settings with clear state and recovery.",
+      "scenarios": [
+        "Catalogue entry and collection URL restore; Review UI remains visible alongside Copy starter.",
+        "Desktop and compact application shell, record selection, project/search/status filters and inspector return.",
+        "Owner and Viewer workspaces, workspace context reset, Mark reviewed and Undo.",
+        "Account profile and notification preferences; loading, empty, filtered-empty and unavailable recovery states."
+      ],
+      "assessments": {
+        "content": "App layouts, Reviews, Inspect, Mark reviewed, Your account and Workspace settings name concrete destinations or actions. The layout page omits a redundant gallery eyebrow. Repeating a selected record title in the list and inspector identifies the same object in distinct contexts. The State menu now says Empty to match a dataset with no records; filtered No results remains a separate state. Local example and in-memory notices describe the actual limits of the actions.",
+        "navigation": "The searchable component catalogue opens App layouts and the existing collection query restores that destination. Workspace switching resets route, selection, filters and scenario together. Project selection opens the corresponding filtered review list. Personal account settings and workspace settings remain distinct. Compact navigation provides Reviews, Projects and More. Review UI names the developer tool separately from the fictional app Reviews task.",
+        "presentation": "The shell separates navigation, task list and conditional inspector. Grid minmax and container breakpoints allow the work area to shrink, and compact detail replaces the list with a named return action. The gallery header wraps its actions on small screens. Shared kit typography and icon sources are fingerprinted because they can change these surfaces. Compact 11–13px secondary typography in the existing layout remains a recorded density limitation.",
+        "interaction": "Selecting a row identifies a record; Mark reviewed changes its local state and offers Undo. Viewer workspaces disable the action and the shared handler checks permission before applying it. Account edits submit explicitly, with blank or unchanged names disabling Save. Compact detail transfers focus to its heading and returns to the selected trigger or list heading on dismissal. The source preserves the existing SDK change paths.",
+        "recovery": "Loading, empty dataset, filtered-empty and unavailable states have explicit alternatives or recovery actions. Completed review changes provide Undo. Filters derive the selected inspector from matching records, preventing an unrelated record from staying open. Compact detail has a named Back action and Escape handling. No source review substitutes for the separate browser focus and responsive contracts."
+      },
+      "limitations": [
+        "Agent contextual source assessment, not human usability validation or measured task speed. Custom components remain Unvalidated.",
+        "This receipt covers the gallery shell and App layouts, not every collection, component state or route. Shared sources are included for invalidation, not blanket approval.",
+        "The application is fictional, local and memory-only. It does not implement authentication, server authorization, tenant isolation or persistence.",
+        "Compact secondary typography remains in the layout showcase. The runtime scanner also reports compact hit-area candidates that need context and spacing review.",
+        "The earlier layout source passed its full browser workflow. The new combined source must pass the separate browser contract before publication; this receipt is not that execution result."
+      ],
+      "fingerprint": "f9e7795851d0bb8cfae6792f4cf14064cf5a4f9e0b5619ea87d551713f6e730d"
+    },
+    {
+      "id": "review-tool",
+      "reviewer": {
+        "kind": "agent",
+        "name": "ChatGPT, implementation review with independent contextual source review"
+      },
+      "reviewedAt": "2026-11-21T21:55:28.053Z",
+      "task": "Open a developer review of the rendered region, understand and locate findings, select a proposed direction and copy a current agent instruction packet without implying that the page was changed.",
+      "scenarios": [
+        "Visible header trigger and review=1 URL; actual-page scope distinct from the deliberately flawed example.",
+        "Real overview scan after SDK label resolution fix: named controls remain named; compact bounds stay advisory.",
+        "Deliberate example produces three anchored findings: repeated subtitle, generic action and an unnamed control.",
+        "Keyboard choice in the deliberate example produces a selection-only packet with OPTIONS, matching fingerprint, stable finding and option IDs, and unresolved count; copy succeeds.",
+        "Show on page highlights the target and minimizes the panel; Back to findings, close/Escape and stale refresh paths are reviewed.",
+        "Source inspection of missing root, hidden/protected/editable exclusions, changed content, changed viewport, agent-selection refusal and clipboard fallback."
+      ],
+      "assessments": {
+        "content": "Review UI is the visible trigger and dialog name. Findings separate the observed evidence, suggestion, severity and certainty. The footer states that choices have not applied page changes. Zero findings still requires contextual review; no overall quality score or semantic approval is claimed. OPTIONS is accompanied by stable mapping so an agent need not guess which finding each number describes. The sample is explicitly labelled as deliberately flawed and separate from the actual page.",
+        "navigation": "The existing gallery header mounts the tool, and review=1 opens it beside the active collection. It scans kit-main instead of replacing the gallery. Show on page locates the actual element and minimizes the panel; Back to findings restores it. Review actual page leaves the sample scope. Source scope, viewport and current freshness are exposed on the dialog and represented in the packet.",
+        "presentation": "The bounded desktop side panel and narrow bottom panel retain persistent actions and a scrollable findings area. Body advice and options use 14px text; metadata uses at least 12px. A visual preview identified translucent text interference, so panel and footer now derive an opaque color from the shared kit token. The existing SDK controls, typography, icons and forced-color treatment remain in use. Location mode reduces obstruction while showing the outlined target.",
+        "interaction": "The component reuses the existing SDK Dialog, Button, RadioGroup, Radio and Textarea with one host bridge. Controlled selections are confirmed human directions; agent-sourced radio changes are cancelled at the shared callback. Selection and copying recheck the live fingerprint before proceeding. The packet is explicitly selection-only and does not rewrite content or authorize a release. The example keyboard/copy exercise is an automated test choice, not a recorded human preference.",
+        "recovery": "A missing or uninspectable region displays an actionable message. Changed content disables old choices and export; a changed refresh clears them, while an unchanged refresh preserves them. Stale fingerprints and unknown decision IDs are rejected by the packet creator. Clipboard failure exposes selectable JSON. Outline observers clean up on close, change and return. Focus moves to Back to findings when minimized and uses SDK restoration when closed."
+      },
+      "limitations": [
+        "Deterministic observations and heuristic candidates do not perform full semantic inference or certify factual accuracy, comprehension, WCAG conformance or human usability.",
+        "Only the supplied rendered region and current state are scanned. Hidden routes, protected content, editable values, iframes, canvas text and backend behavior are outside coverage.",
+        "Static extraction reports unresolved dynamic candidates and deliberately excluded examples; a passing source check does not approve those cases.",
+        "Alternatives are textual implementation directions, not fully rendered alternate designs. A selected direction has no effect on the application.",
+        "The source fingerprint verifies current recorded scope and reasoning presence. It does not prove the assessment is correct, and the runtime fingerprint is not an authorization credential.",
+        "Desktop preview interaction and source review are recorded here. The focused CI contract separately verifies mobile, forced colors, exclusion changes, SDK refusal and stale export. Human review status remains Unvalidated."
+      ],
+      "fingerprint": "17e2719184f35fdd66c602091d740701426720769a9d3a01a2399a0f0da65818"
+    }
+  ]
+}

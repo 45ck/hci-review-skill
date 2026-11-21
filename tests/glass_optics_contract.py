@@ -6,9 +6,12 @@ CI requires a ready GPU and verifies its contribution on three DOM rectangles.
 
 import asyncio
 import base64
+from contextvars import ContextVar
+import json
 from pathlib import Path
 import re
 import struct
+from time import perf_counter
 import zlib
 
 # SwiftShader capture can outlast the interaction timeout after fonts are ready.
@@ -16,6 +19,23 @@ import zlib
 SCREENSHOT_TIMEOUT_MS = 15000
 MOTION_SETTLE_TIMEOUT_MS = 5000
 MOTION_IDLE_SAMPLE_MS = 300
+_CHECK_TRACE = ContextVar("glass_browser_check_trace", default=None)
+
+
+def begin_browser_check(name):
+    _CHECK_TRACE.set({"name": name, "started": perf_counter(), "stages": []})
+
+
+def browser_stage(name, **detail):
+    trace = _CHECK_TRACE.get()
+    if trace is not None:
+        trace["stages"].append({"stage": name, "atSeconds": round(perf_counter() - trace["started"], 3), **detail})
+        trace["stages"] = trace["stages"][-24:]
+
+
+def browser_check_trace():
+    trace = _CHECK_TRACE.get()
+    return trace["stages"][:] if trace else []
 
 
 def _png_rgb(data):
@@ -99,15 +119,19 @@ def _difference(before, after, *, border_only=False):
 
 
 async def _call(page, method, arguments=None):
-    return await asyncio.wait_for(page.evaluate("""async ({method, input}) => {
-        const agent = window.quantitativeHciAgent;
-        if (method === 'query') return agent.query(input);
-        if (method === 'act') return agent.act(input);
-        throw new Error('Unsupported optical-test operation');
-    }""", {"method": method, "input": arguments}), timeout=5)
+    try:
+        return await asyncio.wait_for(page.evaluate("""async ({method, input}) => {
+            const agent = window.quantitativeHciAgent;
+            if (method === 'query') return agent.query(input);
+            if (method === 'act') return agent.act(input);
+            throw new Error('Unsupported optical-test operation');
+        }""", {"method": method, "input": arguments}), timeout=5)
+    except TimeoutError as error:
+        raise AssertionError(f"Optical SDK {method} exceeded 5000 ms") from error
 
 
 async def _entry(page, kind, labels):
+    browser_stage("optics: query SDK control", kind=kind, labels=labels)
     result = await _call(page, "query", {"kind": kind})
     assert isinstance(result, list), result
     names = [labels] if isinstance(labels, str) else labels
@@ -117,6 +141,7 @@ async def _entry(page, kind, labels):
 
 
 async def _act(page, entry, action, args):
+    browser_stage("optics: act on SDK control", component=entry.get("component"), label=entry.get("label"), action=action)
     assert action in entry["actions"], f"{entry} does not expose {action}"
     result = await _call(page, "act", {"steps": [{"ref": entry["ref"], "action": action, "args": args}]})
     assert result.get("ok"), f"Optical control action failed: {result}"
@@ -153,6 +178,7 @@ async def motion_diagnostics(page):
 
 
 async def settled_motion(page, *, check_idle=True):
+    browser_stage("material: wait for idle", checkStableIdle=check_idle)
     await page.wait_for_function("""() => {
         const state = document.documentElement.dataset;
         return state.liquidMotionState === 'idle' && Number(state.liquidActiveEffects) === 0;
@@ -160,6 +186,7 @@ async def settled_motion(page, *, check_idle=True):
     await _painted(page)
     before = await motion_diagnostics(page)
     if check_idle:
+        browser_stage("material: observe stable idle", baseline=before, observationMs=MOTION_IDLE_SAMPLE_MS)
         await page.wait_for_timeout(MOTION_IDLE_SAMPLE_MS)
         after = await motion_diagnostics(page)
         assert after == before, f"Settled material kept scheduling work: {before} -> {after}"
@@ -167,8 +194,9 @@ async def settled_motion(page, *, check_idle=True):
 
 
 async def _arm_motion_frames(page, box, *, indicator=False):
-    # Observe completed GPU draws so Chromium cannot discard a presented texture
-    # before the test reads it. Only three frames are copied, never every frame.
+    browser_stage("motion: arm three GPU frame snapshots", indicator=indicator)
+    # Snapshot before presentation; CPU decoding happens after the observer detaches
+    # so software GPU readback cannot block every observed render callback.
     await page.evaluate("""({box, indicator}) => {
         window.__glassMotionFrames?.cancel();
         const root = document.documentElement;
@@ -183,36 +211,85 @@ async def _arm_motion_frames(page, box, *, indicator=False):
         const context = copy.getContext('2d', {willReadFrequently: true});
         if (!context) throw new Error('Missing test readback context');
         const frames = [];
+        const snapshots = [];
+        const bitmaps = new Set();
+        const probe = {phase: 'armed', frameCount: 0, requiredFrames: 3, decodedCount: 0,
+            observedRenders: 0, activeRenders: 0, frameDeadlineMs: 4000, startedAt: performance.now()};
         const baseline = Number(root.dataset.liquidMotionRevision);
         const capture = Number(root.dataset.liquidCaptureRevision);
         let previous = -Infinity;
         let timer;
         let finished = false;
+        let cancelled = false;
         let resolve;
         const done = new Promise(complete => { resolve = complete; });
-        const finish = error => {
+        const cancel = () => {
+            cancelled = true;
+            observer.disconnect();
+            clearTimeout(timer);
+            for (const bitmap of bitmaps) bitmap.close();
+            bitmaps.clear();
+            copy.width = copy.height = 0;
+            resolve({frames, capture, error: 'Capture cancelled', probe});
+        };
+        const finish = async error => {
             if (finished) return;
             finished = true;
             observer.disconnect();
             clearTimeout(timer);
-            copy.width = copy.height = 0;
-            resolve({frames, capture, error});
+            if (error) {
+                probe.phase = 'failed';
+                probe.elapsedMs = performance.now() - probe.startedAt;
+                resolve({frames, capture, error, probe});
+                return;
+            }
+            try {
+                probe.phase = 'awaiting snapshots';
+                const images = await Promise.all(snapshots);
+                if (cancelled) return;
+                for (let index = 0; index < images.length; index++) {
+                    probe.phase = `decoding snapshot ${index + 1}`;
+                    context.clearRect(0, 0, copy.width, copy.height);
+                    context.drawImage(images[index], 0, 0);
+                    const pixels = context.getImageData(0, 0, copy.width, copy.height).data;
+                    let painted = 0;
+                    for (let offset = 3; offset < pixels.length; offset += 4) painted += pixels[offset] > 0;
+                    frames[index].paintedFraction = painted / (copy.width * copy.height);
+                    frames[index].png = copy.toDataURL('image/png');
+                    images[index].close();
+                    bitmaps.delete(images[index]);
+                    probe.decodedCount++;
+                }
+                probe.phase = 'complete';
+                probe.elapsedMs = performance.now() - probe.startedAt;
+                resolve({frames, capture, error: null, probe});
+            } catch (failure) {
+                probe.phase = 'failed';
+                resolve({frames, capture, error: String(failure), probe});
+            }
         };
         const observer = new MutationObserver(() => {
             const now = performance.now();
             const state = root.dataset;
+            probe.observedRenders++;
+            probe.lastRender = Number(state.liquidRenderRevision);
             if (Number(state.liquidMotionRevision) <= baseline ||
                 state.liquidMotionState !== 'running' ||
-                Number(state.liquidActiveEffects) < 1 || now - previous < 70) return;
+                Number(state.liquidActiveEffects) < 1) return;
+            probe.activeRenders++;
+            if (now - previous < 70) return;
             try {
-                context.clearRect(0, 0, copy.width, copy.height);
-                context.drawImage(source,
-                    (box.x - bounds.x) * scaleX, (box.y - bounds.y) * scaleY,
-                    box.width * scaleX, box.height * scaleY,
-                    0, 0, copy.width, copy.height);
-                const pixels = context.getImageData(0, 0, copy.width, copy.height).data;
-                let painted = 0;
-                for (let offset = 3; offset < pixels.length; offset += 4) painted += pixels[offset] > 0;
+                probe.phase = `snapshot ${frames.length + 1}`;
+                const snapshot = createImageBitmap(source,
+                    Math.floor((box.x - bounds.x) * scaleX),
+                    Math.floor((box.y - bounds.y) * scaleY), copy.width, copy.height
+                ).then(bitmap => {
+                    if (cancelled) bitmap.close();
+                    else bitmaps.add(bitmap);
+                    return bitmap;
+                });
+                snapshot.catch(error => finish(String(error)));
+                snapshots.push(snapshot);
                 const marker = indicator
                     ? document.querySelector('[aria-label="Workspace view"] [data-slot="segmented-control-indicator"]')
                     : null;
@@ -222,24 +299,41 @@ async def _arm_motion_frames(page, box, *, indicator=False):
                     render: Number(state.liquidRenderRevision),
                     capture: Number(state.liquidCaptureRevision),
                     activeEffects: Number(state.liquidActiveEffects),
-                    paintedFraction: painted / (copy.width * copy.height),
-                    indicator: rect ? {x: rect.x, y: rect.y, width: rect.width, height: rect.height} : null,
-                    png: copy.toDataURL('image/png')
+                    indicator: rect ? {x: rect.x, y: rect.y, width: rect.width, height: rect.height} : null
                 });
+                probe.frameCount = frames.length;
+                probe.phase = 'waiting for next render';
                 previous = now;
                 if (frames.length === 3) finish(null);
             } catch (error) { finish(String(error)); }
         });
         observer.observe(root, {attributes: true, attributeFilter: ['data-liquid-render-revision']});
         timer = setTimeout(() => finish('Fewer than three active GPU frames were observed'), 4000);
-        window.__glassMotionFrames = {done, cancel: () => finish('Capture cancelled')};
+        window.__glassMotionFrames = {done, probe, cancel};
     }""", {"box": box, "indicator": indicator})
 
 
 async def _motion_frames(page, output, label):
-    sampled = await asyncio.wait_for(page.evaluate("window.__glassMotionFrames.done"), timeout=5)
-    await page.evaluate("delete window.__glassMotionFrames")
-    assert not sampled["error"], f"{label}: {sampled['error']}; captured {len(sampled['frames'])} frames"
+    browser_stage("motion: await GPU frame evidence", label=label)
+    try:
+        sampled = await asyncio.wait_for(page.evaluate("window.__glassMotionFrames.done"), timeout=5)
+    except TimeoutError as error:
+        try:
+            probe = await asyncio.wait_for(page.evaluate("window.__glassMotionFrames?.probe"), timeout=2)
+        except Exception:
+            probe = {"phase": "browser unavailable during readback timeout"}
+        browser_stage("motion: GPU frame evidence timeout", label=label, probe=probe)
+        raise AssertionError(f"{label}: GPU evidence exceeded 5000 ms; sampler={probe}") from error
+    finally:
+        try:
+            await asyncio.wait_for(page.evaluate("window.__glassMotionFrames?.cancel(); delete window.__glassMotionFrames"), timeout=2)
+        except Exception as cleanup_error:
+            browser_stage("motion: cleanup unavailable", error=str(cleanup_error) or type(cleanup_error).__name__)
+    if sampled["error"]:
+        evidence = {"label": label, "error": sampled["error"], "sampler": sampled["probe"], "frames": [{key: value for key, value in frame.items() if key != "png"} for frame in sampled["frames"]]}
+        (output / f"motion-{label}-failure.json").write_text(json.dumps(evidence, indent=2) + "\n", encoding="utf-8")
+        browser_stage("motion: frame capture failed", evidence=evidence)
+        raise AssertionError(f"{label}: {sampled['error']}; sampler={sampled['probe']}")
     frames = sampled["frames"]
     assert len(frames) == 3, f"Missing motion frames in {label}: {len(frames)}"
     pngs = []
@@ -257,7 +351,7 @@ async def _motion_frames(page, output, label):
     assert any(item["changedFraction"] > 0.001 and item["meanChannelDifference"] > 0.03 for item in differences), f"{label} changed diagnostics but not rendered pixels: {differences}"
     assert len({frame["render"] for frame in frames}) == 3, f"{label} repeated a GPU frame"
     assert frames[-1]["motion"] > frames[0]["motion"], f"{label} did not advance its motion clock"
-    return {"frames": frames, "differences": differences, "elapsedMs": round(frames[-1]["at"] - frames[0]["at"], 1)}
+    return {"frames": frames, "differences": differences, "elapsedMs": round(frames[-1]["at"] - frames[0]["at"], 1), "sampler": sampled["probe"]}
 
 
 async def _settings(page):
@@ -268,10 +362,25 @@ async def _settings(page):
 
 
 async def configure_material(page, *, strength=None, backdrop=None, motion=None, appearance=None):
+    browser_stage("material: configure", strength=strength, backdrop=backdrop, motion=motion, appearance=appearance)
     await _settings(page)
     motion_control = await _entry(page, "switch", "Animate glass")
     resolved_motion = await page.locator("html").get_attribute("data-liquid-motion")
     assert motion_control["checked"] is (resolved_motion == "enabled"), f"Animate glass disagrees with resolved {resolved_motion} mode"
+    if appearance is not None:
+        control = await _entry(page, "select", "Appearance")
+        result = await _call(page, "query", {"within": control["ref"]})
+        choices = [item for entry in result if entry["ref"] == control["ref"] for item in entry.get("items", []) if item["label"] == appearance]
+        assert len(choices) == 1, f"Appearance choice missing: {result}"
+        await _act(page, control, "setValue", [choices[0]["value"]])
+        assert (await _entry(page, "select", "Appearance"))["value"] == choices[0]["value"]
+        await page.wait_for_function("""value => {
+            const state = document.documentElement.dataset;
+            return state.liquidTransparency === value &&
+                ['ready', 'unavailable', 'reduced', 'error'].includes(state.liquidStatus);
+        }""", arg=choices[0]["value"], timeout=25000)
+        assert await page.locator("html").get_attribute("data-liquid-status") != "error", await page.locator("html").get_attribute("data-liquid-error")
+    # Transparency may replace the engine, so baselines belong to the new instance.
     capture_before = await _revision(page, "data-liquid-capture-revision")
     backdrop_changed = False
     if strength is not None:
@@ -285,13 +394,6 @@ async def configure_material(page, *, strength=None, backdrop=None, motion=None,
             control = await _entry(page, "switch", "Animate glass")
         await _act(page, control, "setChecked", [motion])
         assert (await _entry(page, "switch", "Animate glass"))["checked"] is motion
-    if appearance is not None:
-        control = await _entry(page, "select", "Appearance")
-        result = await _call(page, "query", {"within": control["ref"]})
-        choices = [item for entry in result if entry["ref"] == control["ref"] for item in entry.get("items", []) if item["label"] == appearance]
-        assert len(choices) == 1, f"Appearance choice missing: {result}"
-        await _act(page, control, "setValue", [choices[0]["value"]])
-        assert (await _entry(page, "select", "Appearance"))["value"] == choices[0]["value"]
     if backdrop is not None:
         control = await _entry(page, "select", "Backdrop")
         result = await _call(page, "query", {"within": control["ref"]})
@@ -565,3 +667,144 @@ async def verify_suppressed_motion(page, expect, *, policy):
     assert before["capture"] == after["capture"], f"{policy} recaptured the backdrop during a control action"
     await _select_workspace(page, "Files")
     return {"policy": policy, "before": before, "after": after, "button": state, "selectionStillWorks": True}
+
+
+async def _arm_drawer_frames(page):
+    await page.evaluate("""() => {
+        const root = document.documentElement;
+        const drawer = document.querySelector('[data-slot="drawer-content"][data-open]');
+        if (!(drawer instanceof HTMLElement)) throw new Error('Missing open native Drawer');
+        const frames = [];
+        let previous = -Infinity;
+        let timer;
+        let finished = false;
+        let resolve;
+        const done = new Promise(complete => { resolve = complete; });
+        const finish = error => {
+            if (finished) return;
+            finished = true;
+            observer.disconnect();
+            clearTimeout(timer);
+            resolve({frames, error});
+        };
+        const observer = new MutationObserver(() => {
+            if (performance.now() - previous < 25) return;
+            const host = drawer.closest(':popover-open,dialog:modal');
+            const canvas = host?.querySelector(':scope > canvas[data-liquid-canvas="popup"]');
+            const animations = [];
+            for (let node = drawer; node; node = node.parentElement) {
+                for (const animation of node.getAnimations()) {
+                    if (animation instanceof CSSAnimation || animation instanceof CSSTransition ||
+                        animation.playState !== 'running' || !(animation.effect instanceof KeyframeEffect)) continue;
+                    const timing = animation.effect.getComputedTiming();
+                    if (!Number.isFinite(timing.endTime) || timing.endTime <= 0 ||
+                        !animation.effect.getKeyframes().some(frame => 'translate' in frame || 'transform' in frame)) continue;
+                    animations.push({progress: timing.progress, duration: timing.endTime,
+                        target: node.getAttribute('data-slot')});
+                }
+                if (node === host) break;
+            }
+            if (!animations.length || !canvas || !host) return;
+            const box = node => {const rect = node.getBoundingClientRect(); return [rect.x, rect.y, rect.width, rect.height];};
+            frames.push({
+                at: performance.now(), nativeAnimations: animations,
+                drawer: box(drawer), renderedDrawer: JSON.parse(drawer.getAttribute('data-liquid-render-rect') || 'null'),
+                host: box(host), renderedLayer: JSON.parse(canvas.getAttribute('data-liquid-render-rect') || 'null'),
+                render: Number(root.dataset.liquidRenderRevision),
+                motion: Number(root.dataset.liquidMotionRevision),
+                capture: Number(root.dataset.liquidCaptureRevision),
+                state: root.dataset.liquidMotionState
+            });
+            previous = performance.now();
+            if (frames.length === 3) finish(null);
+        });
+        observer.observe(root, {attributes: true, attributeFilter: ['data-liquid-render-revision']});
+        timer = setTimeout(() => finish('Fewer than three rendered native Drawer settle frames'), 4000);
+        window.__glassDrawerFrames = {done, cancel: () => finish('Capture cancelled')};
+    }""")
+
+
+def _assert_rect_alignment(actual, rendered, label):
+    assert isinstance(rendered, list) and len(rendered) == 4, f"Missing actual GPU draw bounds for {label}: {rendered}"
+    error = max(abs(left - right) for left, right in zip(actual, rendered))
+    assert error <= 1.5, f"GPU bounds lagged {label} by {error:.3f}px: DOM {actual}, GPU {rendered}"
+    return round(error, 4)
+
+
+async def verify_drawer_motion_contract(page, expect, *, output_dir="test-results", require_gpu=False):
+    root = page.locator("html")
+    status = await root.get_attribute("data-liquid-status")
+    if status != "ready":
+        assert not require_gpu, f"Native Drawer GPU tracking is required; renderer reported {status}"
+        return {"status": status, "geometryVerified": False}
+    output = Path(output_dir)
+    output.mkdir(parents=True, exist_ok=True)
+    outcomes = {}
+    trigger = page.get_by_role("button", name="Arrange workspace", exact=True)
+    try:
+        for enabled in [True, False]:
+            policy = "enabled" if enabled else "off"
+            browser_stage("drawer: configure and open", policy=policy)
+            await configure_material(page, motion=enabled)
+            await expect(root).to_have_attribute("data-liquid-motion", policy)
+            await trigger.click()
+            drawer = page.get_by_role("dialog", name="Workspace layout", exact=True)
+            await expect(drawer).to_be_visible()
+            await expect(drawer).to_have_attribute("data-driver", "pointer")
+            await settled_motion(page)
+            rest = await drawer.bounding_box()
+            grip = await drawer.locator("[data-slot='grip']").bounding_box()
+            assert rest and grip, "Native Drawer or its drag grip has no bounds"
+            start = {"x": grip["x"] + grip["width"] / 2, "y": grip["y"] + grip["height"] / 2}
+            await page.mouse.move(**start)
+            await settled_motion(page)
+            before = await motion_diagnostics(page)
+            await page.mouse.down()
+            try:
+                browser_stage("drawer: drag grip", policy=policy)
+                distance = min(40, rest["height"] * 0.12)
+                await page.mouse.move(start["x"], start["y"] + distance, steps=6)
+                await expect(drawer).to_have_attribute("data-dragging", re.compile(r".*"))
+                dragged = await drawer.bounding_box()
+                assert dragged and dragged["y"] - rest["y"] > 8, f"The real Drawer did not follow the pointer: {rest}, {dragged}"
+                await page.wait_for_timeout(180)
+                await _arm_drawer_frames(page)
+            finally:
+                await page.mouse.up()
+            browser_stage("drawer: await native settle frames", policy=policy, deadlineMs=4000)
+            samples = await asyncio.wait_for(page.evaluate("window.__glassDrawerFrames.done"), timeout=5)
+            await page.evaluate("delete window.__glassDrawerFrames")
+            assert not samples["error"], f"{policy}: {samples['error']}; observed {len(samples['frames'])}"
+            frames = samples["frames"]
+            assert len({frame["render"] for frame in frames}) == 3, f"{policy} Drawer did not redraw each sampled settle frame"
+            assert max(frame["drawer"][1] for frame in frames) - min(frame["drawer"][1] for frame in frames) > 2, f"{policy} Drawer samples did not show native movement"
+            for frame in frames:
+                frame["drawerAlignmentErrorPx"] = _assert_rect_alignment(frame["drawer"], frame["renderedDrawer"], f"{policy} Drawer surface")
+                frame["layerAlignmentErrorPx"] = _assert_rect_alignment(frame["host"], frame["renderedLayer"], f"{policy} popup host")
+                assert frame["capture"] == before["capture"], "Native Drawer settling recaptured the backdrop"
+                assert frame["state"] == "running", "Native Drawer settle was reported idle while moving"
+                if not enabled:
+                    assert frame["motion"] == before["motion"], "Native geometry tracking restarted decorative motion in off mode"
+            idle = await settled_motion(page)
+            await expect(drawer).to_be_visible()
+            final = await drawer.evaluate("""node => {
+                const rect = node.getBoundingClientRect();
+                return {actual: [rect.x, rect.y, rect.width, rect.height],
+                    rendered: JSON.parse(node.getAttribute('data-liquid-render-rect') || 'null')};
+            }""")
+            _assert_rect_alignment(final["actual"], final["rendered"], f"{policy} settled Drawer")
+            assert abs(final["actual"][1] - rest["y"]) <= 1.5, f"{policy} Drawer did not return to its open snap point"
+            if not enabled:
+                assert idle["motion"] == before["motion"], "Off mode advanced decorative motion while Drawer settled"
+                assert not await drawer.evaluate("node => node.hasAttribute('data-liquid-ripple') || node.hasAttribute('data-liquid-pressed')"), "Off Drawer retained decorative contact effects"
+            filename = f"drawer-settled-{policy}.png"
+            await page.screenshot(path=str(output / filename), animations="allow", timeout=SCREENSHOT_TIMEOUT_MS)
+            await page.keyboard.press("Escape")
+            await expect(drawer).not_to_be_visible()
+            await expect(trigger).to_be_focused()
+            outcomes[policy] = {"frames": frames, "final": final, "idle": idle, "screenshot": filename, "focusRestored": True}
+    finally:
+        await page.keyboard.press("Escape")
+        await page.get_by_role("dialog", name="Workspace layout", exact=True).wait_for(state="hidden", timeout=5000)
+        await configure_material(page, motion=True)
+    return {"geometryVerified": True, "nativePhysicsPreserved": True, "modes": outcomes}

@@ -4,6 +4,8 @@ import asyncio
 import json
 from pathlib import Path
 
+from glass_optics_contract import browser_stage
+
 
 MANIFEST = Path(__file__).resolve().parents[1] / "packages/liquid-glass/component-manifest.json"
 TIMEOUT_MS = 5000
@@ -38,9 +40,12 @@ async def verify_agent_contract(page, expect):
                 timeout=TIMEOUT_MS / 1000,
             )
         except TimeoutError as error:
-            raise AssertionError(f"SDK {method} exceeded {TIMEOUT_MS} ms") from error
+            steps = arguments.get("steps", []) if isinstance(arguments, dict) else []
+            operation = [{"ref": step.get("ref"), "action": step.get("action")} for step in steps]
+            raise AssertionError(f"SDK {method} exceeded {TIMEOUT_MS} ms; operations={operation}") from error
 
     async def entry(kind, label):
+        browser_stage("agent contract: query control", kind=kind, label=label)
         result = await call("query", {"kind": kind, "text": label})
         assert isinstance(result, list), f"Query failed for {label}: {result}"
         matches = [item for item in result if item.get("component") == kind
@@ -65,6 +70,7 @@ async def verify_agent_contract(page, expect):
         return matches[0]
 
     async def act(control, action, args, succeeds=True):
+        browser_stage("agent contract: act", label=control.get("label"), action=action, succeeds=succeeds)
         if succeeds:
             assert action in control["actions"], f"{control} does not offer {action}"
         result = await call("act", {"steps": [{

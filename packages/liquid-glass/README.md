@@ -83,13 +83,13 @@ Import `useLiquidGlass` from the same `/webgpu` entry. `surfaceCount` counts cur
 | `ready`       | The renderer has captured a backdrop and drawn the measured surfaces.          |
 | `unavailable` | No WebGPU API or usable adapter; controls use the CSS fallback.                |
 | `error`       | Initialization, capture or rendering failed; controls use the CSS fallback.    |
-| `reduced`     | Forced colours or reduced transparency has suppressed optics.                  |
+| `reduced`     | Solid appearance, forced colours or reduced transparency has suppressed optics. |
 
 The hook's `motion` is the effective state: `"enabled"`, `"reduced"` or `"off"`. Use it to show an accurate animation control. A system preference can otherwise make an apparently enabled toggle misleading. Explicit app choices override only that preference; they never change the device's settings. Forced colours remain authoritative.
 
 With motion enabled, pointer light follows the active surface, activation produces a bounded ripple, and the SDK's actual tabs and segmented indicators travel with a short spring. Switch thumbs and popup surfaces use the same motion vocabulary. Reduced motion keeps static optics and requested control/layout updates. Animation stops after the response settles; the backdrop is not recaptured per frame.
 
-The motion option controls this material layer. Drawer retains the SDK's own drag/snap physics and device motion handling; the kit does not replace its engine-owned positioning.
+The motion option controls this material layer. Drawer retains the SDK's own drag/snap physics and device motion handling; the kit follows its moving geometry even when decorative motion is off, without replacing its engine-owned positioning.
 
 ## Registering surfaces
 

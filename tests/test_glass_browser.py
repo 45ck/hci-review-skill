@@ -12,6 +12,7 @@ import os
 from pathlib import Path
 import re
 import sys
+import traceback
 from time import perf_counter
 from urllib.parse import urlparse
 
@@ -19,9 +20,13 @@ from glass_agent_contract import verify_agent_contract
 from glass_optics_contract import (
     SCREENSHOT_TIMEOUT_MS,
     _difference,
+    begin_browser_check,
+    browser_check_trace,
+    browser_stage,
     configure_material,
     motion_diagnostics,
     settled_motion,
+    verify_drawer_motion_contract,
     verify_motion_contract,
     verify_optics_contract,
     verify_pointer_motion,
@@ -79,6 +84,50 @@ async def run(args):
         root = page.locator("html")
         response = await page.goto(args.base_url, wait_until="networkidle")
         assert response and response.ok, "Production preview did not return successfully"
+        current_check = "initialization"
+        failure_artifacts = {}
+
+        async def failure_evidence(target):
+            evidence = {"pageClosed": target.is_closed()}
+            if target.is_closed():
+                failure_artifacts.update(evidence)
+                return
+            try:
+                evidence["state"] = await asyncio.wait_for(target.evaluate("""() => {
+                    const rect = node => {const box = node.getBoundingClientRect();
+                        return {x: box.x, y: box.y, width: box.width, height: box.height};};
+                    return {
+                        url: location.href,
+                        renderer: Object.fromEntries([...document.documentElement.attributes]
+                            .filter(attribute => attribute.name.startsWith('data-liquid-'))
+                            .map(attribute => [attribute.name, attribute.value])),
+                        activeElement: {tag: document.activeElement?.tagName,
+                            slot: document.activeElement?.getAttribute('data-slot'),
+                            name: document.activeElement?.getAttribute('aria-label')},
+                        openLayers: [...document.querySelectorAll(':popover-open,dialog:modal')]
+                            .slice(0, 12).map(node => ({slot: node.getAttribute('data-slot'),
+                                role: node.getAttribute('role'), bounds: rect(node),
+                                canvases: node.querySelectorAll('canvas[data-liquid-canvas]').length})),
+                        runningAnimations: document.getAnimations().filter(animation => animation.playState === 'running')
+                            .slice(0, 16).map(animation => ({type: animation.constructor.name,
+                                slot: animation.effect?.target?.getAttribute?.('data-slot'),
+                                timing: animation.effect?.getComputedTiming()})),
+                        activeMarkers: document.querySelectorAll('[data-liquid-active]').length,
+                        pressedMarkers: document.querySelectorAll('[data-liquid-pressed]').length,
+                        rippleMarkers: document.querySelectorAll('[data-liquid-ripple]').length,
+                        travellingMarkers: document.querySelectorAll('[data-liquid-travelling]').length,
+                        motionProbe: window.__glassMotionFrames?.probe ?? null
+                    };
+                }"""), timeout=2)
+            except Exception as error:
+                evidence["stateError"] = str(error) or type(error).__name__
+            filename = f"failure-{current_check}.png"
+            try:
+                await asyncio.wait_for(target.screenshot(path=str(output.parent / filename), animations="allow", timeout=4000), timeout=5)
+                evidence["screenshot"] = filename
+            except Exception as error:
+                evidence["screenshotError"] = str(error) or type(error).__name__
+            failure_artifacts.update(evidence)
 
         async def choose(component_id):
             await page.locator(f"[data-catalogue-id='{component_id}']").click()
@@ -98,20 +147,43 @@ async def run(args):
             await page.evaluate("window.scrollTo(0, 0)")
 
         async def record(name, operation, *, reset=True, timeout=20):
+            nonlocal current_check, failure_artifacts
+            current_check = name
+            failure_artifacts = {}
+            begin_browser_check(name)
             check_started = perf_counter()
             try:
                 if reset:
+                    browser_stage("reset overview")
                     await reset_overview()
+                browser_stage("run check", timeoutSeconds=timeout)
                 detail = await asyncio.wait_for(operation(), timeout=timeout)
                 result = {"name": name, "passed": True, "detail": detail}
             except Exception as error:
-                result = {"name": name, "passed": False, "error": str(error) or type(error).__name__}
+                stages = browser_check_trace()
+                if not failure_artifacts:
+                    await failure_evidence(page)
+                result = {"name": name, "passed": False, "error": str(error) or type(error).__name__,
+                    "exceptionType": type(error).__name__, "lastStage": stages[-1] if stages else None,
+                    "stages": stages, "traceback": "".join(traceback.format_exception(error))[-7000:],
+                    "failureEvidence": failure_artifacts}
+            finally:
+                try:
+                    await asyncio.wait_for(page.evaluate("""() => {
+                        window.__glassMotionFrames?.cancel(); delete window.__glassMotionFrames;
+                        window.__glassDrawerFrames?.cancel(); delete window.__glassDrawerFrames;
+                        window.__glassSelectionEvidence?.stop(); delete window.__glassSelectionEvidence;
+                    }"""), timeout=2)
+                except Exception:
+                    pass
             result["durationSeconds"] = round(perf_counter() - check_started, 3)
             report["checks"].append(result)
             output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
             print(f"{'PASS' if result['passed'] else 'FAIL'} {name} ({result['durationSeconds']}s)", flush=True)
             if not result["passed"]:
                 print(result["error"], flush=True)
+                print(f"Last stage: {result['lastStage']}", flush=True)
+                print(result["traceback"], flush=True)
 
         async def initial():
             await expect(root).to_have_attribute("data-liquid-glass-kit", "true")
@@ -130,6 +202,12 @@ async def run(args):
         await record("default_glass_kit_overview", initial, reset=False, timeout=45)
         await record("gpu_on_actual_controls_strength_and_backdrop", lambda: verify_optics_contract(page, expect, output_dir=output.parent, require_gpu=args.software_gpu), reset=False, timeout=60)
         await record("visible_pointer_ripple_selection_and_idle", lambda: verify_motion_contract(page, expect, output_dir=output.parent, require_gpu=args.software_gpu), timeout=60)
+
+        async def drawer_motion():
+            await choose("drawer")
+            return await verify_drawer_motion_contract(page, expect, output_dir=output.parent, require_gpu=args.software_gpu)
+
+        await record("native_drawer_settle_tracks_gpu_with_motion_on_and_off", drawer_motion, timeout=40)
         await record("real_sdk_agent_contract", lambda: verify_agent_contract(page, expect), timeout=20)
 
         async def all_components():
@@ -137,6 +215,7 @@ async def run(args):
             assert actual == expected_ids, actual
             unnamed = []
             for item in components:
+                browser_stage("catalogue: open specimen", component=item["id"])
                 await choose(item["id"])
                 await expect(page.locator(".demo-error")).to_have_count(0)
                 entries = await page.evaluate("window.quantitativeHciAgent.snapshot().filter(entry => !entry.offPage && entry.component !== 'more')")
@@ -171,6 +250,7 @@ async def run(args):
             await page.keyboard.press("Enter")
             await expect(trigger).to_contain_text("Public")
             collection = page.get_by_role("button", name="New collection", exact=True)
+            browser_stage("keyboard: open collection dialog and inspect popup canvas")
             await collection.focus()
             await collection.press("Enter")
             dialog = page.get_by_role("dialog", name="Create a collection", exact=True)
@@ -291,6 +371,9 @@ async def run(args):
                 await button.press("Enter")
                 await expect(preference_page.get_by_label("Project result", exact=True)).to_have_text("Created Coastal studio")
                 return {"emulatedSystemPreferences": media, "systemReducedReason": system_reason, "explicitGlassStatus": glass_status, "systemReducedMotion": reduced, "userMotionOff": off, "explicitMotionOptIn": override, "persisted": stored, "solidReason": solid_reason, "forcedColoursReason": forced_reason, "forcedColoursOverrideGlass": True, "keyboardActionPreserved": True, "focus": style}
+            except Exception:
+                await failure_evidence(preference_page)
+                raise
             finally:
                 await preference_context.close()
 
@@ -340,6 +423,9 @@ async def run(args):
                 assert diagnostics_after["motion"] > diagnostics_before["motion"], "Fallback did not animate its feedback"
                 assert diagnostics_after["capture"] == diagnostics_before["capture"] == 0, "Unavailable GPU captured a backdrop"
                 return {"simulatedCondition": "navigator.gpu unavailable", "rendererStatus": "unavailable", "pressPixels": pixel_change, "keyboardAction": True, "popupFocusRestored": True, "idle": diagnostics_after, "screenshots": ["fallback-rest.png", "fallback-press.png", "fallback-dialog.png"]}
+            except Exception:
+                await failure_evidence(fallback)
+                raise
             finally:
                 await fallback_context.close()
 
@@ -382,6 +468,9 @@ async def run(args):
                 await demo.mouse.move(1, 1)
                 await settled_motion(demo)
                 await demo.screenshot(path=str(output.parent / "motion-demo-overview.png"), animations="allow", timeout=SCREENSHOT_TIMEOUT_MS)
+            except Exception:
+                await failure_evidence(demo)
+                raise
             finally:
                 await video_context.close()
             video = Path(await demo.video.path())

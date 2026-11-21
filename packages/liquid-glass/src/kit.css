@@ -7,9 +7,10 @@
     --liquid-muted: #496478;
     --liquid-blue: #1264e8;
     --liquid-danger: #b8213f;
-    --liquid-border: rgb(255 255 255 / 0.36);
-    --liquid-rim: rgb(255 255 255 / 0.92);
-    --liquid-underside: rgb(48 113 156 / 0.18);
+    --liquid-border: rgb(255 255 255 / 0.22);
+    --liquid-rim: rgb(255 255 255 / 0.82);
+    --liquid-inner-rim: rgb(255 255 255 / 0.48);
+    --liquid-underside: rgb(48 113 156 / 0.12);
     --liquid-line: rgb(28 65 91 / 0.17);
     --liquid-control-fallback: rgb(241 250 255 / 0.78);
     --liquid-input-fallback: rgb(253 254 255 / 0.84);
@@ -23,26 +24,21 @@
     --liquid-selection: var(--liquid-selection-fallback);
     --liquid-backdrop: blur(14px) saturate(1.16) brightness(1.03);
     --liquid-shadow:
-      0 14px 32px -16px rgb(0 40 90 / 0.28),
-      0 2px 6px -2px rgb(0 40 90 / 0.1),
-      inset 0 1px 1px var(--liquid-rim),
-      inset 0 -2px 6px rgb(0 126 220 / 0.1),
-      inset 0 0 0 1px rgb(255 255 255 / 0.18);
+      0 12px 28px -16px rgb(0 40 90 / 0.22),
+      0 2px 5px -3px rgb(0 40 90 / 0.12),
+      inset 0 -1px 3px rgb(0 126 220 / 0.06);
     --liquid-shadow-raised:
-      0 18px 36px -18px rgb(0 40 90 / 0.34),
-      0 3px 8px -3px rgb(0 40 90 / 0.14),
-      inset 0 1px 1px #fff,
-      inset 0 -2px 6px rgb(0 126 220 / 0.13),
-      inset 0 0 0 1px rgb(255 255 255 / 0.24);
+      0 16px 32px -18px rgb(0 40 90 / 0.26),
+      0 3px 8px -4px rgb(0 40 90 / 0.12),
+      inset 0 -1px 3px rgb(0 126 220 / 0.08);
     --liquid-shadow-pressed:
       0 3px 10px -6px rgb(0 40 90 / 0.22),
       inset 0 1px 4px rgb(22 65 96 / 0.13),
-      inset 0 -1px 1px rgb(255 255 255 / 0.7);
+      inset 0 -1px 1px rgb(255 255 255 / 0.42);
     --liquid-popup-shadow:
-      0 26px 60px -26px rgb(17 43 65 / 0.3),
-      0 4px 12px -5px rgb(17 43 65 / 0.16),
-      inset 0 1px 1px var(--liquid-rim),
-      inset 0 -1px 3px rgb(0 126 220 / 0.08);
+      0 24px 56px -26px rgb(17 43 65 / 0.24),
+      0 4px 10px -6px rgb(17 43 65 / 0.13),
+      inset 0 -1px 2px rgb(0 126 220 / 0.05);
     --liquid-duration: 0ms;
     --liquid-duration-hover: 180ms;
     --liquid-duration-press: 90ms;
@@ -86,6 +82,8 @@
       --liquid-panel: rgb(255 255 255 / 0.1);
       --liquid-popup: rgb(250 253 255 / 0.42);
       --liquid-selection: rgb(255 255 255 / 0.34);
+      /* The shader supplies the inner lip; avoid a second bright CSS outline. */
+      --liquid-inner-rim: transparent;
       --liquid-backdrop: none;
     }
     :is([data-liquid-glass="off"], [data-liquid-glass="off"] [data-liquid-surface]) {
@@ -94,6 +92,7 @@
       --liquid-panel: var(--liquid-panel-fallback);
       --liquid-popup: var(--liquid-popup-fallback);
       --liquid-selection: var(--liquid-selection-fallback);
+      --liquid-inner-rim: rgb(255 255 255 / 0.48);
       --liquid-backdrop: blur(14px) saturate(1.16) brightness(1.03);
     }
     :is(.qg-gpu-canvas, .qg-gpu-popup-canvas) {
@@ -137,7 +136,7 @@
       border: 1px solid var(--liquid-border);
       color: var(--liquid-ink);
       background: var(--liquid-control);
-      box-shadow: var(--liquid-shadow);
+      box-shadow: var(--liquid-shadow), inset 0 1px 0 var(--liquid-inner-rim);
       backdrop-filter: var(--liquid-backdrop);
       -webkit-backdrop-filter: var(--liquid-backdrop);
       transition:
@@ -215,7 +214,7 @@
       [data-disabled], :disabled, [data-variant], [data-invalid], [aria-invalid="true"],
       [data-pressed], [aria-pressed="true"], [data-checked], [data-selected], [data-open]
     ):hover {
-      border-color: rgb(255 255 255 / 0.5);
+      border-color: rgb(255 255 255 / 0.32);
       border-top-color: var(--liquid-rim);
       background: color-mix(in srgb, var(--liquid-control) 94%, #fff 6%);
     }
@@ -242,7 +241,7 @@
       border-radius: 12px;
       color: var(--liquid-ink);
       background: var(--liquid-input);
-      box-shadow: var(--liquid-shadow);
+      box-shadow: var(--liquid-shadow), inset 0 1px 0 var(--liquid-inner-rim);
       backdrop-filter: var(--liquid-backdrop);
       -webkit-backdrop-filter: var(--liquid-backdrop);
       font-size: 16px;
@@ -369,9 +368,9 @@
       border-radius: 999px;
       background: var(--liquid-selection);
       box-shadow:
-        0 6px 16px -8px rgb(20 74 117 / 0.3),
-        inset 0 1px 1px rgb(255 255 255 / 0.96),
-        inset 0 -2px 5px rgb(0 126 220 / 0.14);
+        0 6px 16px -8px rgb(20 74 117 / 0.24),
+        inset 0 1px 0 var(--liquid-inner-rim),
+        inset 0 -1px 3px rgb(0 126 220 / 0.08);
       color: var(--liquid-ink);
     }
     [data-slot="tabs-list"]:has(> [data-slot="tabs-indicator"]) {
@@ -535,7 +534,7 @@
       border: 1px solid var(--liquid-border);
       border-radius: 20px;
       background: var(--liquid-panel);
-      box-shadow: var(--liquid-shadow);
+      box-shadow: var(--liquid-shadow), inset 0 1px 0 var(--liquid-inner-rim);
       backdrop-filter: var(--liquid-backdrop);
       -webkit-backdrop-filter: var(--liquid-backdrop);
       color: var(--liquid-ink);
@@ -684,10 +683,10 @@
       [data-slot="navigation-menu-viewport"], [data-slot="toast"], [data-liquid-kind="popup"]) {
       isolation: isolate;
       max-width: calc(100vw - 32px);
-      border: 1px solid rgb(255 255 255 / 0.9);
+      border: 1px solid var(--liquid-border);
       border-radius: 20px;
       background: var(--liquid-popup);
-      box-shadow: var(--liquid-popup-shadow);
+      box-shadow: var(--liquid-popup-shadow), inset 0 1px 0 var(--liquid-inner-rim);
       backdrop-filter: var(--liquid-backdrop);
       -webkit-backdrop-filter: var(--liquid-backdrop);
       color: var(--liquid-ink);
@@ -979,7 +978,7 @@
           filter 0s linear 300ms;
 
         &:not([data-disabled], :disabled, [aria-disabled="true"], [data-pending]):is(:hover, [data-liquid-active]) {
-          box-shadow: var(--liquid-shadow-raised);
+          box-shadow: var(--liquid-shadow-raised), inset 0 1px 0 var(--liquid-inner-rim);
         }
         &:not([data-disabled], :disabled, [aria-disabled="true"], [data-pending]):is(:active, [data-liquid-pressed]) {
           box-shadow: var(--liquid-shadow-pressed);

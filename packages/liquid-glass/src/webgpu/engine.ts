@@ -1,6 +1,6 @@
 import html2canvas from "html2canvas-pro";
 import { LiquidRenderer } from "./renderer";
-import { collectSurfaces } from "./surfaces";
+import { collectSurfaces, SURFACE_SELECTOR } from "./surfaces";
 import type { Box, LiquidSurface } from "./surfaces";
 import { createLiquidMotion, withoutMotionStyles } from "./motion";
 import type { LiquidGlassMotion } from "./motion";
@@ -43,6 +43,8 @@ export function createLiquidGlassEngine(config: EngineOptions) {
   const marked = new Set<HTMLElement>();
   const popups = new Map<HTMLElement, HTMLCanvasElement>();
   const html = document.documentElement;
+  const debugAttributes = ["data-liquid-motion-work", "data-liquid-last-invalidation"];
+  const previousDebug = debugAttributes.map((name) => html.getAttribute(name));
   let geometryDirty = true;
   let layoutSettlesUntil = 0;
   let surfaces: LiquidSurface[] = [];
@@ -50,6 +52,8 @@ export function createLiquidGlassEngine(config: EngineOptions) {
   let groups = new Map<HTMLElement, LiquidSurface[]>();
   let viewport: LiquidSurface[] = [];
   const geometryAnimations = new Map<Element, Map<string, number>>();
+  const nativeAnimations = new Map<Animation, { target: Element; deadline: number; complete: () => void }>();
+  const expiredAnimations = new WeakSet<Animation>();
   const geometryObserved = new Set<Element>();
   const popupGeometry = new Map<HTMLElement, { rect: DOMRect; left: number; top: number; width: number; height: number }>();
   const motion = createLiquidMotion({
@@ -59,6 +63,66 @@ export function createLiquidGlassEngine(config: EngineOptions) {
     schedule,
     surface: (element) => surfaceMap.get(element),
   });
+
+  function untrackNative(animation: Animation) {
+    const tracked = nativeAnimations.get(animation);
+    if (!tracked) return;
+    animation.removeEventListener("finish", tracked.complete);
+    animation.removeEventListener("cancel", tracked.complete);
+    nativeAnimations.delete(animation);
+  }
+
+  function discoverNativeAnimations(now: number) {
+    const candidates = new Set<Element>();
+    for (const element of document.querySelectorAll<HTMLElement>(SURFACE_SELECTOR)) {
+      if (!element.isConnected || config.backdrop.contains(element) ||
+          element.closest("[data-liquid-glass='off'],[data-liquid-canvas]") || !element.getClientRects().length)
+        continue;
+      let owned = config.root.contains(element);
+      try { owned ||= !!element.closest(":popover-open,dialog:modal"); } catch { /* No top-layer selector support. */ }
+      if (!owned) continue;
+      let ancestor: Element | null = element;
+      while (ancestor && !candidates.has(ancestor)) {
+        candidates.add(ancestor);
+        ancestor = ancestor.parentElement;
+      }
+    }
+    for (const element of candidates) {
+      if (typeof element.getAnimations !== "function") continue;
+      for (const animation of element.getAnimations()) {
+        if (nativeAnimations.has(animation) || expiredAnimations.has(animation) ||
+            (animation.playState !== "running" && !animation.pending) ||
+            (typeof CSSAnimation !== "undefined" && animation instanceof CSSAnimation) ||
+            (typeof CSSTransition !== "undefined" && animation instanceof CSSTransition)) continue;
+        const effect = animation.effect;
+        if (!(effect instanceof KeyframeEffect) || !(effect.target instanceof Element)) continue;
+        const geometry = effect.getKeyframes().some((keyframe) => Object.keys(keyframe).some((property) =>
+          /^(transform|translate|scale|rotate|left|right|top|bottom|width|height|minWidth|maxWidth|minHeight|maxHeight|margin.*|padding.*|border.*Radius)$/.test(property),
+        ));
+        const end = Number(effect.getComputedTiming().endTime);
+        const current = Number(animation.currentTime ?? 0);
+        const speed = Math.abs(animation.playbackRate);
+        if (!geometry || !Number.isFinite(end) || !Number.isFinite(current) || !speed) continue;
+        const remaining = Math.max(0, animation.playbackRate < 0 ? current : end - current) / speed;
+        const complete = () => {
+          untrackNative(animation);
+          if (!disposed) { geometryDirty = true; schedule(); }
+        };
+        nativeAnimations.set(animation, {
+          target: effect.target,
+          deadline: now + Math.min(10_160, remaining + 160),
+          complete,
+        });
+        animation.addEventListener("finish", complete);
+        animation.addEventListener("cancel", complete);
+      }
+    }
+  }
+
+  const publishRenderRect = (element: HTMLElement, rect: Box) => {
+    const value = JSON.stringify([rect.x, rect.y, rect.width, rect.height]);
+    if (element.dataset.liquidRenderRect !== value) element.dataset.liquidRenderRect = value;
+  };
 
   const publish = (next: LiquidGlassState) => {
     if (disposed) return;
@@ -82,7 +146,10 @@ export function createLiquidGlassEngine(config: EngineOptions) {
     hasBackdrop = false;
     config.canvas.style.visibility = "hidden";
     for (const canvas of popups.values()) canvas.style.visibility = "hidden";
-    for (const element of marked) delete element.dataset.liquidSurface;
+    for (const element of marked) {
+      delete element.dataset.liquidSurface;
+      if (element.dataset.slot === "drawer-content") delete element.dataset.liquidRenderRect;
+    }
     marked.clear();
     renderer?.destroy();
     renderer = undefined;
@@ -102,15 +169,27 @@ export function createLiquidGlassEngine(config: EngineOptions) {
     )
       return;
     const now = performance.now();
+    for (const [animation, tracked] of nativeAnimations) {
+      if (now >= tracked.deadline || !tracked.target.isConnected ||
+          (animation.playState !== "running" && !animation.pending)) {
+        if (now >= tracked.deadline) expiredAnimations.add(animation);
+        untrackNative(animation);
+        geometryDirty = true;
+      }
+    }
     let geometryEffects = 0;
     for (const [element, animations] of geometryAnimations) {
       for (const [name, until] of animations)
-        if (now >= until || !element.isConnected || options.motion !== "enabled") animations.delete(name);
+        if (now >= until || !element.isConnected || options.motion !== "enabled") {
+          animations.delete(name);
+          geometryDirty = true;
+        }
       if (!animations.size) geometryAnimations.delete(element);
       else geometryEffects += animations.size;
     }
     try {
-      if (geometryDirty || geometryEffects || motion.isTravelling()) {
+      if (geometryDirty || geometryEffects || nativeAnimations.size || motion.isTravelling()) {
+        const discoverAnimations = geometryDirty;
         surfaces = collectSurfaces(config.root, config.backdrop);
         surfaceMap = new Map(surfaces.map((surface) => [surface.element, surface]));
         groups = new Map();
@@ -143,19 +222,25 @@ export function createLiquidGlassEngine(config: EngineOptions) {
           });
         }
         geometryDirty = false;
+        if (discoverAnimations) discoverNativeAnimations(now);
       }
       const effect = motion.advance(now);
-      const active = effect.active + geometryEffects + Number(options.motion === "enabled" && now < layoutSettlesUntil);
-      const motionState = active ? "running" : "idle";
+      const layout = Number(options.motion === "enabled" && now < layoutSettlesUntil);
+      const active = effect.active + geometryEffects + layout;
+      const running = active + nativeAnimations.size;
+      const work = JSON.stringify({ effects: effect.active, css: geometryEffects, native: nativeAnimations.size, layout });
+      if (html.dataset.liquidMotionWork !== work) html.dataset.liquidMotionWork = work;
+      const motionState = running ? "running" : "idle";
       if (html.dataset.liquidMotionState !== motionState) html.dataset.liquidMotionState = motionState;
-      if (html.dataset.liquidActiveEffects !== String(active)) html.dataset.liquidActiveEffects = String(active);
-      if (active) html.dataset.liquidMotionRevision = String(++motionRevision);
-      if (active) schedule();
+      if (html.dataset.liquidActiveEffects !== String(running)) html.dataset.liquidActiveEffects = String(running);
+      if (running && options.motion === "enabled") html.dataset.liquidMotionRevision = String(++motionRevision);
+      if (running) schedule();
       if (!renderer || !hasBackdrop) return;
       const current = new Set(surfaces.map((surface) => surface.element));
       for (const element of marked)
         if (!current.has(element)) {
           delete element.dataset.liquidSurface;
+          if (element.dataset.slot === "drawer-content") delete element.dataset.liquidRenderRect;
           marked.delete(element);
         }
       for (const surface of surfaces) {
@@ -181,6 +266,8 @@ export function createLiquidGlassEngine(config: EngineOptions) {
         ratio,
         effect.surfaces,
       );
+      for (const surface of viewport)
+        if (surface.element.dataset.slot === "drawer-content") publishRenderRect(surface.element, surface.rect);
       for (const [popup, surfaces] of groups) {
         let canvas = popups.get(popup);
         if (!canvas) {
@@ -212,6 +299,9 @@ export function createLiquidGlassEngine(config: EngineOptions) {
           ratio,
           effect.surfaces,
         );
+        publishRenderRect(canvas, rect);
+        for (const surface of surfaces)
+          if (surface.element.dataset.slot === "drawer-content") publishRenderRect(surface.element, surface.rect);
       }
       html.dataset.liquidRenderRevision = String(++renderRevision);
       publish({ status: "ready", surfaceCount: surfaces.length });
@@ -221,7 +311,7 @@ export function createLiquidGlassEngine(config: EngineOptions) {
   }
 
   function schedule() {
-    if (!disposed && !frame) frame = requestAnimationFrame(paint);
+    if (!disposed && !frame && document.visibilityState !== "hidden") frame = requestAnimationFrame(paint);
   }
 
   const refresh = (): Promise<void> => {
@@ -312,13 +402,29 @@ export function createLiquidGlassEngine(config: EngineOptions) {
     }, 140);
     schedule();
   };
-  const invalidate = () => {
+  const invalidate = (source?: Event | ResizeObserverEntry[] | string) => {
     geometryDirty = true;
     if (options.motion === "enabled") layoutSettlesUntil = performance.now() + 80;
+    const reason = typeof source === "string" ? source : source instanceof Event
+      ? `${source.type}:${source.target instanceof HTMLElement ? source.target.dataset.slot ?? source.target.tagName.toLowerCase() : "document"}`
+      : Array.isArray(source) ? "resize-observer" : "layout";
+    if (html.dataset.liquidLastInvalidation !== reason) html.dataset.liquidLastInvalidation = reason;
     schedule();
   };
   const drag = (event: PointerEvent) => {
     if (event.buttons) invalidate();
+  };
+  const visibilityChanged = () => {
+    if (document.visibilityState === "hidden") {
+      cancelAnimationFrame(frame);
+      frame = 0;
+      for (const animation of nativeAnimations.keys()) untrackNative(animation);
+      geometryAnimations.clear();
+      html.dataset.liquidMotionState = "idle";
+      html.dataset.liquidActiveEffects = "0";
+      html.dataset.liquidMotionWork = JSON.stringify({ effects: 0, css: 0, native: 0, layout: 0 });
+      geometryDirty = true;
+    } else invalidate();
   };
   const cssMilliseconds = (value: string) => value.split(",").map((part) => {
     const number = parseFloat(part) || 0;
@@ -328,7 +434,7 @@ export function createLiquidGlassEngine(config: EngineOptions) {
     if (options.motion !== "enabled" || !(event.target instanceof HTMLElement) ||
         event.target.closest("[data-liquid-canvas],[data-liquid-backdrop]")) return;
     const transition = event instanceof TransitionEvent;
-    if (transition && !/^(transform|translate|scale|rotate|left|right|top|bottom|width|height|min-width|max-width|min-height|max-height|margin.*|padding.*|border.*radius)$/.test(event.propertyName)) return;
+    if (transition && !/^(opacity|transform|translate|scale|rotate|left|right|top|bottom|width|height|min-width|max-width|min-height|max-height|margin.*|padding.*|border.*radius)$/.test(event.propertyName)) return;
     if (!transition && !event.target.matches("[data-liquid-travelling],[data-slot$='-content'],[data-slot='drawer'],[data-liquid-glass]")) return;
     const style = getComputedStyle(event.target);
     const durations = cssMilliseconds(transition ? style.transitionDuration : style.animationDuration);
@@ -338,13 +444,13 @@ export function createLiquidGlassEngine(config: EngineOptions) {
     const active = geometryAnimations.get(event.target) ?? new Map<string, number>();
     active.set(name, performance.now() + Math.min(1600, duration + 80));
     geometryAnimations.set(event.target, active);
-    invalidate();
+    invalidate(`animation-start:${event.target.dataset.slot ?? event.target.tagName.toLowerCase()}:${name}`);
   };
   const finishGeometry = (event: TransitionEvent | AnimationEvent) => {
     if (!(event.target instanceof Element)) return;
     const name = event instanceof TransitionEvent ? `transition:${event.propertyName}` : `animation:${event.animationName}`;
-    geometryAnimations.get(event.target)?.delete(name);
-    invalidate();
+    if (!geometryAnimations.get(event.target)?.delete(name)) return;
+    invalidate(`animation-end:${event.target instanceof HTMLElement ? event.target.dataset.slot ?? event.target.tagName.toLowerCase() : "element"}:${name}`);
   };
   const ownMutation = (record: MutationRecord) => {
     if (
@@ -352,6 +458,8 @@ export function createLiquidGlassEngine(config: EngineOptions) {
       record.target.closest("[data-liquid-canvas]")
     )
       return true;
+    if (record.type === "attributes" && record.attributeName && record.target instanceof Element &&
+        record.oldValue === record.target.getAttribute(record.attributeName)) return true;
     if (record.type === "childList") {
       const changed = [...record.addedNodes, ...record.removedNodes];
       return (
@@ -375,7 +483,10 @@ export function createLiquidGlassEngine(config: EngineOptions) {
       motion.mutation(record);
       changed = true;
     }
-    if (changed) invalidate();
+    if (changed) {
+      const record = records.find((item) => !ownMutation(item))!;
+      invalidate(`mutation:${record.attributeName ?? record.type}:${record.target instanceof HTMLElement ? record.target.dataset.slot ?? record.target.tagName.toLowerCase() : "text"}`);
+    }
   });
   observer.observe(document.body, {
     childList: true,
@@ -390,6 +501,9 @@ export function createLiquidGlassEngine(config: EngineOptions) {
       "open",
       "data-state",
       "data-open",
+      "data-starting-style",
+      "data-ending-style",
+      "inert",
       "data-checked",
       "data-selected",
       "data-pressed",
@@ -434,7 +548,7 @@ export function createLiquidGlassEngine(config: EngineOptions) {
   document.addEventListener("animationstart", trackGeometry, true);
   document.addEventListener("animationend", finishGeometry, true);
   document.addEventListener("animationcancel", finishGeometry, true);
-  document.addEventListener("visibilitychange", invalidate);
+  document.addEventListener("visibilitychange", visibilityChanged);
   schedule();
 
   void (async () => {
@@ -492,6 +606,7 @@ export function createLiquidGlassEngine(config: EngineOptions) {
       resizeObserver.disconnect();
       geometryResize.disconnect();
       motion.destroy();
+      for (const animation of nativeAnimations.keys()) untrackNative(animation);
       window.removeEventListener("resize", queueCapture);
       document.fonts.removeEventListener("loadingdone", queueCapture);
       document.removeEventListener("scroll", invalidate, true);
@@ -506,13 +621,18 @@ export function createLiquidGlassEngine(config: EngineOptions) {
       document.removeEventListener("animationstart", trackGeometry, true);
       document.removeEventListener("animationend", finishGeometry, true);
       document.removeEventListener("animationcancel", finishGeometry, true);
-      document.removeEventListener("visibilitychange", invalidate);
-      for (const element of marked) delete element.dataset.liquidSurface;
+      document.removeEventListener("visibilitychange", visibilityChanged);
+      for (const element of marked) {
+        delete element.dataset.liquidSurface;
+        if (element.dataset.slot === "drawer-content") delete element.dataset.liquidRenderRect;
+      }
       marked.clear();
       renderer?.destroy();
       for (const canvas of popups.values()) canvas.remove();
       popups.clear();
       device?.destroy();
+      debugAttributes.forEach((name, index) => previousDebug[index] === null
+        ? html.removeAttribute(name) : html.setAttribute(name, previousDebug[index]!));
     },
   };
 }

@@ -16,6 +16,9 @@ const documentPaths = Object.freeze({
   "agent-index.schema.json": "agent-index.schema.json",
   "agent-contract.schema.json": "agent-contract.schema.json",
   "agent-release.schema.json": "agent-release.schema.json",
+  "motion.md": "docs/motion.md",
+  "motion-recipes.json": "motion-recipes.json",
+  "motion-recipes.schema.json": "motion-recipes.schema.json",
 });
 const json = value => JSON.stringify(value, null, 2) + "\n";
 const sha256 = value => "sha256:" + createHash("sha256").update(value).digest("hex");
@@ -97,7 +100,7 @@ function resolveSchema(schema, file, assets, active = new Set()) {
 
 function validateDocumentSchemas(assets) {
   const errors = [];
-  const documents = ["agent-index.json", "agent-release.json", ...Object.keys(assets).filter(name => name.startsWith("contracts/"))];
+  const documents = ["agent-index.json", "agent-release.json", "motion-recipes.json", ...Object.keys(assets).filter(name => name.startsWith("contracts/"))];
   const schemas = new Map();
   for (const name of documents) {
     try {

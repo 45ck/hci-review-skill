@@ -12,12 +12,14 @@ This is a private React workspace package, not a published npm release. Use the 
 - [Compact component index](/agent-index.json): choose by purpose, kind and public export; follow its `contract` URL for one complete entry.
 - [Agent contracts](/agent-contracts.json): public export inventory, inputs, state, discovery, actions, restrictions and evidence.
 - [Contract schema](/agent-contracts.schema.json): the versioned machine-readable contract format.
-- [Custom action inputs](/agent-action-inputs.json): exact JSON argument shapes and examples for both custom primitives. Validate the shape before dispatch; inspect live state for revisions, valid IDs and host acceptance.
+- [Custom action inputs](/agent-action-inputs.json): exact JSON argument shapes and examples for custom primitives. Validate the shape before dispatch; inspect live state for revisions, valid IDs and host acceptance.
 - [Release identity](/agent-release.json): package version, source provenance, content fingerprints and all emitted agent documents. Compare the page's `quantive-agent-contract-set` meta value with `release.contractSet` before using cached contracts.
 
 - [Component and recipe registry](/registry/components.json): all SDK families, custom components and compiled composition recipes. This documentation does not provide another action endpoint.
 
 ## Choose a component
+
+- [Native motion](/motion.md): ten geometric icon pairs, finite icon responses, presence/list/number/text transitions, guarded state graphs, layered scenes and optional renderer integration. Read [motion recipes](/motion-recipes.json) and its [schema](/motion-recipes.schema.json) before choosing an effect.
 
 - [Application layouts](https://github.com/45ck/hci-review-skill/blob/main/docs/hci/standards/app-layout-system.md): responsive shell regions, controlled navigation and workspace switching; host integration and the review-task model.
 - [Patterns and Assistant](https://github.com/45ck/hci-review-skill/blob/main/docs/hci/standards/library-patterns.md): established command, filter, selection, detail, empty-state and assistant compositions on genuine SDK controls.
@@ -107,6 +109,8 @@ Import LiquidPromptComposer, LiquidAttachmentList, LiquidSuggestionList, LiquidM
 The compiled assistant-composer.tsx recipe shows these composition boundaries. The gallery runs a clearly labelled, bounded local response fixture with cancellation, not an AI backend. Reuse existing AgentToolRequest and AgentTaskPanel when a conversation needs tool review or task history. Use one existing provider and one createAgent bridge; there is no second mutation endpoint.
 
 ## State, preferences and review
+
+Motion selection follows semantic intent and accepted host state. Import from @quantitative-hci/liquid-glass/motion with motion.css; reuse the existing provider and agent bridge. The motion registry's implementation field distinguishes native components, existing SDK behaviors and a host-supplied runtime adapter. The adapter does not include Rive, Lottie or a 3D engine. Motion completion is presentation only. The liquid-motion-state primitive exposes send(event, expectedState), with exact input shapes in /agent-action-inputs.json. Inspect the resulting value, including cancelled or stale requests. Custom motion remains Unvalidated.
 
 Use meaningful accessible names and real UI SDK callbacks. Do not synthesize clicks to operate an agent-facing state model or expose a second mutation API. Decorative cursor/click/contour/reveal elements have no agent actions. Keep disabled controls disabled for all input routes. Respect data-agent-secret, data-agent-hidden and data-agent-confirm; the demo refuses actions requiring a person.
 

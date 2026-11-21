@@ -11,12 +11,14 @@ import chapterSource from "./recipes/chapter-story.tsx?raw";
 import workPatternsSource from "./recipes/work-patterns.tsx?raw";
 import assistantSource from "./recipes/assistant-composer.tsx?raw";
 import applicationShellSource from "./recipes/application-shell.tsx?raw";
+import motionSource from "./recipes/motion-system.tsx?raw";
 
 const sources: Record<string, string> = {
   "cursor-feedback": cursorSource, "context-actions": contextSource,
   "showcase-section": showcaseSource, "chapter-story": chapterSource,
   "work-patterns": workPatternsSource, "assistant-composer": assistantSource,
   "application-shell": applicationShellSource,
+  "motion-system": motionSource,
 };
 
 export function RecipePanel({ collection }: { collection: string }) {

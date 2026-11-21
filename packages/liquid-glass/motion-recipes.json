@@ -1,0 +1,1291 @@
+{
+  "$schema": "/motion-recipes.schema.json",
+  "schemaVersion": 1,
+  "policy": {
+    "stateOwner": "host or SDK primitive",
+    "rendering": "React; native SVG, CSS and Web Animations API",
+    "unvalidated": true,
+    "motionPreference": "Most restrictive of motion scope, glass provider, device reduced motion and forced colours.",
+    "idle": "Finite responses; no perpetual ambient loop.",
+    "selection": "Choose by intent and target; skip motion when there is no meaningful state change.",
+    "sourceReuse": "Original implementation of documented behavior; no third-party component code, artwork or .riv files bundled.",
+    "parity": "Coverage of selected interaction patterns, not full engine or catalogue parity with source libraries.",
+    "durationMeaning": "Nominal base milliseconds before timing presets and bounded part staggering; exact animation timing is owned by the component. Existing SDK entries use their documented kit timings."
+  },
+  "recipes": [
+    {
+      "id": "icon.play-pause",
+      "title": "Play and pause",
+      "intent": "state",
+      "targets": [
+        "playback"
+      ],
+      "component": "LiquidMorphIcon",
+      "implementation": "native",
+      "trigger": "accepted-state-change",
+      "durationMs": 240,
+      "interruption": "retarget",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "A playback control changes between its two accepted states."
+      ],
+      "avoidWhen": [
+        "The host rejected the action, or the glyph does not describe the control."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://useanimations.com/documentation",
+        "https://github.com/veltman/flubber"
+      ]
+    },
+    {
+      "id": "icon.menu-close",
+      "title": "Menu and close",
+      "intent": "state",
+      "targets": [
+        "menu"
+      ],
+      "component": "LiquidMorphIcon",
+      "implementation": "native",
+      "trigger": "accepted-state-change",
+      "durationMs": 240,
+      "interruption": "retarget",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "A menu control changes between its two accepted states."
+      ],
+      "avoidWhen": [
+        "The host rejected the action, or the glyph does not describe the control."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://useanimations.com/documentation",
+        "https://github.com/veltman/flubber"
+      ]
+    },
+    {
+      "id": "icon.plus-minus",
+      "title": "Add and remove",
+      "intent": "state",
+      "targets": [
+        "quantity"
+      ],
+      "component": "LiquidMorphIcon",
+      "implementation": "native",
+      "trigger": "accepted-state-change",
+      "durationMs": 240,
+      "interruption": "retarget",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "A quantity control changes between its two accepted states."
+      ],
+      "avoidWhen": [
+        "The host rejected the action, or the glyph does not describe the control."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://useanimations.com/documentation",
+        "https://github.com/veltman/flubber"
+      ]
+    },
+    {
+      "id": "icon.chevron",
+      "title": "Expand and collapse",
+      "intent": "state",
+      "targets": [
+        "disclosure"
+      ],
+      "component": "LiquidMorphIcon",
+      "implementation": "native",
+      "trigger": "accepted-state-change",
+      "durationMs": 240,
+      "interruption": "retarget",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "A disclosure control changes between its two accepted states."
+      ],
+      "avoidWhen": [
+        "The host rejected the action, or the glyph does not describe the control."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://useanimations.com/documentation",
+        "https://github.com/veltman/flubber"
+      ]
+    },
+    {
+      "id": "icon.volume-mute",
+      "title": "Sound and mute",
+      "intent": "state",
+      "targets": [
+        "audio"
+      ],
+      "component": "LiquidMorphIcon",
+      "implementation": "native",
+      "trigger": "accepted-state-change",
+      "durationMs": 240,
+      "interruption": "retarget",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "A audio control changes between its two accepted states."
+      ],
+      "avoidWhen": [
+        "The host rejected the action, or the glyph does not describe the control."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://useanimations.com/documentation",
+        "https://github.com/veltman/flubber"
+      ]
+    },
+    {
+      "id": "icon.lock-unlock",
+      "title": "Lock and unlock",
+      "intent": "state",
+      "targets": [
+        "lock"
+      ],
+      "component": "LiquidMorphIcon",
+      "implementation": "native",
+      "trigger": "accepted-state-change",
+      "durationMs": 240,
+      "interruption": "retarget",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "A lock control changes between its two accepted states."
+      ],
+      "avoidWhen": [
+        "The host rejected the action, or the glyph does not describe the control."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://useanimations.com/documentation",
+        "https://github.com/veltman/flubber"
+      ]
+    },
+    {
+      "id": "icon.bookmark-saved",
+      "title": "Bookmark and saved",
+      "intent": "state",
+      "targets": [
+        "bookmark"
+      ],
+      "component": "LiquidMorphIcon",
+      "implementation": "native",
+      "trigger": "accepted-state-change",
+      "durationMs": 240,
+      "interruption": "retarget",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "A bookmark control changes between its two accepted states."
+      ],
+      "avoidWhen": [
+        "The host rejected the action, or the glyph does not describe the control."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://useanimations.com/documentation",
+        "https://github.com/veltman/flubber"
+      ]
+    },
+    {
+      "id": "icon.eye-hidden",
+      "title": "Visible and hidden",
+      "intent": "state",
+      "targets": [
+        "visibility"
+      ],
+      "component": "LiquidMorphIcon",
+      "implementation": "native",
+      "trigger": "accepted-state-change",
+      "durationMs": 240,
+      "interruption": "retarget",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "A visibility control changes between its two accepted states."
+      ],
+      "avoidWhen": [
+        "The host rejected the action, or the glyph does not describe the control."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://useanimations.com/documentation",
+        "https://github.com/veltman/flubber"
+      ]
+    },
+    {
+      "id": "icon.expand-restore",
+      "title": "Expand and restore",
+      "intent": "state",
+      "targets": [
+        "fullscreen"
+      ],
+      "component": "LiquidMorphIcon",
+      "implementation": "native",
+      "trigger": "accepted-state-change",
+      "durationMs": 240,
+      "interruption": "retarget",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "A fullscreen control changes between its two accepted states."
+      ],
+      "avoidWhen": [
+        "The host rejected the action, or the glyph does not describe the control."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://useanimations.com/documentation",
+        "https://github.com/veltman/flubber"
+      ]
+    },
+    {
+      "id": "icon.heart-saved",
+      "title": "Favourite and saved",
+      "intent": "state",
+      "targets": [
+        "favourite"
+      ],
+      "component": "LiquidMorphIcon",
+      "implementation": "native",
+      "trigger": "accepted-state-change",
+      "durationMs": 240,
+      "interruption": "retarget",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "A favourite control changes between its two accepted states."
+      ],
+      "avoidWhen": [
+        "The host rejected the action, or the glyph does not describe the control."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://useanimations.com/documentation",
+        "https://github.com/veltman/flubber"
+      ]
+    },
+    {
+      "id": "icon.effect.draw",
+      "title": "Draw response",
+      "intent": "attention",
+      "targets": [
+        "icon-draw"
+      ],
+      "component": "LiquidAnimatedIcon",
+      "implementation": "native",
+      "trigger": "focus-or-explicit-replay",
+      "durationMs": 440,
+      "interruption": "cancel",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "A named icon briefly acknowledges hover, keyboard focus or an explicit event."
+      ],
+      "avoidWhen": [
+        "Use state morphs for persistent meaning. Do not loop ambient effects in dense task screens."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://lucide-animated.com/",
+        "https://github.com/CityPulso/PulsoIcon-Package",
+        "https://itshover.com/icons"
+      ]
+    },
+    {
+      "id": "icon.effect.ring",
+      "title": "Ring response",
+      "intent": "attention",
+      "targets": [
+        "icon-ring"
+      ],
+      "component": "LiquidAnimatedIcon",
+      "implementation": "native",
+      "trigger": "focus-or-explicit-replay",
+      "durationMs": 480,
+      "interruption": "cancel",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "A named icon briefly acknowledges hover, keyboard focus or an explicit event."
+      ],
+      "avoidWhen": [
+        "Use state morphs for persistent meaning. Do not loop ambient effects in dense task screens."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://lucide-animated.com/",
+        "https://github.com/CityPulso/PulsoIcon-Package",
+        "https://itshover.com/icons"
+      ]
+    },
+    {
+      "id": "icon.effect.lift",
+      "title": "Lift response",
+      "intent": "attention",
+      "targets": [
+        "icon-lift"
+      ],
+      "component": "LiquidAnimatedIcon",
+      "implementation": "native",
+      "trigger": "focus-or-explicit-replay",
+      "durationMs": 420,
+      "interruption": "cancel",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "A named icon briefly acknowledges hover, keyboard focus or an explicit event."
+      ],
+      "avoidWhen": [
+        "Use state morphs for persistent meaning. Do not loop ambient effects in dense task screens."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://lucide-animated.com/",
+        "https://github.com/CityPulso/PulsoIcon-Package",
+        "https://itshover.com/icons"
+      ]
+    },
+    {
+      "id": "icon.effect.spin",
+      "title": "Spin response",
+      "intent": "attention",
+      "targets": [
+        "icon-spin"
+      ],
+      "component": "LiquidAnimatedIcon",
+      "implementation": "native",
+      "trigger": "focus-or-explicit-replay",
+      "durationMs": 560,
+      "interruption": "cancel",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "A named icon briefly acknowledges hover, keyboard focus or an explicit event."
+      ],
+      "avoidWhen": [
+        "Use state morphs for persistent meaning. Do not loop ambient effects in dense task screens."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://lucide-animated.com/",
+        "https://github.com/CityPulso/PulsoIcon-Package",
+        "https://itshover.com/icons"
+      ]
+    },
+    {
+      "id": "icon.effect.pulse",
+      "title": "Pulse response",
+      "intent": "attention",
+      "targets": [
+        "icon-pulse"
+      ],
+      "component": "LiquidAnimatedIcon",
+      "implementation": "native",
+      "trigger": "focus-or-explicit-replay",
+      "durationMs": 420,
+      "interruption": "cancel",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "A named icon briefly acknowledges hover, keyboard focus or an explicit event."
+      ],
+      "avoidWhen": [
+        "Use state morphs for persistent meaning. Do not loop ambient effects in dense task screens."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://lucide-animated.com/",
+        "https://github.com/CityPulso/PulsoIcon-Package",
+        "https://itshover.com/icons"
+      ]
+    },
+    {
+      "id": "icon.effect.tilt",
+      "title": "Tilt response",
+      "intent": "attention",
+      "targets": [
+        "icon-tilt"
+      ],
+      "component": "LiquidAnimatedIcon",
+      "implementation": "native",
+      "trigger": "focus-or-explicit-replay",
+      "durationMs": 420,
+      "interruption": "cancel",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "A named icon briefly acknowledges hover, keyboard focus or an explicit event."
+      ],
+      "avoidWhen": [
+        "Use state morphs for persistent meaning. Do not loop ambient effects in dense task screens."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://lucide-animated.com/",
+        "https://github.com/CityPulso/PulsoIcon-Package",
+        "https://itshover.com/icons"
+      ]
+    },
+    {
+      "id": "icon.effect.bounce",
+      "title": "Bounce response",
+      "intent": "attention",
+      "targets": [
+        "icon-bounce"
+      ],
+      "component": "LiquidAnimatedIcon",
+      "implementation": "native",
+      "trigger": "focus-or-explicit-replay",
+      "durationMs": 420,
+      "interruption": "cancel",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "A named icon briefly acknowledges hover, keyboard focus or an explicit event."
+      ],
+      "avoidWhen": [
+        "Use state morphs for persistent meaning. Do not loop ambient effects in dense task screens."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://lucide-animated.com/",
+        "https://github.com/CityPulso/PulsoIcon-Package",
+        "https://itshover.com/icons"
+      ]
+    },
+    {
+      "id": "icon.effect.shake",
+      "title": "Shake response",
+      "intent": "attention",
+      "targets": [
+        "icon-shake"
+      ],
+      "component": "LiquidAnimatedIcon",
+      "implementation": "native",
+      "trigger": "focus-or-explicit-replay",
+      "durationMs": 420,
+      "interruption": "cancel",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "A named icon briefly acknowledges hover, keyboard focus or an explicit event."
+      ],
+      "avoidWhen": [
+        "Use state morphs for persistent meaning. Do not loop ambient effects in dense task screens."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://lucide-animated.com/",
+        "https://github.com/CityPulso/PulsoIcon-Package",
+        "https://itshover.com/icons"
+      ]
+    },
+    {
+      "id": "icon.effect.spark",
+      "title": "Spark response",
+      "intent": "attention",
+      "targets": [
+        "icon-spark"
+      ],
+      "component": "LiquidAnimatedIcon",
+      "implementation": "native",
+      "trigger": "focus-or-explicit-replay",
+      "durationMs": 420,
+      "interruption": "cancel",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "A named icon briefly acknowledges hover, keyboard focus or an explicit event."
+      ],
+      "avoidWhen": [
+        "Use state morphs for persistent meaning. Do not loop ambient effects in dense task screens."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://lucide-animated.com/",
+        "https://github.com/CityPulso/PulsoIcon-Package",
+        "https://itshover.com/icons"
+      ]
+    },
+    {
+      "id": "presence.fade",
+      "title": "Fade presence",
+      "intent": "presence",
+      "targets": [
+        "surface-fade"
+      ],
+      "component": "LiquidPresence",
+      "implementation": "native",
+      "trigger": "accepted-state-change",
+      "durationMs": 220,
+      "interruption": "cancel",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "A region enters or leaves without changing the underlying control semantics."
+      ],
+      "avoidWhen": [
+        "Interactive exits need a focus-return target; a passive wrapper does not replace an SDK Dialog."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://motion.dev/docs/react-animate-presence",
+        "https://motion-primitives.com/"
+      ]
+    },
+    {
+      "id": "presence.slide",
+      "title": "Slide presence",
+      "intent": "presence",
+      "targets": [
+        "surface-slide"
+      ],
+      "component": "LiquidPresence",
+      "implementation": "native",
+      "trigger": "accepted-state-change",
+      "durationMs": 220,
+      "interruption": "cancel",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "A region enters or leaves without changing the underlying control semantics."
+      ],
+      "avoidWhen": [
+        "Interactive exits need a focus-return target; a passive wrapper does not replace an SDK Dialog."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://motion.dev/docs/react-animate-presence",
+        "https://motion-primitives.com/"
+      ]
+    },
+    {
+      "id": "presence.scale",
+      "title": "Scale presence",
+      "intent": "presence",
+      "targets": [
+        "surface-scale"
+      ],
+      "component": "LiquidPresence",
+      "implementation": "native",
+      "trigger": "accepted-state-change",
+      "durationMs": 220,
+      "interruption": "cancel",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "A region enters or leaves without changing the underlying control semantics."
+      ],
+      "avoidWhen": [
+        "Interactive exits need a focus-return target; a passive wrapper does not replace an SDK Dialog."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://motion.dev/docs/react-animate-presence",
+        "https://motion-primitives.com/"
+      ]
+    },
+    {
+      "id": "presence.blur",
+      "title": "Blur presence",
+      "intent": "presence",
+      "targets": [
+        "surface-blur"
+      ],
+      "component": "LiquidPresence",
+      "implementation": "native",
+      "trigger": "accepted-state-change",
+      "durationMs": 220,
+      "interruption": "cancel",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "A region enters or leaves without changing the underlying control semantics."
+      ],
+      "avoidWhen": [
+        "Interactive exits need a focus-return target; a passive wrapper does not replace an SDK Dialog."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://motion.dev/docs/react-animate-presence",
+        "https://motion-primitives.com/"
+      ]
+    },
+    {
+      "id": "presence.lift",
+      "title": "Lift presence",
+      "intent": "presence",
+      "targets": [
+        "surface-lift"
+      ],
+      "component": "LiquidPresence",
+      "implementation": "native",
+      "trigger": "accepted-state-change",
+      "durationMs": 220,
+      "interruption": "cancel",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "A region enters or leaves without changing the underlying control semantics."
+      ],
+      "avoidWhen": [
+        "Interactive exits need a focus-return target; a passive wrapper does not replace an SDK Dialog."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://motion.dev/docs/react-animate-presence",
+        "https://motion-primitives.com/"
+      ]
+    },
+    {
+      "id": "presence.flip",
+      "title": "Flip presence",
+      "intent": "presence",
+      "targets": [
+        "surface-flip"
+      ],
+      "component": "LiquidPresence",
+      "implementation": "native",
+      "trigger": "accepted-state-change",
+      "durationMs": 220,
+      "interruption": "cancel",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "A region enters or leaves without changing the underlying control semantics."
+      ],
+      "avoidWhen": [
+        "Interactive exits need a focus-return target; a passive wrapper does not replace an SDK Dialog."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://motion.dev/docs/react-animate-presence",
+        "https://motion-primitives.com/"
+      ]
+    },
+    {
+      "id": "presence.draw",
+      "title": "Draw presence",
+      "intent": "presence",
+      "targets": [
+        "surface-draw"
+      ],
+      "component": "LiquidPresence",
+      "implementation": "native",
+      "trigger": "accepted-state-change",
+      "durationMs": 220,
+      "interruption": "cancel",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "A region enters or leaves without changing the underlying control semantics."
+      ],
+      "avoidWhen": [
+        "Interactive exits need a focus-return target; a passive wrapper does not replace an SDK Dialog."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://motion.dev/docs/react-animate-presence",
+        "https://motion-primitives.com/"
+      ]
+    },
+    {
+      "id": "navigation.indicator",
+      "title": "Shared selection",
+      "intent": "continuity",
+      "targets": [
+        "tabs",
+        "segmented-control"
+      ],
+      "component": "LiquidSharedIndicator",
+      "implementation": "native",
+      "trigger": "accepted-state-change",
+      "durationMs": 260,
+      "interruption": "retarget",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "Shared selection explains an accepted change."
+      ],
+      "avoidWhen": [
+        "No meaningful change occurred, or the effect would delay the task."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://motion-primitives.com/docs/animated-background",
+        "https://ui-sdk.dev/docs/react/components/segmented-control"
+      ]
+    },
+    {
+      "id": "collection.reflow",
+      "title": "Collection reflow",
+      "intent": "continuity",
+      "targets": [
+        "list",
+        "attachments",
+        "results",
+        "task-history"
+      ],
+      "component": "LiquidMotionList",
+      "implementation": "native",
+      "trigger": "accepted-state-change",
+      "durationMs": 300,
+      "interruption": "retarget",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "Stable keyed rows are inserted, removed or reordered."
+      ],
+      "avoidWhen": [
+        "Do not stack with another FLIP/layout owner or use array indexes as keys."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://auto-animate.formkit.com/"
+      ]
+    },
+    {
+      "id": "data.number",
+      "title": "Value change",
+      "intent": "progress",
+      "targets": [
+        "number",
+        "metric",
+        "count"
+      ],
+      "component": "LiquidMotionNumber",
+      "implementation": "native",
+      "trigger": "accepted-state-change",
+      "durationMs": 450,
+      "interruption": "retarget",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "A finite numeric value changes; the accessible value is final immediately."
+      ],
+      "avoidWhen": [
+        "Do not interpolate money being edited, passwords, codes or rapidly streaming values."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://motion.dev/docs/react-animation"
+      ]
+    },
+    {
+      "id": "data.text",
+      "title": "Text replacement",
+      "intent": "state",
+      "targets": [
+        "text",
+        "status-label"
+      ],
+      "component": "LiquidTextTransition",
+      "implementation": "native",
+      "trigger": "accepted-state-change",
+      "durationMs": 260,
+      "interruption": "retarget",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "A short label changes; the final text remains accessible immediately."
+      ],
+      "avoidWhen": [
+        "Do not animate each letter of a long answer or distort input text."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://motion.dev/docs/react-animation"
+      ]
+    },
+    {
+      "id": "feedback.result",
+      "title": "Action result",
+      "intent": "feedback",
+      "targets": [
+        "async-action",
+        "save",
+        "upload"
+      ],
+      "component": "LiquidMotionFeedback",
+      "implementation": "native",
+      "trigger": "accepted-state-change",
+      "durationMs": 260,
+      "interruption": "cancel",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "A real operation reports pending, success or error."
+      ],
+      "avoidWhen": [
+        "Never infer success or elapsed percentage from animation timing."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://motion.dev/docs/react-animation"
+      ]
+    },
+    {
+      "id": "depth.selection",
+      "title": "Isometric depth",
+      "intent": "state",
+      "targets": [
+        "isometric-selection"
+      ],
+      "component": "LiquidDepth",
+      "implementation": "native",
+      "trigger": "accepted-state-change",
+      "durationMs": 320,
+      "interruption": "retarget",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "Decorative isometric art reinforces selection inside a stationary control."
+      ],
+      "avoidWhen": [
+        "No meaningful change occurred, or the effect would delay the task."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://github.com/bernaferrari/glyphrise"
+      ]
+    },
+    {
+      "id": "scene.states",
+      "title": "Bound scene poses",
+      "intent": "state",
+      "targets": [
+        "scene",
+        "isometric-scene"
+      ],
+      "component": "LiquidMotionScene",
+      "implementation": "native",
+      "trigger": "accepted-state-change",
+      "durationMs": 360,
+      "interruption": "retarget",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "A small declarative icon scene changes to named poses driven by host state."
+      ],
+      "avoidWhen": [
+        "This is a native DOM/SVG pose renderer; it does not import RML, .riv or arbitrary GLB."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://github.com/bernaferrari/glyphrise",
+        "https://rive.app/docs/runtimes/react/data-binding"
+      ]
+    },
+    {
+      "id": "workflow.graph",
+      "title": "Guarded state graph",
+      "intent": "state",
+      "targets": [
+        "workflow",
+        "state-machine"
+      ],
+      "component": "LiquidMotionState",
+      "implementation": "native",
+      "trigger": "accepted-state-change",
+      "durationMs": 0,
+      "interruption": "retarget",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "People and agents need discoverable valid transitions from the current state."
+      ],
+      "avoidWhen": [
+        "Use an existing SDK control for a simple toggle. Host callbacks must cancel synchronously; use explicit pending states for remote work."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://github.com/vercel-labs/ui",
+        "https://rive.app/docs/editor/state-machine"
+      ]
+    },
+    {
+      "id": "asset.binding",
+      "title": "External runtime binding",
+      "intent": "state",
+      "targets": [
+        "rive",
+        "lottie",
+        "r3f"
+      ],
+      "component": "LiquidMotionAsset",
+      "implementation": "host-adapter",
+      "trigger": "accepted-state-change",
+      "durationMs": 0,
+      "interruption": "retarget",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "The host supplies a licensed asset, a runtime mount adapter and a static fallback."
+      ],
+      "avoidWhen": [
+        "This lifecycle adapter does not bundle, author, fetch or certify third-party assets."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://rive.app/docs/runtimes/react/data-binding",
+        "https://github.com/bernaferrari/glyphrise"
+      ]
+    },
+    {
+      "id": "sdk.popup",
+      "title": "Anchored popup",
+      "intent": "presence",
+      "targets": [
+        "popover",
+        "menu",
+        "tooltip"
+      ],
+      "component": "SDK popup parts",
+      "implementation": "existing-sdk",
+      "trigger": "accepted-state-change",
+      "durationMs": 220,
+      "interruption": "cancel",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "Use the existing Quantive kit state styling on the real SDK part."
+      ],
+      "avoidWhen": [
+        "No meaningful change occurred, or the effect would delay the task."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://ui-sdk.dev/docs/react/components/popover"
+      ]
+    },
+    {
+      "id": "sdk.dialog",
+      "title": "Dialog reveal",
+      "intent": "presence",
+      "targets": [
+        "dialog",
+        "detail"
+      ],
+      "component": "SDK Dialog",
+      "implementation": "existing-sdk",
+      "trigger": "accepted-state-change",
+      "durationMs": 220,
+      "interruption": "cancel",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "Use the existing Quantive kit state styling on the real SDK part."
+      ],
+      "avoidWhen": [
+        "No meaningful change occurred, or the effect would delay the task."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://ui-sdk.dev/docs/react/components/dialog"
+      ]
+    },
+    {
+      "id": "sdk.drawer",
+      "title": "Edge drawer",
+      "intent": "presence",
+      "targets": [
+        "drawer"
+      ],
+      "component": "SDK Drawer",
+      "implementation": "existing-sdk",
+      "trigger": "accepted-state-change",
+      "durationMs": 220,
+      "interruption": "cancel",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "Use the existing Quantive kit state styling on the real SDK part."
+      ],
+      "avoidWhen": [
+        "No meaningful change occurred, or the effect would delay the task."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://ui-sdk.dev/docs/react/components/drawer"
+      ]
+    },
+    {
+      "id": "sdk.disclosure",
+      "title": "Measured disclosure",
+      "intent": "presence",
+      "targets": [
+        "accordion",
+        "collapsible"
+      ],
+      "component": "SDK disclosure parts",
+      "implementation": "existing-sdk",
+      "trigger": "accepted-state-change",
+      "durationMs": 220,
+      "interruption": "cancel",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "Use the existing Quantive kit state styling on the real SDK part."
+      ],
+      "avoidWhen": [
+        "No meaningful change occurred, or the effect would delay the task."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://ui-sdk.dev/docs/react/components/accordion"
+      ]
+    },
+    {
+      "id": "sdk.switch",
+      "title": "Switch thumb",
+      "intent": "progress",
+      "targets": [
+        "switch"
+      ],
+      "component": "SDK Switch",
+      "implementation": "existing-sdk",
+      "trigger": "accepted-state-change",
+      "durationMs": 220,
+      "interruption": "retarget",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "Use the existing Quantive kit state styling on the real SDK part."
+      ],
+      "avoidWhen": [
+        "No meaningful change occurred, or the effect would delay the task."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://ui-sdk.dev/docs/react/components/switch"
+      ]
+    },
+    {
+      "id": "sdk.progress",
+      "title": "Progress change",
+      "intent": "progress",
+      "targets": [
+        "progress"
+      ],
+      "component": "SDK Progress",
+      "implementation": "existing-sdk",
+      "trigger": "accepted-state-change",
+      "durationMs": 220,
+      "interruption": "retarget",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "Use the existing Quantive kit state styling on the real SDK part."
+      ],
+      "avoidWhen": [
+        "No meaningful change occurred, or the effect would delay the task."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://ui-sdk.dev/docs/react/components/progress"
+      ]
+    },
+    {
+      "id": "sdk.toast",
+      "title": "Toast response",
+      "intent": "presence",
+      "targets": [
+        "toast"
+      ],
+      "component": "SDK Toast",
+      "implementation": "existing-sdk",
+      "trigger": "accepted-state-change",
+      "durationMs": 220,
+      "interruption": "cancel",
+      "reducedMotion": "instant-final-state",
+      "useWhen": [
+        "Use the existing Quantive kit state styling on the real SDK part."
+      ],
+      "avoidWhen": [
+        "No meaningful change occurred, or the effect would delay the task."
+      ],
+      "requires": [
+        "Authoritative component or host state",
+        "Accessible text or named SDK control",
+        "Stable identity and no moving hit target"
+      ],
+      "completionMeaning": "presentation-only",
+      "sources": [
+        "https://ui-sdk.dev/docs/react/components/toast"
+      ]
+    }
+  ]
+}

@@ -7778,6 +7778,633 @@
         }
       ],
       "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-motion-policy",
+      "kind": "provider",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/motion",
+          "symbols": [
+            "LiquidMotionProvider"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/motion/policy.tsx"
+      ],
+      "purpose": "Scope motion preference and one of three bounded timing presets.",
+      "useWhen": [
+        "Tune a region without weakening a reduced-motion or off preference."
+      ],
+      "inputs": [
+        "children, mode: system|reduced|off, preset: calm|responsive|expressive"
+      ],
+      "state": [
+        "Effective policy is the most restrictive of host material, device and parent/local settings."
+      ],
+      "runtime": {
+        "discovery": "none",
+        "mutationPath": "Host props configure a nested React context; this creates no runtime action.",
+        "actions": [],
+        "outcome": "Observe accepted host state and the readable final presentation. Animation completion does not prove business completion."
+      },
+      "restrictions": [
+        "Motion is finite and follows the effective material, OS and local motion policy.",
+        "Keep the final state readable and put interactions on genuine SDK controls."
+      ],
+      "policies": [
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "docs": [
+        "packages/liquid-glass/docs/motion.md",
+        "docs/hci/standards/motion-sources.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/glass_motion_contract.py",
+          "scope": "Production-browser checks of shared human/agent controls, cancellation, morph endpoints, list transitions, preferences and local work; no human-review claim."
+        }
+      ],
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-motion-policy-hook",
+      "kind": "host-hook",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/motion",
+          "symbols": [
+            "useLiquidMotionPolicy"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/motion/policy.tsx"
+      ],
+      "purpose": "Read the effective motion preference.",
+      "useWhen": [
+        "Implement a passive effect using the shared preference."
+      ],
+      "inputs": [
+        "Call within the existing LiquidGlassProvider and optional LiquidMotionProvider."
+      ],
+      "state": [
+        "mode, preset, enabled, reducedMotion, effective, durationScale"
+      ],
+      "runtime": {
+        "discovery": "none",
+        "mutationPath": "Read-only host React hook.",
+        "actions": [],
+        "outcome": "Observe accepted host state and the readable final presentation. Animation completion does not prove business completion."
+      },
+      "restrictions": [
+        "Motion is finite and follows the effective material, OS and local motion policy.",
+        "Keep the final state readable and put interactions on genuine SDK controls."
+      ],
+      "policies": [
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "docs": [
+        "packages/liquid-glass/docs/motion.md",
+        "docs/hci/standards/motion-sources.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/glass_motion_contract.py",
+          "scope": "Production-browser checks of shared human/agent controls, cancellation, morph endpoints, list transitions, preferences and local work; no human-review claim."
+        }
+      ],
+      "validation": "not-applicable"
+    },
+    {
+      "id": "liquid-motion-icons",
+      "kind": "decoration",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/motion",
+          "symbols": [
+            "LiquidMorphIcon",
+            "LiquidAnimatedIcon"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/motion/icons.tsx"
+      ],
+      "purpose": "Morph accepted icon state or replay one finite icon response.",
+      "useWhen": [
+        "Show persistent Play/Pause or another registered pair on an SDK control.",
+        "Add a brief response to a meaningful activation without moving its hit target."
+      ],
+      "inputs": [
+        "Morph: pair, active, size, className.",
+        "Animated: existing LiquidIcon name, effect, trigger hover|state, active, revision, size, className."
+      ],
+      "state": [
+        "Actual geometric endpoint follows active; a finite effect follows hover/focus, activation or revision."
+      ],
+      "runtime": {
+        "discovery": "dom",
+        "mutationPath": "Host props control presentation. Child SDK controls retain their own actions.",
+        "actions": [],
+        "outcome": "Observe accepted host state and the readable final presentation. Animation completion does not prove business completion."
+      },
+      "restrictions": [
+        "Motion is finite and follows the effective material, OS and local motion policy.",
+        "Keep the final state readable and put interactions on genuine SDK controls.",
+        "These are decorative: give the containing control a meaningful accessible name.",
+        "Initial mount renders the final endpoint without an entrance animation; rapid reversal retargets from current progress."
+      ],
+      "policies": [
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "docs": [
+        "packages/liquid-glass/docs/motion.md",
+        "docs/hci/standards/motion-sources.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/test_motion_icons.mjs",
+          "scope": "Matched path topology, endpoints, reversal, invalid input and actual initial server rendering through the existing provider."
+        },
+        {
+          "path": "tests/glass_motion_contract.py",
+          "scope": "Production-browser checks of shared human/agent controls, cancellation, morph endpoints, list transitions, preferences and local work; no human-review claim."
+        }
+      ],
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-motion-icon-catalogue",
+      "kind": "pure-utility",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/motion",
+          "symbols": [
+            "LIQUID_MORPH_PAIRS",
+            "LIQUID_ICON_EFFECTS",
+            "LIQUID_MORPH_DEFINITIONS"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/motion/icon-data.ts"
+      ],
+      "purpose": "Discover supported morph pairs, effects and semantic use guidance.",
+      "useWhen": [
+        "Choose an existing pair/effect before inventing new geometry."
+      ],
+      "inputs": [
+        "Read-only exported metadata"
+      ],
+      "state": [
+        "Ten matched-path pairs and nine finite icon effects"
+      ],
+      "runtime": {
+        "discovery": "none",
+        "mutationPath": "Static metadata only.",
+        "actions": [],
+        "outcome": "Observe accepted host state and the readable final presentation. Animation completion does not prove business completion."
+      },
+      "restrictions": [
+        "Metadata is not an interaction endpoint or an upstream icon asset licence."
+      ],
+      "policies": [
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "docs": [
+        "packages/liquid-glass/docs/motion.md",
+        "docs/hci/standards/motion-sources.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/test_motion_icons.mjs",
+          "scope": "Matched path topology, endpoints, reversal, invalid input and actual initial server rendering through the existing provider."
+        },
+        {
+          "path": "tests/glass_motion_contract.py",
+          "scope": "Production-browser checks of shared human/agent controls, cancellation, morph endpoints, list transitions, preferences and local work; no human-review claim."
+        }
+      ],
+      "validation": "not-applicable"
+    },
+    {
+      "id": "liquid-motion-presentation",
+      "kind": "presentation",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/motion",
+          "symbols": [
+            "LiquidMotion",
+            "LiquidPresence",
+            "LiquidMotionList",
+            "LiquidMotionNumber",
+            "LiquidTextTransition",
+            "LiquidMotionFeedback",
+            "LiquidDepth"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/motion/components.tsx"
+      ],
+      "purpose": "Present bounded change, presence, collection continuity, numbers, text, feedback and decorative depth.",
+      "useWhen": [
+        "Explain one accepted state change while preserving focus, stable keys and semantic content."
+      ],
+      "inputs": [
+        "See typed props in motion.md: transitionKey, present, stable list items, value/text/status and active."
+      ],
+      "state": [
+        "Host props remain authoritative. Exiting presence is inert/hidden from agents immediately. Numeric/text semantic endpoints update immediately."
+      ],
+      "runtime": {
+        "discovery": "dom",
+        "mutationPath": "Host props control presentation. Child SDK controls retain their own actions.",
+        "actions": [],
+        "outcome": "Observe accepted host state and the readable final presentation. Animation completion does not prove business completion."
+      },
+      "restrictions": [
+        "Motion is finite and follows the effective material, OS and local motion policy.",
+        "Keep the final state readable and put interactions on genuine SDK controls.",
+        "Supply restoreFocusRef for a presence region that can contain focus.",
+        "LiquidDepth is aria-hidden decoration; do not wrap meaningful controls or content in it.",
+        "Never stack multiple FLIP/layout owners on the same list."
+      ],
+      "policies": [
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "docs": [
+        "packages/liquid-glass/docs/motion.md",
+        "docs/hci/standards/motion-sources.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/glass_motion_contract.py",
+          "scope": "Production-browser checks of shared human/agent controls, cancellation, morph endpoints, list transitions, preferences and local work; no human-review claim."
+        }
+      ],
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-shared-indicator",
+      "kind": "composition",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/motion",
+          "symbols": [
+            "LiquidSharedIndicator"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/motion/components.tsx"
+      ],
+      "purpose": "Move a shared selection indicator through actual SDK segmented-control state.",
+      "useWhen": [
+        "Switch between peer views while preserving selected-state semantics."
+      ],
+      "inputs": [
+        "label, items {id,label,disabled?}, value, onValueChange, disabled, readOnly, className"
+      ],
+      "state": [
+        "Accepted controlled selection with SDK change details and synchronous cancellation."
+      ],
+      "runtime": {
+        "discovery": "sdk-children",
+        "mutationPath": "Actual SDK SegmentedControl and items invoke the controlled host callback.",
+        "actions": [],
+        "outcome": "Observe accepted host state and the readable final presentation. Animation completion does not prove business completion.",
+        "controls": [
+          "@ui-sdk/react/segmented-control"
+        ]
+      },
+      "restrictions": [
+        "Motion is finite and follows the effective material, OS and local motion policy.",
+        "Keep the final state readable and put interactions on genuine SDK controls.",
+        "Forward change details; call cancel synchronously to refuse changes."
+      ],
+      "policies": [
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "docs": [
+        "packages/liquid-glass/docs/motion.md",
+        "docs/hci/standards/motion-sources.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/glass_motion_contract.py",
+          "scope": "Production-browser checks of shared human/agent controls, cancellation, morph endpoints, list transitions, preferences and local work; no human-review claim."
+        }
+      ],
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-motion-state",
+      "kind": "primitive",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/motion",
+          "symbols": [
+            "liquidMotionState",
+            "LiquidMotionState"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/motion/state.ts",
+        "packages/liquid-glass/src/motion/state-view.tsx"
+      ],
+      "purpose": "Operate a declared, guarded motion/state graph through the same SDK primitive for people and agents.",
+      "useWhen": [
+        "A workflow or interactive illustration needs named states and explicit allowed transitions."
+      ],
+      "inputs": [
+        "graph {id, initial, states, transitions}, value/defaultValue, disabled, readOnly, onValueChange",
+        "React view adds label, children(state), className"
+      ],
+      "state": [
+        "value, validated graph, disabled, readOnly; agent items enumerate currently declared outgoing event values."
+      ],
+      "runtime": {
+        "discovery": "sdk",
+        "mutationPath": "Public definePrimitive and createChange; the React view uses public usePrimitive/usePart and SDK Buttons.",
+        "actions": [
+          "send"
+        ],
+        "outcome": "Observe accepted host state and the readable final presentation. Animation completion does not prove business completion.",
+        "controls": [
+          "@ui-sdk/react/button"
+        ],
+        "primitive": {
+          "source": "packages/liquid-glass/src/motion/state.ts",
+          "symbol": "liquidMotionState",
+          "name": "liquid-motion-state",
+          "actions": [
+            "send"
+          ]
+        },
+        "actionParameters": {
+          "send": [
+            "event:string",
+            "expectedState:string"
+          ]
+        },
+        "actionSchema": "./agent-action-inputs.json#/$defs/liquid-motion-state"
+      },
+      "restrictions": [
+        "send requires an event and the exact current expectedState. Re-query after stale requests.",
+        "Host acceptance is authoritative; cancel synchronously or retain controlled props to refuse.",
+        "This is a finite named graph, not a general Rive editor, animation blend engine, backend or authorization system."
+      ],
+      "policies": [
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "docs": [
+        "packages/liquid-glass/docs/motion.md",
+        "docs/hci/standards/motion-sources.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/test_motion_state.mjs",
+          "scope": "Real public SDK primitive state, expected-source guard, acceptance, cancellation, malformed graph and disabled/read-only behavior."
+        },
+        {
+          "path": "tests/glass_motion_contract.py",
+          "scope": "Production-browser checks of shared human/agent controls, cancellation, morph endpoints, list transitions, preferences and local work; no human-review claim."
+        }
+      ],
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-motion-graph-validation",
+      "kind": "pure-utility",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/motion",
+          "symbols": [
+            "validateLiquidMotionGraph"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/motion/state.ts"
+      ],
+      "purpose": "Validate bounded graphs before mounting.",
+      "useWhen": [
+        "Build or accept a declarative graph from a trusted host configuration."
+      ],
+      "inputs": [
+        "A LiquidMotionGraph"
+      ],
+      "state": [
+        "Returns error strings for missing/duplicate IDs, invalid endpoints, invalid labels or ambiguous events."
+      ],
+      "runtime": {
+        "discovery": "none",
+        "mutationPath": "Pure validation only; no application-state mutation.",
+        "actions": [],
+        "outcome": "Observe accepted host state and the readable final presentation. Animation completion does not prove business completion."
+      },
+      "restrictions": [
+        "Supports 1\u201364 states and at most 256 transitions; identifiers and labels are nonempty and bounded."
+      ],
+      "policies": [
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "docs": [
+        "packages/liquid-glass/docs/motion.md",
+        "docs/hci/standards/motion-sources.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/test_motion_state.mjs",
+          "scope": "Real public SDK primitive state, expected-source guard, acceptance, cancellation, malformed graph and disabled/read-only behavior."
+        },
+        {
+          "path": "tests/glass_motion_contract.py",
+          "scope": "Production-browser checks of shared human/agent controls, cancellation, morph endpoints, list transitions, preferences and local work; no human-review claim."
+        }
+      ],
+      "validation": "not-applicable"
+    },
+    {
+      "id": "liquid-motion-scene",
+      "kind": "presentation",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/motion",
+          "symbols": [
+            "LiquidMotionScene"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/motion/scene.tsx"
+      ],
+      "purpose": "Animate original isometric icon layers between named poses.",
+      "useWhen": [
+        "Show a small layered illustration linked to actual workflow state."
+      ],
+      "inputs": [
+        "scene {id,label,states,layers}, state, className; each layer supplies an existing icon and per-state poses."
+      ],
+      "state": [
+        "Accepted state maps to bounded translation, rotation, scale, opacity and shadow depth."
+      ],
+      "runtime": {
+        "discovery": "dom",
+        "mutationPath": "Host props control presentation. Child SDK controls retain their own actions.",
+        "actions": [],
+        "outcome": "Observe accepted host state and the readable final presentation. Animation completion does not prove business completion."
+      },
+      "restrictions": [
+        "Motion is finite and follows the effective material, OS and local motion policy.",
+        "Keep the final state readable and put interactions on genuine SDK controls.",
+        "This is a native HTML/SVG pose composition, not SVG extrusion, GLB export, R3F or an arbitrary scene editor."
+      ],
+      "policies": [
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "docs": [
+        "packages/liquid-glass/docs/motion.md",
+        "docs/hci/standards/motion-sources.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/glass_motion_contract.py",
+          "scope": "Production-browser checks of shared human/agent controls, cancellation, morph endpoints, list transitions, preferences and local work; no human-review claim."
+        }
+      ],
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-motion-asset",
+      "kind": "presentation",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/motion",
+          "symbols": [
+            "LiquidMotionAsset"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/motion/scene.tsx"
+      ],
+      "purpose": "Host an optional externally supplied animation renderer with cancellation and fallback.",
+      "useWhen": [
+        "The host already has a configured and licensed Rive, Lottie, WebGL or other asset renderer."
+      ],
+      "inputs": [
+        "label, runtime.mount(element,signal), properties, fallback, onError, className",
+        "Controller supplies update, pause, resume, dispose."
+      ],
+      "state": [
+        "Per-generation host prevents late mounts overwriting a newer renderer. Fallback stays present when unavailable or suppressed."
+      ],
+      "runtime": {
+        "discovery": "dom",
+        "mutationPath": "Host props control presentation. Child SDK controls retain their own actions.",
+        "actions": [],
+        "outcome": "Observe accepted host state and the readable final presentation. Animation completion does not prove business completion."
+      },
+      "restrictions": [
+        "Motion is finite and follows the effective material, OS and local motion policy.",
+        "Keep the final state readable and put interactions on genuine SDK controls.",
+        "No renderer dependency, asset download, Rive file, GLB importer or authoring product is bundled.",
+        "The host implements the adapter and owns engine and asset licensing.",
+        "Failures dispose the controller; onError is diagnostic and cannot interrupt cleanup."
+      ],
+      "policies": [
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "docs": [
+        "packages/liquid-glass/docs/motion.md",
+        "docs/hci/standards/motion-sources.md"
+      ],
+      "evidence": [
+        {
+          "path": "scripts/check-agent-contracts.mjs",
+          "scope": "Static public export classification and no fabricated agent action; does not prove a third-party renderer integration."
+        }
+      ],
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-motion-recipes",
+      "kind": "pure-utility",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/motion",
+          "symbols": [
+            "liquidMotionRegistry",
+            "liquidMotionRecipes",
+            "findLiquidMotionRecipes",
+            "selectLiquidMotionRecipe"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/motion/recipes.ts"
+      ],
+      "purpose": "Choose a registered motion recipe from semantic intent and target.",
+      "useWhen": [
+        "An authoring agent needs deterministic guidance on when and how to apply motion."
+      ],
+      "inputs": [
+        "find(query); select({intent,target,meaningfulChange?,reducedMotion?,frequent?})"
+      ],
+      "state": [
+        "42 records with intent, targets, trigger, duration, interruption, requirements, avoidWhen, source and implementation boundary."
+      ],
+      "runtime": {
+        "discovery": "none",
+        "mutationPath": "Read-only registry and deterministic selector; no runtime action endpoint.",
+        "actions": [],
+        "outcome": "Observe accepted host state and the readable final presentation. Animation completion does not prove business completion."
+      },
+      "restrictions": [
+        "No meaningful change or no matching recipe produces none; reduced motion produces the instant endpoint.",
+        "Frequent attention effects are suppressed. Selection never authorizes or completes work."
+      ],
+      "policies": [
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "docs": [
+        "packages/liquid-glass/docs/motion.md",
+        "docs/hci/standards/motion-sources.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/test_motion_recipes.mjs",
+          "scope": "Deterministic recipe selection and registry shape/meaning constraints; no visual-review claim."
+        }
+      ],
+      "validation": "not-applicable"
     }
   ]
 }

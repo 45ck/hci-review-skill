@@ -8,6 +8,9 @@
     },
     {
       "$ref": "#/$defs/model-document"
+    },
+    {
+      "$ref": "#/$defs/liquid-motion-state"
     }
   ],
   "$defs": {
@@ -74,7 +77,7 @@
                     "zoom"
                   ],
                   "additionalProperties": false,
-                  "description": "Finite requested camera values. Positive zoom requests are clamped by the runtime to 0.1–4; this input schema does not falsely reject supported out-of-range requests."
+                  "description": "Finite requested camera values. Positive zoom requests are clamped by the runtime to 0.1\u20134; this input schema does not falsely reject supported out-of-range requests."
                 }
               ],
               "minItems": 1,
@@ -219,7 +222,7 @@
               "items": false
             }
           },
-          "description": "Request a positive zoom; the SDK clamps accepted output to 0.1–4.",
+          "description": "Request a positive zoom; the SDK clamps accepted output to 0.1\u20134.",
           "examples": [
             {
               "contract": "liquid-viewport",
@@ -2738,6 +2741,115 @@
         "operations"
       ],
       "additionalProperties": false
+    },
+    "liquid-motion-state": {
+      "type": "object",
+      "description": "Send a declared event against the exact current state. The graph, disabled/read-only state and controlled host still decide acceptance.",
+      "properties": {
+        "contract": {
+          "const": "liquid-motion-state"
+        },
+        "action": {
+          "enum": [
+            "send"
+          ]
+        },
+        "args": {
+          "type": "array"
+        }
+      },
+      "required": [
+        "contract",
+        "action",
+        "args"
+      ],
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "properties": {
+            "action": {
+              "const": "send"
+            },
+            "args": {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 120,
+                  "pattern": ".*\\S.*"
+                },
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 120,
+                  "pattern": ".*\\S.*"
+                }
+              ],
+              "minItems": 2,
+              "maxItems": 2,
+              "items": false
+            }
+          },
+          "description": "Request one allowed edge from the expected source state.",
+          "examples": [
+            {
+              "contract": "liquid-motion-state",
+              "action": "send",
+              "args": [
+                "start",
+                "idle"
+              ]
+            }
+          ],
+          "x-invalidExamples": [
+            {
+              "value": {
+                "contract": "liquid-motion-state",
+                "action": "send",
+                "args": [
+                  "start"
+                ]
+              },
+              "reason": "Expected current state is required."
+            },
+            {
+              "value": {
+                "contract": "liquid-motion-state",
+                "action": "send",
+                "args": [
+                  "",
+                  "idle"
+                ]
+              },
+              "reason": "Event must be nonempty."
+            },
+            {
+              "value": {
+                "contract": "liquid-motion-state",
+                "action": "send",
+                "args": [
+                  "start",
+                  "idle",
+                  "extra"
+                ]
+              },
+              "reason": "The public action accepts exactly two arguments."
+            },
+            {
+              "value": {
+                "contract": "liquid-motion-state",
+                "action": "send",
+                "args": [
+                  "start",
+                  3
+                ]
+              },
+              "reason": "Expected state must be a string."
+            }
+          ]
+        }
+      ]
     }
   }
 }

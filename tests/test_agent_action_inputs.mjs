@@ -48,7 +48,7 @@ test("all custom actions have exact schemas and valid/invalid examples", () => {
     assert.deepEqual(primitiveActionSchemaIssues(schemas, entry.id, entry.runtime.actions), []);
     count += entry.runtime.actions.length;
   }
-  assert.equal(count, 16);
+  assert.equal(count, 17);
 });
 
 test("viewport schemas agree with actual rejection and zoom clamping", () => {

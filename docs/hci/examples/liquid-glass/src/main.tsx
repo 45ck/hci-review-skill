@@ -83,6 +83,8 @@ import { SectionsShowcase } from "./sections-showcase";
 import { LayoutsShowcase } from "./layouts-showcase";
 import { PatternsShowcase } from "./patterns-showcase";
 import { AssistantShowcase } from "./assistant-showcase";
+import { MotionShowcase } from "./motion-showcase";
+import { MotionStateExample } from "./motion-state-example";
 import { RecipePanel } from "./recipe-panel";
 import { GraphicsShowcase, initialGraphicDocument, initialGraphicAssets } from "./graphics-showcase";
 import type { GraphicAsset } from "@quantitative-hci/liquid-glass/graphics";
@@ -98,6 +100,7 @@ import "./gallery.css";
 const demos: Record<string, ComponentType> = { ...inputDemos, ...surfaceDemos };
 const groups = [...new Set(manifest.components.map((item) => item.category))];
 const collections = [
+  { id: "motion", name: "Motion", keywords: "animation morph play pause isometric icons transitions presence list shared indicator numbers text depth state graph agent recipes" },
   { id: "layouts", name: "App layouts", keywords: "application app shell workspace account organisation multitenancy menu dashboard navigation review queue phone mobile settings projects people states" },
   { id: "patterns", name: "Patterns", keywords: "command palette search filter facets selection bulk actions drawer detail sheet empty state library" },
   { id: "assistant", name: "Assistant", keywords: "ai elements prompt composer attachment message conversation sources citation suggestions" },
@@ -928,7 +931,10 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
           {(active === "assistant" || visitedCollections.includes("assistant")) && <div hidden={active !== "assistant"}>
             <SpecimenBoundary key="assistant" name="Assistant"><AssistantShowcase /></SpecimenBoundary>
           </div>}
-          {(["layouts", "interactions", "sections", "patterns", "assistant"].includes(active ?? "")) && <RecipePanel collection={active!} />}
+          {(active === "motion" || visitedCollections.includes("motion")) && <div hidden={active !== "motion"}>
+            <SpecimenBoundary key="motion" name="Motion"><MotionShowcase active={active === "motion"} stateExample={<MotionStateExample />} /></SpecimenBoundary>
+          </div>}
+          {(["motion", "layouts", "interactions", "sections", "patterns", "assistant"].includes(active ?? "")) && <RecipePanel collection={active!} />}
           {active === "overview" ? (
             <Overview onExplore={(id) => { selectCatalogue(id); document.getElementById("kit-main")?.focus(); }} />
           ) : collection ? null

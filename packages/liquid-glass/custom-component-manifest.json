@@ -451,6 +451,104 @@
       "exportPath": "@quantitative-hci/liquid-glass/layouts",
       "validation": "unvalidated",
       "contract": "docs/hci/standards/app-layout-system.md"
+    },
+    {
+      "id": "liquid-motion-provider",
+      "name": "LiquidMotionProvider",
+      "category": "Motion",
+      "exportPath": "@quantitative-hci/liquid-glass/motion",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-morph-icon",
+      "name": "LiquidMorphIcon",
+      "category": "Motion",
+      "exportPath": "@quantitative-hci/liquid-glass/motion",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-animated-icon",
+      "name": "LiquidAnimatedIcon",
+      "category": "Motion",
+      "exportPath": "@quantitative-hci/liquid-glass/motion",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-motion",
+      "name": "LiquidMotion",
+      "category": "Motion",
+      "exportPath": "@quantitative-hci/liquid-glass/motion",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-presence",
+      "name": "LiquidPresence",
+      "category": "Motion",
+      "exportPath": "@quantitative-hci/liquid-glass/motion",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-motion-list",
+      "name": "LiquidMotionList",
+      "category": "Motion",
+      "exportPath": "@quantitative-hci/liquid-glass/motion",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-motion-number",
+      "name": "LiquidMotionNumber",
+      "category": "Motion",
+      "exportPath": "@quantitative-hci/liquid-glass/motion",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-text-transition",
+      "name": "LiquidTextTransition",
+      "category": "Motion",
+      "exportPath": "@quantitative-hci/liquid-glass/motion",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-shared-indicator",
+      "name": "LiquidSharedIndicator",
+      "category": "Motion",
+      "exportPath": "@quantitative-hci/liquid-glass/motion",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-motion-feedback",
+      "name": "LiquidMotionFeedback",
+      "category": "Motion",
+      "exportPath": "@quantitative-hci/liquid-glass/motion",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-depth",
+      "name": "LiquidDepth",
+      "category": "Motion",
+      "exportPath": "@quantitative-hci/liquid-glass/motion",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-motion-state",
+      "name": "LiquidMotionState",
+      "category": "Motion",
+      "exportPath": "@quantitative-hci/liquid-glass/motion",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-motion-scene",
+      "name": "LiquidMotionScene",
+      "category": "Motion",
+      "exportPath": "@quantitative-hci/liquid-glass/motion",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-motion-asset",
+      "name": "LiquidMotionAsset",
+      "category": "Motion",
+      "exportPath": "@quantitative-hci/liquid-glass/motion",
+      "validation": "unvalidated"
     }
   ]
 }

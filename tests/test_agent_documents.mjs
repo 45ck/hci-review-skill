@@ -50,7 +50,7 @@ test("index fingerprints identify the exact emitted contract bytes", () => {
 test("hosted action schema links resolve from nested contracts to the published input definitions", () => {
   const definitions = JSON.parse(assets["agent-action-inputs.json"]).$defs;
   const primitives = index.entries.filter(entry => entry.kind === "primitive");
-  assert.equal(primitives.length, 2);
+  assert.equal(primitives.length, 3);
   for (const entry of primitives) {
     const envelope = JSON.parse(assets[entry.contract.slice(1)]);
     const url = new URL(envelope.actionSchema, `https://kit.invalid${entry.contract}`);
@@ -74,7 +74,7 @@ test("changing a canonical guide invalidates the contract set identity", t => {
   const directory = mkdtempSync(join(tmpdir(), "quantive-agent-source-"));
   t.after(() => rmSync(directory, { recursive: true, force: true }));
   const files = ["package.json", "component-manifest.json", "custom-component-manifest.json", "component-recipes.json",
-    "docs/llms.txt", "docs/agent-engineering.md", ...Object.keys(assets).filter(name => name.endsWith(".schema.json") || name === "agent-contracts.json" || name === "agent-action-inputs.json")];
+    "docs/llms.txt", "docs/agent-engineering.md", "docs/motion.md", "motion-recipes.json", ...Object.keys(assets).filter(name => name.endsWith(".schema.json") || name === "agent-contracts.json" || name === "agent-action-inputs.json")];
   for (const file of files) {
     const target = join(directory, "packages/liquid-glass", file);
     mkdirSync(dirname(target), { recursive: true });

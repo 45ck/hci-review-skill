@@ -31,7 +31,7 @@ export default defineConfig({
       server.middlewares.use((request, response, next) => {
         if (request.method !== "GET" && request.method !== "HEAD") return next();
         const name = request.url?.split("?")[0].slice(1);
-        if (!name || !/^(?:agent-[a-z.-]+|llms\.txt|registry\/components\.json|contracts\/[a-z0-9-]+\.json)$/.test(name)) return next();
+        if (!name || !/^(?:agent-[a-z.-]+|motion\.md|motion-recipes(?:\.schema)?\.json|llms\.txt|registry\/components\.json|contracts\/[a-z0-9-]+\.json)$/.test(name)) return next();
         try {
           const content = createAgentDocuments()[name];
           if (content === undefined) {

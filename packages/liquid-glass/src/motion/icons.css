@@ -1,0 +1,42 @@
+.qgm-morph-icon,
+.qgm-animated-icon {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  color: inherit;
+  pointer-events: none;
+  user-select: none;
+  isolation: isolate;
+}
+
+.qgm-morph-icon > svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.qgm-morph-icon [data-qgm-variant="isometric"] { display: none; }
+.qgm-morph-icon[data-icon-style="isometric"] [data-qgm-variant="line"] { display: none; }
+.qgm-morph-icon[data-icon-style="isometric"] [data-qgm-variant="isometric"] { display: block; }
+.qgm-morph-icon [data-qgm-variant="line"] { fill: none; stroke: currentColor; stroke-width: 1.8; }
+.qgm-morph-icon [data-qgm-variant="line"] [data-qgm-solid="true"] { fill: currentColor; stroke-width: .4; }
+.qgm-morph-icon [data-qgm-variant="line"] [data-qgm-fill="vary"] { stroke-width: 1.8; }
+.qgm-morph-icon [data-qgm-variant="isometric"] { stroke-width: 2; }
+.qgm-morph-icon [data-qgm-depth] { stroke-width: 2.6; }
+.qgm-morph-icon [data-qgm-variant="isometric"] [data-qgm-solid="true"] { stroke-width: .65; }
+.qgm-morph-icon [data-qgm-variant="isometric"] [data-qgm-fill="vary"] { stroke-width: 1.8; }
+.qgm-animated-icon > .qg-icon { transform-origin: center; }
+.qgm-animated-icon svg > :is(path, ellipse, rect, circle, polygon, polyline) { transform-box: fill-box; transform-origin: center; }
+
+@media (forced-colors: active) {
+  .qgm-morph-icon [data-qgm-variant="isometric"] { display: none !important; }
+  .qgm-morph-icon [data-qgm-variant="line"] { display: block !important; }
+  .qgm-morph-icon { color: ButtonText; forced-color-adjust: auto; }
+}

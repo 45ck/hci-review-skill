@@ -49,7 +49,12 @@
     "./agent-contract.schema.json": "./agent-contract.schema.json",
     "./agent-release.schema.json": "./agent-release.schema.json",
     "./layouts": "./src/layouts/index.ts",
-    "./layouts.css": "./src/layouts/layouts.css"
+    "./layouts.css": "./src/layouts/layouts.css",
+    "./motion": "./src/motion/index.ts",
+    "./motion.css": "./src/motion/motion.css",
+    "./motion-recipes.json": "./motion-recipes.json",
+    "./motion-recipes.schema.json": "./motion-recipes.schema.json",
+    "./docs/motion.md": "./docs/motion.md"
   },
   "dependencies": {
     "@ui-sdk/core": "0.1.0-beta.13",

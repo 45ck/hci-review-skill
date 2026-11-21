@@ -1,0 +1,29 @@
+@import "./components.css";
+@import "./icons.css";
+
+.qgm-scope {
+  --qgm-fast: 150ms;
+  --qgm-control: 240ms;
+  --qgm-layout: 320ms;
+  --qgm-ease: cubic-bezier(.2,.8,.2,1);
+  --qgm-spring: cubic-bezier(.18,1.16,.3,1);
+  --qgm-ink: var(--liquid-ink, #163a42);
+  --qgm-accent: var(--liquid-accent, #176b6a);
+}
+.qgm-scope[data-motion-preset="calm"] { --qgm-fast: 180ms; --qgm-control: 300ms; --qgm-layout: 400ms; --qgm-spring: var(--qgm-ease); }
+.qgm-scope[data-motion-preset="expressive"] { --qgm-control: 265ms; --qgm-layout: 350ms; }
+.qgm-scope[data-motion-policy="off"], .qgm-scope[data-motion-policy="reduced"] { --qgm-fast: 0ms; --qgm-control: 0ms; --qgm-layout: 0ms; }
+.qgm-state { display: grid; gap: 1rem; min-width: 0; }
+.qgm-state-name { display: block; margin-block: .75rem; font-weight: 650; font-size: 1rem; }
+.qgm-state-actions { display: flex; flex-wrap: wrap; gap: .6rem; }
+.qgm-scene { position: relative; width: 100%; aspect-ratio: 2 / 1; overflow: hidden; isolation: isolate; }
+.qgm-scene-layer { position: absolute; inset-inline-start: 50%; inset-block-start: 50%; width: 4rem; height: 4rem; margin: -2rem; pointer-events: none; }
+.qgm-asset { position: relative; min-width: 0; min-height: 3rem; }
+.qgm-asset-canvas { pointer-events: none; }
+.qgm-asset-canvas[data-ready="true"] + .qgm-asset-fallback { display: none; }
+.qgm-scope:is([data-motion-policy="off"], [data-motion-policy="reduced"]) :is([data-slot], [data-motion-effect]) {
+  transition-duration: 0ms !important;
+  animation: none !important;
+}
+@media (prefers-reduced-motion: reduce) { .qgm-scope { --qgm-fast: 0ms; --qgm-control: 0ms; --qgm-layout: 0ms; } }
+@media (forced-colors: active) { .qgm-scope { --qgm-ink: CanvasText; --qgm-accent: Highlight; } }

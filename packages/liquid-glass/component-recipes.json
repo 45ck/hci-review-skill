@@ -238,6 +238,47 @@
         "https://ui.shadcn.com/blocks/sidebar",
         "https://developer.apple.com/design/human-interface-guidelines/materials"
       ]
+    },
+    {
+      "id": "motion-system",
+      "collection": "motion",
+      "title": "Native motion",
+      "purpose": "Compose accepted icon state, selection, presence and list continuity with one shared motion policy.",
+      "components": [
+        "LiquidMotionProvider",
+        "LiquidMorphIcon",
+        "LiquidAnimatedIcon",
+        "LiquidPresence",
+        "LiquidMotionList",
+        "LiquidMotionNumber",
+        "LiquidTextTransition",
+        "LiquidSharedIndicator",
+        "LiquidMotionFeedback",
+        "LiquidDepth",
+        "LiquidMotionState",
+        "LiquidMotionScene"
+      ],
+      "importPath": "@quantitative-hci/liquid-glass/motion",
+      "stylesheet": "@quantitative-hci/liquid-glass/motion.css",
+      "example": "docs/hci/examples/liquid-glass/src/recipes/motion-system.tsx",
+      "sdkPrimitives": [
+        "Button",
+        "Toggle",
+        "SegmentedControl"
+      ],
+      "constraints": [
+        "Reuse the existing LiquidGlassProvider and one SDK agent bridge.",
+        "Animate only accepted meaningful state changes; completion of animation is presentation only.",
+        "Read /motion-recipes.json for intent, requirements and avoidWhen; respect effective preferences.",
+        "A named graph uses send(event, expectedState); inspect the resulting accepted state and handle cancellation."
+      ],
+      "sources": [
+        "https://useanimations.com/documentation",
+        "https://motion.dev/docs",
+        "https://motion-primitives.com",
+        "https://auto-animate.formkit.com",
+        "https://rive.app/docs/runtimes/react/data-binding"
+      ]
     }
   ]
 }

@@ -383,11 +383,42 @@ async def run(args):
             await page.evaluate("window.scrollTo(0, 0)")
             await expect(page.locator("[data-kit-view='overview']")).to_be_visible()
             await expect(page.get_by_label("Search components", exact=True)).to_be_visible()
-            await expect(page.get_by_role("button", name="Material settings", exact=True)).to_be_visible()
+            material_trigger = page.get_by_role("button", name="Material settings", exact=True)
+            await expect(material_trigger).to_be_visible()
+            await expect(material_trigger.locator("[data-liquid-icon='settings']")).to_be_visible()
             dimensions = await page.evaluate("({width: innerWidth, scroll: document.documentElement.scrollWidth})")
             assert dimensions["scroll"] <= dimensions["width"] + 1, f"Mobile overview overflows: {dimensions}"
             await settled_motion(page)
             await page.screenshot(path=str(output.parent / "overview-mobile.png"), animations="allow", timeout=SCREENSHOT_TIMEOUT_MS)
+            appearance_state = """() => ({
+                font: document.documentElement.dataset.liquidFont,
+                icons: document.documentElement.dataset.liquidIcons,
+                storedFont: localStorage.getItem('qg-kit-font'),
+                storedIcons: localStorage.getItem('qg-kit-icons')
+            })"""
+            appearance_before = await page.evaluate(appearance_state)
+            await material_trigger.click()
+            material_popover = page.locator(".kit-material-popover")
+            await expect(material_popover).to_be_visible()
+            for label, options in (
+                ("Font set", ("Studio — Manrope", "Editorial — Fraunces", "System")),
+                ("Icon style", ("Isometric", "Line")),
+            ):
+                choice = material_popover.get_by_role("combobox", name=label, exact=True)
+                await choice.scroll_into_view_if_needed()
+                await choice.click()
+                for option in options:
+                    item = page.get_by_role("option", name=option, exact=True)
+                    await expect(item).to_be_visible()
+                    await expect(item).to_be_in_viewport()
+                await page.keyboard.press("Escape")
+                await expect(choice).to_have_attribute("aria-expanded", "false")
+                await expect(material_popover).to_be_visible()
+            await page.screenshot(path=str(output.parent / "material-settings-mobile.png"), animations="allow", timeout=SCREENSHOT_TIMEOUT_MS)
+            await material_popover.get_by_role("button", name="Done", exact=True).click()
+            await expect(material_popover).to_be_hidden()
+            await expect(material_trigger).to_be_focused()
+            assert await page.evaluate(appearance_state) == appearance_before, "Inspecting mobile choices changed appearance preferences"
             catalogue = page.get_by_role("listbox", name="Component catalogue", exact=True)
             assert await catalogue.evaluate("node => node.scrollHeight > node.clientHeight"), "Mobile catalogue should remain scrollable"
             await choose("preferences")
@@ -398,7 +429,15 @@ async def run(args):
             await expect(control).to_have_attribute("aria-checked", "false" if before == "true" else "true")
             await page.set_viewport_size({"width": 1440, "height": 1000})
             await page.evaluate("window.scrollTo(0, 0)")
-            return {**dimensions, "viewport": {"width": 390, "height": 844}, "switchUsable": True, "screenshot": "overview-mobile.png"}
+            return {
+                **dimensions, "viewport": {"width": 390, "height": 844},
+                "switchUsable": True, "screenshot": "overview-mobile.png",
+                "materialSettings": {
+                    "iconVisible": True, "choicesReachable": ["Font set", "Icon style"],
+                    "appearanceUnchanged": True, "focusRestored": True,
+                    "screenshot": "material-settings-mobile.png",
+                },
+            }
 
         await record("mobile_overview_fits_and_remains_usable", mobile, timeout=20)
 

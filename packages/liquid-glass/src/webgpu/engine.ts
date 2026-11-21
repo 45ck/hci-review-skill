@@ -52,6 +52,7 @@ export function createLiquidGlassEngine(config: EngineOptions) {
   let groups = new Map<HTMLElement, LiquidSurface[]>();
   let viewport: LiquidSurface[] = [];
   const geometryAnimations = new Map<Element, Map<string, number>>();
+  const popupEntries = new Map<HTMLElement, { duration: number; limit: number; until: number | null }>();
   const nativeAnimations = new Map<Animation, { target: Element; deadline: number; complete: () => void }>();
   const expiredAnimations = new WeakSet<Animation>();
   const geometryObserved = new Set<Element>();
@@ -178,7 +179,16 @@ export function createLiquidGlassEngine(config: EngineOptions) {
         geometryDirty = true;
       }
     }
-    let geometryEffects = 0;
+    for (const [popup, entry] of popupEntries) {
+      if (entry.until === null && !popup.hasAttribute("data-starting-style"))
+        entry.until = Math.min(entry.limit, now + entry.duration);
+      if (!popup.isConnected || options.motion !== "enabled" || now >= entry.limit ||
+          (entry.until !== null && now >= entry.until)) {
+        popupEntries.delete(popup);
+        geometryDirty = true; // Take the final position before reporting idle.
+      }
+    }
+    let geometryEffects = popupEntries.size;
     for (const [element, animations] of geometryAnimations) {
       for (const [name, until] of animations)
         if (now >= until || !element.isConnected || options.motion !== "enabled") {
@@ -190,9 +200,10 @@ export function createLiquidGlassEngine(config: EngineOptions) {
     }
     try {
       if (geometryDirty || geometryEffects || nativeAnimations.size || motion.isTravelling()) {
-        const discoverAnimations = geometryDirty;
+        const discoverAnimations = geometryDirty || popupEntries.size > 0;
         surfaces = collectSurfaces(config.root, config.backdrop);
         surfaceMap = new Map(surfaces.map((surface) => [surface.element, surface]));
+        const previousGroups = groups;
         groups = new Map();
         viewport = [];
         popupGeometry.clear();
@@ -212,6 +223,26 @@ export function createLiquidGlassEngine(config: EngineOptions) {
             geometryResize.unobserve(element);
             geometryObserved.delete(element);
           }
+        if (options.motion === "enabled") {
+          for (const popup of groups.keys()) {
+            if (previousGroups.has(popup)) continue;
+            const style = getComputedStyle(popup);
+            const durations = cssMilliseconds(style.transitionDuration);
+            const delays = cssMilliseconds(style.transitionDelay);
+            const duration = Math.max(...durations.map((value, index) => value + (delays[index % delays.length] || 0)), 0);
+            if (!duration) continue;
+            // Registration may precede the SDK's first-frame style reset.
+            // Reconcile throughout that entry without relying on CSS events,
+            // and give a delayed reset its full duration within a hard bound.
+            const span = Math.min(1600, duration + 80);
+            if (!popupEntries.has(popup)) geometryEffects++;
+            popupEntries.set(popup, {
+              duration: span,
+              limit: now + 1600,
+              until: popup.hasAttribute("data-starting-style") ? null : now + span,
+            });
+          }
+        }
         geometryDirty = false;
         if (discoverAnimations) discoverNativeAnimations(now);
       }
@@ -421,6 +452,7 @@ export function createLiquidGlassEngine(config: EngineOptions) {
       frame = 0;
       for (const animation of nativeAnimations.keys()) untrackNative(animation);
       geometryAnimations.clear();
+      popupEntries.clear();
       html.dataset.liquidMotionState = "idle";
       html.dataset.liquidActiveEffects = "0";
       html.dataset.liquidMotionWork = JSON.stringify({ effects: 0, css: 0, native: 0, layout: 0 });
@@ -600,7 +632,10 @@ export function createLiquidGlassEngine(config: EngineOptions) {
     update(next: Options) {
       options = next;
       motion.update(next.motion);
-      if (next.motion !== "enabled") geometryAnimations.clear();
+      if (next.motion !== "enabled") {
+        geometryAnimations.clear();
+        popupEntries.clear();
+      }
       geometryDirty = true;
       schedule();
     },
@@ -613,6 +648,7 @@ export function createLiquidGlassEngine(config: EngineOptions) {
       resizeObserver.disconnect();
       geometryResize.disconnect();
       motion.destroy();
+      popupEntries.clear();
       for (const animation of nativeAnimations.keys()) untrackNative(animation);
       window.removeEventListener("resize", queueCapture);
       document.fonts.removeEventListener("loadingdone", queueCapture);

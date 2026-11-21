@@ -56,6 +56,7 @@ export function LiquidReviewOverlay({ open, onOpenChange, root, triggerLabel = "
   const [report, setReport] = useState<ReviewReport | null>(null);
   const [choices, setChoices] = useState<Record<string, number>>({});
   const [stale, setStale] = useState(false);
+  const [inspecting, setInspecting] = useState(false);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [peek, setPeek] = useState(false);
@@ -68,30 +69,78 @@ export function LiquidReviewOverlay({ open, onOpenChange, root, triggerLabel = "
   const wasPeeking = useRef(false);
   const reportRef = useRef(report);
   reportRef.current = report;
+  const cancelInitialScan = useRef<() => void>(() => {});
+
+  const acceptReport = useCallback((next: ReviewReport) => {
+    if (reportRef.current?.fingerprint !== next.fingerprint) setChoices({});
+    setReport(next);
+    setStale(false);
+    setError("");
+    setInspecting(false);
+  }, []);
 
   const refresh = useCallback(() => {
+    cancelInitialScan.current();
+    setInspecting(false);
     const surface = resolveRoot.current();
     setHighlight(null);
     setPeek(false);
     setNotice("");
     if (!surface) { setError("The review surface is not available. Open a page and refresh."); setStale(true); return; }
     try {
-      const next = scanReview(surface);
-      if (reportRef.current?.fingerprint !== next.fingerprint) setChoices({});
-      setReport(next);
-      setStale(false);
-      setError("");
+      acceptReport(scanReview(surface));
     } catch {
       setError("This surface could not be inspected. Refresh after it finishes loading.");
       setStale(true);
     }
-  }, []);
+  }, [acceptReport]);
 
   useEffect(() => {
-    if (!open) { setHighlight(null); setPeek(false); return; }
-    const frame = requestAnimationFrame(refresh);
-    return () => cancelAnimationFrame(frame);
-  }, [open, root, refresh]);
+    if (!open) { setHighlight(null); setPeek(false); setInspecting(false); return; }
+    let stopped = false;
+    let frame = 0;
+    let timer = 0;
+    let deadline = 0;
+    let previous: ReviewReport | null = null;
+    const stop = () => {
+      stopped = true;
+      cancelAnimationFrame(frame);
+      window.clearTimeout(timer);
+      window.clearTimeout(deadline);
+    };
+    cancelInitialScan.current = stop;
+    setInspecting(true);
+    setError("");
+    setNotice("");
+    setHighlight(null);
+    setPeek(false);
+    // A deep link opens during the first layout. Responsive effects and swapped
+    // fonts can still change measured geometry, so do not publish that first
+    // frame as a decision target. This bounded stage ends before choices exist;
+    // later visible changes remain stale until the person explicitly refreshes.
+    const sample = () => {
+      if (stopped) return;
+      try {
+        const surface = resolveRoot.current();
+        const next = surface ? scanReview(surface) : null;
+        if (document.fonts?.status === "loading") previous = null;
+        else if (next && previous?.fingerprint === next.fingerprint) {
+          stop();
+          acceptReport(next);
+          return;
+        } else previous = next;
+      } catch { previous = null; }
+      timer = window.setTimeout(() => { frame = requestAnimationFrame(sample); }, 220);
+    };
+    deadline = window.setTimeout(() => {
+      stop();
+      setInspecting(false);
+      setStale(true);
+      setError("The page is still changing or unavailable. Refresh checks after it finishes loading.");
+    }, 2000);
+    frame = requestAnimationFrame(() => { frame = requestAnimationFrame(sample); });
+    return stop;
+  }, [open, root, acceptReport]);
 
   useEffect(() => {
     if (open && peek) returnButton.current?.focus();
@@ -100,7 +149,7 @@ export function LiquidReviewOverlay({ open, onOpenChange, root, triggerLabel = "
   }, [open, peek]);
 
   useEffect(() => {
-    if (!open || !report) return;
+    if (!open || !report || inspecting) return;
     const surface = resolveRoot.current();
     if (!surface) return;
     let timer = 0;
@@ -128,11 +177,11 @@ export function LiquidReviewOverlay({ open, onOpenChange, root, triggerLabel = "
       window.removeEventListener("resize", schedule);
       document.removeEventListener("visibilitychange", schedule);
     };
-  }, [open, report]);
+  }, [open, report, inspecting]);
 
   const currentReport = () => {
     const surface = resolveRoot.current();
-    if (!report || !surface || stale) return false;
+    if (!report || !surface || stale || inspecting) return false;
     try {
       if (scanReview(surface).fingerprint === report.fingerprint) return true;
     } catch { /* An unavailable surface cannot authorise an old selection. */ }
@@ -143,10 +192,10 @@ export function LiquidReviewOverlay({ open, onOpenChange, root, triggerLabel = "
   };
 
   const packetText = useMemo(() => {
-    if (!report || stale) return "";
+    if (!report || stale || inspecting) return "";
     try { return JSON.stringify(createReviewPacket(report, { fingerprint: report.fingerprint, choices }), null, 2); }
     catch { return ""; }
-  }, [report, choices, stale]);
+  }, [report, choices, stale, inspecting]);
 
   const locate = (finding: ReviewFinding, number: number) => {
     if (!currentReport()) return;
@@ -176,7 +225,7 @@ export function LiquidReviewOverlay({ open, onOpenChange, root, triggerLabel = "
   return <>
     <Dialog open={open} onOpenChange={onOpenChange} modal={false} closeOnOutsidePress={false}>
       <DialogTrigger ref={trigger} className={`qgr-trigger ${className}`} data-quantive-review-root="" shortcut={shortcut}><LiquidIcon name="search" size={18} />{triggerLabel}</DialogTrigger>
-      <DialogContent ref={panel} className="qgr-panel" initialFocus="content" finalFocus={() => trigger.current} data-quantive-review-root="" data-review-fingerprint={report?.fingerprint ?? ""} data-review-stale={stale} data-review-scope={report?.scope ?? ""} data-review-element-count={report?.elementCount ?? 0} data-review-peek={peek} data-review-source={report?.scope.includes("lint-example") ? "fixture" : "page"} data-validation="unvalidated" data-liquid-glass="off">
+      <DialogContent ref={panel} className="qgr-panel" initialFocus="content" finalFocus={() => trigger.current} data-quantive-review-root="" data-review-fingerprint={inspecting ? "" : report?.fingerprint ?? ""} data-review-stale={stale} data-review-scope={report?.scope ?? ""} data-review-element-count={report?.elementCount ?? 0} data-review-peek={peek} data-review-source={report?.scope.includes("lint-example") ? "fixture" : "page"} data-validation="unvalidated" data-liquid-glass="off">
         <header className="qgr-header">
           <div className="qgr-title"><LiquidIcon name="search" size={24} /><DialogTitle>Review UI</DialogTitle></div>
           <DialogClose aria-label="Close review" className="qgr-close">×</DialogClose>
@@ -185,8 +234,8 @@ export function LiquidReviewOverlay({ open, onOpenChange, root, triggerLabel = "
           <div className="qgr-toolbar"><Button onClick={refresh}>Refresh checks</Button>{tools}</div>
           <div className="qgr-scroll">
             {error && <p className="qgr-alert" role="alert">{error}</p>}
-            {stale && <div className="qgr-alert" role="status"><strong>Page changed</strong><p>Refresh to inspect the current content. Previous choices will be cleared.</p></div>}
-            {report ? <>
+            {stale && !inspecting && <div className="qgr-alert" role="status"><strong>Page changed</strong><p>Refresh to inspect the current content. Previous choices will be cleared.</p></div>}
+            {report && !inspecting ? <>
               <div className="qgr-summary"><span>{report.findings.length} {report.findings.length === 1 ? "finding" : "findings"}</span><span>{report.elementCount} elements · {report.viewport.width} × {report.viewport.height}</span></div>
               <p className="qgr-scope">{report.scope}</p>
               {report.findings.length === 0 && <div className="qgr-empty"><strong>No findings in these checks</strong><p>Meaning, task clarity and visual judgment still need contextual review.</p></div>}

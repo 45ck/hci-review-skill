@@ -217,7 +217,7 @@ export function LiquidGraphicStudio({ model, assets, onModelChange, onAssetsChan
     }
     if (target?.kind === "image" && !target.locked) {
       commit({ ...current, layers: current.layers.map(layer => layer.id === target.id ? { ...target, assetId: acceptedAsset.id } : layer) },
-        { reason: "image-import", layerId: target.id, ...waiting.input, message: `Imported ${acceptedAsset.name} into ${target.name}.` }, assets);
+        { reason: "image-import", layerId: target.id, source: waiting.input.source, event: waiting.input.event, message: `Imported ${acceptedAsset.name} into ${target.name}.` }, assets);
     } else setFeedback(`Image asset ${acceptedAsset.name} accepted. Choose Image and add a layer to use it.`);
   }, [assets, model]);
 
@@ -244,7 +244,7 @@ export function LiquidGraphicStudio({ model, assets, onModelChange, onAssetsChan
   }
 
   function updateLayer(layer: GraphicLayer, reason: GraphicChangeDetails["reason"], input: GraphicInteraction) {
-    return commit({ ...currentModel.current, layers: currentModel.current.layers.map((item) => item.id === layer.id ? layer : item) }, { reason, layerId: layer.id, ...input });
+    return commit({ ...currentModel.current, layers: currentModel.current.layers.map((item) => item.id === layer.id ? layer : item) }, { reason, layerId: layer.id, source: input.source, event: input.event });
   }
 
   function applyProperties(input: GraphicInteraction) {
@@ -272,19 +272,19 @@ export function LiquidGraphicStudio({ model, assets, onModelChange, onAssetsChan
   function addLayer(input: GraphicInteraction) {
     const base = { id: freshId(newKind), name: uniqueName(newKind === "text" ? "New text" : newKind === "image" ? "New image" : "New shape"), x: model.width * 0.15, y: model.height * 0.2, width: model.width * 0.55, height: model.height * 0.3, rotation: 0, opacity: 1, visible: true, locked: false };
     const layer: GraphicLayer = newKind === "text" ? { ...base, kind: "text", text: "Make something worth seeing.", fontSize: 56, fontFamily: "sans-serif", fontWeight: 600, fill: "#163348", align: "left" } : newKind === "image" ? { ...base, kind: "image", assetId: newAssetId, fit: "cover", radius: 24 } : { ...base, kind: "shape", shape: "rectangle", fill: "#d9f0e8", radius: 24 };
-    commit({ ...model, layers: [...model.layers, layer] }, { reason: "add", layerId: layer.id, selectedId: layer.id, ...input });
+    commit({ ...model, layers: [...model.layers, layer] }, { reason: "add", layerId: layer.id, selectedId: layer.id, source: input.source, event: input.event });
   }
 
   function duplicateLayer(input: GraphicInteraction) {
     if (!selected) return;
     const layer = { ...structuredClone(selected), id: freshId(selected.kind), name: uniqueName(`${selected.name} copy`), x: selected.x + 24, y: selected.y + 24, locked: false };
-    commit({ ...model, layers: [...model.layers, layer] }, { reason: "duplicate", layerId: selected.id, selectedId: layer.id, ...input });
+    commit({ ...model, layers: [...model.layers, layer] }, { reason: "duplicate", layerId: selected.id, selectedId: layer.id, source: input.source, event: input.event });
   }
 
   function deleteLayer(input: GraphicInteraction) {
     if (!selected || model.layers.length <= 1) return;
     const remaining = model.layers.filter((layer) => layer.id !== selected.id);
-    commit({ ...model, layers: remaining }, { reason: "delete", layerId: selected.id, selectedId: remaining.at(-1)!.id, ...input });
+    commit({ ...model, layers: remaining }, { reason: "delete", layerId: selected.id, selectedId: remaining.at(-1)!.id, source: input.source, event: input.event });
   }
 
   function reorder(offset: number, input: GraphicInteraction) {
@@ -295,7 +295,7 @@ export function LiquidGraphicStudio({ model, assets, onModelChange, onAssetsChan
     const next = [...model.layers];
     next.splice(index, 1);
     next.splice(destination, 0, selected);
-    commit({ ...model, layers: next }, { reason: "reorder", layerId: selected.id, ...input });
+    commit({ ...model, layers: next }, { reason: "reorder", layerId: selected.id, source: input.source, event: input.event });
   }
 
   function startDrag(event: PointerEvent<HTMLButtonElement>, layer: GraphicLayer, kind: "move" | "resize") {
@@ -480,9 +480,9 @@ export function LiquidGraphicStudio({ model, assets, onModelChange, onAssetsChan
           <Choice label="Graphic format" disabled={mutationBusy} value={format} options={[...formats, { value: "custom", label: `${model.width} × ${model.height} · custom` }]} onChange={(value, input) => {
             const preset = formats.find((item) => item.value === value); if (!preset) return;
             const sx = preset.width / model.width, sy = preset.height / model.height;
-            commit({ ...model, width: preset.width, height: preset.height, layers: model.layers.map((layer) => ({ ...layer, x: rounded(layer.x * sx), y: rounded(layer.y * sy), width: rounded(layer.width * sx), height: rounded(layer.height * sy), ...(layer.kind === "text" ? { fontSize: rounded(clamp(layer.fontSize * Math.min(sx, sy), 8, 240)) } : {}) })) }, { reason: "artboard", ...input });
+            commit({ ...model, width: preset.width, height: preset.height, layers: model.layers.map((layer) => ({ ...layer, x: rounded(layer.x * sx), y: rounded(layer.y * sy), width: rounded(layer.width * sx), height: rounded(layer.height * sy), ...(layer.kind === "text" ? { fontSize: rounded(clamp(layer.fontSize * Math.min(sx, sy), 8, 240)) } : {}) })) }, { reason: "artboard", source: input.source, event: input.event });
           }} />
-          <form className="qgs-background" onSubmit={(event) => { event.preventDefault(); const input = backgroundSubmit.current ?? { source: sourceOf(event.nativeEvent), event: event.nativeEvent }; backgroundSubmit.current = null; commit({ ...model, background }, { reason: "artboard", ...input }); }} noValidate>
+          <form className="qgs-background" onSubmit={(event) => { event.preventDefault(); const input = backgroundSubmit.current ?? { source: sourceOf(event.nativeEvent), event: event.nativeEvent }; backgroundSubmit.current = null; commit({ ...model, background }, { reason: "artboard", source: input.source, event: input.event }); }} noValidate>
             <Field><FieldLabel>Graphic background</FieldLabel><Input value={background} onValueChange={setBackground} maxLength={7} spellCheck={false} /></Field><Button type="submit" disabled={mutationBusy} onClick={(event, details) => { backgroundSubmit.current = { source: details.source, event: event.nativeEvent }; }}>Apply background</Button>
           </form>
         </div>

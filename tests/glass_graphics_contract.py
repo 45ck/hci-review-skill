@@ -173,6 +173,8 @@ async def verify_graphics_contract(page, expect, *, base_url, output_dir):
     assert await copy_model() == framed, "A stale draft replaced a newer composition"
     await _act(page, await _entry(page, "switch", "Layer locked"), "setChecked", [True])
     locked = await copy_model()
+    assert _layer(locked, "image")["locked"] is True, "The host did not accept locking the image"
+    assert locked["revision"] == framed["revision"] + 1, "Locking must create one accepted revision"
     invalid = deepcopy(locked)
     _layer(invalid, "image")["x"] += 100
     await set_value("textarea", "Graphic JSON draft", json.dumps(invalid))
@@ -181,6 +183,8 @@ async def verify_graphics_contract(page, expect, *, base_url, output_dir):
     assert await copy_model() == locked, "Structured edits bypassed a layer lock"
     await _act(page, await _entry(page, "switch", "Layer locked"), "setChecked", [False])
     unlocked = await copy_model()
+    assert _layer(unlocked, "image")["locked"] is False, "SDK input details overrode the unlock operation or the host did not accept it"
+    assert unlocked["revision"] == locked["revision"] + 1, "Unlocking must create one accepted revision"
     changed = deepcopy(unlocked)
     _layer(changed, "caption")["text"] = "A composition worth keeping."
     await set_value("textarea", "Graphic JSON draft", json.dumps(changed))

@@ -1,7 +1,9 @@
 import type { DiagramEdge, DiagramModel, DiagramNode, DiagramPoint } from "./types";
+import { DIAGRAM_EDGE_KINDS, DIAGRAM_NODE_KINDS, DIAGRAM_NOTATIONS } from "./types";
+import { specialNodeShapes } from "./notations";
 
 export interface DiagramShape {
-  tag: "rect" | "line" | "path" | "polyline" | "polygon" | "text" | "g" | "title";
+  tag: "rect" | "line" | "path" | "polyline" | "polygon" | "text" | "g" | "title" | "circle" | "ellipse";
   attrs: Record<string, string | number>;
   text?: string;
   children?: DiagramShape[];
@@ -38,20 +40,64 @@ export function nodeKeyword(node: DiagramNode) {
 }
 
 export function nodeHeaderHeight(node: DiagramNode) {
+  if (node.kind === "table") return 52 + 24 * ((node.table?.rows.length ?? 0) + 1);
+  if (["initial", "final", "fork", "startEvent", "endEvent", "criterion", "port", "ifmlEvent", "pool", "planningTable"].includes(node.kind)) return 0;
+  if (["package", "casePlan", "device"].includes(node.kind)) return 74;
+  if (["stage", "interaction", "lifeline", "ifmlViewContainer"].includes(node.kind)) return 48;
+  if (["object", "part"].includes(node.kind)) return 46;
+  if (!["class", "component", "interface", "uwe"].includes(node.kind)) return Math.min(40, node.height);
   return nodeKeyword(node) ? 58 : 44;
 }
 
-export function validateDiagramModel(model: DiagramModel) {
+export function validateDiagramModel(candidate: unknown) {
   const errors: string[] = [];
-  if (![model.width, model.height].every((value) => Number.isFinite(value) && value > 0)) {
-    errors.push("The diagram must have positive, finite dimensions.");
+  const record = (value: unknown): value is Record<string, unknown> => Boolean(value && typeof value === "object" && !Array.isArray(value));
+  const validText = (value: unknown, max = 2000): value is string => typeof value === "string" && value.length <= max && !/[\u0000-\u0008\u000b\u000c\u000e-\u001f\ud800-\udfff\ufffe\uffff]/u.test(value);
+  const strings = (value: unknown) => Array.isArray(value) && value.length <= 100 && value.every(item => validText(item));
+  if (!record(candidate) || !Array.isArray(candidate.nodes) || !Array.isArray(candidate.edges)) return ["Provide a model object with nodes and edges arrays."];
+  const model = candidate as unknown as DiagramModel;
+  if (![model.id, model.name, model.description].every(value => validText(value, 10000) && value.trim())) errors.push("The model needs a text ID, name and description without invalid XML characters.");
+  if (!DIAGRAM_NOTATIONS.includes(model.notation)) errors.push("Choose one of the supported notation views.");
+  if (model.nodes.length > 500 || model.edges.length > 1500) errors.push("Use at most 500 elements and 1,500 relationships per model.");
+  if (model.standard !== undefined) {
+    if (!record(model.standard) || ![model.standard.acronym, model.standard.version, model.standard.sourceUrl, model.standard.scope].every(value => validText(value, 10000) && value.trim()) || !["notation-subset", "concept-projection"].includes(model.standard.coverage)) errors.push("Standard metadata needs a name, version, HTTPS source, coverage and scope.");
+    else { try { if (new URL(model.standard.sourceUrl).protocol !== "https:") errors.push("Use an HTTPS specification source URL."); } catch { errors.push("Use a valid HTTPS specification source URL."); } }
+  }
+  for (const node of model.nodes) {
+    if (!record(node) || ![node.id, node.name, node.description].every(value => validText(value, 10000)) || !DIAGRAM_NODE_KINDS.includes(node.kind)) {
+      errors.push("Every element needs a supported kind and text ID, name and description.");
+      continue;
+    }
+    if (node.compartments !== undefined && (!Array.isArray(node.compartments) || node.compartments.length > 30 || node.compartments.some(group => !record(group) || !strings(group.entries) || (group.label !== undefined && !validText(group.label))))) errors.push("Element compartments must contain text entries.");
+    if (node.constraints !== undefined && !strings(node.constraints)) errors.push("Element constraints must be text entries.");
+    if (node.activations !== undefined && (!Array.isArray(node.activations) || node.activations.length > 100 || node.activations.some(value => !record(value) || !Number.isFinite(value.y) || !Number.isFinite(value.height) || value.y < 0 || value.height <= 0 || value.y + value.height > node.height))) errors.push("Lifeline activations must fit inside their element with positive heights.");
+    if (node.kind === "table" || node.table !== undefined) {
+      if (!record(node.table) || !strings(node.table.columns) || !node.table.columns.length || !Array.isArray(node.table.rows) || node.table.rows.length > 100 || node.table.rows.some(row => !strings(row) || row.length !== node.table!.columns.length)) errors.push("Tables need column names and equally sized text rows.");
+      else {
+        if (node.table.hitPolicy !== undefined && !validText(node.table.hitPolicy, 80)) errors.push("Table hit policy must be text.");
+        if (node.table.inputColumnCount !== undefined && (!Number.isInteger(node.table.inputColumnCount) || node.table.inputColumnCount < 1 || node.table.inputColumnCount > node.table.columns.length - 2)) errors.push("Decision tables need a valid number of input columns and an output column.");
+      }
+    }
+    if ([node.stereotype, node.marker, node.parentId, node.ownerId, node.multiplicity].some(value => value !== undefined && !validText(value))) errors.push("Element metadata must be text.");
+    if ([node.abstract, node.discretionary].some(value => value !== undefined && typeof value !== "boolean")) errors.push("Element flags must be boolean.");
+  }
+  for (const edge of model.edges) {
+    if (!record(edge) || ![edge.id, edge.source, edge.target, edge.description].every(value => validText(value, 10000)) || !DIAGRAM_EDGE_KINDS.includes(edge.kind)) { errors.push("Every relationship needs text IDs, a description and a supported kind."); continue; }
+    if (edge.waypoints !== undefined && (!Array.isArray(edge.waypoints) || edge.waypoints.length > 100)) errors.push("Relationship waypoints must be an array of at most 100 points.");
+    if ([edge.label, edge.sourceMultiplicity, edge.targetMultiplicity].some(value => value !== undefined && !validText(value))) errors.push("Relationship labels must be text.");
+    if ([edge.sourceSide, edge.targetSide].some(value => value !== undefined && !["top", "right", "bottom", "left"].includes(value))) errors.push("Relationship sides must be top, right, bottom or left.");
+    if (edge.directed !== undefined && typeof edge.directed !== "boolean") errors.push("Relationship direction must be boolean.");
+  }
+  if (errors.length) return [...new Set(errors)];
+  if (![model.width, model.height].every((value) => Number.isFinite(value) && value >= 100 && value <= 20000)) {
+    errors.push("The diagram must have finite dimensions between 100 and 20,000 units.");
   }
   const nodes = new Map<string, DiagramNode>();
   for (const node of model.nodes) {
     if (!node.id || nodes.has(node.id)) errors.push("Every element needs a unique, non-empty ID.");
     nodes.set(node.id, node);
     if (!node.name.trim()) errors.push("Every element needs a name.");
-    if (![node.x, node.y, node.width, node.height].every(Number.isFinite) || node.width <= 0 || node.height < nodeHeaderHeight(node)) {
+    if (![node.x, node.y, node.width, node.height].every(Number.isFinite) || node.width < 8 || node.height < Math.max(8, nodeHeaderHeight(node))) {
       errors.push(`Element ${node.id} has invalid dimensions.`);
     }
     if (node.x < 0 || node.y < 0 || node.x + node.width > model.width || node.y + node.height > model.height) {
@@ -59,6 +105,7 @@ export function validateDiagramModel(model: DiagramModel) {
     }
   }
   for (const node of model.nodes) {
+    if (node.ownerId && (!nodes.has(node.ownerId) || node.ownerId === node.id)) errors.push(`Element ${node.id} needs a distinct, existing owner.`);
     if (!node.parentId) continue;
     const parent = nodes.get(node.parentId);
     if (!parent || parent.id === node.id) {
@@ -89,7 +136,7 @@ export function validateDiagramModel(model: DiagramModel) {
     if ([edge.sourceOffset, edge.targetOffset].some((value) => value !== undefined && (!Number.isFinite(value) || value < 0 || value > 1))) {
       errors.push(`Relationship ${edge.id} has an invalid connection offset.`);
     }
-    if ([...(edge.waypoints ?? []), ...(edge.labelPosition ? [edge.labelPosition] : [])].some(({ x, y }) => !Number.isFinite(x) || !Number.isFinite(y))) {
+    if ([...(edge.waypoints ?? []), ...[edge.labelPosition, edge.sourcePoint, edge.targetPoint].filter(value => value !== undefined)].some(value => !record(value) || !Number.isFinite(value.x) || !Number.isFinite(value.y))) {
       errors.push(`Relationship ${edge.id} has invalid coordinates.`);
     }
   }
@@ -111,8 +158,8 @@ function edgePoints(edge: DiagramEdge, nodes: Map<string, DiagramNode>) {
   const horizontal = Math.abs(dx) > Math.abs(dy);
   const sourceSide = edge.sourceSide ?? (horizontal ? (dx >= 0 ? "right" : "left") : dy >= 0 ? "bottom" : "top");
   const targetSide = edge.targetSide ?? (horizontal ? (dx >= 0 ? "left" : "right") : dy >= 0 ? "top" : "bottom");
-  const start = anchor(source, sourceSide, edge.sourceOffset);
-  const end = anchor(target, targetSide, edge.targetOffset);
+  const start = edge.sourcePoint ?? anchor(source, sourceSide, edge.sourceOffset);
+  const end = edge.targetPoint ?? anchor(target, targetSide, edge.targetOffset);
   const bends = edge.waypoints ?? (sourceSide === "left" || sourceSide === "right"
     ? [{ x: (start.x + end.x) / 2, y: start.y }, { x: (start.x + end.x) / 2, y: end.y }]
     : [{ x: start.x, y: (start.y + end.y) / 2 }, { x: end.x, y: (start.y + end.y) / 2 }]);
@@ -130,21 +177,40 @@ function edgeShapes(edge: DiagramEdge, nodes: Map<string, DiagramNode>): Diagram
   const points = edgePoints(edge, nodes);
   const start = points[0];
   const end = points.at(-1)!;
-  const vector = endVector(end, points.at(-2)!);
+  const vector = endVector(end, points.at(-2) ?? end);
   const children: DiagramShape[] = [];
-  const dashed = edge.kind === "dependency" || edge.kind === "realization";
+  const dashed = ["dependency", "realization", "messageFlow", "knowledgeRequirement", "authorityRequirement", "caseLink", "sentryOnPart", "returnMessage", "intangibleFlow", "dataFlow"].includes(edge.kind);
+  const dashPattern = edge.kind === "sentryOnPart" ? "1.5 4" : edge.kind === "caseLink" ? "8 4 1.5 4 1.5 4" : "7 5";
   children.push(shape("polyline", {
     points: points.map(point).join(" "), fill: "none", stroke: ink, strokeWidth: 1.6,
-    strokeLinejoin: "round", ...(dashed ? { strokeDasharray: "7 5" } : {}),
+    strokeLinejoin: "round", ...(dashed ? { strokeDasharray: dashPattern } : {}),
     "data-diagram-edge": edge.id, "data-edge-kind": edge.kind,
   }));
   if (edge.kind === "generalization" || edge.kind === "realization") {
     children.push(shape("polygon", { points: [end, vector(15, 8), vector(15, -8)].map(point).join(" "), fill: paper, stroke: ink, strokeWidth: 1.6, "data-arrowhead": "triangle", className: "qgd-arrow-paper" }));
-  } else if (dashed || edge.kind === "navigationLink" || edge.kind === "processLink" || edge.directed) {
+  } else if (["sequenceFlow", "informationRequirement", "synchronousMessage", "extension", "dataFlow", "navigationFlow", "deliverableFlow", "intangibleFlow", "valuePropositionFlow"].includes(edge.kind)) {
+    children.push(shape("polygon", { points: [end, vector(12, 6), vector(12, -6)].map(point).join(" "), fill: ink, stroke: ink, "data-arrowhead": "filled-triangle", className: "qgd-arrow-solid" }));
+  } else if (edge.kind === "authorityRequirement") {
+    const center = vector(4, 0);
+    children.push(shape("circle", { cx: center.x, cy: center.y, r: 4, fill: ink, "data-arrowhead": "solid-circle", className: "qgd-arrow-solid" }));
+  } else if (edge.kind === "messageFlow") {
+    const center = endVector(start, points[1] ?? start)(4, 0);
+    children.push(shape("circle", { cx: center.x, cy: center.y, r: 4, fill: paper, stroke: ink, className: "qgd-arrow-paper" }));
+    children.push(shape("polygon", { points: [end, vector(12, 6), vector(12, -6)].map(point).join(" "), fill: paper, stroke: ink, "data-arrowhead": "message", className: "qgd-arrow-paper" }));
+  } else if (edge.kind === "communicationMessage") {
+    const segments = points.slice(1).map((to, index) => ({ from: points[index], to, length: Math.hypot(to.x - points[index].x, to.y - points[index].y) }));
+    const segment = segments.reduce((longest, current) => current.length > longest.length ? current : longest, { from: start, to: end, length: 0 });
+    const along = endVector(segment.to, segment.from);
+    const messageStart = along(segment.length / 2 + 15, -10);
+    const messageEnd = along(segment.length / 2 - 15, -10);
+    const arrow = endVector(messageEnd, messageStart);
+    children.push(shape("line", { x1: messageStart.x, y1: messageStart.y, x2: messageEnd.x, y2: messageEnd.y, stroke: ink, strokeWidth: 1.4, "data-message-arrow": edge.id }));
+    children.push(shape("polygon", { points: [messageEnd, arrow(8, 4), arrow(8, -4)].map(point).join(" "), fill: ink, stroke: ink, "data-arrowhead": "communication-message", className: "qgd-arrow-solid" }));
+  } else if ((dashed && !["caseLink", "sentryOnPart"].includes(edge.kind)) || ["navigationLink", "processLink", "controlFlow", "transition"].includes(edge.kind) || (edge.directed && !["caseLink", "sentryOnPart"].includes(edge.kind))) {
     children.push(shape("polyline", { points: [vector(11, 5), end, vector(11, -5)].map(point).join(" "), fill: "none", stroke: ink, strokeWidth: 1.6, "data-arrowhead": "open" }));
   }
   if (edge.kind === "composition" || edge.kind === "aggregation") {
-    const fromStart = endVector(start, points[1]);
+    const fromStart = endVector(start, points[1] ?? start);
     children.push(shape("polygon", {
       points: [start, fromStart(9, 5), fromStart(18, 0), fromStart(9, -5)].map(point).join(" "),
       fill: edge.kind === "composition" ? ink : paper, stroke: ink, strokeWidth: 1.6,
@@ -156,7 +222,7 @@ function edgeShapes(edge: DiagramEdge, nodes: Map<string, DiagramNode>): Diagram
   const label = edge.label ?? (edge.kind === "navigationLink" || edge.kind === "processLink" ? `«${edge.kind}»` : "");
   if (label) children.push(textAt(middle.x, middle.y, label, { textAnchor: "middle", fontSize: 12, paintOrder: "stroke", stroke: paper, strokeWidth: 5, strokeLinejoin: "round", className: "qgd-edge-label" }));
   if (edge.sourceMultiplicity) {
-    const near = endVector(start, points[1])(25, -12);
+    const near = endVector(start, points[1] ?? start)(25, -12);
     children.push(textAt(near.x, near.y, edge.sourceMultiplicity, { fontSize: 12, textAnchor: "middle" }));
   }
   if (edge.targetMultiplicity) {
@@ -167,6 +233,8 @@ function edgeShapes(edge: DiagramEdge, nodes: Map<string, DiagramNode>): Diagram
 }
 
 function nodeShapes(node: DiagramNode, active: boolean, container: boolean): DiagramShape {
+  const special = specialNodeShapes(node, active);
+  if (special) return { tag: "g", attrs: { transform: `translate(${node.x} ${node.y})`, "data-notation-node": node.id, "data-node-kind": node.kind }, children: special };
   const keyword = nodeKeyword(node);
   const header = nodeHeaderHeight(node);
   const children: DiagramShape[] = [shape("title", {}, node.name), shape("rect", {
@@ -213,14 +281,15 @@ export function diagramScene(model: DiagramModel, selectedId?: string): DiagramS
   }
   return [
     shape("rect", { x: 0, y: 0, width: model.width, height: model.height, fill: "#f8fbfa", className: "qgd-canvas-paper" }),
+    ...[...model.nodes].filter(node => parents.has(node.id)).sort((a, b) => depth(a) - depth(b)).map(node => nodeShapes(node, node.id === selectedId, true)),
     ...model.edges.map((edge) => edgeShapes(edge, nodes)),
-    ...[...model.nodes].sort((a, b) => depth(a) - depth(b)).map((node) => nodeShapes(node, node.id === selectedId, parents.has(node.id))),
+    ...[...model.nodes].filter(node => !parents.has(node.id)).sort((a, b) => depth(a) - depth(b)).map(node => nodeShapes(node, node.id === selectedId, false)),
   ];
 }
 
 const xmlNames: Record<string, string> = {
   className: "class", strokeWidth: "stroke-width", strokeLinejoin: "stroke-linejoin", strokeDasharray: "stroke-dasharray",
-  fontFamily: "font-family", fontSize: "font-size", fontStyle: "font-style", fontWeight: "font-weight", textAnchor: "text-anchor", paintOrder: "paint-order",
+  fontFamily: "font-family", fontSize: "font-size", fontStyle: "font-style", fontWeight: "font-weight", textAnchor: "text-anchor", paintOrder: "paint-order", textDecoration: "text-decoration",
 };
 
 function escapeXml(value: string | number) {

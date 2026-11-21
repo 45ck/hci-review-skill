@@ -6,14 +6,15 @@ The workspace pins `@ui-sdk/core` and `@ui-sdk/react` to **0.1.0-beta.13**. Impo
 
 **Review status:** custom Quantive components, glass styling, icons and compositions are **Unvalidated**: no human UI/UX team has reviewed or approved them. **SDK foundation** identifies upstream behaviour provenance; it is not an approval of this adaptation. The [custom component manifest](custom-component-manifest.json) records this distinction. Automated checks do not promote review status.
 
-## Developer components
+## Standards
 
-`LiquidDiagram` renders a typed model as precise SVG, with real SDK controls for selection and bounded zoom, plus visible element details and relationship descriptions. The same model powers exported SVG and the text equivalent. The demo includes UML class, UML component, UWE navigation and UWE presentation examples. Glass stays on framing and controls, while notation remains on a stable readable canvas.
+`LiquidDiagram` renders precise SVG from typed model data, with selection, readable element/relationship alternatives and a shared canvas. `LiquidViewport` uses the pinned UI SDK's `createViewport` behavior for drag pan, wheel pan, anchored pinch/Ctrl-wheel zoom, keyboard movement, fit, actual size, focus selection and full-window mode. Its named SDK controls and agent actions follow the same cancellable change path. Glass stays on the surrounding interface; exact notation stays crisp.
 
+The demo provides **27 editable views**: all 14 UML diagram kinds; UWE navigation/presentation; BPMN process; DMN requirements/table; CMMN case; VDML value delivery; IFML interaction; SysML 1.7 blocks/requirements; and explicit BMM, SBVR and BACM concept projections. Each adapter is a bounded subset, pinned to an exact version. [The full coverage registry](../../docs/hci/standards/omg-coverage.md) distinguishes 8 notation subsets, 3 concept projections and 277 reference-only records. The complete current OMG catalogue is indexed; indexing does not implement a specification's language, runtime or interchange format.
 ```tsx
 import { useState } from "react";
-import { LiquidDiagram, type DiagramModel } from "@quantitative-hci/liquid-glass/developer";
-import "@quantitative-hci/liquid-glass/developer.css";
+import { LiquidDiagram, type DiagramModel } from "@quantitative-hci/liquid-glass/standards";
+import "@quantitative-hci/liquid-glass/standards.css";
 
 export function Architecture({ model }: { model: DiagramModel }) {
   const [selectedId, setSelectedId] = useState(model.nodes[0]?.id);
@@ -21,11 +22,35 @@ export function Architecture({ model }: { model: DiagramModel }) {
 }
 ```
 
-Use within the same `LiquidGlassProvider` and `kit.css` shown below. `DiagramModel` contains stable IDs, names, kinds, positions, compartments, stereotypes, containment and typed relationships. `diagramToSvg(model)` returns a standalone SVG string with escaped text. `onSelectionChange(id, details)` reports the same state transition for the node Buttons and **Diagram element** Select. The demo adds label editing, JSON copy, a readable **Model data** panel and an SVG download; edits retain node/edge IDs and persist while navigating the current kit session.
+Use within the same `LiquidGlassProvider` and `kit.css` shown below. `DiagramModel` contains stable IDs, names, kinds, positions, compartments, stereotypes, containment, ownership, table rules, explicit routing points and typed relationships. `validateDiagramModel(candidate)` performs runtime structural/geometric checks. `diagramToSvg(model)` generates vector SVG with escaped labels. The gallery adds geometry and label edits, element/relationship creation, deletion, bounded undo/redo, and validated JSON application. Changes persist across collection navigation for the page session; export before reloading.
 
-This is a focused notation renderer, not a full UML editor, XMI parser, semantic validator, automatic layout tool or OMG conformance claim. Read the [developer standard](../../docs/hci/standards/developer-components.md), [sample models](../../docs/hci/examples/liquid-glass/src/developer-models.ts) and [exploration model](../../docs/hci/models/developer-model-exploration.md) before extending it.
+```ts
+import { findStandards, catalogueCounts } from "@quantitative-hci/liquid-glass/standards";
+const businessNotation = findStandards({ category: "business", coverage: "notation-subset" });
+```
 
-## Visual components
+The `/developer` and `/developer.css` entries remain compatibility aliases. Prefer `/standards` for new work. Read the [component contract](../../docs/hci/standards/standards-components.md), [sample models](../../docs/hci/examples/liquid-glass/src/standards-models.ts) and [exploration model](../../docs/hci/models/developer-model-exploration.md) before extending the adapters.
+
+## Shared canvas
+
+```tsx
+import { LiquidViewport } from "@quantitative-hci/liquid-glass/viewport";
+import "@quantitative-hci/liquid-glass/viewport.css";
+```
+
+Provide `label`, world `width`/`height` and children. Optional `selectionRect` enables Focus selection. Use controlled `viewport` and `onViewportChange` for application-owned camera state, or a ref for coordinate conversion, fit, reveal, center, pan and zoom. Zoom is bounded to 10–400%; initial fit never requires dragging to find the model. A full-window SDK Dialog retains Escape dismissal and focus return.
+
+## Graphics studio
+
+```tsx
+import { LiquidGraphicStudio, type GraphicDocument } from "@quantitative-hci/liquid-glass/graphics";
+import "@quantitative-hci/liquid-glass/graphics.css";
+```
+
+`LiquidGraphicStudio` owns no remote service: the host supplies the document, assets and change callbacks. It supports image/text/shape layers, transform fields and dragging, ordering, visibility/locking, image fit, upload, undo/redo, saved directions, revision-checked JSON and self-contained SVG. Its optional `onImageRequest` integration receives an inspectable brief, selected-layer context and the document. The demo prepares that handoff; it does not call an image model or imply a generated image has returned. See the [graphics API](src/graphics/README.md) for the exact callback and context contract.
+
+## Image components
+
 
 ```tsx
 import { LiquidImageCard, LiquidMediaGallery, LiquidImageComparison } from "@quantitative-hci/liquid-glass/media";

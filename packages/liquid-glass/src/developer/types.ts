@@ -8,10 +8,27 @@ export interface DiagramCompartment {
   entries: string[];
 }
 
+export const DIAGRAM_NODE_KINDS = [
+  "class", "component", "interface", "uwe", "object", "package", "device", "artifact",
+  "actor", "useCase", "activity", "decision", "initial", "final", "fork", "state",
+  "lifeline", "interaction", "timing", "port", "task", "startEvent", "endEvent", "gateway",
+  "pool", "dmnDecision", "inputData", "businessKnowledge", "knowledgeSource",
+  "casePlan", "stage", "milestone", "eventListener", "criterion", "role", "valueProposition", "table", "ifmlAction", "ifmlEvent",
+  "part", "merge", "ifmlViewContainer", "ifmlViewComponent", "planningTable",
+] as const;
+export type DiagramNodeKind = typeof DIAGRAM_NODE_KINDS[number];
+
+export interface DiagramTable {
+  columns: string[];
+  rows: string[][];
+  hitPolicy?: string;
+  inputColumnCount?: number;
+}
+
 export interface DiagramNode {
   id: string;
   name: string;
-  kind: "class" | "component" | "interface" | "uwe";
+  kind: DiagramNodeKind;
   description: string;
   x: number;
   y: number;
@@ -22,7 +39,12 @@ export interface DiagramNode {
   compartments?: DiagramCompartment[];
   constraints?: string[];
   parentId?: string;
+  ownerId?: string;
   multiplicity?: string;
+  marker?: string;
+  discretionary?: boolean;
+  activations?: { y: number; height: number }[];
+  table?: DiagramTable;
 }
 
 export type DiagramEdgeKind =
@@ -33,7 +55,18 @@ export type DiagramEdgeKind =
   | "dependency"
   | "realization"
   | "navigationLink"
-  | "processLink";
+  | "processLink"
+  | "sequenceFlow" | "messageFlow" | "informationRequirement" | "knowledgeRequirement"
+  | "authorityRequirement" | "caseLink" | "synchronousMessage" | "returnMessage"
+  | "controlFlow" | "transition" | "extension" | "deliverableFlow" | "intangibleFlow" | "dataFlow"
+  | "navigationFlow" | "sentryOnPart" | "valuePropositionFlow" | "communicationMessage";
+
+export const DIAGRAM_EDGE_KINDS: readonly DiagramEdgeKind[] = [
+  "association", "composition", "aggregation", "generalization", "dependency", "realization",
+  "navigationLink", "processLink", "sequenceFlow", "messageFlow", "informationRequirement",
+  "knowledgeRequirement", "authorityRequirement", "caseLink", "synchronousMessage", "returnMessage",
+  "controlFlow", "transition", "extension", "deliverableFlow", "intangibleFlow", "dataFlow", "navigationFlow", "sentryOnPart", "valuePropositionFlow", "communicationMessage",
+];
 
 export interface DiagramEdge {
   id: string;
@@ -51,17 +84,29 @@ export interface DiagramEdge {
   sourceMultiplicity?: string;
   targetMultiplicity?: string;
   directed?: boolean;
+  sourcePoint?: DiagramPoint;
+  targetPoint?: DiagramPoint;
 }
+
+export const DIAGRAM_NOTATIONS = [
+  "UML class", "UML component", "UML object", "UML package", "UML deployment", "UML composite structure",
+  "UML profile", "UML use case", "UML activity", "UML state machine", "UML sequence", "UML communication",
+  "UML interaction overview", "UML timing", "UWE navigation", "UWE presentation", "BPMN process",
+  "DMN requirements", "DMN decision table", "CMMN case", "BMM motivation", "SBVR vocabulary",
+  "VDML value delivery", "IFML interaction", "SysML block", "SysML requirements", "BACM capabilities",
+] as const;
+export type DiagramNotation = typeof DIAGRAM_NOTATIONS[number];
 
 export interface DiagramModel {
   id: string;
   name: string;
-  notation: "UML class" | "UML component" | "UWE navigation" | "UWE presentation";
+  notation: DiagramNotation;
   description: string;
   width: number;
   height: number;
   nodes: DiagramNode[];
   edges: DiagramEdge[];
+  standard?: { acronym: string; version: string; sourceUrl: string; coverage: "notation-subset" | "concept-projection"; scope: string };
 }
 
 export interface DiagramSelectionDetails {

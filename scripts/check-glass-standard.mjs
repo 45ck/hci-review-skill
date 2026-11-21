@@ -48,6 +48,12 @@ for (const [entry, path] of Object.entries({
   "./validation": "./src/validation.tsx",
   "./developer": "./src/developer/index.ts",
   "./developer.css": "./src/developer/diagrams.css",
+  "./standards": "./src/standards/index.ts",
+  "./standards.css": "./src/standards/standards.css",
+  "./viewport": "./src/developer/viewport.tsx",
+  "./viewport.css": "./src/developer/viewport.css",
+  "./graphics": "./src/graphics/index.ts",
+  "./graphics.css": "./src/graphics/graphics.css",
   "./media": "./src/media/index.ts",
   "./media.css": "./src/media/media.css",
   "./fonts.css": "./src/fonts.css",
@@ -86,7 +92,7 @@ for (const id of expected) {
 for (const path of sourceFiles) {
   const source = read(path);
   check(!/["']@ui-sdk\/react["']/.test(source) && !source.includes("@ui-sdk/core/internal/"), `${relative(root, path)}: use documented SDK entries.`);
-  check(!/["']@quantitative-hci\/liquid-glass\/(?!webgpu["']|appearance["']|icons["']|validation["']|developer(?:\.css)?["']|media(?:\.css)?["']|material["']|fonts\.css["']|kit\.css["']|styles\.css["']|tokens\.css["'])/.test(source), `${relative(root, path)}: use direct SDK primitives and documented shared kit APIs.`);
+  check(!/["']@quantitative-hci\/liquid-glass\/(?!webgpu["']|appearance["']|icons["']|validation["']|developer(?:\.css)?["']|standards(?:\.css)?["']|viewport(?:\.css)?["']|graphics(?:\.css)?["']|media(?:\.css)?["']|material["']|fonts\.css["']|kit\.css["']|styles\.css["']|tokens\.css["'])/.test(source), `${relative(root, path)}: use direct SDK primitives and documented shared kit APIs.`);
 }
 
 const customManifest = json(join(packageDir, "custom-component-manifest.json"));

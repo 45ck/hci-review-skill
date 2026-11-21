@@ -48,17 +48,160 @@ async def _page_fits(page):
     return dimensions
 
 
+async def _diagram_camera(viewer):
+    return await viewer.locator(".qgv-viewport").evaluate("""root => {
+        const world = root.querySelector('.qgv-world');
+        const matrix = new DOMMatrixReadOnly(getComputedStyle(world).transform);
+        return {x: Number(root.dataset.viewportX), y: Number(root.dataset.viewportY),
+            zoom: Number(root.dataset.viewportZoom) / 100,
+            painted: {x: matrix.e, y: matrix.f, zoom: matrix.a}};
+    }""")
+
+
+async def _diagram_fits(viewer):
+    await viewer.evaluate("() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))")
+    bounds = await viewer.locator(".qgv-surface").evaluate("""surface => {
+        const frame = surface.getBoundingClientRect(), world = surface.querySelector('.qgv-world').getBoundingClientRect();
+        return {frame: {left: frame.left, top: frame.top, right: frame.right, bottom: frame.bottom},
+            world: {left: world.left, top: world.top, right: world.right, bottom: world.bottom}};
+    }""")
+    frame, world = bounds["frame"], bounds["world"]
+    assert world["left"] >= frame["left"] - 1 and world["top"] >= frame["top"] - 1, bounds
+    assert world["right"] <= frame["right"] + 1 and world["bottom"] <= frame["bottom"] + 1, bounds
+    return bounds
+
+
+async def _verify_viewport_contract(page, expect, viewer):
+    browser_stage("standards: shared camera, pointer capture, wheel and keyboard")
+    viewport = viewer.locator(".qgv-viewport")
+    surface = viewer.locator(".qgv-surface")
+    control = await _entry(page, "liquid-viewport", "Diagram viewport")
+    assert {"setViewport", "panBy", "zoomTo", "zoomBy", "fit", "actualSize", "focusSelection", "setPanMode", "setExpanded"}.issubset(control["actions"]), control
+    await _act(page, control, "fit", [])
+    await _diagram_fits(viewer)
+    initial = await _diagram_camera(viewer)
+    assert .1 <= initial["zoom"] <= 1, initial
+    await _act(page, await _entry(page, "button", "Zoom in diagram"), "press", [])
+    increased = await _diagram_camera(viewer)
+    assert increased["zoom"] > initial["zoom"], (initial, increased)
+    await _act(page, await _entry(page, "number-input", "Diagram zoom percent"), "setValue", [150])
+    assert abs((await _diagram_camera(viewer))["zoom"] - 1.5) < .001
+    await _act(page, control, "setViewport", [{"x": 120, "y": 120, "zoom": 1}])
+    await surface.scroll_into_view_if_needed()
+    box = await surface.bounding_box()
+    assert box
+    before_drag = await _diagram_camera(viewer)
+    await page.mouse.move(box["x"] + 30, box["y"] + 30)
+    await page.mouse.down()
+    await page.mouse.move(box["x"] - 25, box["y"] + 70, steps=5)
+    await page.mouse.up()
+    dragged = await _diagram_camera(viewer)
+    assert abs(dragged["x"] - before_drag["x"] + 55) < 1, (before_drag, dragged)
+    assert abs(dragged["y"] - before_drag["y"] - 40) < 1, (before_drag, dragged)
+    await page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+    await page.mouse.wheel(35, 55)
+    await expect(viewport).not_to_have_attribute("data-viewport-y", str(dragged["y"]).removesuffix(".0"))
+    wheeled = await _diagram_camera(viewer)
+    assert abs(wheeled["x"] - dragged["x"] + 35) < 1 and abs(wheeled["y"] - dragged["y"] + 55) < 1, (dragged, wheeled)
+    anchor = {"x": box["width"] / 2, "y": box["height"] / 2}
+    before_anchor = {axis: (anchor[axis] - wheeled[axis]) / wheeled["zoom"] for axis in ("x", "y")}
+    await page.keyboard.down("Control")
+    try:
+        await page.mouse.wheel(0, -120)
+    finally:
+        await page.keyboard.up("Control")
+    await expect(viewport).not_to_have_attribute("data-viewport-zoom", str(wheeled["zoom"] * 100).removesuffix(".0"))
+    zoomed = await _diagram_camera(viewer)
+    assert zoomed["zoom"] > wheeled["zoom"], (wheeled, zoomed)
+    for axis in ("x", "y"):
+        after_anchor = (anchor[axis] - zoomed[axis]) / zoomed["zoom"]
+        assert abs(after_anchor - before_anchor[axis]) < 1, (before_anchor, zoomed)
+    await surface.focus()
+    before_key = await _diagram_camera(viewer)
+    await page.keyboard.press("ArrowRight")
+    assert abs((await _diagram_camera(viewer))["x"] - before_key["x"] - 80) < .1
+    await page.keyboard.press("ArrowLeft")
+    assert abs((await _diagram_camera(viewer))["x"] - before_key["x"]) < .1
+    await page.keyboard.press("Shift+ArrowDown")
+    assert abs((await _diagram_camera(viewer))["y"] - before_key["y"] - 240) < .1
+    await page.keyboard.press("ArrowUp")
+    assert abs((await _diagram_camera(viewer))["y"] - before_key["y"] - 160) < .1
+    await page.keyboard.press("+")
+    assert (await _diagram_camera(viewer))["zoom"] > before_key["zoom"]
+    await page.keyboard.press("0")
+    assert abs((await _diagram_camera(viewer))["zoom"] - 1) < .001
+    await page.keyboard.down("Space")
+    await expect(surface).to_have_attribute("data-pan-mode", "true")
+    await page.keyboard.up("Space")
+    await expect(surface).to_have_attribute("data-pan-mode", "false")
+    await page.keyboard.press("f")
+    await _diagram_fits(viewer)
+    for label, dx, dy in [("left", -80, 0), ("up", 0, -80), ("down", 0, 80), ("right", 80, 0)]:
+        before = await _diagram_camera(viewer)
+        await _act(page, await _entry(page, "button", f"Pan diagram {label}"), "press", [])
+        after = await _diagram_camera(viewer)
+        assert abs(after["x"] - before["x"] - dx) < .1 and abs(after["y"] - before["y"] - dy) < .1, (label, before, after)
+    await _act(page, control, "zoomTo", [100])
+    assert (await _diagram_camera(viewer))["zoom"] == 4
+    await _act(page, control, "zoomTo", [.001])
+    assert (await _diagram_camera(viewer))["zoom"] == .1
+    await _act(page, control, "fit", [])
+    selected_before_hand = await viewer.locator("[data-diagram-selection]").get_attribute("data-diagram-selection")
+    await _act(page, await _entry(page, "toggle", "Pan diagram tool"), "setPressed", [True])
+    await viewer.locator('[data-diagram-node="project"]').click()
+    assert await viewer.locator("[data-diagram-selection]").get_attribute("data-diagram-selection") == selected_before_hand, "Hand tool activated an element"
+    await _act(page, await _entry(page, "toggle", "Pan diagram tool"), "setPressed", [False])
+    await _select(page, "select", "Diagram element", value="image-asset")
+    await _act(page, control, "setViewport", [{"x": -2000, "y": -1800, "zoom": 1}])
+    await viewer.locator('[data-diagram-node="image-asset"]').focus()
+    selected_bounds = await viewer.locator('[data-diagram-node="image-asset"]').bounding_box()
+    frame = await surface.bounding_box()
+    assert frame and selected_bounds and selected_bounds["x"] >= frame["x"] and selected_bounds["x"] + selected_bounds["width"] <= frame["x"] + frame["width"], (frame, selected_bounds)
+    await _act(page, await _entry(page, "button", "Diagram focus selection"), "press", [])
+    assert (await _diagram_camera(viewer))["zoom"] > initial["zoom"]
+    browser_stage("standards: full-window SDK Dialog and focus restoration")
+    trigger = page.get_by_role("button", name="Fullscreen diagram", exact=True)
+    await trigger.click()
+    dialog = page.get_by_role("dialog", name="Diagram fullscreen", exact=True)
+    await expect(dialog).to_be_visible()
+    await expect(dialog.get_by_text("Unvalidated", exact=True)).to_be_visible()
+    await expect(dialog.locator(".qgv-surface")).to_be_visible()
+    await expect(viewer.locator(".qgv-surface")).to_have_count(1)
+    expanded = await dialog.bounding_box()
+    screen = page.viewport_size
+    assert expanded and screen and expanded["width"] >= screen["width"] - 40 and expanded["height"] >= screen["height"] - 40, expanded
+    await _act(page, control, "panBy", [90, -50])
+    await page.keyboard.press("Escape")
+    await expect(dialog).to_be_hidden()
+    await expect(trigger).to_be_focused()
+    await _act(page, control, "setExpanded", [True])
+    await expect(dialog).to_be_visible()
+    await page.get_by_role("button", name="Close fullscreen diagram", exact=True).click()
+    await expect(dialog).to_be_hidden()
+    await expect(trigger).to_be_focused()
+    await _act(page, control, "fit", [])
+    final = await _diagram_camera(viewer)
+    for axis in ("x", "y", "zoom"):
+        assert abs(final[axis] - final["painted"][axis]) < .01, final
+    return {"initial": initial, "zoomed": increased, "pointerCaptureBeyondFrame": True,
+            "wheelPanAndAnchoredZoom": True, "keyboard": ["arrows", "Shift+arrow", "+", "0", "Space", "F"],
+            "agentActions": control["actions"], "boundedZoom": [10, 400], "handPreventsSelection": True,
+            "focusedNodeRevealed": True, "fullscreen": {"bounds": expanded, "escapeAndCloseRestoreFocus": True}}
+
+
 async def verify_developer_contract(page, expect, *, base_url, output_dir):
     output = Path(output_dir)
     browser_stage("developer: load custom section through the actual SDK")
     await page.goto(base_url, wait_until="networkidle")
-    await _select(page, "listbox", "Component catalogue", choice="Developer components")
+    await _select(page, "listbox", "Component catalogue", value="standards")
     await expect(page.get_by_role("combobox", name="Diagram model", exact=True)).to_be_visible()
     await expect(page.get_by_text("Unvalidated", exact=True).first).to_be_visible()
     named = await _named_controls(page)
     model_control = await _entry(page, "select", "Diagram model")
     models = await _choices(page, model_control)
-    assert {item["value"] for item in models} == {"uml-class", "uml-component", "uwe-navigation", "uwe-presentation"}, models
+    legacy_ids = {"uml-class", "uml-component", "uwe-navigation", "uwe-presentation"}
+    assert legacy_ids.issubset({item["value"] for item in models}), models
+    models = [item for item in models if item["value"] in legacy_ids]
 
     # Isolate clipboard output while exercising the real copy action; never read
     # the user's or runner's existing clipboard.
@@ -171,8 +314,8 @@ async def verify_developer_contract(page, expect, *, base_url, output_dir):
     await _select(page, "select", "Diagram model", value="uwe-navigation")
     await _select(page, "select", "Diagram model", value="uml-class")
     assert await copy_model() == edited, "Switching models discarded the session edit"
-    await _select(page, "listbox", "Component catalogue", choice="Visual components")
-    await _select(page, "listbox", "Component catalogue", choice="Developer components")
+    await _select(page, "listbox", "Component catalogue", value="visual")
+    await _select(page, "listbox", "Component catalogue", value="standards")
     assert await copy_model() == edited, "Leaving the developer section discarded the session model"
     await _act(page, await _entry(page, "collapsible", "Model data"), "setOpen", [True])
     code = await _entry(page, "textarea", "Diagram JSON")
@@ -182,14 +325,8 @@ async def verify_developer_contract(page, expect, *, base_url, output_dir):
     assert json.loads((await _entry(page, "textarea", "Diagram JSON"))["value"]) == edited, "The read-only representation exposed a mutation route"
     await _act(page, await _entry(page, "collapsible", "Model data"), "setOpen", [False])
 
-    browser_stage("developer: bounded zoom and standalone SVG export")
-    zoom = viewer.locator("[data-diagram-zoom]")
-    initial_zoom = await zoom.get_attribute("data-diagram-zoom")
-    await _act(page, await _entry(page, "button", "Zoom in diagram"), "press", [])
-    await expect(zoom).not_to_have_attribute("data-diagram-zoom", initial_zoom)
-    changed_zoom = await zoom.get_attribute("data-diagram-zoom")
-    await _act(page, await _entry(page, "button", "Reset diagram view"), "press", [])
-    await expect(zoom).to_have_attribute("data-diagram-zoom", initial_zoom)
+    navigation = await _verify_viewport_contract(page, expect, viewer)
+    browser_stage("developer: standalone SVG export")
     async with page.expect_download() as download_event:
         await page.get_by_role("button", name="Download diagram SVG", exact=True).click()
     download = await download_event.value
@@ -211,6 +348,27 @@ async def verify_developer_contract(page, expect, *, base_url, output_dir):
     await expect(choice).to_be_in_viewport()
     await _select(page, "select", "Diagram element", value="image-asset")
     await expect(viewer.locator('[data-diagram-selection="image-asset"]')).to_be_visible()
+    await _act(page, await _entry(page, "liquid-viewport", "Diagram viewport"), "fit", [])
+    mobile_canvas = await _diagram_fits(viewer)
+    surface = viewer.locator(".qgv-surface")
+    await surface.scroll_into_view_if_needed()
+    box = await surface.bounding_box()
+    assert box
+    touch = await page.context.new_cdp_session(page)
+    before_pinch = await _diagram_camera(viewer)
+    try:
+        await touch.send("Emulation.setTouchEmulationEnabled", {"enabled": True, "maxTouchPoints": 2})
+        center_x, center_y = box["x"] + box["width"] / 2, box["y"] + box["height"] - 20
+        points = lambda gap: [{"x": center_x - gap, "y": center_y, "id": 1}, {"x": center_x + gap, "y": center_y, "id": 2}]
+        await touch.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": points(30)})
+        await touch.send("Input.dispatchTouchEvent", {"type": "touchMove", "touchPoints": points(55)})
+        await touch.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
+        after_pinch = await _diagram_camera(viewer)
+        assert after_pinch["zoom"] > before_pinch["zoom"] * 1.3, (before_pinch, after_pinch)
+    finally:
+        await touch.send("Emulation.setTouchEmulationEnabled", {"enabled": False})
+        await touch.detach()
+    await _act(page, await _entry(page, "button", "Diagram focus selection"), "press", [])
     mobile_screenshot = await capture("developer-mobile.png")
     await page.emulate_media(forced_colors="active", reduced_motion="reduce")
     await expect(page.locator("html")).to_have_attribute("data-liquid-status", "reduced")
@@ -229,8 +387,8 @@ async def verify_developer_contract(page, expect, *, base_url, output_dir):
             "stableIdsAndEdges": True, "rejectedEmptyAndOverlongLabels": True, "sessionDraftPreserved": True,
             "sectionReturnPreserved": True, "agentReadableJson": True,
             "readOnlyMutationRefused": not readonly_attempt.get("ok", False),
-            "zoom": {"initial": initial_zoom, "changed": changed_zoom, "reset": True},
-            "vectorExport": filename, "mobile": mobile, "forcedColourFocus": focus,
+            "viewport": navigation, "touchPinch": {"before": before_pinch, "after": after_pinch},
+            "vectorExport": filename, "mobile": mobile, "mobileCanvas": mobile_canvas, "forcedColourFocus": focus,
             "screenshots": [mobile_screenshot, forced_screenshot]}
 
 
@@ -238,7 +396,8 @@ async def verify_visual_contract(page, expect, *, base_url, output_dir):
     output = Path(output_dir)
     browser_stage("visual: open image compositions through the actual SDK")
     await page.goto(base_url, wait_until="networkidle")
-    await _select(page, "listbox", "Component catalogue", choice="Visual components")
+    await _select(page, "listbox", "Component catalogue", value="visual")
+    await _select(page, "tabs", "Graphics views", value="images")
     gallery = page.locator('[data-custom-component="media-gallery"]')
     comparison = page.locator('[data-custom-component="image-comparison"]')
     card = page.locator('[data-custom-component="image-card"]')

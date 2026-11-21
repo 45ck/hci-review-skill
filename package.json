@@ -8,12 +8,12 @@
     "docs/hci/examples/liquid-glass"
   ],
   "engines": {
-    "node": ">=22.12.0"
+    "node": ">=24"
   },
   "scripts": {
     "glass:dev": "npm run dev -w @quantitative-hci/glass-gallery",
     "glass:build": "npm run build -w @quantitative-hci/glass-gallery",
-    "glass:check": "node scripts/check-glass-standard.mjs",
+    "glass:check": "node scripts/check-glass-standard.mjs && node scripts/check-standards-models.mjs",
     "glass:verify": "npm run glass:check && npm run glass:build"
   }
 }

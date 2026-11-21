@@ -25,7 +25,7 @@ Use the shared **WebGPU Liquid Glass kit** for new high-fidelity internal interf
 
 **Studio typography and Isometric icons are the defaults.** Material settings lets you switch between Studio (Manrope), Editorial (Fraunces headings with Manrope interface text) and System fonts, and between Isometric and Line icons. The demo remembers valid choices, and Copy starter includes your selected font and icon presets.
 
-**Visual components** adds original imagery in an editorial card, controlled gallery, detail dialogs and image comparison. **Developer components** adds interactive UML class/component and UWE navigation/presentation diagrams, element selection and label editing, visible relationship descriptions, JSON copy and vector SVG download. Both use the actual SDK controls and shared agent bridge. See the [developer component standard](docs/hci/standards/developer-components.md) and [worked exploration model](docs/hci/models/developer-model-exploration.md).
+**Graphics** adds an editable image/text/shape canvas with stable layer IDs, transforms, undo/redo, variants, validated JSON, self-contained SVG export and an image-agent brief/context handoff. Existing image cards, gallery, detail dialogs and comparisons remain under **Image components**. **Standards** adds 27 editable notation/concept views and the complete current OMG catalogue (286 official version entries, plus historical SysML 1.7 and LMU UWE). Both share an SDK-powered pan/zoom/fit/fullscreen viewport and use the actual SDK agent bridge. Coverage is explicit: 8 notation subsets, 3 concept projections and 277 reference-only entries; no full OMG conformance or runtime implementation is implied. See the [Standards and graphics contract](docs/hci/standards/standards-components.md), [OMG coverage](docs/hci/standards/omg-coverage.md) and [worked exploration model](docs/hci/models/developer-model-exploration.md).
 
 Every custom component and composition is **Unvalidated**, meaning a human UI/UX team has not reviewed or approved it. The original 55 families are marked **SDK foundation**, identifying upstream Vercel behaviour rather than approval of our glass adaptation. Engineering checks and human review status remain distinct.
 
@@ -232,3 +232,5 @@ LICENSE                              MIT
 ## License
 
 [MIT](LICENSE)
+
+Kit verification uses Node 24 (also pinned in CI) and Python 3. Model checks execute the real typed scene sources, validate all 27 registered views, reject malformed imports, and parse every SVG as XML.

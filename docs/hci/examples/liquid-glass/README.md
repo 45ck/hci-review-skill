@@ -2,7 +2,7 @@
 
 A private UI kit that applies a shared WebGPU material to real Vercel UI SDK components. Its default overview contains working buttons, fields, choices, switches, sliders and a collection dialog. The searchable catalogue includes all **55 component families**, with one selected specimen shown at a time.
 
-Two custom collections extend that catalogue: **Visual components** for image cards, a gallery, detail dialogs and image comparison; **Developer components** for interactive UML class/component and UWE navigation/presentation diagrams. Custom components, theme and compositions are **Unvalidated**: no human UI/UX team has reviewed or approved them. **SDK foundation** marks upstream behaviour provenance and makes no human approval claim about Quantive's adaptation.
+Two custom collections extend that catalogue: **Graphics** for an editable design canvas, AI brief/context handoff, image cards, gallery, detail dialogs and comparison; **Standards** for 27 editable models and the complete current OMG specification catalogue. Both use the shared SDK pan/zoom/fit/fullscreen canvas. Custom components, theme and compositions are **Unvalidated**: no human UI/UX team has reviewed or approved them. **SDK foundation** marks upstream behaviour provenance and makes no human approval claim about Quantive's adaptation.
 
 The GPU treatment and animation are enabled under normal device preferences. Refraction and colour dispersion are adjustable in **Material settings**, and **Backdrop** changes the scene sampled by the glass. **Appearance** offers Follow device, Glass and Solid. **Animate glass** shows the effective motion state; turning it on explicitly enables animation for this kit. These choices are remembered locally without changing device settings. Labels and interaction stay in the DOM.
 
@@ -33,14 +33,14 @@ Open the local address printed by Vite. The hosted site opens the kit directly; 
 | Material settings | Choose Glass if Follow device is showing Solid material, enable Animate glass, compare refraction and switch Backdrop. |
 | Motion | Move across a control, press it, switch Workspace view, toggle Sound and open New collection. Reflections, ripples, selection and popup depth respond. |
 | Catalogue | Search a family and select it from Component catalogue. Every item uses the real upstream component. |
-| Visual components | Browse three original images using thumbnails or previous/next controls, inspect details, save an artwork for the current section visit, and compare two directions with a slider or preset. |
-| Developer components | Select one of four UML/UWE examples, select an element, inspect its relationships, zoom/reset, edit its label, copy current JSON or download exact vector SVG. |
+| Graphics | Edit image/text/shape layers; change geometry, typography, fit and ordering; undo/redo, save directions, import raster images, export JSON/self-contained SVG and prepare an image-agent request. Image components retains the gallery, cards, details and comparison. |
+| Standards | Choose from 27 models, pan/zoom/fit/fullscreen, select an element, inspect relationships, edit labels and geometry, add/delete elements and relationships, undo/redo, apply validated JSON, and export JSON/SVG. Browse 288 versioned entries with exact coverage and primary sources. |
 | Popups | Open menus, dialogs, popovers and drawers; their controls must remain above the backdrop and operable. |
 | Accessibility preferences | Check forced colours, reduced transparency and reduced motion with the same labels, state and actions. |
 
 All data and state changes belong to the demonstration. There is no form backend, account connection, upload service or purchase flow.
 
-Model label edits survive switching models and leaving/returning to the Developer section in this page session. A reload starts with the supplied examples. **Model data** exposes the exact JSON to people and agents through a read-only SDK field. The diagram renderer supports the documented notation subset; it is not an XMI parser, semantic UML validator or complete modelling tool. Images are fictional generated artwork, separately credited; exact diagram geometry is generated from typed data.
+Model edits, canvas state, graphics history and variants survive collection navigation in this page session. A reload starts with the supplied examples. **Model data and structured edits** exposes current JSON and a validated editor through SDK fields. Catalogue entries distinguish notation subsets, concept projections and reference-only metadata. This release does not provide XMI/BPMN/DMN interchange or a standards execution engine. Images are fictional generated artwork, separately credited; exact diagram geometry is generated from typed data.
 
 ## Material implementation
 
@@ -89,7 +89,8 @@ The JSON report records browser metadata, status, pixel differences, timing and 
 
 - [Implementation standard](../../standards/liquid-glass.md)
 - [Reusable package](../../../../packages/liquid-glass/README.md)
-- [Developer and media component standard](../../standards/developer-components.md)
+- [Standards and graphics component contract](../../standards/standards-components.md)
+- [Complete OMG coverage](../../standards/omg-coverage.md)
 - [Worked model exploration task](../../models/developer-model-exploration.md)
 - [HCI evaluation protocol](../../models/evaluation-protocol.md)
 

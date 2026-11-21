@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-from glass_developer_contract import _choices, _diagram_fits, _named_controls, _select
+from glass_developer_contract import _choices, _diagram_fits, _named_controls, _open_diagram_details, _select
 from glass_optics_contract import SCREENSHOT_TIMEOUT_MS, _act, _entry, browser_stage, settled_motion
 
 
@@ -14,12 +14,16 @@ EXPECTED_VIEWS = {
     "uml-interaction-overview", "uml-timing", "uwe-navigation", "uwe-presentation", "bpmn-process",
     "dmn-requirements", "dmn-table", "cmmn-case", "bmm-motivation", "sbvr-vocabulary", "vdml-value",
     "ifml-interaction", "sysml-block", "sysml-requirements", "bacm-capabilities",
+    "uwe-requirements", "uwe-requirement-activity", "uwe-content", "uwe-process-structure", "uwe-process-flow",
+    "uwe-user-roles", "uwe-basic-rights", "uwe-navigation-states", "uwe-application-modes",
+    "c4-landscape", "c4-context", "c4-container", "c4-component", "c4-code", "c4-dynamic", "c4-deployment",
+    "agent-architecture", "agent-task-lifecycle", "agent-handoff",
 }
 
 
 async def verify_standards_contract(page, expect, *, base_url, output_dir):
     output = Path(output_dir)
-    browser_stage("standards: discover all 27 editable views")
+    browser_stage("standards: discover all 46 editable views")
     await page.emulate_media(reduced_motion="reduce")
     await page.goto(base_url, wait_until="networkidle")
     await _select(page, "listbox", "Component catalogue", value="standards")
@@ -39,6 +43,89 @@ async def verify_standards_contract(page, expect, *, base_url, output_dir):
 
     async def press(label):
         await _act(page, await _entry(page, "button", label), "press", [])
+
+    browser_stage("standards: model family counts, view search and clear filters")
+    family_counts = {}
+    for family, prefix, count in [("UWE", "uwe-", 11), ("C4", "c4-", 7), ("Agents", "agent-", 3)]:
+        await _select(page, "select", "Model family", value=family)
+        matching = await _choices(page, await _entry(page, "select", "Diagram model"))
+        expected = {model_id for model_id in EXPECTED_VIEWS if model_id.startswith(prefix)}
+        assert len(matching) == count and {item["value"] for item in matching} == expected, (family, matching)
+        await expect(page.get_by_role("region", name="Model navigation", exact=True)).to_contain_text(f"{count} of 46 views")
+        family_counts[family] = len(matching)
+
+    await _select(page, "select", "Model family", value="C4")
+    await _act(page, await _entry(page, "input", "Search model views"), "setValue", ["DEPLOYMENT"])
+    search_results = await _choices(page, await _entry(page, "select", "Diagram model"))
+    assert [item["value"] for item in search_results] == ["c4-deployment"], search_results
+    await press("Clear model filters")
+    assert (await _entry(page, "select", "Model family"))["value"] == "all"
+    assert (await _entry(page, "input", "Search model views"))["value"] == ""
+    assert {item["value"] for item in await _choices(page, await _entry(page, "select", "Diagram model"))} == EXPECTED_VIEWS
+    await _act(page, await _entry(page, "input", "Search model views"), "setValue", ["UWE process flow"])
+    process_results = await _choices(page, await _entry(page, "select", "Diagram model"))
+    assert [item["value"] for item in process_results] == ["uwe-process-flow"], process_results
+    await _act(page, await _entry(page, "input", "Search model views"), "setValue", ["no-model-view-quantive-qa"])
+    assert await _choices(page, await _entry(page, "select", "Diagram model")) == []
+    await expect(page.get_by_role("region", name="Model navigation", exact=True)).to_contain_text("0 of 46 views")
+    await press("Clear model filters")
+
+    async def selected_target(model_id, node_id):
+        viewer = page.locator(f'[data-diagram-id="{model_id}"]')
+        await expect(viewer).to_be_visible()
+        button = viewer.locator(f'[data-diagram-node="{node_id}"]')
+        await expect(button).to_have_attribute("aria-pressed", "true")
+        selected = await _entry(page, "select", "Diagram element")
+        assert selected["value"] == node_id, selected
+        await viewer.evaluate("() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))")
+        frame = await viewer.locator(".qgv-surface").bounding_box()
+        bounds = await button.bounding_box()
+        assert frame and bounds, (model_id, node_id, frame, bounds)
+        assert bounds["x"] >= frame["x"] - 1 and bounds["y"] >= frame["y"] - 1, (model_id, node_id, frame, bounds)
+        assert bounds["x"] + bounds["width"] <= frame["x"] + frame["width"] + 1, (model_id, node_id, frame, bounds)
+        assert bounds["y"] + bounds["height"] <= frame["y"] + frame["height"] + 1, (model_id, node_id, frame, bounds)
+
+    followed = []
+
+    async def follow_reference(source_id, target_model_id):
+        source_model = await copy_model()
+        await _select(page, "select", "Diagram element", value=source_id)
+        source_node = next(node for node in source_model["nodes"] if node["id"] == source_id)
+        links = [link for link in source_node.get("references", []) if link["modelId"] == target_model_id]
+        assert len(links) == 1 and links[0].get("nodeId"), (source_model["id"], source_id, links)
+        link = links[0]
+        assert not link["label"].lower().startswith("open "), "Reference labels must not produce a repeated Open verb"
+        await press("Open " + link["label"])
+        target_model = await copy_model()
+        assert target_model["id"] == target_model_id, (link, target_model["id"])
+        await selected_target(target_model_id, link["nodeId"])
+        followed.append({"sourceModel": source_model["id"], "sourceNode": source_id,
+                         "targetModel": target_model_id, "targetNode": link["nodeId"],
+                         "selectedAndRevealed": True})
+        return target_model
+
+    browser_stage("standards: linked C4 drill-down, target selection and breadcrumb return")
+    await _select(page, "select", "Model family", value="C4")
+    await _select(page, "select", "Diagram model", value="c4-context")
+    context_model = await copy_model()
+    container_model = await follow_reference("library", "c4-container")
+    await follow_reference("api", "c4-dynamic")
+    hierarchy = page.get_by_role("navigation", name="Model hierarchy", exact=True)
+    await expect(hierarchy.get_by_role("button", name="Return to " + container_model["name"], exact=True)).to_be_visible()
+    await press("Return to " + container_model["name"])
+    await selected_target("c4-container", "api")
+    await follow_reference("api", "c4-deployment")
+    await press("Return to " + context_model["name"])
+    await selected_target("c4-context", "library")
+    await follow_reference("library", "c4-container")
+    await follow_reference("api", "c4-dynamic")
+
+    browser_stage("standards: cross-family trace resets filters without hiding the destination")
+    assert (await _entry(page, "select", "Model family"))["value"] == "C4"
+    await follow_reference("api", "uwe-process-flow")
+    assert (await _entry(page, "select", "Model family"))["value"] == "all"
+    assert (await _entry(page, "input", "Search model views"))["value"] == ""
+    assert {item["value"] for item in await _choices(page, await _entry(page, "select", "Diagram model"))} == EXPECTED_VIEWS
 
     smoke = []
     for item in models:
@@ -65,6 +152,7 @@ async def verify_standards_contract(page, expect, *, base_url, output_dir):
         assert all(node["label"] == "Inspect " + next(item["name"] for item in model["nodes"] if item["id"] == node["id"]) for node in nodes), nodes
         choices = await _choices(page, await _entry(page, "select", "Diagram element"))
         assert {choice["value"] for choice in choices} == {node["id"] for node in model["nodes"]}, choices
+        await _open_diagram_details(page)
         await expect(viewer.locator("[data-diagram-relation]")).to_have_count(len(model["edges"]))
         await expect(artwork.locator("[data-diagram-edge]")).to_have_count(len(model["edges"]))
         await _diagram_fits(viewer)
@@ -90,7 +178,7 @@ async def verify_standards_contract(page, expect, *, base_url, output_dir):
     catalogue = page.get_by_role("dialog", name="Standards catalogue", exact=True)
     await expect(catalogue).to_be_visible()
     cards = catalogue.locator("[data-standard-id]")
-    await expect(cards).to_have_count(288)
+    await expect(cards).to_have_count(291)
     inventory = await cards.evaluate_all("""nodes => nodes.map(node => ({
         id: node.dataset.standardId, coverage: node.dataset.standardCoverage,
         text: node.textContent, source: node.querySelector('.standards-entry-meta a').href,
@@ -99,8 +187,8 @@ async def verify_standards_contract(page, expect, *, base_url, output_dir):
     actual = {item["id"]: item for item in inventory}
     source = json.loads((ROOT / "packages/liquid-glass/src/standards/catalogue.snapshot.json").read_text(encoding="utf-8"))
     assert source["source"]["entryCount"] == len(source["entries"]) == 286
-    assert len(actual) == len(inventory) == 288
-    assert set(actual) == {entry["id"] for entry in source["entries"]} | {"SysML@1.7", "UWE@profile"}, actual.keys()
+    assert len(actual) == len(inventory) == 291
+    assert set(actual) == {entry["id"] for entry in source["entries"]} | {"SysML@1.7", "UWE@profile", "C4@2026-11", "A2A@0.3.0", "Agent-patterns@1.0"}, actual.keys()
     for entry in source["entries"]:
         rendered = actual[entry["id"]]
         assert rendered["source"] == entry["versionUrl"], (entry, rendered)
@@ -111,7 +199,7 @@ async def verify_standards_contract(page, expect, *, base_url, output_dir):
     assert actual["DMN@1.6"]["coverage"] == "notation-subset"
     assert actual["BACM@1.2 beta"]["coverage"] == "reference-only"
     assert actual["BACM@1.1"]["coverage"] == "concept-projection"
-    assert sum(len(item["actions"]) for item in inventory) == 27, inventory
+    assert sum(len(item["actions"]) for item in inventory) == 46, inventory
     browser_stage("standards: SDK category, coverage and text filters")
     await _select(page, "select", "Standard category", value="business")
     business_ids = await cards.evaluate_all("nodes => nodes.map(node => node.dataset.standardId)")
@@ -211,7 +299,7 @@ async def verify_standards_contract(page, expect, *, base_url, output_dir):
     assert await copy_model() == structured
     await _act(page, await _entry(page, "collapsible", "Model data"), "setOpen", [False])
     screenshots = []
-    for model_id in ["bpmn-process", "dmn-table", "uml-sequence"]:
+    for model_id in ["bpmn-process", "dmn-table", "uml-sequence", "uwe-navigation", "uwe-process-flow", "c4-container", "agent-task-lifecycle"]:
         await _select(page, "select", "Diagram model", value=model_id)
         viewer = page.locator(f'[data-diagram-id="{model_id}"]')
         await viewer.locator(".qgv-surface").scroll_into_view_if_needed()
@@ -221,7 +309,11 @@ async def verify_standards_contract(page, expect, *, base_url, output_dir):
         await page.screenshot(path=str(output / filename), animations="allow", timeout=SCREENSHOT_TIMEOUT_MS)
         screenshots.append(filename)
     return {"reviewStatus": "Unvalidated", "models": smoke, "namedControls": named,
-            "catalogue": {"officialEntries": 286, "totalEntries": 288, "versionSourcesVerified": True,
+            "navigation": {"familyCounts": family_counts, "caseInsensitiveViewSearch": True,
+                           "processViewSearch": True, "emptyViewSearch": True, "clearFilters": True,
+                           "followedReferences": followed, "breadcrumbReturnsPreserveSelection": True,
+                           "crossFamilyTraceResetsFilters": True},
+            "catalogue": {"officialEntries": 286, "totalEntries": 291, "versionSourcesVerified": True,
                           "businessIds": business_ids, "referenceFilterCount": len(reference_ids),
                           "betaDoesNotInheritCoverage": True, "legacySysMLExplicit": True, "emptySearch": True},
             "editing": {"geometry": True, "invalidGeometryRefused": True, "newElementId": node_id,

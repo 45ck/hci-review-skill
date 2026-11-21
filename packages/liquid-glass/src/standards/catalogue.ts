@@ -26,7 +26,7 @@ export const standardKinds = [
 export type StandardCategory = (typeof standardCategories)[number]['id'];
 export type StandardKind = (typeof standardKinds)[number]['id'];
 export type StandardCoverage = 'notation-subset' | 'concept-projection' | 'reference-only';
-export type StandardPublicationStatus = 'formal' | 'beta' | 'research-profile';
+export type StandardPublicationStatus = 'formal' | 'beta' | 'research-profile' | 'published-method' | 'published-protocol' | 'application-pattern';
 export type StandardInventory = 'current-omg' | 'additional-version' | 'external-profile';
 
 export const coverageLabels: Record<StandardCoverage, string> = {
@@ -38,7 +38,7 @@ export const coverageLabels: Record<StandardCoverage, string> = {
 export interface StandardCatalogueEntry {
   /** Stable identity includes the exact publication version. */
   id: string;
-  authority: 'OMG' | 'LMU UWE';
+  authority: 'OMG' | 'LMU UWE' | 'C4 model' | 'A2A' | 'Quantitative HCI';
   title: string;
   acronym: string;
   displayAcronym: string;
@@ -178,8 +178,8 @@ const coverageByVersion: Readonly<Record<string, CoverageDefinition>> = {
   },
   'UWE@profile': {
     coverage: 'notation-subset',
-    coverageDescription: 'Navigation and presentation profile examples based on the LMU UWE tutorials. UWE is a separate research profile; no complete profile validation or model transformation.',
-    viewIds: ['uwe-navigation', 'uwe-presentation'],
+    coverageDescription: 'Eleven labelled UWE views: requirements, requirement activity, content, navigation, presentation, process structure and flow, user roles, basic rights, navigation states and application modes. Linked examples and bounded profile checks; no complete UWE metamodel/OCL conformance, XMI round trip, model transformation or access-control execution.',
+    viewIds: ['uwe-requirements', 'uwe-requirement-activity', 'uwe-content', 'uwe-navigation', 'uwe-presentation', 'uwe-process-structure', 'uwe-process-flow', 'uwe-user-roles', 'uwe-basic-rights', 'uwe-navigation-states', 'uwe-application-modes'],
   },
 };
 
@@ -242,10 +242,10 @@ const additionalEntries: StandardCatalogueEntry[] = [
     acronym: 'UWE',
     displayAcronym: 'UWE',
     family: 'UWE',
-    version: 'Profile tutorials',
+    version: '3.0 (implemented subset)',
     status: 'research-profile',
-    publicationDate: 'Tutorials checked 21 November 2026',
-    sourceUrl: 'https://uwe.pst.ifi.lmu.de/teachingTutorialNavigation.html',
+    publicationDate: 'Sources checked 21 November 2026',
+    sourceUrl: 'https://uwe.pst.ifi.lmu.de/publicationsMetamodelAndProfile.html',
     familyUrl: 'https://uwe.pst.ifi.lmu.de/',
     category: 'software',
     kind: 'notation',
@@ -253,9 +253,37 @@ const additionalEntries: StandardCatalogueEntry[] = [
     inventory: 'external-profile',
     validation: 'unvalidated',
   },
+  {
+    id: 'C4@2026-11', authority: 'C4 model', title: 'C4 model for visualising software architecture',
+    acronym: 'C4', displayAcronym: 'C4', family: 'C4', version: '2026-11 reference snapshot',
+    status: 'published-method', publicationDate: 'Sources checked 21 November 2026',
+    sourceUrl: 'https://c4model.com/', familyUrl: 'https://c4model.com/', category: 'systems', kind: 'notation',
+    coverage: 'notation-subset',
+    coverageDescription: 'All seven C4 view types: landscape, context, container, component, code, dynamic and deployment. Typed elements, technology labels, directed relationships, legends and linked drill-downs. A local notation adapter; no Structurizr DSL parser or C4 certification claim.',
+    viewIds: ['c4-landscape', 'c4-context', 'c4-container', 'c4-component', 'c4-code', 'c4-dynamic', 'c4-deployment'],
+    inventory: 'external-profile', validation: 'unvalidated',
+  },
+  {
+    id: 'A2A@0.3.0', authority: 'A2A', title: 'Agent2Agent task-state projection',
+    acronym: 'A2A', displayAcronym: 'A2A', family: 'A2A', version: '0.3.0 (state projection)',
+    status: 'published-protocol', publicationDate: 'Pinned protocol 0.3.0',
+    sourceUrl: 'https://a2a-protocol.org/v0.3.0/specification/', familyUrl: 'https://a2a-protocol.org/', category: 'software', kind: 'concept-model',
+    coverage: 'concept-projection',
+    coverageDescription: 'All nine A2A TaskState values rendered with UML state notation. Illustrative transitions and cross-view links; no A2A network transport, Agent Card schema validator or protocol-conformance claim.',
+    viewIds: ['agent-task-lifecycle'], inventory: 'external-profile', validation: 'unvalidated',
+  },
+  {
+    id: 'Agent-patterns@1.0', authority: 'Quantitative HCI', title: 'Agent collaboration patterns',
+    acronym: 'Agent patterns', displayAcronym: 'Agent patterns', family: 'Agent patterns', version: '1.0 (local projection)',
+    status: 'application-pattern', publicationDate: '21 November 2026',
+    sourceUrl: 'https://a2a-protocol.org/v0.3.0/specification/', familyUrl: 'https://modelcontextprotocol.io/specification/2025-06-18/server/tools', category: 'software', kind: 'concept-model',
+    coverage: 'concept-projection',
+    coverageDescription: 'Application-defined architecture and reviewed tool-interaction views using established UML component and sequence notation. Informed by A2A task/artifact and MCP tool concepts; not an OMG profile or a normative protocol architecture.',
+    viewIds: ['agent-architecture', 'agent-handoff'], inventory: 'external-profile', validation: 'unvalidated',
+  },
 ];
 
-/** 286 current OMG rows, one explicitly pinned historical version, one external profile. */
+/** Official OMG inventory plus explicitly attributed external profiles and methods. */
 export const standardsCatalogue: readonly StandardCatalogueEntry[] = [...officialEntries, ...additionalEntries];
 
 export const catalogueCounts = {

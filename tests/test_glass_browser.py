@@ -16,11 +16,12 @@ import traceback
 from time import perf_counter
 from urllib.parse import urlparse
 
-from glass_agent_contract import verify_agent_contract
+from glass_agent_contract import verify_agent_contract, verify_agent_tasks_contract
 from glass_appearance_contract import verify_appearance_contract
 from glass_browser_diagnostics import start_browser_profile
 from glass_developer_contract import verify_developer_contract, verify_visual_contract
 from glass_graphics_contract import verify_graphics_contract
+from glass_model_document_contract import verify_model_document_contract
 from glass_standards_contract import verify_standards_contract
 from glass_optics_contract import (
     SCREENSHOT_TIMEOUT_MS,
@@ -43,6 +44,26 @@ from glass_optics_contract import (
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "packages/liquid-glass/component-manifest.json"
+BROWSER_CHECK_NAMES = (
+    "default_glass_kit_overview",
+    "gpu_on_actual_controls_strength_and_backdrop",
+    "visible_pointer_ripple_selection_and_idle",
+    "native_drawer_settle_tracks_gpu_with_motion_on_and_off",
+    "real_sdk_agent_contract",
+    "all_55_families_render_and_have_agent_names",
+    "keyboard_selection_and_real_popup",
+    "mobile_overview_fits_and_remains_usable",
+    "font_icon_presets_state_and_export",
+    "uml_uwe_selection_editing_exports_and_access",
+    "standards_catalogue_46_views_and_model_editing",
+    "model_document_atomic_agent_commands_and_human_history",
+    "agent_tasks_review_and_artifacts",
+    "graphics_agent_human_edits_history_and_exports",
+    "visual_media_gallery_comparison_and_dialogs",
+    "system_preferences_explicit_opt_in_and_forced_colours",
+    "unavailable_gpu_css_motion_and_popup",
+    "short_overview_motion_video",
+)
 
 
 async def run(args):
@@ -61,6 +82,9 @@ async def run(args):
         "sdkVersion": manifest["sdkVersion"],
         "upstreamCommit": manifest["upstreamCommit"],
         "popupTimelineRequested": args.popup_timeline,
+        "fullSuite": args.check is None,
+        "selectedChecks": [args.check] if args.check is not None else list(BROWSER_CHECK_NAMES),
+        "releaseGatePassed": False,
         "scope": "Scripted real-control, agent, keyboard, preference, responsive-layout and GPU pixel evidence; not a human study or optical-equivalence claim.",
         "checks": [],
     }
@@ -197,6 +221,8 @@ async def run(args):
 
         async def record(name, operation, *, reset=True, timeout=20):
             nonlocal current_check, failure_artifacts, check_profiles
+            if args.check is not None and args.check != name:
+                return
             current_check = name
             failure_artifacts = {}
             check_profiles = []
@@ -244,7 +270,7 @@ async def run(args):
             await expect(root).to_have_attribute("data-liquid-font", "studio")
             await expect(root).to_have_attribute("data-liquid-icons", "isometric")
             await expect(page.locator("[data-kit-view='overview']")).to_be_visible()
-            await expect(page.locator("[data-catalogue-id]")).to_have_count(58)
+            await expect(page.locator("[data-catalogue-id]")).to_have_count(59)
             await expect(page.locator("[data-component-id]")).to_have_count(0)
             await expect(page.locator(".agent-inspector, .agent-command-console, .reference-lens-stage")).to_have_count(0)
             await expect(page.get_by_role("button", name="Create project", exact=True)).to_be_enabled()
@@ -254,7 +280,7 @@ async def run(args):
             assert status != "error", await root.get_attribute("data-liquid-error")
             await settled_motion(page)
             await page.screenshot(path=str(output.parent / "overview-desktop.png"), animations="allow", timeout=SCREENSHOT_TIMEOUT_MS)
-            return {"catalogueChoices": 58, "families": 55, "default": "Liquid Glass overview", "appearance": {"font": "studio", "icons": "isometric", "initialStorageAbsent": True}, "rendererStatus": status, "screenshot": "overview-desktop.png", "viewport": {"width": 1440, "height": 1000}}
+            return {"catalogueChoices": 59, "families": 55, "default": "Liquid Glass overview", "appearance": {"font": "studio", "icons": "isometric", "initialStorageAbsent": True}, "rendererStatus": status, "screenshot": "overview-desktop.png", "viewport": {"width": 1440, "height": 1000}}
 
         await record("default_glass_kit_overview", initial, reset=False, timeout=45)
         await record("gpu_on_actual_controls_strength_and_backdrop", lambda: verify_optics_contract(page, expect, output_dir=output.parent, require_gpu=args.software_gpu), reset=False, timeout=60)
@@ -269,7 +295,7 @@ async def run(args):
 
         async def all_components():
             catalogue = await page.locator("[data-catalogue-id]").evaluate_all("nodes => nodes.map(node => node.dataset.catalogueId)")
-            custom_collections = ["standards", "visual"]
+            custom_collections = ["standards", "visual", "agents"]
             assert all(catalogue.count(item) == 1 for item in custom_collections), f"Expected each custom collection exactly once: {catalogue}"
             actual = sorted(item for item in catalogue if item not in ["overview", *custom_collections])
             assert actual == expected_ids, actual
@@ -494,7 +520,9 @@ async def run(args):
                 await custom_context.close()
 
         await record("uml_uwe_selection_editing_exports_and_access", lambda: custom_components(verify_developer_contract), reset=False, timeout=100)
-        await record("standards_catalogue_27_views_and_model_editing", lambda: custom_components(verify_standards_contract), reset=False, timeout=150)
+        await record("standards_catalogue_46_views_and_model_editing", lambda: custom_components(verify_standards_contract), reset=False, timeout=240)
+        await record("model_document_atomic_agent_commands_and_human_history", lambda: custom_components(verify_model_document_contract), reset=False, timeout=90)
+        await record("agent_tasks_review_and_artifacts", lambda: custom_components(verify_agent_tasks_contract), reset=False, timeout=90)
         await record("graphics_agent_human_edits_history_and_exports", lambda: custom_components(verify_graphics_contract), reset=False, timeout=90)
         await record("visual_media_gallery_comparison_and_dialogs", lambda: custom_components(verify_visual_contract), reset=False, timeout=40)
 
@@ -682,7 +710,11 @@ async def run(args):
         await browser.close()
 
     report["durationSeconds"] = round(perf_counter() - started, 3)
-    report["passed"] = all(item["passed"] for item in report["checks"])
+    report["selectionComplete"] = [item["name"] for item in report["checks"]] == [
+        *report["selectedChecks"], "uncaught_page_errors", "console_errors",
+    ]
+    report["passed"] = report["selectionComplete"] and all(item["passed"] for item in report["checks"])
+    report["releaseGatePassed"] = report["fullSuite"] and report["passed"]
     output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print(f"Browser: {report['browser']}; total: {report['durationSeconds']}s; report: {output}")
     return 0 if report["passed"] else 1
@@ -695,6 +727,8 @@ def main():
     parser.add_argument("--executable", default=None)
     parser.add_argument("--software-gpu", action="store_true", help="Require software WebGPU for a reviewed loopback build only")
     parser.add_argument("--popup-timeline", action="store_true", help="Collect bounded popup geometry diagnostics; extra layout reads can affect animation timing")
+    parser.add_argument("--check", choices=BROWSER_CHECK_NAMES, default=None,
+                        help="Run one exact scenario for diagnostics; page/console error checks still run. Omit for the full release suite.")
     return asyncio.run(run(parser.parse_args()))
 
 

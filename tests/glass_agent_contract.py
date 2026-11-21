@@ -110,7 +110,7 @@ async def verify_agent_contract(page, expect):
         first_page = await choices(catalogue)
         available = {item["value"]: item["label"] for item in first_page.get("items", [])}
         expected_choices = {"overview": "Overview", "visual": "Graphics",
-                            "standards": "Standards", **families}
+                            "standards": "Standards", "agents": "Agents", **families}
         for family, label in expected_choices.items():
             if family not in available:
                 item = await choice(catalogue, label)
@@ -299,3 +299,107 @@ async def verify_agent_contract(page, expect):
             window.__glassAgentContract?.stop();
             delete window.__glassAgentContract;
         }""")
+
+
+async def verify_agent_tasks_contract(page, expect, *, base_url, output_dir):
+    """Exercise the real sample through SDK actions and the marked human review control."""
+    from glass_developer_contract import _named_controls, _page_fits, _select
+    from glass_optics_contract import _act, _call, _entry, settled_motion, SCREENSHOT_TIMEOUT_MS
+
+    browser_stage("agent tasks: discover reusable task, review and artifact controls")
+    await page.emulate_media(reduced_motion="reduce")
+    await page.goto(base_url, wait_until="networkidle")
+    await _select(page, "listbox", "Component catalogue", value="agents")
+    stage = page.locator('[data-kit-view="agents"]')
+    await expect(stage).to_be_visible()
+    await expect(stage).to_have_attribute("data-validation", "unvalidated")
+    named = await _named_controls(page)
+    task = stage.locator("[data-agent-task]")
+
+    async def press(label):
+        await _act(page, await _entry(page, "button", label), "press", [])
+
+    async def context():
+        await _act(page, await _entry(page, "collapsible", "Agent task context"), "setOpen", [True])
+        return json.loads((await _entry(page, "textarea", "Current agent task JSON"))["value"])
+
+    await expect(task).to_have_attribute("data-task-state", "submitted")
+    await press("Start sample task")
+    await expect(task).to_have_attribute("data-task-state", "working")
+    await press("Propose label change")
+    await expect(task).to_have_attribute("data-task-state", "input-required")
+    await expect(stage.locator('[data-call-state="proposed"]')).to_be_visible()
+    before = await context()
+    assert before["task"]["revision"] == 2 and before["reviewRequired"] == ["rename-release"], before
+    assert before["task"]["calls"][-1]["arguments"]["expectedRevision"] == 0
+    await expect(stage.locator("[data-sample-revision]")).to_have_attribute("data-sample-revision", "0")
+
+    browser_stage("agent tasks: marked approval is refused by the agent bridge")
+    approval = await _entry(page, "button", "Approve proposed change")
+    refusal = await _call(page, "act", {"steps": [{"ref": approval["ref"], "action": "press", "args": []}]})
+    assert refusal["ok"] is False, refusal
+    assert "person" in refusal["error"]["message"].lower() or "review" in refusal["error"]["message"].lower(), refusal
+    assert (await context())["task"] == before["task"], "Blocked approval changed the task"
+    await expect(stage.get_by_role("button", name="Apply approved change", exact=True)).to_have_count(0)
+    await _act(page, await _entry(page, "collapsible", "Agent task context"), "setOpen", [False])
+    await stage.get_by_role("button", name="Approve proposed change", exact=True).click()
+    await expect(task).to_have_attribute("data-task-state", "working")
+    await expect(stage.locator('[data-call-state="approved"]')).to_be_visible()
+    await press("Apply approved change")
+    await expect(task).to_have_attribute("data-task-state", "completed")
+    await expect(stage.locator("[data-sample-revision]")).to_have_attribute("data-sample-revision", "1")
+    await expect(stage.locator(".agents-current-model")).to_contain_text("Review release candidate")
+    await expect(stage.locator("[data-agent-artifact]")).to_be_visible()
+    completed = await context()
+    assert completed["terminal"] is True and not completed["reviewRequired"], completed
+    assert completed["task"]["revision"] == 4 and len(completed["task"]["events"]) == 4, completed
+    assert completed["task"]["artifacts"][0]["content"]["element"]["name"] == "Review release candidate"
+    assert completed["task"]["events"][2]["actor"] == "Person", completed
+    readonly = await _entry(page, "textarea", "Current agent task JSON")
+    await _call(page, "act", {"steps": [{"ref": readonly["ref"], "action": "setValue", "args": ["{}"]}]})
+    assert json.loads((await _entry(page, "textarea", "Current agent task JSON"))["value"]) == completed
+    await expect(stage.get_by_role("button", name="Cancel task", exact=True)).to_be_disabled()
+    await _act(page, await _entry(page, "collapsible", "Agent task context"), "setOpen", [False])
+    await _act(page, await _entry(page, "collapsible", "Revised release model contents"), "setOpen", [True])
+    artifact = json.loads((await _entry(page, "textarea", "Revised release model content"))["value"])
+    assert artifact == completed["task"]["artifacts"][0]["content"]
+    await _select(page, "listbox", "Component catalogue", value="standards")
+    await _select(page, "listbox", "Component catalogue", value="agents")
+    await expect(task).to_have_attribute("data-task-state", "completed")
+    await _named_controls(page)
+    await settled_motion(page)
+    output = Path(output_dir)
+    await page.screenshot(path=str(output / "agents-task-complete.png"), animations="allow", timeout=SCREENSHOT_TIMEOUT_MS)
+
+    browser_stage("agent tasks: rejected proposals and cancellation retain the original model")
+    await press("New sample task")
+    await press("Start sample task")
+    await press("Propose label change")
+    await press("Reject proposed change")
+    await expect(task).to_have_attribute("data-task-state", "rejected")
+    await expect(stage.locator("[data-sample-revision]")).to_have_attribute("data-sample-revision", "0")
+    await expect(stage.locator("[data-agent-artifact]")).to_have_count(0)
+    await press("New sample task")
+    await press("Start sample task")
+    await press("Propose label change")
+    await press("Cancel task")
+    await expect(task).to_have_attribute("data-task-state", "canceled")
+    await expect(stage.get_by_role("button", name="Approve proposed change", exact=True)).to_be_disabled()
+    await expect(stage.locator("[data-sample-revision]")).to_have_attribute("data-sample-revision", "0")
+    await press("New sample task")
+    await press("Start sample task")
+    await press("Propose label change")
+    await page.set_viewport_size({"width": 390, "height": 844})
+    mobile = await _page_fits(page)
+    await stage.locator(".qga-tool").scroll_into_view_if_needed()
+    await page.screenshot(path=str(output / "agents-review-mobile.png"), animations="allow", timeout=SCREENSHOT_TIMEOUT_MS)
+    await page.emulate_media(forced_colors="active")
+    review_button = stage.get_by_role("button", name="Approve proposed change", exact=True)
+    await review_button.focus()
+    await expect(review_button).to_be_focused()
+    await expect(review_button).to_be_enabled()
+    return {"components": named, "completedRevision": 4, "humanReviewRequired": True,
+            "agentApprovalRefused": True, "artifactMatchesAppliedModel": True, "readonlyContext": True,
+            "retainedAcrossCollections": True, "rejectionAndCancellationKeepOriginal": True,
+            "mobile": mobile, "forcedColoursKeyboardControl": True,
+            "screenshots": ["agents-task-complete.png", "agents-review-mobile.png"]}

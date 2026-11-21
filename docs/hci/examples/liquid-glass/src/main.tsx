@@ -75,7 +75,9 @@ import { inputDemos } from "./demos-inputs";
 import { surfaceDemos } from "./demos-surfaces";
 import { KitBackdrop, type BackdropName } from "./kit-backdrop";
 import { StandardsShowcase } from "./standards-showcase";
-import { standardsModels } from "./standards-models";
+import { allDiagramModels } from "./model-catalogue";
+import { createModelDocument } from "@quantitative-hci/liquid-glass/modeling";
+import { AgentsShowcase } from "./agents-showcase";
 import { GraphicsShowcase, initialGraphicDocument, initialGraphicAssets } from "./graphics-showcase";
 import type { GraphicAsset } from "@quantitative-hci/liquid-glass/graphics";
 import { VisualShowcase, visualAssets } from "./visual-showcase";
@@ -91,7 +93,8 @@ const demos: Record<string, ComponentType> = { ...inputDemos, ...surfaceDemos };
 const groups = [...new Set(manifest.components.map((item) => item.category))];
 const collections = [
   { id: "visual", name: "Graphics", keywords: "image layers design canvas ai agent media gallery carousel card comparison photo showcase" },
-  { id: "standards", name: "Standards", keywords: "omg business bpmn dmn cmmn bmm sbvr vdml bacm ifml sysml uml uwe diagram class component navigation presentation model" },
+  { id: "standards", name: "Standards", keywords: "omg business bpmn dmn cmmn bmm sbvr vdml bacm ifml sysml uml uwe c4 architecture agent diagram class component navigation presentation process requirements content roles model" },
+  { id: "agents", name: "Agents", keywords: "a2a mcp agent task lifecycle tool request review artifact timeline capability collaboration" },
 ];
 const accessOptions = [
   { value: "private", label: "Private" },
@@ -673,7 +676,7 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
   const [selected, setSelected] = useState("overview");
   const [restart, setRestart] = useState(0);
   const [copied, setCopied] = useState("");
-  const [models, setModels] = useState(() => structuredClone(standardsModels));
+  const [documents, setDocuments] = useState(() => allDiagramModels.map(model => createModelDocument(model)));
   const [graphicDocument, setGraphicDocument] = useState(() => structuredClone(initialGraphicDocument));
   const [graphicAssets, setGraphicAssets] = useState<readonly GraphicAsset[]>(initialGraphicAssets);
   const [visitedCollections, setVisitedCollections] = useState<string[]>([]);
@@ -694,7 +697,7 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
         : collectionMatches[0]?.id ?? matches[0]?.id;
   const collection = collections.find((item) => item.id === active);
   useEffect(() => {
-    if (active === "visual" || active === "standards") setVisitedCollections(current => current.includes(active) ? current : [...current, active]);
+    if (collections.some(item => item.id === active)) setVisitedCollections(current => current.includes(active!) ? current : [...current, active!]);
   }, [active]);
   const component = manifest.components.find((item) => item.id === active);
   const Demo = active ? demos[active] : undefined;
@@ -821,7 +824,7 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
               ) : null;
             })}
           </Listbox>
-          <p className="kit-catalogue-count">55 SDK families · 2 custom collections</p>
+          <p className="kit-catalogue-count">{manifest.components.length} SDK families · {collections.length} custom collections</p>
         </aside>
         <main className="kit-main" id="kit-main" tabIndex={-1}>
           <div className="kit-title-row">
@@ -858,11 +861,14 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
             </SpecimenBoundary>
           </div>}
           {(active === "standards" || visitedCollections.includes("standards")) && <div hidden={active !== "standards"}>
-            <SpecimenBoundary key="standards" name="Standards"><StandardsShowcase models={models} onModelsChange={setModels} /></SpecimenBoundary>
+            <SpecimenBoundary key="standards" name="Standards"><StandardsShowcase documents={documents} onDocumentsChange={setDocuments} /></SpecimenBoundary>
+          </div>}
+          {(active === "agents" || visitedCollections.includes("agents")) && <div hidden={active !== "agents"}>
+            <SpecimenBoundary key="agents" name="Agents"><AgentsShowcase /></SpecimenBoundary>
           </div>}
           {active === "overview" ? (
             <Overview onExplore={(id) => { setSelected(id); document.getElementById("kit-main")?.focus(); }} />
-          ) : active === "visual" || active === "standards" ? null
+          ) : collection ? null
           : component && Demo ? (
             <section
               className="kit-specimen"

@@ -15,10 +15,14 @@ const modules = {
   scene: 'packages/liquid-glass/src/developer/scene.ts',
   'developer-models': 'docs/hci/examples/liquid-glass/src/developer-models.ts',
   'standards-models': 'docs/hci/examples/liquid-glass/src/standards-models.ts',
+  'extended-models': 'docs/hci/examples/liquid-glass/src/extended-models.ts',
+  'agent-models': 'docs/hci/examples/liquid-glass/src/agent-models.ts',
+  'model-catalogue': 'docs/hci/examples/liquid-glass/src/model-catalogue.ts',
+  profiles: 'packages/liquid-glass/src/standards/profiles.ts',
 };
 for (const [name, file] of Object.entries(modules)) {
   let code = stripTypeScriptTypes(fs.readFileSync(path.join(repo, file), 'utf8'));
-  for (const dependency of ['types', 'notations', 'developer-models']) {
+  for (const dependency of Object.keys(modules)) {
     code = code.replaceAll(`"./${dependency}"`, `"./${dependency}.mjs"`);
   }
   fs.writeFileSync(path.join(output, `${name}.mjs`), code);
@@ -27,14 +31,15 @@ const catalogue = fs.readFileSync(path.join(repo, 'packages/liquid-glass/src/sta
 const snapshot = fs.readFileSync(path.join(repo, 'packages/liquid-glass/src/standards/catalogue.snapshot.json'), 'utf8');
 fs.writeFileSync(path.join(output, 'catalogue.mjs'), stripTypeScriptTypes(catalogue.replace("import snapshot from './catalogue.snapshot.json';", `const snapshot=${snapshot};`)));
 const load = (name) => import(pathToFileURL(path.join(output, `${name}.mjs`)).href);
-const { standardsModels: models } = await load('standards-models');
+const { allDiagramModels: models } = await load('model-catalogue');
+const { diagramProfiles, validateDiagramProfile } = await load('profiles');
 const { standardsCatalogue: entries, catalogueCounts, findStandards } = await load('catalogue');
 const { validateDiagramModel, diagramScene, diagramToSvg } = await load('scene');
 
 const advertised = entries.flatMap(standard => standard.viewIds.map(id => ({ id, standard })));
-assert.equal(advertised.length, 27);
-assert.equal(models.length, 27);
-assert.equal(new Set(models.map(model => model.id)).size, 27);
+assert.equal(advertised.length, 46);
+assert.equal(models.length, 46);
+assert.equal(new Set(models.map(model => model.id)).size, 46);
 for (const { id, standard } of advertised) {
   const matches = models.filter(model => model.id === id);
   assert.equal(matches.length, 1, `Exactly one model must resolve ${id}`);
@@ -45,6 +50,13 @@ for (const { id, standard } of advertised) {
 }
 for (const model of models) {
   assert.deepEqual(validateDiagramModel(model), [], model.id);
+  assert.deepEqual(validateDiagramProfile(model).filter(issue => issue.severity === 'error'), [], `${model.id}: profile`);
+  if (model.profileId) assert.ok(diagramProfiles.some(profile => profile.id === model.profileId), `${model.id}: registered profile`);
+  if (model.parentModelId) assert.ok(models.some(parent => parent.id === model.parentModelId), `${model.id}: parent exists`);
+  for (const node of model.nodes) for (const reference of node.references ?? []) {
+    const target = models.find(item => item.id === reference.modelId);
+    assert.ok(target && (!reference.nodeId || target.nodes.some(item => item.id === reference.nodeId)), `${model.id}/${node.id}: resolved cross-view reference`);
+  }
   const svg = diagramToSvg(model);
   assert.ok(svg.startsWith('<svg '), `${model.id}: SVG root`);
   assert.ok(!/\b(?:NaN|Infinity|undefined)\b/.test(svg), `${model.id}: finite serialized geometry`);
@@ -101,9 +113,9 @@ for (const edge of get('uml-communication').edges) assert.ok(edgeShapes(get('uml
 
 assert.equal(catalogueCounts.officialEntries, 286);
 assert.equal(catalogueCounts.officialFamilies, 270);
-assert.equal(catalogueCounts.totalEntries, 288);
-assert.equal(catalogueCounts.notationSubsets, 8);
-assert.equal(catalogueCounts.conceptProjections, 3);
+assert.equal(catalogueCounts.totalEntries, 291);
+assert.equal(catalogueCounts.notationSubsets, 9);
+assert.equal(catalogueCounts.conceptProjections, 5);
 assert.equal(catalogueCounts.referenceOnly, 277);
 for (const id of ['DMN@1.7 beta', 'BACM@1.2 beta', 'SysML@2.0']) assert.equal(entries.find(entry => entry.id === id)?.coverage, 'reference-only', `${id} must not inherit an older adapter`);
 assert.ok(findStandards({ category: 'business', coverage: 'notation-subset' }).some(entry => entry.family === 'BPMN'));
@@ -128,6 +140,9 @@ for (const [index, value] of malformed.entries()) {
 const escaped = structuredClone(models[1]);
 escaped.nodes[0].name = 'A < B & "C"';
 assert.ok(diagramToSvg(escaped).includes('A &lt; B &amp; &quot;C&quot;'), 'User-authored SVG labels stay text');
-execFileSync('python3', ['-c', 'import pathlib,sys,xml.etree.ElementTree as ET; files=list(pathlib.Path(sys.argv[1]).glob("*.svg")); [ET.parse(p) for p in files]; assert len(files)==27', output], { stdio: 'pipe' });
+assert.equal(models.filter(model => model.standard.acronym === 'UWE').length, 11, 'Eleven labelled UWE views');
+assert.equal(models.filter(model => model.standard.acronym === 'C4').length, 7, 'Seven C4 view types');
+assert.deepEqual(get('agent-task-lifecycle').nodes.map(node => node.name).sort(), ['submitted', 'working', 'input-required', 'auth-required', 'completed', 'canceled', 'failed', 'rejected', 'unknown'].sort());
+execFileSync('python3', ['-c', 'import pathlib,sys,xml.etree.ElementTree as ET; files=list(pathlib.Path(sys.argv[1]).glob("*.svg")); [ET.parse(p) for p in files]; assert len(files)==int(sys.argv[2])', output, String(models.length)], { stdio: 'pipe' });
 fs.rmSync(output, { recursive: true, force: true });
-console.log(JSON.stringify({ result: 'PASS', views: models.length, registry: catalogueCounts, malformedImportsRefused: malformed.length, svgXmlParsed: 27 }));
+console.log(JSON.stringify({ result: 'PASS', views: models.length, registry: catalogueCounts, malformedImportsRefused: malformed.length, svgXmlParsed: models.length }));

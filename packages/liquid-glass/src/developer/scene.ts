@@ -1,5 +1,5 @@
 import type { DiagramEdge, DiagramModel, DiagramNode, DiagramPoint } from "./types";
-import { DIAGRAM_EDGE_KINDS, DIAGRAM_NODE_KINDS, DIAGRAM_NOTATIONS } from "./types";
+import { DIAGRAM_ARCHITECTURE_TYPES, DIAGRAM_EDGE_KINDS, DIAGRAM_NODE_KINDS, DIAGRAM_NOTATIONS } from "./types";
 import { specialNodeShapes } from "./notations";
 
 export interface DiagramShape {
@@ -35,16 +35,41 @@ function fittedName(value: string, width: number) {
   return { text, width: Math.min(width, measure(text)) };
 }
 
+function wrappedText(value: string, width: number): string[] {
+  const lines: string[] = [];
+  let current = "";
+  for (const word of value.split(/\s+/)) {
+    const next = current ? current + " " + word : word;
+    if (fittedName(next, width).text === next) { current = next; continue; }
+    if (current) lines.push(current);
+    current = "";
+    for (const letter of Array.from(word)) {
+      if (current && fittedName(current + letter, width).text !== current + letter) {
+        lines.push(current);
+        current = "";
+      }
+      current += letter;
+    }
+  }
+  if (current) lines.push(current);
+  return lines;
+}
+
 export function nodeKeyword(node: DiagramNode) {
   return node.stereotype ?? (node.kind === "component" || node.kind === "interface" ? node.kind : "");
 }
 
 export function nodeHeaderHeight(node: DiagramNode) {
+  if (["c4Boundary", "c4Deployment"].includes(node.kind)) return node.architecture?.technology ? 88 : 64;
+  if (node.kind === "c4Person") return 156;
+  if (["c4Element", "c4Database"].includes(node.kind)) return 132;
+  if (node.kind === "comment") return 72;
   if (node.kind === "table") return 52 + 24 * ((node.table?.rows.length ?? 0) + 1);
   if (["initial", "final", "fork", "startEvent", "endEvent", "criterion", "port", "ifmlEvent", "pool", "planningTable"].includes(node.kind)) return 0;
   if (["package", "casePlan", "device"].includes(node.kind)) return 74;
   if (["stage", "interaction", "lifeline", "ifmlViewContainer"].includes(node.kind)) return 48;
-  if (["object", "part"].includes(node.kind)) return 46;
+  if (["object", "objectNode", "part"].includes(node.kind)) return 46;
+  if (["activity", "state"].includes(node.kind) && node.compartments?.length) return node.stereotype ? 58 : 48;
   if (!["class", "component", "interface", "uwe"].includes(node.kind)) return Math.min(40, node.height);
   return nodeKeyword(node) ? 58 : 44;
 }
@@ -58,6 +83,9 @@ export function validateDiagramModel(candidate: unknown) {
   const model = candidate as unknown as DiagramModel;
   if (![model.id, model.name, model.description].every(value => validText(value, 10000) && value.trim())) errors.push("The model needs a text ID, name and description without invalid XML characters.");
   if (!DIAGRAM_NOTATIONS.includes(model.notation)) errors.push("Choose one of the supported notation views.");
+  if ([model.profileId, model.parentModelId].some(value => value !== undefined && (!validText(value, 200) || !value.trim()))) errors.push("Profile and parent model IDs must be non-empty text.");
+  if (model.parentModelId === model.id) errors.push("A model cannot be its own parent.");
+  if (model.legend !== undefined && !strings(model.legend)) errors.push("The notation legend must contain text entries.");
   if (model.nodes.length > 500 || model.edges.length > 1500) errors.push("Use at most 500 elements and 1,500 relationships per model.");
   if (model.standard !== undefined) {
     if (!record(model.standard) || ![model.standard.acronym, model.standard.version, model.standard.sourceUrl, model.standard.scope].every(value => validText(value, 10000) && value.trim()) || !["notation-subset", "concept-projection"].includes(model.standard.coverage)) errors.push("Standard metadata needs a name, version, HTTPS source, coverage and scope.");
@@ -79,12 +107,17 @@ export function validateDiagramModel(candidate: unknown) {
       }
     }
     if ([node.stereotype, node.marker, node.parentId, node.ownerId, node.multiplicity].some(value => value !== undefined && !validText(value))) errors.push("Element metadata must be text.");
+    if (node.entityId !== undefined && (!validText(node.entityId, 200) || !node.entityId.trim())) errors.push("Entity IDs must be non-empty text.");
+    if (node.references !== undefined && (!Array.isArray(node.references) || node.references.length > 32 || node.references.some(ref => !record(ref) || !validText(ref.modelId, 200) || !ref.modelId.trim() || !validText(ref.label, 200) || !ref.label.trim() || (ref.nodeId !== undefined && (!validText(ref.nodeId, 200) || !ref.nodeId.trim())) || !["refines", "realizes", "traces", "drill-down"].includes(ref.relation)))) errors.push("Element references need a target model, optional element, relation and label.");
+    if (node.architecture !== undefined && (!record(node.architecture) || !DIAGRAM_ARCHITECTURE_TYPES.includes(node.architecture.type) || (node.architecture.technology !== undefined && !validText(node.architecture.technology, 200)) || (node.architecture.external !== undefined && typeof node.architecture.external !== "boolean"))) errors.push("Architecture metadata needs a supported element type, text technology and optional external flag.");
     if ([node.abstract, node.discretionary].some(value => value !== undefined && typeof value !== "boolean")) errors.push("Element flags must be boolean.");
   }
   for (const edge of model.edges) {
     if (!record(edge) || ![edge.id, edge.source, edge.target, edge.description].every(value => validText(value, 10000)) || !DIAGRAM_EDGE_KINDS.includes(edge.kind)) { errors.push("Every relationship needs text IDs, a description and a supported kind."); continue; }
     if (edge.waypoints !== undefined && (!Array.isArray(edge.waypoints) || edge.waypoints.length > 100)) errors.push("Relationship waypoints must be an array of at most 100 points.");
     if ([edge.label, edge.sourceMultiplicity, edge.targetMultiplicity].some(value => value !== undefined && !validText(value))) errors.push("Relationship labels must be text.");
+    if (edge.technology !== undefined && !validText(edge.technology, 200)) errors.push("Relationship technology must be text.");
+    if (edge.order !== undefined && (!Number.isSafeInteger(edge.order) || edge.order < 1 || edge.order > 10000)) errors.push("Relationship order must be an integer between 1 and 10,000.");
     if ([edge.sourceSide, edge.targetSide].some(value => value !== undefined && !["top", "right", "bottom", "left"].includes(value))) errors.push("Relationship sides must be top, right, bottom or left.");
     if (edge.directed !== undefined && typeof edge.directed !== "boolean") errors.push("Relationship direction must be boolean.");
   }
@@ -179,7 +212,7 @@ function edgeShapes(edge: DiagramEdge, nodes: Map<string, DiagramNode>): Diagram
   const end = points.at(-1)!;
   const vector = endVector(end, points.at(-2) ?? end);
   const children: DiagramShape[] = [];
-  const dashed = ["dependency", "realization", "messageFlow", "knowledgeRequirement", "authorityRequirement", "caseLink", "sentryOnPart", "returnMessage", "intangibleFlow", "dataFlow"].includes(edge.kind);
+  const dashed = ["dependency", "realization", "messageFlow", "knowledgeRequirement", "authorityRequirement", "caseLink", "sentryOnPart", "returnMessage", "intangibleFlow", "dataFlow", "commentLink"].includes(edge.kind);
   const dashPattern = edge.kind === "sentryOnPart" ? "1.5 4" : edge.kind === "caseLink" ? "8 4 1.5 4 1.5 4" : "7 5";
   children.push(shape("polyline", {
     points: points.map(point).join(" "), fill: "none", stroke: ink, strokeWidth: 1.6,
@@ -188,7 +221,7 @@ function edgeShapes(edge: DiagramEdge, nodes: Map<string, DiagramNode>): Diagram
   }));
   if (edge.kind === "generalization" || edge.kind === "realization") {
     children.push(shape("polygon", { points: [end, vector(15, 8), vector(15, -8)].map(point).join(" "), fill: paper, stroke: ink, strokeWidth: 1.6, "data-arrowhead": "triangle", className: "qgd-arrow-paper" }));
-  } else if (["sequenceFlow", "informationRequirement", "synchronousMessage", "extension", "dataFlow", "navigationFlow", "deliverableFlow", "intangibleFlow", "valuePropositionFlow"].includes(edge.kind)) {
+  } else if (["sequenceFlow", "informationRequirement", "synchronousMessage", "extension", "dataFlow", "navigationFlow", "deliverableFlow", "intangibleFlow", "valuePropositionFlow", "c4Relationship"].includes(edge.kind)) {
     children.push(shape("polygon", { points: [end, vector(12, 6), vector(12, -6)].map(point).join(" "), fill: ink, stroke: ink, "data-arrowhead": "filled-triangle", className: "qgd-arrow-solid" }));
   } else if (edge.kind === "authorityRequirement") {
     const center = vector(4, 0);
@@ -206,7 +239,7 @@ function edgeShapes(edge: DiagramEdge, nodes: Map<string, DiagramNode>): Diagram
     const arrow = endVector(messageEnd, messageStart);
     children.push(shape("line", { x1: messageStart.x, y1: messageStart.y, x2: messageEnd.x, y2: messageEnd.y, stroke: ink, strokeWidth: 1.4, "data-message-arrow": edge.id }));
     children.push(shape("polygon", { points: [messageEnd, arrow(8, 4), arrow(8, -4)].map(point).join(" "), fill: ink, stroke: ink, "data-arrowhead": "communication-message", className: "qgd-arrow-solid" }));
-  } else if ((dashed && !["caseLink", "sentryOnPart"].includes(edge.kind)) || ["navigationLink", "processLink", "controlFlow", "transition"].includes(edge.kind) || (edge.directed && !["caseLink", "sentryOnPart"].includes(edge.kind))) {
+  } else if ((dashed && !["caseLink", "sentryOnPart", "commentLink"].includes(edge.kind)) || ["navigationLink", "processLink", "controlFlow", "objectFlow", "transition"].includes(edge.kind) || (edge.directed && !["caseLink", "sentryOnPart", "commentLink"].includes(edge.kind))) {
     children.push(shape("polyline", { points: [vector(11, 5), end, vector(11, -5)].map(point).join(" "), fill: "none", stroke: ink, strokeWidth: 1.6, "data-arrowhead": "open" }));
   }
   if (edge.kind === "composition" || edge.kind === "aggregation") {
@@ -219,8 +252,9 @@ function edgeShapes(edge: DiagramEdge, nodes: Map<string, DiagramNode>): Diagram
     }));
   }
   const middle = edge.labelPosition ?? { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 - 10 };
-  const label = edge.label ?? (edge.kind === "navigationLink" || edge.kind === "processLink" ? `«${edge.kind}»` : "");
+  const label = `${edge.order !== undefined ? `${edge.order}. ` : ""}${edge.label ?? (edge.kind === "navigationLink" || edge.kind === "processLink" ? `«${edge.kind}»` : "")}`;
   if (label) children.push(textAt(middle.x, middle.y, label, { textAnchor: "middle", fontSize: 12, paintOrder: "stroke", stroke: paper, strokeWidth: 5, strokeLinejoin: "round", className: "qgd-edge-label" }));
+  if (edge.technology) children.push(textAt(middle.x, middle.y + 17, `[${edge.technology}]`, { textAnchor: "middle", fontSize: 11, paintOrder: "stroke", stroke: paper, strokeWidth: 5, strokeLinejoin: "round", className: "qgd-edge-label" }));
   if (edge.sourceMultiplicity) {
     const near = endVector(start, points[1] ?? start)(25, -12);
     children.push(textAt(near.x, near.y, edge.sourceMultiplicity, { fontSize: 12, textAnchor: "middle" }));
@@ -304,6 +338,9 @@ function serializeShape(item: DiagramShape): string {
 export function diagramToSvg(model: DiagramModel) {
   const scene = diagramScene(model);
   const byId = new Map(model.nodes.map((node) => [node.id, node]));
-  const description = [model.description, ...model.nodes.map((node) => `${node.name}, ${nodeKeyword(node) || node.kind}: ${node.description} ${(node.compartments ?? []).flatMap((compartment) => compartment.entries).join("; ")}`), ...model.edges.map((edge) => `${byId.get(edge.source)!.name} to ${byId.get(edge.target)!.name}, ${edge.kind}: ${edge.description}`)].join(" ");
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${escapeXml(model.width)}" height="${escapeXml(model.height)}" viewBox="0 0 ${escapeXml(model.width)} ${escapeXml(model.height)}" role="img" aria-labelledby="diagram-title diagram-description"><title id="diagram-title">${escapeXml(model.name)}</title><desc id="diagram-description">${escapeXml(description)}</desc>${scene.map(serializeShape).join("")}</svg>`;
+  const description = [model.description, ...model.nodes.map((node) => `${node.name}, ${node.architecture?.type || nodeKeyword(node) || node.kind}${node.architecture?.technology ? `, ${node.architecture.technology}` : ""}${node.architecture?.external ? ", external" : ""}: ${node.description} ${(node.compartments ?? []).flatMap((compartment) => compartment.entries).join("; ")}${node.constraints?.length ? ` Constraints: ${node.constraints.join("; ")}.` : ""}`), ...model.edges.map((edge) => `${edge.order ? `${edge.order}. ` : ""}${byId.get(edge.source)!.name} to ${byId.get(edge.target)!.name}, ${edge.kind}${edge.technology ? `, ${edge.technology}` : ""}: ${edge.description}`)].join(" ");
+  const legend = (model.legend ?? []).flatMap(value => wrappedText(value, Math.max(40, model.width - 40)));
+  const height = model.height + (legend.length ? 46 + legend.length * 22 : 0);
+  const legendShapes = legend.length ? [shape("rect", { x: 0, y: model.height, width: model.width, height: height - model.height, fill: paper }), textAt(20, model.height + 25, "Notation key", { fontWeight: 700 }), ...legend.map((line, index) => textAt(20, model.height + 48 + index * 22, line))] : [];
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${escapeXml(model.width)}" height="${escapeXml(height)}" viewBox="0 0 ${escapeXml(model.width)} ${escapeXml(height)}" role="img" aria-labelledby="diagram-title diagram-description"><title id="diagram-title">${escapeXml(model.name)}</title><desc id="diagram-description">${escapeXml(description)}</desc>${[...scene, ...legendShapes].map(serializeShape).join("")}</svg>`;
 }

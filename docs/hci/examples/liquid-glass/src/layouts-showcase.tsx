@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { canRecordReview, initialLayoutNavigation, transitionLayout, type LayoutSpaceId as SpaceId, type LayoutRouteId as RouteId } from "./layouts-state";
 import {
   ArrowLeft, Check, ChevronDown, ChevronRight,
   MoreHorizontal, Search, X
@@ -21,8 +22,6 @@ import { Tabs, TabsList, TabsTab, TabsPanel, TabsIndicator } from "@ui-sdk/react
 import { Switch, SwitchThumb } from "@ui-sdk/react/switch";
 import "./layouts-showcase.css";
 
-type SpaceId = "northstar" | "fieldworks";
-type RouteId = "reviews" | "projects" | "people" | "workspace" | "account";
 type Review = Readonly<{
   id: string; project: string; title: string; summary: string;
   evidence: string; owner: string; changed: string;
@@ -92,15 +91,9 @@ const routes: ReadonlyArray<{ id: RouteId; label: string }> = [
 
 export function LayoutsShowcase() {
   const [device, setDevice] = useState<"wide" | "phone">("wide");
-  const [spaceId, setSpaceId] = useState<SpaceId>("northstar");
-  const [route, setRoute] = useState<RouteId>("reviews");
-  const [selectedId, setSelectedId] = useState<string | null>("REL-204");
-  const [detailOpen, setDetailOpen] = useState(false);
-  const [filter, setFilter] = useState<"open" | "all" | "reviewed">("open");
-  const [query, setQuery] = useState("");
-  const [projectFilter, setProjectFilter] = useState("");
+  const [layoutState, dispatch] = useReducer(transitionLayout, initialLayoutNavigation);
+  const { spaceId, route, selectedId, detailOpen, filter, query, projectFilter, scenario } = layoutState;
   const [reviewed, setReviewed] = useState<Record<SpaceId, string[]>>({ northstar: [], fieldworks: [] });
-  const [scenario, setScenario] = useState<"ready" | "loading" | "error" | "empty">("ready");
   const [accountName, setAccountName] = useState("Alex Morgan");
   const [accountDraft, setAccountDraft] = useState("Alex Morgan");
   const [digest, setDigest] = useState(true);
@@ -130,40 +123,38 @@ export function LayoutsShowcase() {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault(); setCommandOpen(true);
       }
-      if (event.key === "Escape" && detailOpen) setDetailOpen(false);
+      if (event.key === "Escape" && detailOpen) dispatch({ type: "close-detail" });
     }
     window.addEventListener("keydown", onShortcut);
     return () => window.removeEventListener("keydown", onShortcut);
   }, [detailOpen]);
 
   function navigate(next: RouteId) {
-    setRoute(next); setDetailOpen(false); setNotice("");
+    dispatch({ type: "navigate", route: next }); setNotice("");
     if (next === "account") setAccountDraft(accountName);
   }
   function switchSpace(next: SpaceId) {
     if (next === spaceId) return;
-    setSpaceId(next); setSelectedId(reviewsBySpace[next][0]?.id ?? null);
-    setRoute("reviews"); setDetailOpen(false);
-    setProjectFilter(""); setQuery(""); setFilter("open"); setScenario("ready");
+    dispatch({ type: "switch-space", spaceId: next, firstRecordId: reviewsBySpace[next][0]?.id ?? null });
     setLastReviewed(null); setNotice("Switched to " + spaces.find((item) => item.id === next)!.name + ".");
   }
-  function inspect(id: string) { setSelectedId(id); setDetailOpen(true); }
+  function inspect(id: string) { dispatch({ type: "inspect", recordId: id }); }
   function markReviewed() {
-    if (!selected || !canReview || reviewed[spaceId].includes(selected.id)) return;
+    if (!selected || !canRecordReview(space.role, selected.id, reviewed[spaceId])) return;
     const id = selected.id;
     setReviewed((before) => ({ ...before, [spaceId]: [...before[spaceId], id] }));
     setLastReviewed(id);
     setNotice(id + " marked reviewed in this local example.");
-    setDetailOpen(false);
+    dispatch({ type: "close-detail" });
   }
   function undoReview() {
     if (!lastReviewed || !canReview) return;
     setReviewed((before) => ({ ...before, [spaceId]: before[spaceId].filter((id) => id !== lastReviewed) }));
     setNotice(lastReviewed + " returned to the review queue.");
-    setFilter("open"); setLastReviewed(null);
+    dispatch({ type: "filter", value: "open" }); setLastReviewed(null);
   }
   function openProject(name: string) {
-    setProjectFilter(name); setFilter("all"); setQuery(""); navigate("reviews");
+    dispatch({ type: "open-project", name }); setNotice("");
   }
   function openRouteFromSearch(id: RouteId) {
     navigate(id); setCommandOpen(false); setCommand("");
@@ -173,7 +164,7 @@ export function LayoutsShowcase() {
     <section className="qg-layout-study" data-validation="unvalidated" aria-label="Responsive application layout study">
       <div className="qg-layout-toolbar">
         <SegmentedControl aria-label="Preview width" value={device} onValueChange={(value) => {
-          if (value === "wide" || value === "phone") { setDevice(value); setDetailOpen(false); }
+          if (value === "wide" || value === "phone") { setDevice(value); dispatch({ type: "close-detail" }); }
         }}>
           <SegmentedControlIndicator />
           <SegmentedControlItem value="wide">Desktop</SegmentedControlItem>
@@ -184,10 +175,10 @@ export function LayoutsShowcase() {
             State <ChevronDown size={15} aria-hidden="true" />
           </MenuTrigger>
           <MenuContent>
-            <MenuItem onClick={() => setScenario("ready")}>Ready</MenuItem>
-            <MenuItem onClick={() => setScenario("empty")}>No results</MenuItem>
-            <MenuItem onClick={() => setScenario("loading")}>Loading</MenuItem>
-            <MenuItem onClick={() => setScenario("error")}>Unavailable</MenuItem>
+            <MenuItem onClick={() => dispatch({ type: "scenario", value: "ready" })}>Ready</MenuItem>
+            <MenuItem onClick={() => dispatch({ type: "scenario", value: "empty" })}>No results</MenuItem>
+            <MenuItem onClick={() => dispatch({ type: "scenario", value: "loading" })}>Loading</MenuItem>
+            <MenuItem onClick={() => dispatch({ type: "scenario", value: "error" })}>Unavailable</MenuItem>
           </MenuContent>
         </Menu>
         <span className="qg-layout-fixture">Fictional data</span>
@@ -280,14 +271,14 @@ export function LayoutsShowcase() {
                   </div>
                   {projectFilter && <div className="qg-app-filter-chip">
                     <span>{projectFilter}</span>
-                    <Button aria-label="Show reviews from all projects" onClick={() => { setProjectFilter(""); setFilter("open"); }}>
+                    <Button aria-label="Show reviews from all projects" onClick={() => { dispatch({ type: "clear-project" }); }}>
                       <X size={16} aria-hidden="true" />
                     </Button>
                   </div>}
                   <div className="qg-app-query">
-                    <Input aria-label="Search reviews" placeholder="Search reviews" value={query} onValueChange={setQuery} />
+                    <Input aria-label="Search reviews" placeholder="Search reviews" value={query} onValueChange={(value) => dispatch({ type: "query", value })} />
                     <SegmentedControl aria-label="Review filter" value={filter} onValueChange={(value) => {
-                      if (value === "open" || value === "all" || value === "reviewed") setFilter(value);
+                      if (value === "open" || value === "all" || value === "reviewed") dispatch({ type: "filter", value });
                     }}>
                       <SegmentedControlIndicator />
                       <SegmentedControlItem value="open">To review</SegmentedControlItem>
@@ -297,18 +288,18 @@ export function LayoutsShowcase() {
                   </div>
                   {scenario === "loading" ? (
                     <div className="qg-app-state" role="status"><strong>Loading reviews</strong><p>The current workspace is being refreshed.</p>
-                      <Button onClick={() => setScenario("ready")}>Show example data</Button>
+                      <Button onClick={() => dispatch({ type: "scenario", value: "ready" })}>Show example data</Button>
                     </div>
                   ) : scenario === "error" ? (
                     <div className="qg-app-state" role="alert"><strong>Reviews are unavailable</strong><p>Nothing has changed. Try loading this workspace again.</p>
-                      <Button onClick={() => setScenario("ready")}>Retry</Button>
+                      <Button onClick={() => dispatch({ type: "scenario", value: "ready" })}>Retry</Button>
                     </div>
                   ) : scenario === "empty" || matching.length === 0 ? (
                     <div className="qg-app-state" role="status">
                       <LiquidIcon name="inbox" size={40}/>
                       <strong>{scenario === "empty" ? "No reviews here yet" : "No matching reviews"}</strong>
                       <p>{scenario === "empty" ? "This preview state has no records." : "Clear the filters to see the full queue."}</p>
-                      <Button onClick={() => { setQuery(""); setProjectFilter(""); setFilter("all"); setScenario("ready"); }}>Show all reviews</Button>
+                      <Button onClick={() => { dispatch({ type: "show-all" }); }}>Show all reviews</Button>
                     </div>
                   ) : (
                     <div className="qg-app-list" aria-label="Reviews">
@@ -430,7 +421,7 @@ export function LayoutsShowcase() {
           {route === "reviews" && selected && scenario === "ready" && (
             <aside className="qg-app-detail" aria-label="Selected review" data-open={detailOpen}>
               <div className="qg-app-detail-head">
-                <Button className="qg-app-back" onClick={() => setDetailOpen(false)}>
+                <Button className="qg-app-back" onClick={() => dispatch({ type: "close-detail" })}>
                   <ArrowLeft size={17} aria-hidden="true"/> Reviews
                 </Button>
                 <span>{selected.id}</span>
@@ -440,7 +431,7 @@ export function LayoutsShowcase() {
                   </MenuTrigger>
                   <MenuContent>
                     <MenuItem onClick={() => setNotice("Reference: " + selected.id)}>Show reference</MenuItem>
-                    <MenuItem onClick={() => setDetailOpen(false)}>Close details</MenuItem>
+                    <MenuItem onClick={() => dispatch({ type: "close-detail" })}>Close details</MenuItem>
                   </MenuContent>
                 </Menu>
               </div>

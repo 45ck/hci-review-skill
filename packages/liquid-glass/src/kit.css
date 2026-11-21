@@ -1324,6 +1324,11 @@
         border-color: Highlight !important;
         color: HighlightText !important;
       }
+      [data-slot][data-variant="solid"] {
+        /* This explicit system-colour pair must also paint the text backdrop;
+           UA backplates can otherwise cover HighlightText with Canvas. */
+        forced-color-adjust: none;
+      }
       :is(button, input, textarea, select, a, [tabindex], [data-slot]):focus-visible,
       :is([data-slot="slider-thumb"], [data-slot="rating-item"], [data-slot="otp-input"]):has(:focus-visible) {
         outline-color: Highlight !important;

@@ -5,6 +5,7 @@ evidence. They do not establish human recognition, reading speed or preference.
 """
 
 import asyncio
+from math import ceil, floor
 import re
 from pathlib import Path
 
@@ -14,6 +15,7 @@ from glass_optics_contract import (
     _call,
     _difference,
     _entry,
+    _png_rgb,
     _settings,
     browser_stage,
     settled_motion,
@@ -192,6 +194,45 @@ async def verify_appearance_contract(page, expect, *, base_url, output_dir, requ
     forced_icon = page.locator('[data-liquid-icon="layers"]').first
     await expect(forced_icon.locator('svg[data-icon-variant="line"]')).to_be_visible()
     await expect(forced_icon.locator('svg[data-icon-variant="isometric"]')).not_to_be_visible()
+    solid_button = page.get_by_role("button", name="Open library", exact=True)
+    await solid_button.scroll_into_view_if_needed()
+    forced_label = await solid_button.evaluate(r"""button => {
+        const label = 'Open library';
+        const walker = document.createTreeWalker(button, NodeFilter.SHOW_TEXT);
+        let text;
+        while ((text = walker.nextNode()) && !text.data.includes(label)) {}
+        if (!text) throw new Error('Missing actual Open library text node');
+        const range = document.createRange();
+        const start = text.data.indexOf(label);
+        range.setStart(text, start);
+        range.setEnd(text, start + label.length);
+        const rect = range.getBoundingClientRect();
+        const bounds = button.getBoundingClientRect();
+        const rgb = value => value.match(/[\d.]+/g).slice(0, 3).map(Number);
+        return {text: label, rect: [rect.x - bounds.x, rect.y - bounds.y, rect.width, rect.height],
+            buttonSize: [bounds.width, bounds.height],
+            foreground: rgb(getComputedStyle(text.parentElement).color),
+            background: rgb(getComputedStyle(button).backgroundColor)};
+    }""")
+    label_screenshot = "appearance-forced-colours-label.png"
+    width, height, rgb = _png_rgb(await solid_button.screenshot(
+        path=str(output / label_screenshot), animations="allow", timeout=SCREENSHOT_TIMEOUT_MS))
+    screenshots.append(label_screenshot)
+    x, y, text_width, text_height = forced_label["rect"]
+    scale_x, scale_y = width / forced_label["buttonSize"][0], height / forced_label["buttonSize"][1]
+    left, top = max(0, ceil(x * scale_x)), max(0, ceil(y * scale_y))
+    right, bottom = min(width, floor((x + text_width) * scale_x)), min(height, floor((y + text_height) * scale_y))
+    pixels = [rgb[(row * width + column) * 3:(row * width + column) * 3 + 3]
+              for row in range(top, bottom) for column in range(left, right)]
+    assert pixels, f"Forced-colour label has no rendered text area: {forced_label}"
+    assert max(abs(a - b) for a, b in zip(forced_label["foreground"], forced_label["background"])) > 36, forced_label
+    fractions = {name: sum(max(abs(a - b) for a, b in zip(pixel, forced_label[name])) <= 18
+                           for pixel in pixels) / len(pixels) for name in ("foreground", "background")}
+    forced_label.update({"sampledPixels": len(pixels), "maxChannelDistance": 18,
+                         "foregroundFraction": round(fractions["foreground"], 5),
+                         "backgroundFraction": round(fractions["background"], 5),
+                         "screenshot": label_screenshot})
+    assert fractions["background"] > 0.25 and fractions["foreground"] > 0.02, f"Forced-colour text must contain visible glyphs and background gaps: {forced_label}"
     await capture("appearance-forced-colours.png")
     await page.emulate_media(forced_colors="none")
     await ready()
@@ -219,4 +260,4 @@ async def verify_appearance_contract(page, expect, *, base_url, output_dir, requ
             "choices": choices_used, "stateContinuity": preserved,
             "copyStarter": {"fontSet": "editorial", "iconSet": "line", "clipboardIO": "isolated writeText spy"},
             "persisted": stored, "resetDefaults": True, "invalidStorageDefaults": True,
-            "forcedColoursUseLine": True, "screenshots": screenshots}
+            "forcedColoursUseLine": True, "forcedColourLabelPixels": forced_label, "screenshots": screenshots}

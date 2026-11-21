@@ -745,6 +745,122 @@ async def verify_suppressed_motion(page, expect, *, policy):
     return {"policy": policy, "before": before, "after": after, "button": state, "selectionStillWorks": True}
 
 
+async def arm_popup_render_timeline(page):
+    """Observe a single real popup entry without timers or renderer mutations."""
+    await page.evaluate("""() => {
+        window.__glassPopupTimeline?.stop('replaced');
+        const root = document.documentElement;
+        const first = [], last = [];
+        const startedAt = performance.now();
+        let stopped = false, total = 0, renderSamples = 0, lifecycleSamples = 0;
+        let previousRender = Number(root.dataset.liquidRenderRevision);
+        let currentHost = null;
+        const rect = node => {
+            if (!node) return null;
+            const value = node.getBoundingClientRect();
+            return [value.x, value.y, value.width, value.height];
+        };
+        const snapshot = source => {
+            const host = document.querySelector('[data-slot="dialog-content"][data-open], [data-slot="dialog-content"]:popover-open, dialog[data-slot="dialog-content"]:modal');
+            if (host instanceof HTMLElement) currentHost = host;
+            const popup = host || (currentHost?.isConnected ? currentHost : null);
+            if (!popup && source === 'render') return;
+            const style = popup ? getComputedStyle(popup) : null;
+            const canvases = popup?.querySelectorAll('canvas[data-liquid-canvas="popup"]');
+            const canvas = canvases?.[0];
+            const animations = popup?.getAnimations() ?? [];
+            const entry = {
+                atMs: performance.now() - startedAt, source,
+                performanceNow: performance.now(), documentTimelineTime: document.timeline.currentTime,
+                render: Number(root.dataset.liquidRenderRevision), motion: root.dataset.liquidMotion,
+                motionRevision: Number(root.dataset.liquidMotionRevision),
+                motionState: root.dataset.liquidMotionState, motionWork: root.dataset.liquidMotionWork,
+                activeEffects: Number(root.dataset.liquidActiveEffects),
+                surfaceCount: Number(root.dataset.liquidSurfaceCount),
+                lastInvalidation: root.dataset.liquidLastInvalidation,
+                popup: popup ? {
+                    startingStyle: popup.hasAttribute('data-starting-style'),
+                    endingStyle: popup.hasAttribute('data-ending-style'), open: popup.hasAttribute('data-open'),
+                    inlineStyle: popup.getAttribute('style')?.slice(0, 1500) ?? null,
+                    translate: style.translate, transform: style.transform, scale: style.scale, opacity: style.opacity,
+                    transitionProperty: style.transitionProperty,
+                    transitionDuration: style.transitionDuration, transitionDelay: style.transitionDelay,
+                    actual: rect(popup), liquidSurface: popup.getAttribute('data-liquid-surface'),
+                    canvasCount: canvases.length, actualCanvas: rect(canvas),
+                    recordedCanvas: canvas?.getAttribute('data-liquid-render-rect') ?? null,
+                    animationCount: animations.length,
+                    animations: animations.slice(0, 4).map(animation => ({
+                        type: animation.constructor.name, playState: animation.playState,
+                        pending: animation.pending, currentTime: animation.currentTime,
+                        endTime: animation.effect?.getComputedTiming().endTime,
+                        progress: animation.effect?.getComputedTiming().progress
+                    }))
+                } : null
+            };
+            total++;
+            if (source === 'render') renderSamples++; else lifecycleSamples++;
+            if (first.length < 16) first.push(entry);
+            else { last.push(entry); if (last.length > 16) last.shift(); }
+        };
+        const renders = new MutationObserver(() => {
+            const revision = Number(root.dataset.liquidRenderRevision);
+            if (revision === previousRender) return;
+            previousRender = revision;
+            snapshot('render');
+        });
+        const lifecycle = new MutationObserver(records => {
+            for (const record of records) {
+                if (!(record.target instanceof HTMLElement) || record.target.dataset.slot !== 'dialog-content' ||
+                    record.oldValue === record.target.getAttribute(record.attributeName)) continue;
+                currentHost = record.target;
+                snapshot(`attribute:${record.attributeName}`);
+            }
+        });
+        const transition = event => {
+            if (!(event.target instanceof HTMLElement) || event.target.dataset.slot !== 'dialog-content') return;
+            if (event instanceof TransitionEvent && !['translate', 'transform', 'scale', 'opacity'].includes(event.propertyName)) return;
+            currentHost = event.target;
+            snapshot(`${event.type}:${event.propertyName ?? ''}`);
+        };
+        const events = ['transitionrun', 'transitionstart', 'transitionend', 'transitioncancel', 'toggle'];
+        const summary = () => ({startedAt, endedAt: performance.now(), total, renderSamples, lifecycleSamples,
+            retained: first.length + last.length, dropped: total - first.length - last.length, first, last});
+        const stop = reason => {
+            if (!stopped) {
+                stopped = true;
+                renders.disconnect(); lifecycle.disconnect();
+                for (const event of events) document.removeEventListener(event, transition, true);
+                snapshot(`final:${reason}`);
+            }
+            return summary();
+        };
+        renders.observe(root, {attributes: true, attributeFilter: ['data-liquid-render-revision']});
+        lifecycle.observe(document.body, {subtree: true, attributes: true, attributeOldValue: true,
+            attributeFilter: ['data-starting-style', 'data-ending-style', 'data-open']});
+        for (const event of events) document.addEventListener(event, transition, true);
+        window.__glassPopupTimeline = {stop, summary};
+        snapshot('armed');
+    }""")
+
+
+async def finish_popup_render_timeline(page, output_dir):
+    """Always disconnect the bounded probe and retain evidence on assertion failure."""
+    try:
+        timeline = await asyncio.wait_for(page.evaluate("""() => {
+            const result = window.__glassPopupTimeline?.stop('check cleanup');
+            delete window.__glassPopupTimeline;
+            return result ?? null;
+        }"""), timeout=2)
+        if timeline is None:
+            return {"status": "not-armed"}
+        path = Path(output_dir) / "keyboard-popup-render-timeline.json"
+        path.write_text(json.dumps(timeline, indent=2) + "\n", encoding="utf-8")
+        return {"status": "saved", "artifact": path.name,
+                **{key: timeline[key] for key in ["total", "renderSamples", "lifecycleSamples", "retained", "dropped"]}}
+    except Exception as error:
+        return {"status": "unavailable", "error": str(error) or type(error).__name__}
+
+
 async def _arm_drawer_frames(page, target_y):
     await page.evaluate("""targetY => {
         window.__glassDrawerFrames?.cancel();

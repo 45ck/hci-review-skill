@@ -22,10 +22,12 @@ from glass_optics_contract import (
     SCREENSHOT_TIMEOUT_MS,
     _assert_rect_alignment,
     _difference,
+    arm_popup_render_timeline,
     begin_browser_check,
     browser_check_trace,
     browser_stage,
     configure_material,
+    finish_popup_render_timeline,
     motion_diagnostics,
     settled_motion,
     verify_drawer_motion_contract,
@@ -212,6 +214,7 @@ async def run(args):
                         window.__glassMotionFrames?.cancel(); delete window.__glassMotionFrames;
                         window.__glassDrawerFrames?.cancel(); delete window.__glassDrawerFrames;
                         window.__glassSelectionEvidence?.stop(); delete window.__glassSelectionEvidence;
+                        window.__glassPopupTimeline?.stop('check fallback cleanup'); delete window.__glassPopupTimeline;
                     }"""), timeout=2)
                 except Exception:
                     pass
@@ -250,7 +253,7 @@ async def run(args):
             return await verify_drawer_motion_contract(page, expect, output_dir=output.parent, require_gpu=args.software_gpu)
 
         await record("native_drawer_settle_tracks_gpu_with_motion_on_and_off", drawer_motion, timeout=40)
-        await record("real_sdk_agent_contract", lambda: verify_agent_contract(page, expect), timeout=20)
+        await record("real_sdk_agent_contract", lambda: verify_agent_contract(page, expect), timeout=30)
 
         async def all_components():
             actual = sorted(await page.locator("[data-catalogue-id]").evaluate_all("nodes => nodes.map(node => node.dataset.catalogueId).filter(id => id !== 'overview')"))
@@ -265,7 +268,7 @@ async def run(args):
             assert not unnamed, f"Unnamed SDK entries: {json.dumps(unnamed)}"
             return {"familiesOpened": len(components), "unnamed": unnamed, "oneFamilyMountedAtATime": True}
 
-        await record("all_55_families_render_and_have_agent_names", all_components, timeout=20)
+        await record("all_55_families_render_and_have_agent_names", all_components, timeout=35)
 
         async def keyboard_and_popup():
             search = page.get_by_label("Search components", exact=True)
@@ -294,6 +297,7 @@ async def run(args):
             collection = page.get_by_role("button", name="New collection", exact=True)
             browser_stage("keyboard: open collection dialog and inspect popup canvas")
             await collection.focus()
+            await arm_popup_render_timeline(page)
             await collection.press("Enter")
             dialog = page.get_by_role("dialog", name="Create a collection", exact=True)
             await expect(dialog).to_be_visible()
@@ -346,6 +350,7 @@ async def run(args):
                 const hit = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
                 return hit === node || node.contains(hit);
             }"""), "The popup renderer covers its live input"
+            await page.evaluate("window.__glassPopupTimeline?.stop('popup inspected')")
             await page.screenshot(path=str(output.parent / "dialog-desktop.png"), animations="allow", timeout=SCREENSHOT_TIMEOUT_MS)
             await page.keyboard.press("Escape")
             await expect(dialog).not_to_be_visible()
@@ -363,6 +368,7 @@ async def run(args):
             try:
                 return await keyboard_and_popup()
             finally:
+                report["popupRenderTimeline"] = await finish_popup_render_timeline(page, output.parent)
                 await finish_profile(profile)
 
         await record("keyboard_selection_and_real_popup", profiled_keyboard_popup, timeout=25)

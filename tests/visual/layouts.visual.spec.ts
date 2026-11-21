@@ -102,6 +102,16 @@ async function openQualityPopup(page: Page, options: {
   expect(bounds.y).toBeGreaterThanOrEqual(-1);
   expect(bounds.x + bounds.width).toBeLessThanOrEqual(viewport.width + 1);
   expect(bounds.y + bounds.height).toBeLessThanOrEqual(viewport.height + 1);
+  for (const selector of ["[data-quality-anchor]", "[data-quality-peer]"]) {
+    const control = await page.locator(selector).boundingBox();
+    expect(control, `${selector} has a measurable hit region`).not.toBeNull();
+    if (!control) throw new Error(`Missing action-group control: ${selector}`);
+    expect(control.height).toBeGreaterThanOrEqual(44);
+    expect(control.x).toBeGreaterThanOrEqual(-1);
+    expect(control.y).toBeGreaterThanOrEqual(-1);
+    expect(control.x + control.width).toBeLessThanOrEqual(viewport.width + 1);
+    expect(control.y + control.height).toBeLessThanOrEqual(viewport.height + 1);
+  }
 }
 
 async function capture(page: Page, testInfo: TestInfo, name: string) {
@@ -175,6 +185,8 @@ const states: Array<{
       const inspector = page.locator(".qg-app-detail");
       await expect(inspector).toBeVisible();
       await expect(inspector.getByRole("heading", { name: "Payment retry", exact: true })).toBeFocused();
+      // Keep the compact task and its action in view instead of framing the outer catalogue.
+      await page.locator(".qg-layout-canvas").scrollIntoViewIfNeeded();
     },
   },
   {

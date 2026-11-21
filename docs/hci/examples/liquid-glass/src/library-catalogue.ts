@@ -35,7 +35,7 @@ const tasks: Record<string, string> = {
 };
 
 const collectionsByCategory: Record<string, string> = {
-  Patterns: "patterns", Assistant: "assistant", Chat: "chat", Layouts: "layouts", Interactions: "interactions", Sections: "sections",
+  Patterns: "patterns", Assistant: "assistant", Chat: "chat", "App layouts": "layouts", Interactions: "interactions", Sections: "sections",
   Graphics: "visual", Standards: "standards", Agents: "agents", "Shared canvas": "standards", "Shared modeling": "standards",
   Appearance: "overview", Demo: "overview",
 };
@@ -44,7 +44,7 @@ export const collectionLabels: Record<string, string> = {
   sections: "Showcase and story sections", visual: "Graphics studio", standards: "Standards workbench", agents: "Agent task review", overview: "Overview",
 };
 const categoryIcons: Record<string, LiquidIconName> = {
-  Patterns: "folder", Assistant: "sparkles", Chat: "sparkles", Layouts: "layers", Interactions: "activity", Sections: "layers", Graphics: "grid",
+  Patterns: "folder", Assistant: "sparkles", Chat: "sparkles", "App layouts": "layers", Interactions: "activity", Sections: "layers", Graphics: "grid",
   Standards: "grid", Agents: "activity", "Shared canvas": "grid", "Shared modeling": "layers", Appearance: "settings", Demo: "grid",
   Actions: "sparkles", Inputs: "code", Overlays: "layers", Navigation: "folder", "Date & colour": "settings", Display: "grid",
 };

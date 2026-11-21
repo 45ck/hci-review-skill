@@ -1,10 +1,10 @@
 # Liquid Glass UI kit
 
-A private UI kit that applies a shared WebGPU material to real Vercel UI SDK components. Its default overview contains working buttons, fields, choices, switches, sliders and a collection dialog. The searchable catalogue includes all **55 component families**, with one selected specimen shown at a time.
+A private UI kit that applies a shared WebGPU material to real Vercel UI SDK components. Its default overview contains working buttons, fields, choices, switches, sliders and a collection dialog. The searchable **All components** page exposes **115 canonical entries: 55 SDK families and 60 custom entries**. Individual details link to real controls, inputs, agent contracts and their complete working context.
 
 Nine custom collections extend that catalogue: **Chat workspace** for controlled conversations, threads, templates and local streaming; **App layouts** for a review task within reusable workspace/navigation/content regions; **Patterns** for command search, filtering, selection, detail sheets and empty states; **Assistant** for prompt composition, attachments, suggestions, messages and sources; **Interactions** for cursors, click responses and genuine context actions; **Sections** for reusable showcases, natural-scroll chapters, contours and reveals; **Graphics** for an editable design canvas, AI brief/context handoff and image components; **Standards** for 46 editable models and the complete current OMG specification catalogue; **Agents** for capability cards, task history, proposed tool changes and produced artifacts. Graphics and Standards share the SDK pan/zoom/fit/fullscreen canvas. Custom components, theme and compositions are **Unvalidated**: no human UI/UX team has reviewed or approved them. **SDK foundation** marks upstream behaviour provenance and makes no human approval claim about Quantive's adaptation.
 
-Open `?collection=chat`, `?collection=layouts`, `?collection=patterns`, `?collection=assistant`, `?collection=interactions` or `?collection=sections` for direct access. These six collections include **Use these components in a project**, with compiled TSX examples, copyable agent briefs and links to `/registry/components.json` and `/llms.txt`. The package remains a private workspace dependency.
+Open `?collection=catalogue` to browse every component, `?collection=examples` for all **eight runnable TSX recipes**, or `?collection=integrations` for **seven typechecked integration source examples**. Each runnable example offers Live preview, Source and Integration tabs, exact source copying and a copyable agent brief. Direct collections include `?collection=chat`, `?collection=layouts`, `?collection=patterns`, `?collection=assistant`, `?collection=interactions` and `?collection=sections`. The component and recipe registry remains available at `/registry/components.json`, with agent guidance at `/llms.txt`. The package remains a private workspace dependency.
 
 The GPU treatment and animation are enabled under normal device preferences. Refraction and colour dispersion are adjustable in **Material settings**, and **Backdrop** changes the scene sampled by the glass. **Appearance** offers Follow device, Glass and Solid. **Animate glass** shows the effective motion state; turning it on explicitly enables animation for this kit. These choices are remembered locally without changing device settings. Labels and interaction stay in the DOM.
 
@@ -34,7 +34,10 @@ Open the local address printed by Vite. The hosted site opens the kit directly; 
 | Collection dialog | Open New collection, enter Collection name, create or cancel, and check keyboard focus. |
 | Material settings | Choose Glass if Follow device is showing Solid material, enable Animate glass, compare refraction and switch Backdrop. |
 | Motion | Move across a control, press it, switch Workspace view, toggle Sound and open New collection. Reflections, ripples, selection and popup depth respond. |
-| Catalogue | Search a family and select it from Component catalogue. Every item uses the real upstream component. |
+| Catalogue | Browse all 115 entries, filter by origin/category, inspect an individual import and contract, then open its working collection. Sidebar search leaves the current page intact. |
+| Examples | Run any of the eight compiled recipes, restart it, inspect its actual source and copy its integration brief. |
+| Chat workspace | Switch threads or layouts, choose a prompt template, send/stop a local response and exercise error/retry while preserving drafts. |
+| AI integrations | Inspect Vercel AI SDK with OpenAI/Anthropic/OpenRouter, direct OpenAI/Claude server clients, CopilotKit, AG-UI and custom host callbacks; copy exact typechecked source. |
 | App layouts | Inspect Payment retry, mark it reviewed and undo; switch to Fieldworks to inspect its Viewer-only tasks. Compare Desktop/Phone, follow the detail/back path, search pages, edit the local account name and recover loading, unavailable or empty examples. |
 | Patterns | Search and filter saved work, select records, apply bulk actions, inspect a detail sheet and use grouped commands through the real SDK palette. |
 | Assistant | Choose a suggestion, edit the prompt, manage local attachment metadata and send or stop a local preview; inspect the resulting message and sources. No model provider is called. |
@@ -79,11 +82,12 @@ CI adds `--software-gpu`. This uses the established Chromium SwiftShader flags o
 
 | Evidence | What the suite checks |
 | --- | --- |
-| Catalogue | Overview plus all 55 families are discoverable; each family mounts without a render error and exposes named SDK entries. |
+| Catalogue | Overview plus all 55 SDK families and 60 custom entries are discoverable; working specimens, detail contracts, filters/history and all eight independently compiled previews retain their behavior. |
 | Custom components | All nine custom collections; model/node selection, validation and label identity, JSON/SVG export, keyboard and real agent actions, loaded media, responsive and forced-colour views. |
 | App layouts | Review and undo, workspace context reset, Viewer refusal, account preferences, compact detail/back navigation and explicit recovery states in the real gallery. |
 | Library patterns | Accepted query/facet state, row selection and bulk effects, command actions, sheet focus/dismissal, empty recovery and narrow layout. |
 | Assistant | Shared prompt and suggestion state, attachments, accepted local responses, cancellation and refusal paths, source disclosure and narrow layout. |
+| Chat and integrations | Thread and draft isolation, templates, local streaming, Stop, retry and hidden-view cancellation; exact integration source copying and runtime/provider navigation. No live provider requests are asserted. |
 | Cursors and clicks | Exact pointer hotspot, fixed hit targets, finite effects and idle cleanup, context-menu focus return, disabled/pending actions, native input and hidden-region fallbacks. |
 | Sections | Actual scroll-follow, shared keyboard/agent chapter selection, visible media/captions, narrow-screen focus retention and presentation preferences. |
 | Interaction | Real agent actions, keyboard selection, dialog dismissal and focus restoration. |
@@ -106,6 +110,8 @@ The JSON report records browser metadata, status, pixel differences, timing and 
 - [Interaction and section contract](../../standards/interaction-sections.md)
 - [Established library patterns](../../standards/library-patterns.md)
 - [Application layout contract](../../standards/app-layout-system.md)
+- [Chat integration contract](../../standards/chat-integrations.md)
+- [Component discovery model](../../models/library-discovery-model.md)
 - [Agent composition guide](../../../../packages/liquid-glass/docs/llms.txt)
 - [Complete OMG coverage](../../standards/omg-coverage.md)
 - [Worked model exploration task](../../models/developer-model-exploration.md)

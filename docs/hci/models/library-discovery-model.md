@@ -21,6 +21,7 @@ The catalogue is generated from the existing foundation manifest, custom manifes
 | AI integrations | `?collection=integrations` | Inspect the runtime/provider connection and supported integration examples. |
 | Image components | `?collection=visual&graphicsview=images` | Open the actual image-card, gallery and comparison view, including from their individual detail pages. |
 | Chat workspace | `?collection=chat` | Operate the shared chat compositions in their controlled demonstration. |
+| App layouts | `?collection=layouts` | Operate the responsive workspace and review task; reach the same collection from all nine layout entries. |
 
 Sidebar search filters its options without changing the active page. Choosing an option navigates. This separates looking for a destination from entering it, preserving current work while a person explores names. Browser Back/Forward restores a valid route. The mounted catalogue retains its filters while viewing a component or working showcase.
 

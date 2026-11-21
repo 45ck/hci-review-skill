@@ -12,11 +12,11 @@
 .assistant-messages { display: grid; gap: 34px; width: min(100%, 820px); margin-inline: auto; padding: 30px 30px 24px; box-sizing: border-box; }
 .assistant-messages .qg-chat-message-actions > span { color: #365b4c; font-size: .8125rem; }
 .assistant-compose-area { display: grid; gap: 16px; width: min(100%, 820px); margin-inline: auto; padding: 14px 28px 20px; box-sizing: border-box; min-width: 0; }
-.assistant-compose-area > [data-slot="file-input"] { min-width: 0; }
-.assistant-dropzone { min-width: 0; border-radius: 24px; }
+.assistant-compose-area > [data-slot="file-input"] { min-width: 0; max-width: none; }
+.assistant-dropzone { min-width: 0; border-radius: 24px; align-items: stretch; text-align: start; }
 .assistant-dropzone[data-drag-accept] { outline: 2px solid #286c89; outline-offset: 5px; }
 .assistant-dropzone[data-drag-reject] { outline: 2px solid #a23e37; outline-offset: 5px; }
-.assistant-notice { display: block; min-height: 1.5em; font-size: .8125rem; line-height: 1.5; color: #32566a; }
+.assistant-notice { display: block; min-height: 1.5em; font-size: .875rem; line-height: 1.5; color: #32566a; }
 .assistant-context-summary { font-size: .75rem; color: #3d5d6c; }
 .assistant-footnote { margin: -6px 0 0; color: #486779; font-size: .8125rem; line-height: 1.7; }
 @media (max-width: 600px) {

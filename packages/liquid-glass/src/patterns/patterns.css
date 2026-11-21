@@ -7,7 +7,7 @@
   .qgp-dialog-heading h2 { margin: 0; font-size: 1.2rem; }
   .qgp-dialog-heading p { margin: .5rem 0 0; color: var(--liquid-muted); font-size: 1rem; line-height: 1.6; }
   .qgp-dialog-heading > button { flex: none; min-width: 2.5rem; min-height: 2.5rem; font-size: 1.4rem; padding: .2rem; }
-  .qgp-command-dialog [data-slot="command"] { border: 0; background: transparent; box-shadow: none; }
+  .qgp-command-dialog [data-slot="command"] { width: 100%; min-width: 0; align-self: stretch; border: 0; background: transparent; box-shadow: none; }
   .qgp-command-dialog [data-slot="command-input"] { border: 0; border-bottom: 1px solid var(--liquid-line); border-radius: 0; padding: 1rem 1.4rem; min-height: 3.5rem; background: transparent; }
   .qgp-command-dialog [data-slot="command-list"] { max-height: min(50dvh, 24rem); overflow-y: auto; padding: .55rem; }
   .qgp-command-dialog [data-slot="command-group-label"] { padding: .8rem .8rem .4rem; color: var(--liquid-muted); font-size: .875rem; text-transform: uppercase; letter-spacing: .1em; }
@@ -16,7 +16,7 @@
   .qgp-command-copy { display: grid; gap: .2rem; flex: 1; min-width: 0; }
   .qgp-command-copy small { color: var(--liquid-danger, #a33c3c); font-size: .875rem; }
   .qgp-command-pending, .qgp-command-empty { color: var(--liquid-muted); font-size: 1rem; }
-  .qgp-command-empty { padding: 2rem; text-align: center; }
+  .qgp-command-empty:not(:empty) { padding: 2rem; text-align: center; }
   .qgp-command-hint { display: flex; flex-wrap: wrap; gap: 1rem; border-top: 1px solid var(--liquid-line); padding: .75rem 1.4rem; color: var(--liquid-muted); font-size: .875rem; }
   .qgp-command-hint kbd { display: inline-block; min-width: 1.1rem; padding: .1rem .2rem; margin-inline-end: .15rem; border: 1px solid var(--liquid-line); border-radius: .25rem; text-align: center; font: inherit; }
   .qgp-filter-bar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .8rem; width: 100%; min-width: 0; }

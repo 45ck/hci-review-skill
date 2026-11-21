@@ -4,20 +4,20 @@
 .qg-chat-prompt-field > [data-slot="field-label"] { font-size: .875rem; font-weight: 600; }
 .qg-chat-prompt-field [data-slot="textarea"] { width: 100%; min-height: 88px; max-height: 220px; border: 0; border-radius: 10px; padding: 10px 2px; box-shadow: none; background: transparent; resize: none; font-size: 1rem; line-height: 1.6; }
 .qg-chat-prompt-field [data-slot="textarea"]:focus-visible { outline: 2px solid var(--liquid-focus, #286c89); outline-offset: 3px; }
-.qg-chat-prompt-field [data-slot="field-description"], .qg-chat-prompt-field [data-slot="field-error"] { font-size: .8125rem; line-height: 1.5; }
+.qg-chat-prompt-field [data-slot="field-description"], .qg-chat-prompt-field [data-slot="field-error"] { font-size: .875rem; line-height: 1.5; }
 .qg-chat-composer-footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 14px; }
 .qg-chat-composer-tools { display: flex; align-items: center; gap: 8px; min-width: 0; flex-wrap: wrap; }
 .qg-chat-composer-tools [data-slot="select-trigger"] { min-height: 44px; width: auto; max-width: 100%; font-size: .875rem; }
 .qg-chat-composer-tools [data-slot="file-input-trigger"] { min-height: 44px; min-width: 44px; padding: 8px 12px; }
 .qg-chat-submit { min-height: 44px; margin-inline-start: auto; gap: 9px; white-space: nowrap; }
 .qg-chat-submit > span:first-child { font-size: 1.25rem; line-height: 1; }
-.qg-chat-submit-status { margin: 10px 0 0; font-size: .8125rem; color: #32566a; }
+.qg-chat-submit-status { margin: 10px 0 0; font-size: .875rem; color: #32566a; }
 .qg-chat-stop-symbol { width: 10px; height: 10px; border-radius: 2px; background: currentColor; }
 .qg-chat-mode-menu { min-width: 180px; max-width: calc(100vw - 32px); }
 .qg-chat-attachments { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; padding: 0; }
 .qg-chat-attachments > li { display: flex; align-items: center; gap: 8px; max-width: 100%; min-width: 0; padding: 7px 8px 7px 10px; border: 1px solid rgb(130 163 177 / .55); border-radius: 12px; background: rgb(240 249 250 / .82); }
 .qg-chat-attachment-text { display: grid; gap: 3px; min-width: 0; }
-.qg-chat-attachment-text strong { overflow-wrap: anywhere; font-size: .8125rem; font-weight: 600; }
+.qg-chat-attachment-text strong { overflow-wrap: anywhere; font-size: .875rem; font-weight: 600; }
 .qg-chat-attachment-text > span { font-size: .75rem; color: #486578; }
 .qg-chat-attachment-remove { min-height: 36px; min-width: 36px; padding: 5px; border-radius: 9px; font-size: 1.25rem; box-shadow: none; }
 .qg-chat-suggestions { display: flex; flex-wrap: wrap; gap: 8px; }

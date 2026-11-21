@@ -109,12 +109,13 @@ async def verify_agent_contract(page, expect):
         catalogue = await entry("listbox", "Component catalogue")
         first_page = await choices(catalogue)
         available = {item["value"]: item["label"] for item in first_page.get("items", [])}
-        expected_choices = {"overview": "Overview", **families}
+        expected_choices = {"overview": "Overview", "visual": "Visual components",
+                            "developer": "Developer components", **families}
         for family, label in expected_choices.items():
             if family not in available:
                 item = await choice(catalogue, label)
                 available[item["value"]] = item["label"]
-        assert available == expected_choices, f"Agent catalogue differs from the manifest plus Overview: {available}"
+        assert available == expected_choices, f"Agent catalogue differs from the foundation manifest and custom sections: {available}"
         outcomes["catalogue"] = {
             "discoverableFamilies": len(families),
             "overviewAvailable": available.get("overview") == "Overview",

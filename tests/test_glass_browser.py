@@ -19,6 +19,7 @@ from urllib.parse import urlparse
 from glass_agent_contract import verify_agent_contract
 from glass_appearance_contract import verify_appearance_contract
 from glass_browser_diagnostics import start_browser_profile
+from glass_developer_contract import verify_developer_contract, verify_visual_contract
 from glass_optics_contract import (
     SCREENSHOT_TIMEOUT_MS,
     _assert_rect_alignment,
@@ -234,7 +235,7 @@ async def run(args):
         async def initial():
             await expect(root).to_have_attribute("data-liquid-glass-kit", "true")
             await expect(page.locator("[data-kit-view='overview']")).to_be_visible()
-            await expect(page.locator("[data-catalogue-id]")).to_have_count(56)
+            await expect(page.locator("[data-catalogue-id]")).to_have_count(58)
             await expect(page.locator("[data-component-id]")).to_have_count(0)
             await expect(page.locator(".agent-inspector, .agent-command-console, .reference-lens-stage")).to_have_count(0)
             await expect(page.get_by_role("button", name="Create project", exact=True)).to_be_enabled()
@@ -244,7 +245,7 @@ async def run(args):
             assert status != "error", await root.get_attribute("data-liquid-error")
             await settled_motion(page)
             await page.screenshot(path=str(output.parent / "overview-desktop.png"), animations="allow", timeout=SCREENSHOT_TIMEOUT_MS)
-            return {"catalogueChoices": 56, "families": 55, "default": "Liquid Glass overview", "rendererStatus": status, "screenshot": "overview-desktop.png", "viewport": {"width": 1440, "height": 1000}}
+            return {"catalogueChoices": 58, "families": 55, "default": "Liquid Glass overview", "rendererStatus": status, "screenshot": "overview-desktop.png", "viewport": {"width": 1440, "height": 1000}}
 
         await record("default_glass_kit_overview", initial, reset=False, timeout=45)
         await record("gpu_on_actual_controls_strength_and_backdrop", lambda: verify_optics_contract(page, expect, output_dir=output.parent, require_gpu=args.software_gpu), reset=False, timeout=60)
@@ -457,6 +458,21 @@ async def run(args):
                 await appearance_context.close()
 
         await record("font_icon_presets_state_and_export", appearance, reset=False, timeout=45)
+
+        async def custom_components(operation):
+            custom_context = await new_context(viewport={"width": 1440, "height": 1000})
+            custom_page = await custom_context.new_page()
+            await observe_errors(custom_page)
+            try:
+                return await operation(custom_page, expect, base_url=args.base_url, output_dir=output.parent)
+            except Exception:
+                await failure_evidence(custom_page)
+                raise
+            finally:
+                await custom_context.close()
+
+        await record("uml_uwe_selection_editing_exports_and_access", lambda: custom_components(verify_developer_contract), reset=False, timeout=60)
+        await record("visual_media_gallery_comparison_and_dialogs", lambda: custom_components(verify_visual_contract), reset=False, timeout=40)
 
         async def preferences():
             preference_context = await new_context(viewport={"width": 1440, "height": 1000})

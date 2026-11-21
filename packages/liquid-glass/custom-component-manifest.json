@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "validationMeaning": "Unvalidated means a human UI/UX team has not reviewed or approved this component.",
+  "foundation": {
+    "name": "Vercel UI SDK",
+    "repository": "https://github.com/vercel-labs/ui",
+    "version": "0.1.0-beta.13",
+    "label": "SDK foundation",
+    "meaning": "Upstream behaviour provenance. It does not establish human approval of Quantive's styling, compositions or custom components."
+  },
+  "components": [
+    { "id": "liquid-diagram", "name": "LiquidDiagram", "category": "Developer components", "exportPath": "@quantitative-hci/liquid-glass/developer", "validation": "unvalidated", "notation": ["UML class", "UML component", "UWE navigation", "UWE presentation"] },
+    { "id": "image-card", "name": "LiquidImageCard", "category": "Visual components", "exportPath": "@quantitative-hci/liquid-glass/media", "validation": "unvalidated" },
+    { "id": "media-gallery", "name": "LiquidMediaGallery", "category": "Visual components", "exportPath": "@quantitative-hci/liquid-glass/media", "validation": "unvalidated" },
+    { "id": "image-comparison", "name": "LiquidImageComparison", "category": "Visual components", "exportPath": "@quantitative-hci/liquid-glass/media", "validation": "unvalidated" },
+    { "id": "liquid-material", "name": "LiquidGlassProvider and glass theme", "category": "Appearance", "exportPath": "@quantitative-hci/liquid-glass/webgpu", "validation": "unvalidated" },
+    { "id": "liquid-icons", "name": "LiquidIcon", "category": "Appearance", "exportPath": "@quantitative-hci/liquid-glass/icons", "validation": "unvalidated" },
+    { "id": "overview-compositions", "name": "Overview and showcase compositions", "category": "Demo", "validation": "unvalidated" },
+    { "id": "diagram-label-editor", "name": "Diagram label editor", "category": "Developer components", "validation": "unvalidated" }
+  ]
+}

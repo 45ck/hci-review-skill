@@ -29,6 +29,8 @@ Give every control a meaningful name. Keep names stable where selected or presse
 
 The manifest remains the source of truth for **55 families**. Every family needs its real upstream import, package alias and working specimen. Overview is an additional catalogue choice, not a replacement for coverage.
 
+The **Visual components** and **Developer components** collections are additional custom compositions, with a separate [custom manifest](../../../packages/liquid-glass/custom-component-manifest.json). Follow the [developer component standard](developer-components.md) for typed UML/UWE models, exact vector notation, text equivalents and shared human/agent actions. Custom components, icons, glass styling and demo compositions remain visibly **Unvalidated** until a recorded human UI/UX team review approves a defined scope. Label upstream families **SDK foundation** for provenance without implying human approval of the adaptation.
+
 ## Optical surfaces
 
 Apply the shared kit stylesheet and `LiquidGlassProvider` at the application boundary. Register intended surfaces with `data-liquid-glass`; `data-liquid-glass="off"` excludes a subtree. One shared viewport canvas and local canvases for actual top-layer popups align with current DOM rectangles after resizing, scrolling, selection and popup changes.

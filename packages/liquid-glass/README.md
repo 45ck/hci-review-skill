@@ -4,6 +4,42 @@
 
 The workspace pins `@ui-sdk/core` and `@ui-sdk/react` to **0.1.0-beta.13**. Import the SDK's components directly. Existing package component re-exports remain compatibility aliases.
 
+**Review status:** custom Quantive components, glass styling, icons and compositions are **Unvalidated**: no human UI/UX team has reviewed or approved them. **SDK foundation** identifies upstream behaviour provenance; it is not an approval of this adaptation. The [custom component manifest](custom-component-manifest.json) records this distinction. Automated checks do not promote review status.
+
+## Developer components
+
+`LiquidDiagram` renders a typed model as precise SVG, with real SDK controls for selection and bounded zoom, plus visible element details and relationship descriptions. The same model powers exported SVG and the text equivalent. The demo includes UML class, UML component, UWE navigation and UWE presentation examples. Glass stays on framing and controls, while notation remains on a stable readable canvas.
+
+```tsx
+import { useState } from "react";
+import { LiquidDiagram, type DiagramModel } from "@quantitative-hci/liquid-glass/developer";
+import "@quantitative-hci/liquid-glass/developer.css";
+
+export function Architecture({ model }: { model: DiagramModel }) {
+  const [selectedId, setSelectedId] = useState(model.nodes[0]?.id);
+  return <LiquidDiagram model={model} selectedId={selectedId} onSelectionChange={setSelectedId} />;
+}
+```
+
+Use within the same `LiquidGlassProvider` and `kit.css` shown below. `DiagramModel` contains stable IDs, names, kinds, positions, compartments, stereotypes, containment and typed relationships. `diagramToSvg(model)` returns a standalone SVG string with escaped text. `onSelectionChange(id, details)` reports the same state transition for the node Buttons and **Diagram element** Select. The demo adds label editing, JSON copy, a readable **Model data** panel and an SVG download; edits retain node/edge IDs and persist while navigating the current kit session.
+
+This is a focused notation renderer, not a full UML editor, XMI parser, semantic validator, automatic layout tool or OMG conformance claim. Read the [developer standard](../../docs/hci/standards/developer-components.md), [sample models](../../docs/hci/examples/liquid-glass/src/developer-models.ts) and [exploration model](../../docs/hci/models/developer-model-exploration.md) before extending it.
+
+## Visual components
+
+```tsx
+import { LiquidImageCard, LiquidMediaGallery, LiquidImageComparison } from "@quantitative-hci/liquid-glass/media";
+import "@quantitative-hci/liquid-glass/media.css";
+```
+
+| Component | Controlled data and actions |
+| --- | --- |
+| `LiquidImageCard` | `asset`, optional `headline`, `summary`, `eyebrow`; a named SDK Dialog opens the image story. |
+| `LiquidMediaGallery` | `assets`, `selectedId`, `onSelectedIdChange`, `savedIds`, `onSavedChange`, optional `label`; SDK Carousel and thumbnail indicators select an image, a Dialog shows details, and Toggle changes saved state. |
+| `LiquidImageComparison` | `before`, `after`, `value`, `onValueChange`, optional `beforeLabel`, `afterLabel`, `label`; Slider and named preset Buttons control the reveal without requiring dragging. |
+
+`LiquidMediaAsset` includes `id`, `title`, `src`, optional `srcSet`, `alt`, `description`, `kind`, `width`, `height` and optional `credit`. Supply meaningful alternatives, local optimized assets and an honest credit. The demo bundles three original generated artworks at two responsive sizes; [asset provenance](../../docs/hci/examples/liquid-glass/public/media/sources.json) records prompts, dimensions and hashes. All custom media components show **Unvalidated**. There is no autoplay or remote media dependency.
+
 ## Start with real controls
 
 ```tsx

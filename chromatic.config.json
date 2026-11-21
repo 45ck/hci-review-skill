@@ -1,0 +1,11 @@
+{
+  "$schema": "https://www.chromatic.com/config-file.schema.json",
+  "playwright": true,
+  "autoAcceptChanges": false,
+  "exitZeroOnChanges": false,
+  "exitOnceUploaded": false,
+  "onlyChanged": false,
+  "skipUpdateCheck": true,
+  "junitReport": "test-results/layout-visual/chromatic.xml",
+  "storybookLogFile": "test-results/layout-visual/chromatic-build.log"
+}

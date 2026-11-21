@@ -1,0 +1,91 @@
+name: Layout visual regression
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/layout-visual.yml'
+      - 'playwright.visual.config.ts'
+      - 'chromatic.config.json'
+      - 'tests/visual/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'packages/liquid-glass/**'
+      - 'docs/hci/examples/liquid-glass/**'
+      - 'docs/hci/standards/visual-regression.md'
+  workflow_dispatch:
+    inputs:
+      baseline_mode:
+        description: 'Compare approved baselines, or capture candidates for explicit review (no comparison/approval)'
+        type: choice
+        options: [compare, candidates]
+        default: compare
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: layout-visual-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  visual:
+    name: ${{ inputs.baseline_mode == 'candidates' && 'Capture candidates (no comparison)' || 'Compare local pixel baselines' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      GLASS_VISUAL_BASELINE_MODE: ${{ inputs.baseline_mode || 'compare' }}
+      CHROMATIC_ARCHIVE_LOCATION: test-results/layout-visual/test-output
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Report hosted comparison availability
+        id: chromatic
+        shell: bash
+        env:
+          CHROMATIC_PROJECT_TOKEN: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+        run: |
+          if [[ "$GLASS_VISUAL_BASELINE_MODE" == "candidates" ]]; then
+            printf 'enabled=0\n' >> "$GITHUB_OUTPUT"
+            printf '### Baseline candidates only\n\nNo pixel comparison or baseline approval is performed in this run. Review the PNG artifacts before committing expected images. Chromatic upload is skipped.\n' >> "$GITHUB_STEP_SUMMARY"
+          elif [[ -n "$CHROMATIC_PROJECT_TOKEN" ]]; then
+            printf 'enabled=1\n' >> "$GITHUB_OUTPUT"
+            printf '### Chromatic configured\n\nThe hosted comparison will run after local pixel checks pass.\n' >> "$GITHUB_STEP_SUMMARY"
+          else
+            printf 'enabled=0\n' >> "$GITHUB_OUTPUT"
+            printf '### Chromatic: SKIPPED\n\nCHROMATIC_PROJECT_TOKEN is unavailable to this run. No hosted snapshots or comparisons have run. The local pixel comparison remains required and independent.\n' >> "$GITHUB_STEP_SUMMARY"
+            printf '::notice title=Chromatic skipped::CHROMATIC_PROJECT_TOKEN is unavailable; no hosted visual result is claimed.\n'
+          fi
+      - name: Install locked tools and build canonical gallery
+        run: |
+          npm ci --ignore-scripts
+          npm run glass:visual:typecheck
+          npm run glass:build
+          npm exec -- playwright install --with-deps chromium
+      - name: Compare baselines or capture review candidates
+        env:
+          GLASS_CAPTURE_CHROMATIC: ${{ steps.chromatic.outputs.enabled }}
+        run: npm exec -- playwright test --config playwright.visual.config.ts
+      - name: Run hosted Chromatic comparison
+        if: steps.chromatic.outputs.enabled == '1'
+        env:
+          CHROMATIC_PROJECT_TOKEN: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+          CHROMATIC_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          CHROMATIC_BRANCH: ${{ github.head_ref || github.ref_name }}
+          CHROMATIC_SLUG: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+        run: npm exec -- chromatic --playwright --config-file chromatic.config.json --no-interactive
+      - name: Retain snapshots, differences, traces and reports
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: layout-visual-${{ github.sha }}-${{ github.run_attempt }}
+          if-no-files-found: ignore
+          retention-days: 7
+          path: test-results/layout-visual/

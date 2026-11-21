@@ -12,6 +12,9 @@ import {
   LiquidAppInspector, LiquidAppDock, LiquidAppNavigation, LiquidWorkspaceSwitcher
 } from "@quantitative-hci/liquid-glass/layouts";
 import "@quantitative-hci/liquid-glass/layouts.css";
+import { LiquidLayoutDiagnostics } from "@quantitative-hci/liquid-glass/quality";
+import "@quantitative-hci/liquid-glass/quality.css";
+import { LayoutQualityLab } from "./layout-quality-lab";
 import { Button } from "@ui-sdk/react/button";
 import { Input } from "@ui-sdk/react/input";
 import { Field, FieldLabel } from "@ui-sdk/react/field";
@@ -209,7 +212,7 @@ export function LayoutsShowcase({ active = true }: { active?: boolean }) {
           <MenuTrigger aria-label="Preview application state">
             State <ChevronDown size={15} aria-hidden="true" />
           </MenuTrigger>
-          <MenuContent>
+          <MenuContent side="bottom" align="start" sideOffset={8} collisionPadding={8}>
             <MenuItem value="ready" onSelect={() => dispatch({ type: "scenario", value: "ready" })}>Ready</MenuItem>
             <MenuItem value="empty" onSelect={() => dispatch({ type: "scenario", value: "empty" })}>No results</MenuItem>
             <MenuItem value="loading" onSelect={() => dispatch({ type: "scenario", value: "loading" })}>Loading</MenuItem>
@@ -232,7 +235,7 @@ export function LayoutsShowcase({ active = true }: { active?: boolean }) {
           </LiquidAppRail>
 
           <LiquidAppWorkarea className="qg-app-workarea">
-            <LiquidAppHeader className="qg-app-header">
+            <LiquidAppHeader className="qg-app-header" data-layout-probe="app-header">
               <LiquidWorkspaceSwitcher items={spaces.map(item => ({ id: item.id, name: item.name, role: item.role, shortLabel: item.short }))}
                 value={spaceId} onValueChange={(id) => switchSpace(id as SpaceId)} />
               <span className="qg-app-header-spacer" />
@@ -240,7 +243,7 @@ export function LayoutsShowcase({ active = true }: { active?: boolean }) {
                 if (open && !active) details.cancel();
                 else setCommandOpen(open);
               }}>
-                <DialogTrigger aria-label="Search application pages" className="qg-app-icon-control" shortcut={active ? "mod+k" : undefined}>
+                <DialogTrigger aria-label="Search application pages" className="qg-app-icon-control" shortcut={active ? "mod+k" : undefined} data-layout-probe="app-search">
                   <Search size={18} aria-hidden="true" />
                 </DialogTrigger>
                 <DialogBackdrop />
@@ -260,19 +263,19 @@ export function LayoutsShowcase({ active = true }: { active?: boolean }) {
                 </DialogContent>
               </Dialog>
               <Menu>
-                <MenuTrigger className="qg-app-icon-control" aria-label="Notifications">
+                <MenuTrigger className="qg-app-icon-control" aria-label="Notifications" data-layout-probe="app-notifications">
                   <LiquidIcon name="bell" size={24} />
                 </MenuTrigger>
-                <MenuContent>
+                <MenuContent side="bottom" align="end" sideOffset={8} collisionPadding={8}>
                   <MenuItem value="reviews" onSelect={() => navigate("reviews")}>Open reviews ({totalOpen})</MenuItem>
                   <MenuItem value="preferences" onSelect={() => { navigate("account"); setAccountTab("alerts"); }}>Notification preferences</MenuItem>
                 </MenuContent>
               </Menu>
               <Menu>
-                <MenuTrigger className="qg-app-account-trigger" aria-label="Open account menu">
+                <MenuTrigger className="qg-app-account-trigger" aria-label="Open account menu" data-layout-probe="app-account">
                   <span aria-hidden="true">{accountName.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase()}</span>
                 </MenuTrigger>
-                <MenuContent>
+                <MenuContent side="bottom" align="end" sideOffset={8} collisionPadding={8}>
                   <MenuItem value="account" onSelect={() => navigate("account")}>Your account</MenuItem>
                   <MenuItem value="workspace" onSelect={() => navigate("workspace")}>Workspace settings</MenuItem>
                 </MenuContent>
@@ -427,7 +430,7 @@ export function LayoutsShowcase({ active = true }: { active?: boolean }) {
               </Button>
               <Menu>
                 <MenuTrigger aria-label="More pages"><MoreHorizontal size={22} aria-hidden="true" />More</MenuTrigger>
-                <MenuContent>
+                <MenuContent side="top" align="end" sideOffset={8} collisionPadding={8}>
                   <MenuItem value="people" onSelect={() => navigate("people")}>People</MenuItem>
                   <MenuItem value="workspace" onSelect={() => navigate("workspace")}>Workspace settings</MenuItem>
                   <MenuItem value="account" onSelect={() => navigate("account")}>Your account</MenuItem>
@@ -446,7 +449,7 @@ export function LayoutsShowcase({ active = true }: { active?: boolean }) {
                   <MenuTrigger className="qg-app-icon-control" aria-label="Review actions">
                     <MoreHorizontal size={18} aria-hidden="true" />
                   </MenuTrigger>
-                  <MenuContent finalFocus={() => inspectTrigger.current?.isConnected ? inspectTrigger.current : reviewHeading.current}>
+                  <MenuContent side="bottom" align="end" sideOffset={8} collisionPadding={8} finalFocus={() => inspectTrigger.current?.isConnected ? inspectTrigger.current : reviewHeading.current}>
                     <MenuItem value="reference" onSelect={() => setNotice("Reference: " + selected.id)}>Show reference</MenuItem>
                     <MenuItem value="close" onSelect={() => dispatch({ type: "dismiss-detail" })}>Close details</MenuItem>
                   </MenuContent>
@@ -479,6 +482,9 @@ export function LayoutsShowcase({ active = true }: { active?: boolean }) {
         This example uses the gallery's real UI SDK, Quantive icons, fonts and Liquid Glass provider.
         Changes stay in page memory. Login, tenant isolation and persistence are not implemented.
       </p>
+      <LiquidLayoutDiagnostics target={() => canvas.current} active={active} defaultOpen={typeof window !== "undefined" && new URLSearchParams(window.location.search).get("quality") === "1"}>
+        <LayoutQualityLab active={active} />
+      </LiquidLayoutDiagnostics>
     </section>
   );
 }

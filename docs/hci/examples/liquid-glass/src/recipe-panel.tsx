@@ -4,25 +4,13 @@ import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from "@ui-sdk/react
 import { Tabs, TabsList, TabsPanel, TabsTab, TabsIndicator } from "@ui-sdk/react/tabs";
 import { ChevronDown } from "lucide-react";
 import { liquidComponentRegistry, liquidComponentRecipes } from "@quantitative-hci/liquid-glass/recipes";
-import cursorSource from "./recipes/cursor-feedback.tsx?raw";
-import contextSource from "./recipes/context-actions.tsx?raw";
-import showcaseSource from "./recipes/showcase-section.tsx?raw";
-import chapterSource from "./recipes/chapter-story.tsx?raw";
-import workPatternsSource from "./recipes/work-patterns.tsx?raw";
-import assistantSource from "./recipes/assistant-composer.tsx?raw";
-import applicationShellSource from "./recipes/application-shell.tsx?raw";
+import { exampleSource } from "./example-preview";
 
-const sources: Record<string, string> = {
-  "cursor-feedback": cursorSource, "context-actions": contextSource,
-  "showcase-section": showcaseSource, "chapter-story": chapterSource,
-  "work-patterns": workPatternsSource, "assistant-composer": assistantSource,
-  "application-shell": applicationShellSource,
-};
-
-export function RecipePanel({ collection }: { collection: string }) {
+export function RecipePanel({ collection, onNavigate }: { collection: string; onNavigate?: (id: string) => void }) {
   const [result, setResult] = useState("");
   useEffect(() => setResult(""), [collection]);
   const recipes = liquidComponentRecipes.filter(recipe => recipe.collection === collection);
+  if (!recipes.length) return null;
   const copy = async (text: string, message: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -33,6 +21,7 @@ export function RecipePanel({ collection }: { collection: string }) {
   };
   return (
     <section className="kit-recipe-panel" aria-label={`${collection} recipes`} data-liquid-glass="off">
+      {onNavigate && <div className="kit-recipe-links">{recipes.map(recipe => <Button key={recipe.id} onClick={() => onNavigate(`example:${recipe.id}`)}>Try {recipe.title}</Button>)}</div>}
       <Collapsible>
         <CollapsibleTrigger>Use these components in a project <ChevronDown size={18} aria-hidden="true" /></CollapsibleTrigger>
         <CollapsiblePanel>
@@ -45,12 +34,12 @@ export function RecipePanel({ collection }: { collection: string }) {
             {recipes.map(recipe => <TabsPanel key={recipe.id} value={recipe.id}>
               <p>{recipe.purpose}</p>
               <div className="kit-recipe-actions">
-                <Button onClick={() => copy(sources[recipe.id], `${recipe.title} example copied`)}>Copy example</Button>
-                <Button onClick={() => copy(JSON.stringify({ ...recipe, foundation: liquidComponentRegistry.foundation, distribution: liquidComponentRegistry.distribution, policy: liquidComponentRegistry.policy, exampleSource: sources[recipe.id] }, null, 2), `${recipe.title} agent brief copied`)}>Copy agent brief</Button>
+                <Button disabled={!exampleSource(recipe.id)} onClick={() => copy(exampleSource(recipe.id) ?? "", `${recipe.title} example copied`)}>Copy example</Button>
+                <Button disabled={!exampleSource(recipe.id)} onClick={() => copy(JSON.stringify({ ...recipe, foundation: liquidComponentRegistry.foundation, distribution: liquidComponentRegistry.distribution, policy: liquidComponentRegistry.policy, exampleSource: exampleSource(recipe.id) }, null, 2), `${recipe.title} agent brief copied`)}>Copy agent brief</Button>
                 <a href="/registry/components.json" target="_blank" rel="noreferrer">Component registry</a>
                 <a href="/llms.txt" target="_blank" rel="noreferrer">Agent guide</a>
               </div>
-              <pre tabIndex={0} aria-label={`${recipe.title} source`}><code>{sources[recipe.id]}</code></pre>
+              <pre tabIndex={0} aria-label={`${recipe.title} source`}><code>{exampleSource(recipe.id)}</code></pre>
             </TabsPanel>)}
           </Tabs>
           <output className="kit-recipe-result" aria-live="polite">{result}</output>

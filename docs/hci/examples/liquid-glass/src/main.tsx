@@ -2,6 +2,7 @@ import {
   Component,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ComponentType,
   type ErrorInfo,
@@ -83,7 +84,13 @@ import { SectionsShowcase } from "./sections-showcase";
 import { LayoutsShowcase } from "./layouts-showcase";
 import { PatternsShowcase } from "./patterns-showcase";
 import { AssistantShowcase } from "./assistant-showcase";
+import { ChatShowcase } from "./chat-showcase";
+import { IntegrationsShowcase } from "./integrations-showcase";
 import { RecipePanel } from "./recipe-panel";
+import { ComponentDetails, ExampleDetails, ExamplesPage, LibraryCatalogue } from "./library-pages";
+import { isLibraryRoute, libraryComponents, libraryCounts, matchesLibrarySearch, type LibraryNavigationOptions } from "./library-catalogue";
+import { ExamplePreview } from "./example-preview";
+import { liquidComponentRecipes } from "@quantitative-hci/liquid-glass/recipes";
 import { GraphicsShowcase, initialGraphicDocument, initialGraphicAssets } from "./graphics-showcase";
 import type { GraphicAsset } from "@quantitative-hci/liquid-glass/graphics";
 import { VisualShowcase, visualAssets } from "./visual-showcase";
@@ -99,6 +106,7 @@ const demos: Record<string, ComponentType> = { ...inputDemos, ...surfaceDemos };
 const groups = [...new Set(manifest.components.map((item) => item.category))];
 const collections = [
   { id: "layouts", name: "App layouts", keywords: "application app shell workspace account organisation multitenancy menu dashboard navigation review queue phone mobile settings projects people states" },
+  { id: "chat", name: "Chat workspace", keywords: "conversation chats prompt template thread history streaming assistant messages" },
   { id: "patterns", name: "Patterns", keywords: "command palette search filter facets selection bulk actions drawer detail sheet empty state library" },
   { id: "assistant", name: "Assistant", keywords: "ai elements prompt composer attachment message conversation sources citation suggestions" },
   { id: "interactions", name: "Interactions", keywords: "cursor pointer mouse click ripple feedback magnetic right click context menu gestures" },
@@ -314,11 +322,12 @@ function Overview({ onExplore }: { onExplore: (id: string) => void }) {
           <svg viewBox="0 0 100 100"><circle cx="48" cy="45" r="31" /><circle cx="48" cy="45" r="21" /><path d="m43 30 3 33 9-11 14-3Z" /></svg>
         </div>
         <div className="kit-new-copy">
-          <h2 id="kit-new-title">Patterns worth reusing.</h2>
-          <p>Commands, filters and conversations. Built on the same SDK.</p>
+          <h2 id="kit-new-title">Find it. Try it. Build with it.</h2>
+          <p>{libraryCounts.foundation} SDK families, {libraryCounts.custom} custom entries and {libraryCounts.examples} runnable examples.</p>
           <div className="kit-button-row">
-            <Button onClick={() => onExplore("patterns")}>Explore patterns</Button>
-            <Button onClick={() => onExplore("assistant")}>Explore assistant</Button>
+            <Button onClick={() => onExplore("catalogue")}>Browse all components</Button>
+            <Button onClick={() => onExplore("examples")}>Try the examples</Button>
+            <Button onClick={() => onExplore("chat")}>Open chat workspace</Button>
           </div>
         </div>
       </section>
@@ -704,13 +713,17 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
   const [documents, setDocuments] = useState(() => allDiagramModels.map(model => createModelDocument(model)));
   const [graphicDocument, setGraphicDocument] = useState(() => structuredClone(initialGraphicDocument));
   const [graphicAssets, setGraphicAssets] = useState<readonly GraphicAsset[]>(initialGraphicAssets);
+  const [graphicsView, setGraphicsView] = useState<"canvas" | "images">("canvas");
+  const focusGraphicsTab = useRef(false);
   const [visitedCollections, setVisitedCollections] = useState<string[]>([]);
   useEffect(() => {
     const restoreCollection = () => {
-      const id = new URL(location.href).searchParams.get("collection");
-      if (id && [...collections, ...manifest.components].some(item => item.id === id)) {
+      const params = new URL(location.href).searchParams;
+      const id = params.get("collection");
+      if (id && isLibraryRoute(id)) {
         setSelected(id);
         setSearch("");
+        if (id === "visual") setGraphicsView(params.get("graphicsview") === "images" ? "images" : "canvas");
       } else {
         setSelected("overview");
         setSearch("");
@@ -720,14 +733,29 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
     window.addEventListener("popstate", restoreCollection);
     return () => window.removeEventListener("popstate", restoreCollection);
   }, []);
-  const selectCatalogue = (id: string) => {
+  const selectCatalogue = (id: string, options?: LibraryNavigationOptions) => {
+    if (!isLibraryRoute(id)) return;
     setSelected(id);
     setRestart(0);
     setCopied("");
     const url = new URL(location.href);
     if (id === "overview") url.searchParams.delete("collection");
     else url.searchParams.set("collection", id);
+    const nextGraphicsView = options?.graphicsView ?? graphicsView;
+    if (id === "visual" && nextGraphicsView === "images") url.searchParams.set("graphicsview", "images");
+    else url.searchParams.delete("graphicsview");
+    if (id === "visual" && options?.graphicsView) {
+      setGraphicsView(options.graphicsView);
+      focusGraphicsTab.current = true;
+    }
     if (url.href !== location.href) history.pushState(null, "", url);
+  };
+  const navigateLibrary = (id: string, options?: LibraryNavigationOptions) => {
+    setSearch("");
+    selectCatalogue(id, options);
+    const main = document.getElementById("kit-main");
+    main?.focus({ preventScroll: true });
+    main?.scrollIntoView({ block: "start" });
   };
   const { status, motion: effectiveMotion } = useLiquidGlass();
   const matches = manifest.components.filter((item) =>
@@ -738,17 +766,23 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
   const collectionMatches = collections.filter((item) =>
     (item.name + " " + item.keywords).toLowerCase().includes(search.toLowerCase().trim()),
   );
-  const active =
-    selected === "overview" && !search
-      ? "overview"
-      : [...collectionMatches, ...matches].some((item) => item.id === selected)
-        ? selected
-        : collectionMatches[0]?.id ?? matches[0]?.id;
+  const customMatches = search.trim() ? libraryComponents.filter(item => !item.foundation && matchesLibrarySearch(item, search)) : [];
+  const active = selected;
+  useEffect(() => {
+    if (active === "visual" && focusGraphicsTab.current) {
+      document.querySelector<HTMLElement>('.kit-graphics-tabs [role="tab"][aria-selected="true"]')?.focus();
+      focusGraphicsTab.current = false;
+    }
+  }, [active, graphicsView]);
+  const catalogueValue = (!search && active === "overview") || [...collectionMatches, ...matches].some(item => item.id === active) || customMatches.some(item => item.route === active) ? active : null;
   const collection = collections.find((item) => item.id === active);
   useEffect(() => {
-    if (collections.some(item => item.id === active)) setVisitedCollections(current => current.includes(active!) ? current : [...current, active!]);
+    if (collections.some(item => item.id === active) || active === "catalogue") setVisitedCollections(current => current.includes(active) ? current : [...current, active]);
   }, [active]);
   const component = manifest.components.find((item) => item.id === active);
+  const customComponent = libraryComponents.find(item => !item.foundation && item.route === active);
+  const example = liquidComponentRecipes.find(item => `example:${item.id}` === active);
+  const libraryPageTitle = active === "catalogue" ? "All components" : active === "examples" ? "Examples" : active === "integrations" ? "AI integrations" : customComponent?.title ?? example?.title;
   const Demo = active ? demos[active] : undefined;
   const copy = async (value: string, result: string) => {
     try {
@@ -804,6 +838,11 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
       </header>
       <div className="kit-layout">
         <aside className="kit-sidebar" aria-label="Component library">
+          <nav className="kit-library-navigation" aria-label="Browse the library">
+            <Button aria-current={active === "catalogue" || customComponent ? "page" : undefined} onClick={() => navigateLibrary("catalogue")}><LiquidIcon name="grid" />All components</Button>
+            <Button aria-current={active === "examples" || example ? "page" : undefined} onClick={() => navigateLibrary("examples")}><LiquidIcon name="code" />Examples</Button>
+            <Button aria-current={active === "integrations" ? "page" : undefined} onClick={() => navigateLibrary("integrations")}><LiquidIcon name="sparkles" />AI integrations</Button>
+          </nav>
           <div className="kit-search">
             <Search size={17} aria-hidden="true" />
             <Input
@@ -817,7 +856,7 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
             aria-label="Component catalogue"
             className="kit-catalogue"
             data-liquid-glass="off"
-            value={active ?? null}
+            value={catalogueValue}
             onValueChange={(value) => {
               if (typeof value === "string") {
                 selectCatalogue(value);
@@ -826,6 +865,7 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
             items={[
               ...(!search ? [{ value: "overview", label: "Overview" }] : []),
               ...collectionMatches.map((item) => ({ value: item.id, label: item.name })),
+              ...customMatches.map(item => ({ value: item.route, label: item.name })),
               ...matches.map((item) => ({ value: item.id, label: item.name })),
             ]}
           >
@@ -841,7 +881,7 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
             )}
             {collectionMatches.length > 0 && (
               <div className="kit-catalogue-group kit-custom-collection">
-                <p>Custom components</p>
+                <p>Working showcases</p>
                 {collectionMatches.map((item) => (
                   <ListboxItem key={item.id} value={item.id} data-catalogue-id={item.id}>
                     {item.name}
@@ -850,6 +890,10 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
                 ))}
               </div>
             )}
+            {customMatches.length > 0 && <div className="kit-catalogue-group">
+              <p>Custom components</p>
+              {customMatches.map(item => <ListboxItem key={item.id} value={item.route} data-catalogue-id={item.route}>{item.name}<span className="kit-active-mark"><Check size={14} aria-hidden="true" /></span></ListboxItem>)}
+            </div>}
             {groups.map((group) => {
               const items = matches.filter((item) => item.category === group);
               return items.length > 0 ? (
@@ -871,6 +915,7 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
               ) : null;
             })}
           </Listbox>
+          {search && <p className="kit-navigation-search-result" role="status">{matches.length + collectionMatches.length + customMatches.length ? `${matches.length + collectionMatches.length + customMatches.length} matches. Choose one to open it.` : "No matching components. Try another name."}</p>}
           <p className="kit-catalogue-count">{manifest.components.length} SDK families · {collections.length} custom collections</p>
         </aside>
         <main className="kit-main" id="kit-main" tabIndex={-1}>
@@ -879,12 +924,12 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
               {active !== "layouts" && <p className="kit-eyebrow">
                 {active === "overview"
                   ? "The component collection"
-                  : collection ? "Custom collection" : (component?.category ?? "Components")}
+                  : libraryPageTitle ? customComponent?.category ?? (example ? "Runnable example" : "Component library") : collection ? "Custom collection" : (component?.category ?? "Components")}
               </p>}
               <h1>
                 {active === "overview"
                   ? "Liquid Glass"
-                  : (collection?.name ?? component?.name ?? "No matching components")}
+                  : (libraryPageTitle ?? collection?.name ?? component?.name ?? "No matching components")}
               </h1>
               {active === "overview" && (
                 <p className="kit-intro">
@@ -898,9 +943,22 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
             </div>
             <MaterialSettings {...props} />
           </div>
+          {(active === "catalogue" || visitedCollections.includes("catalogue")) && <div hidden={active !== "catalogue"}><LibraryCatalogue onNavigate={navigateLibrary} /></div>}
+          {active === "examples" && <ExamplesPage onNavigate={navigateLibrary} />}
+          {active === "integrations" && <IntegrationsShowcase />}
+          {customComponent && <ComponentDetails key={customComponent.id} item={customComponent} onNavigate={navigateLibrary} />}
+          {example && <ExampleDetails key={example.id} id={example.id} onNavigate={navigateLibrary} />}
+          {(active === "chat" || visitedCollections.includes("chat")) && <div hidden={active !== "chat"}><SpecimenBoundary key="chat" name="Chat workspace"><ChatShowcase active={active === "chat"} /></SpecimenBoundary></div>}
           {(active === "visual" || visitedCollections.includes("visual")) && <div hidden={active !== "visual"}>
             <SpecimenBoundary key="visual" name="Graphics">
-              <Tabs className="kit-graphics-tabs" defaultValue="canvas">
+              <Tabs className="kit-graphics-tabs" value={graphicsView} onValueChange={value => {
+                if (value !== "canvas" && value !== "images") return;
+                setGraphicsView(value);
+                const url = new URL(location.href);
+                if (value === "images") url.searchParams.set("graphicsview", "images");
+                else url.searchParams.delete("graphicsview");
+                if (url.href !== location.href) history.pushState(null, "", url);
+              }}>
                 <TabsList aria-label="Graphics views"><TabsTab value="canvas">Design canvas</TabsTab><TabsTab value="images">Image components</TabsTab><TabsIndicator /></TabsList>
                 <TabsPanel value="canvas" keepMounted><GraphicsShowcase model={graphicDocument} assets={graphicAssets} onModelChange={setGraphicDocument} onAssetsChange={setGraphicAssets} /></TabsPanel>
                 <TabsPanel value="images" keepMounted><VisualShowcase /></TabsPanel>
@@ -928,10 +986,10 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
           {(active === "assistant" || visitedCollections.includes("assistant")) && <div hidden={active !== "assistant"}>
             <SpecimenBoundary key="assistant" name="Assistant"><AssistantShowcase /></SpecimenBoundary>
           </div>}
-          {(["layouts", "interactions", "sections", "patterns", "assistant"].includes(active ?? "")) && <RecipePanel collection={active!} />}
+          {(["layouts", "interactions", "sections", "patterns", "assistant", "chat"].includes(active ?? "")) && <RecipePanel collection={active!} onNavigate={navigateLibrary} />}
           {active === "overview" ? (
-            <Overview onExplore={(id) => { selectCatalogue(id); document.getElementById("kit-main")?.focus(); }} />
-          ) : collection ? null
+            <Overview onExplore={navigateLibrary} />
+          ) : collection || libraryPageTitle ? null
           : component && Demo ? (
             <section
               className="kit-specimen"
@@ -1043,4 +1101,5 @@ function App() {
   );
 }
 
-createRoot(document.getElementById("root")!).render(<App />);
+const initialParams = new URLSearchParams(location.search);
+createRoot(document.getElementById("root")!).render(initialParams.get("embed") === "1" ? <ExamplePreview id={initialParams.get("example") ?? ""} /> : <App />);

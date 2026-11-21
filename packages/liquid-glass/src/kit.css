@@ -1,6 +1,7 @@
 @layer ui-sdk, liquid-kit;
 @import "@ui-sdk/core/web.css";
 @import "./fonts.css";
+@import "./validation.css";
 
 @layer liquid-kit {
   .qg-icon {

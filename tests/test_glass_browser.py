@@ -19,6 +19,7 @@ from urllib.parse import urlparse
 from glass_agent_contract import verify_agent_contract
 from glass_appearance_contract import verify_appearance_contract
 from glass_browser_diagnostics import start_browser_profile
+from glass_developer_contract import verify_developer_contract, verify_visual_contract
 from glass_optics_contract import (
     SCREENSHOT_TIMEOUT_MS,
     _assert_rect_alignment,
@@ -90,6 +91,10 @@ async def run(args):
             await target.bring_to_front()
 
         context = await new_context(viewport={"width": 1440, "height": 1000})
+        initial_storage = await context.storage_state()
+        initial_appearance_keys = [item["name"] for origin in initial_storage["origins"]
+                                   for item in origin["localStorage"]
+                                   if item["name"] in {"qg-kit-font", "qg-kit-icons"}]
         page = await context.new_page()
         await observe_errors(page)
         root = page.locator("html")
@@ -233,8 +238,11 @@ async def run(args):
 
         async def initial():
             await expect(root).to_have_attribute("data-liquid-glass-kit", "true")
+            assert not initial_appearance_keys, f"Initial overview should start without saved appearance: {initial_appearance_keys}"
+            await expect(root).to_have_attribute("data-liquid-font", "studio")
+            await expect(root).to_have_attribute("data-liquid-icons", "isometric")
             await expect(page.locator("[data-kit-view='overview']")).to_be_visible()
-            await expect(page.locator("[data-catalogue-id]")).to_have_count(56)
+            await expect(page.locator("[data-catalogue-id]")).to_have_count(58)
             await expect(page.locator("[data-component-id]")).to_have_count(0)
             await expect(page.locator(".agent-inspector, .agent-command-console, .reference-lens-stage")).to_have_count(0)
             await expect(page.get_by_role("button", name="Create project", exact=True)).to_be_enabled()
@@ -244,7 +252,7 @@ async def run(args):
             assert status != "error", await root.get_attribute("data-liquid-error")
             await settled_motion(page)
             await page.screenshot(path=str(output.parent / "overview-desktop.png"), animations="allow", timeout=SCREENSHOT_TIMEOUT_MS)
-            return {"catalogueChoices": 56, "families": 55, "default": "Liquid Glass overview", "rendererStatus": status, "screenshot": "overview-desktop.png", "viewport": {"width": 1440, "height": 1000}}
+            return {"catalogueChoices": 58, "families": 55, "default": "Liquid Glass overview", "appearance": {"font": "studio", "icons": "isometric", "initialStorageAbsent": True}, "rendererStatus": status, "screenshot": "overview-desktop.png", "viewport": {"width": 1440, "height": 1000}}
 
         await record("default_glass_kit_overview", initial, reset=False, timeout=45)
         await record("gpu_on_actual_controls_strength_and_backdrop", lambda: verify_optics_contract(page, expect, output_dir=output.parent, require_gpu=args.software_gpu), reset=False, timeout=60)
@@ -258,7 +266,10 @@ async def run(args):
         await record("real_sdk_agent_contract", lambda: verify_agent_contract(page, expect), timeout=30)
 
         async def all_components():
-            actual = sorted(await page.locator("[data-catalogue-id]").evaluate_all("nodes => nodes.map(node => node.dataset.catalogueId).filter(id => id !== 'overview')"))
+            catalogue = await page.locator("[data-catalogue-id]").evaluate_all("nodes => nodes.map(node => node.dataset.catalogueId)")
+            custom_collections = ["developer", "visual"]
+            assert all(catalogue.count(item) == 1 for item in custom_collections), f"Expected each custom collection exactly once: {catalogue}"
+            actual = sorted(item for item in catalogue if item not in ["overview", *custom_collections])
             assert actual == expected_ids, actual
             unnamed = []
             for item in components:
@@ -268,7 +279,7 @@ async def run(args):
                 entries = await page.evaluate("window.quantitativeHciAgent.snapshot().filter(entry => !entry.offPage && entry.component !== 'more')")
                 unnamed.extend({"specimen": item["id"], "component": entry["component"], "ref": entry["ref"]} for entry in entries if not entry.get("label", "").strip())
             assert not unnamed, f"Unnamed SDK entries: {json.dumps(unnamed)}"
-            return {"familiesOpened": len(components), "unnamed": unnamed, "oneFamilyMountedAtATime": True}
+            return {"familiesOpened": len(components), "customCollectionsPresent": custom_collections, "unnamed": unnamed, "oneFamilyMountedAtATime": True}
 
         await record("all_55_families_render_and_have_agent_names", all_components, timeout=35)
 
@@ -304,6 +315,9 @@ async def run(args):
             await collection.press("Enter")
             dialog = page.get_by_role("dialog", name="Create a collection", exact=True)
             await expect(dialog).to_be_visible()
+            browser_stage("keyboard: wait for the dialog's visual entry")
+            await expect(dialog).not_to_have_attribute("data-starting-style", re.compile(r".*"))
+            await expect(dialog).to_have_css("opacity", "1")
             await settled_motion(page)
             assert await dialog.evaluate("node => node.contains(document.activeElement)"), "Focus did not enter the collection dialog"
             gpu = await root.get_attribute("data-liquid-status") == "ready"
@@ -442,7 +456,14 @@ async def run(args):
         await record("mobile_overview_fits_and_remains_usable", mobile, timeout=20)
 
         async def appearance():
-            appearance_context = await new_context(viewport={"width": 1440, "height": 1000})
+            location = urlparse(args.base_url)
+            appearance_context = await new_context(viewport={"width": 1440, "height": 1000}, storage_state={
+                "cookies": [],
+                "origins": [{"origin": f"{location.scheme}://{location.netloc}", "localStorage": [
+                    {"name": "qg-kit-font", "value": "__unsupported_font__"},
+                    {"name": "qg-kit-icons", "value": "__unsupported_icons__"},
+                ]}],
+            })
             appearance_page = await appearance_context.new_page()
             await observe_errors(appearance_page)
             try:
@@ -450,13 +471,28 @@ async def run(args):
                     appearance_page, expect, base_url=args.base_url,
                     output_dir=output.parent, require_gpu=args.software_gpu,
                 )
-            except Exception:
+            except (Exception, asyncio.CancelledError):
                 await failure_evidence(appearance_page)
                 raise
             finally:
                 await appearance_context.close()
 
         await record("font_icon_presets_state_and_export", appearance, reset=False, timeout=45)
+
+        async def custom_components(operation):
+            custom_context = await new_context(viewport={"width": 1440, "height": 1000})
+            custom_page = await custom_context.new_page()
+            await observe_errors(custom_page)
+            try:
+                return await operation(custom_page, expect, base_url=args.base_url, output_dir=output.parent)
+            except Exception:
+                await failure_evidence(custom_page)
+                raise
+            finally:
+                await custom_context.close()
+
+        await record("uml_uwe_selection_editing_exports_and_access", lambda: custom_components(verify_developer_contract), reset=False, timeout=60)
+        await record("visual_media_gallery_comparison_and_dialogs", lambda: custom_components(verify_visual_contract), reset=False, timeout=40)
 
         async def preferences():
             preference_context = await new_context(viewport={"width": 1440, "height": 1000})
@@ -611,10 +647,16 @@ async def run(args):
                 await demo.wait_for_timeout(500)
                 await demo.get_by_role("switch", name="Notifications", exact=True).click()
                 await demo.wait_for_timeout(450)
-                await demo.get_by_role("button", name="New collection", exact=True).click()
-                await expect(demo.get_by_role("dialog", name="Create a collection", exact=True)).to_be_visible()
+                collection = demo.get_by_role("button", name="New collection", exact=True)
+                await collection.click()
+                dialog = demo.get_by_role("dialog", name="Create a collection", exact=True)
+                await expect(dialog).to_be_visible()
+                await expect(dialog).not_to_have_attribute("data-starting-style", re.compile(r".*"))
+                await expect(dialog).to_have_css("opacity", "1")
                 await demo.wait_for_timeout(700)
                 await demo.keyboard.press("Escape")
+                await expect(dialog).to_be_hidden()
+                await expect(collection).to_be_focused()
                 await demo.mouse.move(1, 1)
                 await settled_motion(demo)
                 await demo.screenshot(path=str(output.parent / "motion-demo-overview.png"), animations="allow", timeout=SCREENSHOT_TIMEOUT_MS)

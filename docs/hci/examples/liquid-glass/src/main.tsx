@@ -16,6 +16,7 @@ import {
   Search,
 } from "lucide-react";
 import { LiquidIcon, type LiquidIconName } from "@quantitative-hci/liquid-glass/icons";
+import { FoundationBadge, ValidationBadge } from "@quantitative-hci/liquid-glass/validation";
 import { Button } from "@ui-sdk/react/button";
 import { Input } from "@ui-sdk/react/input";
 import { Field, FieldLabel } from "@ui-sdk/react/field";
@@ -72,6 +73,9 @@ import {
 import { inputDemos } from "./demos-inputs";
 import { surfaceDemos } from "./demos-surfaces";
 import { KitBackdrop, type BackdropName } from "./kit-backdrop";
+import { DeveloperShowcase } from "./developer-showcase";
+import { diagramModels } from "./developer-models";
+import { VisualShowcase, visualAssets } from "./visual-showcase";
 import starterSource from "./starter-template.tsx?raw";
 import manifest from "../../../../../packages/liquid-glass/component-manifest.json";
 import "./agent-bridge";
@@ -82,6 +86,10 @@ import "./gallery.css";
 
 const demos: Record<string, ComponentType> = { ...inputDemos, ...surfaceDemos };
 const groups = [...new Set(manifest.components.map((item) => item.category))];
+const collections = [
+  { id: "visual", name: "Visual components", keywords: "image gallery media carousel card comparison photo showcase" },
+  { id: "developer", name: "Developer components", keywords: "uml uwe diagram class component navigation presentation model" },
+];
 const accessOptions = [
   { value: "private", label: "Private" },
   { value: "team", label: "Team" },
@@ -265,7 +273,7 @@ function Panel({
   );
 }
 
-function Overview() {
+function Overview({ onExplore }: { onExplore: (id: string) => void }) {
   const [projectName, setProjectName] = useState("Coastal studio");
   const [access, setAccess] = useState("private");
   const [notifications, setNotifications] = useState(true);
@@ -489,6 +497,32 @@ function Overview() {
         <div className="kit-panel-divider" />
         <RadioDemo />
       </Panel>
+      <section className="kit-extension-preview" data-liquid-glass="" data-liquid-kind="panel" data-validation="unvalidated">
+        <div className="kit-preview-images" aria-hidden="true">
+          {visualAssets.slice(0, 2).map((asset) => (
+            <img key={asset.id} src={asset.src} srcSet={asset.srcSet} sizes="(max-width: 760px) 160px, 280px" width={asset.width} height={asset.height} alt="" loading="lazy" />
+          ))}
+        </div>
+        <div className="kit-preview-description">
+          <ValidationBadge />
+          <h2>A place for your imagery</h2>
+          <p>Image cards, a browsable gallery, detailed previews and an interactive comparison.</p>
+          <Button onClick={() => onExplore("visual")}>Explore visual components</Button>
+        </div>
+      </section>
+      <section className="kit-extension-preview kit-developer-preview" data-liquid-glass="" data-liquid-kind="panel" data-validation="unvalidated">
+        <div className="kit-preview-model" aria-hidden="true">
+          <div><small>«component»</small><strong>Interface</strong><span>Shared actions</span></div>
+          <svg viewBox="0 0 100 32"><path d="M2 16H93M85 10l10 6-10 6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeDasharray="5 4" /></svg>
+          <div><small>«interface»</small><strong>Model</strong><span>Visible state</span></div>
+        </div>
+        <div className="kit-preview-description">
+          <ValidationBadge />
+          <h2>Make the system visible</h2>
+          <p>Explore UML and UWE diagrams, inspect relationships, and edit the same model together.</p>
+          <Button onClick={() => onExplore("developer")}>Explore developer components</Button>
+        </div>
+      </section>
     </div>
   );
 }
@@ -636,18 +670,23 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
   const [selected, setSelected] = useState("overview");
   const [restart, setRestart] = useState(0);
   const [copied, setCopied] = useState("");
+  const [developerModels, setDeveloperModels] = useState(() => structuredClone(diagramModels));
   const { status, motion: effectiveMotion } = useLiquidGlass();
   const matches = manifest.components.filter((item) =>
     (item.name + " " + item.category)
       .toLowerCase()
       .includes(search.toLowerCase().trim()),
   );
+  const collectionMatches = collections.filter((item) =>
+    (item.name + " " + item.keywords).toLowerCase().includes(search.toLowerCase().trim()),
+  );
   const active =
     selected === "overview" && !search
       ? "overview"
-      : matches.some((item) => item.id === selected)
+      : [...collectionMatches, ...matches].some((item) => item.id === selected)
         ? selected
-        : matches[0]?.id;
+        : collectionMatches[0]?.id ?? matches[0]?.id;
+  const collection = collections.find((item) => item.id === active);
   const component = manifest.components.find((item) => item.id === active);
   const Demo = active ? demos[active] : undefined;
   const copy = async (value: string, result: string) => {
@@ -727,6 +766,7 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
             }}
             items={[
               ...(!search ? [{ value: "overview", label: "Overview" }] : []),
+              ...collectionMatches.map((item) => ({ value: item.id, label: item.name })),
               ...matches.map((item) => ({ value: item.id, label: item.name })),
             ]}
           >
@@ -739,6 +779,17 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
                 <LiquidIcon name="grid" />
                 Overview
               </ListboxItem>
+            )}
+            {collectionMatches.length > 0 && (
+              <div className="kit-catalogue-group kit-custom-collection">
+                <p>Custom components</p>
+                {collectionMatches.map((item) => (
+                  <ListboxItem key={item.id} value={item.id} data-catalogue-id={item.id}>
+                    {item.name}
+                    <span className="kit-active-mark"><Check size={14} aria-hidden="true" /></span>
+                  </ListboxItem>
+                ))}
+              </div>
             )}
             {groups.map((group) => {
               const items = matches.filter((item) => item.category === group);
@@ -761,7 +812,7 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
               ) : null;
             })}
           </Listbox>
-          <p className="kit-catalogue-count">55 components</p>
+          <p className="kit-catalogue-count">55 SDK families · 2 custom collections</p>
         </aside>
         <main className="kit-main" id="kit-main" tabIndex={-1}>
           <div className="kit-title-row">
@@ -769,12 +820,12 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
               <p className="kit-eyebrow">
                 {active === "overview"
                   ? "The component collection"
-                  : (component?.category ?? "Components")}
+                  : collection ? "Custom collection" : (component?.category ?? "Components")}
               </p>
               <h1>
                 {active === "overview"
                   ? "Liquid Glass"
-                  : (component?.name ?? "No matching components")}
+                  : (collection?.name ?? component?.name ?? "No matching components")}
               </h1>
               {active === "overview" && (
                 <p className="kit-intro">
@@ -789,7 +840,11 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
             <MaterialSettings {...props} />
           </div>
           {active === "overview" ? (
-            <Overview />
+            <Overview onExplore={(id) => { setSelected(id); document.getElementById("kit-main")?.focus(); }} />
+          ) : active === "visual" ? (
+            <SpecimenBoundary key="visual" name="Visual components"><VisualShowcase /></SpecimenBoundary>
+          ) : active === "developer" ? (
+            <SpecimenBoundary key="developer" name="Developer components"><DeveloperShowcase models={developerModels} onModelsChange={setDeveloperModels} /></SpecimenBoundary>
           ) : component && Demo ? (
             <section
               className="kit-specimen"
@@ -798,7 +853,7 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
               data-liquid-kind="panel"
             >
               <div className="kit-specimen-toolbar">
-                <span>{component.name}</span>
+                <span className="kit-foundation-label">{component.name}<FoundationBadge /></span>
                 <Button onClick={() => setRestart((value) => value + 1)}>
                   <RotateCcw size={15} aria-hidden="true" />
                   Restart component
@@ -830,6 +885,10 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
           <output className="kit-copy-result" aria-live="polite">
             {copied}
           </output>
+          <div className="kit-provenance-note">
+            <p><FoundationBadge /> Behaviour from Vercel UI SDK.</p>
+            <p><ValidationBadge /> Custom components, glass styling and compositions have not been reviewed or approved by a human UI/UX team.</p>
+          </div>
           <footer className="kit-footer">
             <span>Quantive Liquid Glass</span>
             <span>React · UI SDK · WebGPU</span>

@@ -45,6 +45,11 @@ check(pkg.exports?.["./kit.css"] === "./src/kit.css", "Export the shared kit sty
 for (const [entry, path] of Object.entries({
   "./appearance": "./src/appearance.tsx",
   "./icons": "./src/icons.tsx",
+  "./validation": "./src/validation.tsx",
+  "./developer": "./src/developer/index.ts",
+  "./developer.css": "./src/developer/diagrams.css",
+  "./media": "./src/media/index.ts",
+  "./media.css": "./src/media/media.css",
   "./fonts.css": "./src/fonts.css",
 })) {
   check(pkg.exports?.[entry] === path && existsSync(join(packageDir, path)), `Retain the public ${entry} entry.`);
@@ -81,8 +86,13 @@ for (const id of expected) {
 for (const path of sourceFiles) {
   const source = read(path);
   check(!/["']@ui-sdk\/react["']/.test(source) && !source.includes("@ui-sdk/core/internal/"), `${relative(root, path)}: use documented SDK entries.`);
-  check(!/["']@quantitative-hci\/liquid-glass\/(?!webgpu["']|appearance["']|icons["']|material["']|fonts\.css["']|kit\.css["']|styles\.css["']|tokens\.css["'])/.test(source), `${relative(root, path)}: use direct SDK primitives and the shared material/provider APIs.`);
+  check(!/["']@quantitative-hci\/liquid-glass\/(?!webgpu["']|appearance["']|icons["']|validation["']|developer(?:\.css)?["']|media(?:\.css)?["']|material["']|fonts\.css["']|kit\.css["']|styles\.css["']|tokens\.css["'])/.test(source), `${relative(root, path)}: use direct SDK primitives and documented shared kit APIs.`);
 }
+
+const customManifest = json(join(packageDir, "custom-component-manifest.json"));
+check(customManifest.foundation?.version === manifest.sdkVersion, "Custom provenance must retain the installed SDK version.");
+check(customManifest.components?.length >= 4 && customManifest.components.every((item) => item.validation === "unvalidated"), "Custom components remain Unvalidated until an evidenced human UI/UX review changes this standard.");
+check(new Set(customManifest.components?.map((item) => item.id)).size === customManifest.components?.length, "Custom component IDs must be unique.");
 
 const main = read(join(galleryDir, "src/main.tsx"));
 const bridge = read(join(galleryDir, "src/agent-bridge.ts"));

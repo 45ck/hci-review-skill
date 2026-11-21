@@ -25,6 +25,10 @@ Use the shared **WebGPU Liquid Glass kit** for new high-fidelity internal interf
 
 **Studio typography and Isometric icons are the defaults.** Material settings lets you switch between Studio (Manrope), Editorial (Fraunces headings with Manrope interface text) and System fonts, and between Isometric and Line icons. The demo remembers valid choices, and Copy starter includes your selected font and icon presets.
 
+**Visual components** adds original imagery in an editorial card, controlled gallery, detail dialogs and image comparison. **Developer components** adds interactive UML class/component and UWE navigation/presentation diagrams, element selection and label editing, visible relationship descriptions, JSON copy and vector SVG download. Both use the actual SDK controls and shared agent bridge. See the [developer component standard](docs/hci/standards/developer-components.md) and [worked exploration model](docs/hci/models/developer-model-exploration.md).
+
+Every custom component and composition is **Unvalidated**, meaning a human UI/UX team has not reviewed or approved it. The original 55 families are marked **SDK foundation**, identifying upstream Vercel behaviour rather than approval of our glass adaptation. Engineering checks and human review status remain distinct.
+
 The [implementation standard](docs/hci/standards/liquid-glass.md), [agent instructions](AGENTS.md), pinned SDK packages and browser contracts define the integration. GPU tests compare real control rectangles, strength changes, backdrop recapture and top-layer popups. The SDK agent bridge remains beneath the UI for verification; the hosted kit has no diagnostic workbench, inspector or settings pilot.
 
 Use the [interface foundations](docs/hci/standards/interface-foundations.md) to turn a real task into content, navigation, presentation and state decisions, then select the measurements that can justify a change. The [kit customization model](docs/hci/models/kit-customization-model.md) provides a concrete worked contract for font/icon choices, state retention and evaluation. Visual defaults and automated rendering checks are distinct from measured human usability.

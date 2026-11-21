@@ -29,6 +29,8 @@ Give every control a meaningful name. Keep names stable where selected or presse
 
 The manifest remains the source of truth for **55 families**. Every family needs its real upstream import, package alias and working specimen. Overview is an additional catalogue choice, not a replacement for coverage.
 
+The **Visual components** and **Developer components** collections are additional custom compositions, with a separate [custom manifest](../../../packages/liquid-glass/custom-component-manifest.json). Follow the [developer component standard](developer-components.md) for typed UML/UWE models, exact vector notation, text equivalents and shared human/agent actions. Custom components, icons, glass styling and demo compositions remain visibly **Unvalidated** until a recorded human UI/UX team review approves a defined scope. Label upstream families **SDK foundation** for provenance without implying human approval of the adaptation.
+
 ## Optical surfaces
 
 Apply the shared kit stylesheet and `LiquidGlassProvider` at the application boundary. Register intended surfaces with `data-liquid-glass`; `data-liquid-glass="off"` excludes a subtree. One shared viewport canvas and local canvases for actual top-layer popups align with current DOM rectangles after resizing, scrolling, selection and popup changes.
@@ -42,6 +44,8 @@ Share work across controls, bound resolution, draw when material or geometry cha
 Keep broad faces clear and concentrate refraction near the bevel. Directional upper and lower reflections, a thin inner rim and separate contact/ambient shadows establish thickness. Avoid broad centre-contraction artifacts and uniform bright outlines. Pointer light, damped activation ripples and short selection springs belong to the shared material. Use `TabsIndicator` and `SegmentedControlIndicator` so selection motion follows the SDK's actual state, including keyboard and agent changes. Text and hit targets stay stable.
 
 Motion is enabled under normal device preferences. A single bounded animation loop follows active light, ripple and geometry responses, then stops; it pauses for hidden documents and never recaptures the backdrop every frame. Disabled/read-only controls must not imply a successful action through a press response.
+
+Queued or in-flight backdrop capture counts as pending renderer work when reporting idle. Wait for capture without a polling animation loop, then publish idle after its final render work completes.
 
 ## Readability and fallbacks
 

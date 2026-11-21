@@ -550,7 +550,40 @@ async def verify_optics_contract(page, expect, *, output_dir="test-results", req
     responding = [kind for kind, difference in strength.items() if difference["changedFraction"] > 0.002 and difference["meanChannelDifference"] > 0.05]
     assert len(responding) >= 2, f"Refraction strength did not affect multiple actual surfaces: {strength}"
 
-    capture_change = await configure_material(page, backdrop="Coast")
+    browser_stage("optics: observe capture work through a real backdrop change")
+    await page.evaluate("""() => {
+        const root = document.documentElement;
+        const snapshots = [];
+        let previous = '';
+        const record = () => {
+            const work = JSON.parse(root.dataset.liquidMotionWork || '{}');
+            const state = {state: root.dataset.liquidMotionState, visibility: document.visibilityState,
+                captureWork: work.capture ?? null, effects: work.effects ?? null,
+                captureRevision: Number(root.dataset.liquidCaptureRevision)};
+            const key = JSON.stringify(state);
+            if (key === previous) return;
+            previous = key;
+            if (snapshots.length === 128) snapshots.splice(1, 1);
+            snapshots.push(state);
+        };
+        const observer = new MutationObserver(record);
+        observer.observe(root, {attributes: true, attributeFilter: [
+            'data-liquid-motion-state', 'data-liquid-motion-work', 'data-liquid-capture-revision']});
+        record();
+        window.__glassCaptureActivity = {finish: () => {record(); observer.disconnect(); return snapshots;}};
+    }""")
+    try:
+        capture_change = await configure_material(page, backdrop="Coast")
+    finally:
+        capture_activity = await page.evaluate("""() => {
+            const snapshots = window.__glassCaptureActivity.finish();
+            delete window.__glassCaptureActivity;
+            return snapshots;
+        }""")
+    pending_capture = [sample for sample in capture_activity if sample["captureWork"] == 1 and sample["visibility"] == "visible"]
+    assert pending_capture, f"The real backdrop refresh exposed no visible pending capture phase: {capture_activity}"
+    assert all(sample["state"] == "running" for sample in pending_capture), f"Visible pending capture was reported idle: {capture_activity}"
+    assert capture_activity[-1]["captureWork"] == 0 and capture_activity[-1]["state"] == "idle", f"Capture work did not settle: {capture_activity}"
     coast = await capture("coast")
     backdrop = {kind: _difference(high[kind], coast[kind], border_only=kind == "panel") for kind in probes}
     assert capture_change["captureAfter"] > capture_change["captureBefore"], "Backdrop changed without a completed texture capture"
@@ -569,6 +602,7 @@ async def verify_optics_contract(page, expect, *, output_dir="test-results", req
         "strengthResponders": responding,
         "backdropChanges": backdrop,
         "captureRevision": capture_change,
+        "captureActivity": capture_activity,
         "screenshots": sorted(path.name for path in output.glob("gpu-*.png")),
     })
     return result

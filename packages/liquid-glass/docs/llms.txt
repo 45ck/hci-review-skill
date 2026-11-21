@@ -17,6 +17,8 @@ This is a private React workspace package, not a published npm release. Use the 
 
 ## Choose a component
 
+- [Patterns and Assistant](https://github.com/45ck/hci-review-skill/blob/main/docs/hci/standards/library-patterns.md): established command, filter, selection, detail, empty-state and assistant compositions on genuine SDK controls.
+- [Patterns API](https://github.com/45ck/hci-review-skill/blob/main/packages/liquid-glass/src/patterns/README.md) and [Assistant API](https://github.com/45ck/hci-review-skill/blob/main/packages/liquid-glass/src/assistant/README.md): exact props, callback and host-state contracts.
 - [Interactions and Sections](https://github.com/45ck/hci-review-skill/blob/main/docs/hci/standards/interaction-sections.md): scoped effects, real context menus, semantic sections and cancellable chapter selection.
 - [Models and transactions](https://github.com/45ck/hci-review-skill/blob/main/packages/liquid-glass/src/modeling/README.md): inspect, preview, revision-checked edits, controlled acceptance and history.
 - [Agent tasks](https://github.com/45ck/hci-review-skill/blob/main/packages/liquid-glass/src/agents/README.md): capabilities, timeline, tool review, context and artifacts; local component schema, not protocol transport.
@@ -61,6 +63,30 @@ Examples: docs/hci/examples/liquid-glass/src/recipes/cursor-feedback.tsx and con
 
 Examples: docs/hci/examples/liquid-glass/src/recipes/showcase-section.tsx and chapter-story.tsx. All four examples include a standalone provider; compose the inner content into an existing provider when integrating with an established app. They intentionally do not initialize another agent bridge: reuse the host's single bridge described above, or initialize it once at the application boundary.
 
+## Patterns
+
+Import LiquidCommandPalette, LiquidFilterBar, LiquidSelectionBar, LiquidDetailSheet and LiquidEmptyState from @quantitative-hci/liquid-glass/patterns; load patterns.css after kit.css. These follow familiar shadcn/ui arrangements using actual SDK parts. Read the package's patterns/README.md and one /contracts/liquid-<component>.json entry for exact inputs and evidence.
+
+- LiquidCommandPalette uses SDK Dialog and Command with named grouped commands, search, shortcuts and pending/error feedback. Supply stable command IDs and onAction; return a Promise for asynchronous work. The installed CommandActionDetails contains event only, not source/cancel. Cancellable opening and query changes retain their SDK details. Inspect the actual host effect after running a command.
+- LiquidFilterBar forwards the SDK Input and multiple Select callbacks. The host owns query, facet values and derived results. Call details.cancel synchronously to refuse a value. Reset is a genuine Button action.
+- LiquidSelectionBar displays selectedCount and actual Toolbar/Button actions. The host owns selected IDs and validates each bulk operation. It is not a selection store. Return callback promises and keep confirmation marks on consequential actions.
+- LiquidDetailSheet composes the SDK Drawer with title, trigger, content, footer and close actions. It supports the real controlled open callback/controller and retains dismissal/focus behavior. The chosen record must be available when an agent opens the drawer directly.
+- LiquidEmptyState is passive title/description/media/actions presentation. Put genuine SDK controls in the action slot; the wrapper has no root action.
+
+The compiled work-patterns.tsx recipe demonstrates the package. The Patterns collection is local saved work, with real query/selection/record changes and explicit refusal paths. It does not include a table engine, backend or account system.
+
+## Assistant
+
+Import LiquidPromptComposer, LiquidAttachmentList, LiquidSuggestionList, LiquidMessage and LiquidSourceList from @quantitative-hci/liquid-glass/assistant; load assistant.css after kit.css. Their arrangements follow Vercel AI Elements and the cited 21st.dev prompt inputs, while all interactive controls use the pinned SDK. Read assistant/README.md for complete typed props.
+
+- LiquidPromptComposer requires label, controlled value/onValueChange and onSubmit({text,mode},details). It offers an optional SDK input controller, modes/mode/onModeChange, host status ready|running, onStop, error, attachments/tools/hint slots and labels. The SDK Textarea supports Mod+Enter through the same submit path. Blank, oversized, disabled or invalid-mode submissions are refused; host props remain authoritative. No provider or upload is called by the component.
+- LiquidAttachmentList takes attachments with stable id,name,description and optional disabled state. Its actual SDK remove Button calls onRemove(id,details); the accepted list comes from host props. Project context and local file selection must be labelled accurately. Compose the existing SDK FileInput when browser file selection is needed.
+- LiquidSuggestionList takes stable {id,label,prompt,disabled?} records and onChoose(suggestion,details). The host decides whether this fills a draft or starts work; the gallery fills the real controlled draft.
+- LiquidMessage is passive {id,author,role:user|assistant,children,meta?,actions?} presentation. It adds no markdown parser, streaming transport or root agent action.
+- LiquidSourceList takes {id,title,url,description?} references and optional label/open/defaultOpen/onOpenChange. Its disclosure is the actual SDK Collapsible. Safe HTTP(S) links use SDK Buttons rendered as semantic anchors, so the bridge can discover them; invalid links become readable unavailable text. Source records are supplied by the host, not retrieved by this component.
+
+The compiled assistant-composer.tsx recipe shows these composition boundaries. The gallery runs a clearly labelled, bounded local response fixture with cancellation, not an AI backend. Reuse existing AgentToolRequest and AgentTaskPanel when a conversation needs tool review or task history. Use one existing provider and one createAgent bridge; there is no second mutation endpoint.
+
 ## State, preferences and review
 
 Use meaningful accessible names and real UI SDK callbacks. Do not synthesize clicks to operate an agent-facing state model or expose a second mutation API. Decorative cursor/click/contour/reveal elements have no agent actions. Keep disabled controls disabled for all input routes. Respect data-agent-secret, data-agent-hidden and data-agent-confirm; the demo refuses actions requiring a person.
@@ -71,7 +97,7 @@ All custom components remain Unvalidated until a recorded human UI/UX team revie
 
 ## Verification
 
-Run npm run glass:verify and the repository's Python browser contract against the production build. Preserve all baseline scenarios and include interactions_pointer_keyboard_agent_and_preferences plus sections_chapters_navigation_and_preferences. Use the existing CI environment for software-WebGPU evidence. Record exact commands, source commit, browser, viewport, failed paths and limitations.
+Run npm run glass:verify and the repository's Python browser contract against the production build. Preserve all baseline scenarios, including interactions_pointer_keyboard_agent_and_preferences and sections_chapters_navigation_and_preferences, and include patterns_commands_filters_selection_and_details plus assistant_composition_cancellation_and_sources. Use the existing CI environment for software-WebGPU evidence. Record exact commands, source commit, browser, viewport, failed paths and limitations.
 
 ## Sources and reuse
 

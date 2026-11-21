@@ -8,6 +8,19 @@ The workspace pins `@ui-sdk/core` and `@ui-sdk/react` to **0.1.0-beta.13**. Impo
 
 **Review status:** custom Quantive components, glass styling, icons and compositions are **Unvalidated**: no human UI/UX team has reviewed or approved them. **SDK foundation** identifies upstream behaviour provenance; it is not an approval of this adaptation. The [custom component manifest](custom-component-manifest.json) records this distinction. Automated checks do not promote review status.
 
+## Established library patterns
+
+```tsx
+import { LiquidCommandPalette, LiquidFilterBar, LiquidSelectionBar, LiquidDetailSheet, LiquidEmptyState } from "@quantitative-hci/liquid-glass/patterns";
+import { LiquidPromptComposer, LiquidAttachmentList, LiquidSuggestionList, LiquidMessage, LiquidSourceList } from "@quantitative-hci/liquid-glass/assistant";
+import "@quantitative-hci/liquid-glass/patterns.css";
+import "@quantitative-hci/liquid-glass/assistant.css";
+```
+
+These compositions preserve familiar arrangements from shadcn/ui, Vercel AI Elements and selected 21st.dev entries. Their behavior comes from the pinned UI SDK: Command/Dialog for command search, Input/Select for filtering, Toolbar/Button for contextual actions, Drawer for details, and Textarea/FileInput/Select/Button/Collapsible for assistant interaction. They do not add another control stack or agent bridge.
+
+Use the [patterns API](src/patterns/README.md), [assistant API](src/assistant/README.md) and [source/interaction standard](../../docs/hci/standards/library-patterns.md). Each public export has a scoped entry in [agent-contracts.json](agent-contracts.json). Host callbacks own persistence, model execution and authorization. The gallery's conversations and saved work are local examples; choosing a file does not upload it. Existing `/agents` components provide tool review and task history when needed.
+
 ## Interactions and page sections
 
 ```tsx
@@ -19,7 +32,7 @@ import "@quantitative-hci/liquid-glass/sections.css";
 
 Use these inside the same provider and `kit.css` shown below. Cursor and click decoration preserve real SDK controls and native input behavior. Context actions use the SDK menu's pointer, keyboard and agent paths, including disabled, pending and confirmation semantics. Magnetic movement affects only a decorative icon inside a stationary control. Sections combine semantic headings, actual actions and readable media; chapter selection shares a controlled value with natural scroll following. Reduced motion, forced colours and hidden regions stop decorative effects.
 
-The [interaction API](src/interactions/README.md) and [component contract](../../docs/hci/standards/interaction-sections.md) document exact props, state and boundaries. The gallery provides four [compiled TSX examples](../../docs/hci/examples/liquid-glass/src/recipes) with **Copy example** and **Copy agent brief**. These examples include a standalone provider; reuse an existing provider and the host's single agent bridge when integrating. This remains a private workspace package, not an npm release.
+The [interaction API](src/interactions/README.md) and [component contract](../../docs/hci/standards/interaction-sections.md) document exact props, state and boundaries. The gallery provides six [compiled TSX examples](../../docs/hci/examples/liquid-glass/src/recipes) with **Copy example** and **Copy agent brief**. These examples include a standalone provider; reuse an existing provider and the host's single agent bridge when integrating. This remains a private workspace package, not an npm release.
 
 ```ts
 import { liquidComponentRecipes, findLiquidRecipes } from "@quantitative-hci/liquid-glass/recipes";

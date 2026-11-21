@@ -4859,7 +4859,7 @@
         }
       },
       "restrictions": [
-        "Zoom remains 0.1–4; dimensions and positions must be finite.",
+        "Zoom remains 0.1\u20134; dimensions and positions must be finite.",
         "Controlled host may cancel or decline camera updates; check the resulting camera.",
         "Keyboard/controls provide non-drag alternatives."
       ],
@@ -6722,7 +6722,7 @@
         "Add pointer emphasis to a decorative icon inside a real SDK button or link."
       ],
       "inputs": [
-        "children:decorative artwork; distance:CSS pixels clamped to 0–12; className",
+        "children:decorative artwork; distance:CSS pixels clamped to 0\u201312; className",
         "LiquidGlassProvider resolved motion and fine-pointer/forced-colour preferences"
       ],
       "state": [
@@ -7076,6 +7076,579 @@
         }
       ],
       "validation": "not-applicable"
+    },
+    {
+      "id": "liquid-command-palette",
+      "kind": "composition",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/patterns",
+          "symbols": [
+            "LiquidCommandPalette"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/patterns/components.tsx"
+      ],
+      "purpose": "Search grouped commands in a familiar modal command palette.",
+      "useWhen": [
+        "Offer searchable application actions with visible, keyboard and SDK-agent entry points."
+      ],
+      "inputs": [
+        "title,triggerLabel,searchLabel,groups with stable group and command IDs,onAction(id,CommandActionDetails)",
+        "Optional description,placeholder,shortcut,controlled open/defaultOpen/onOpenChange,query/onQueryChange,className; commands may include icon,keywords,shortcut,disabled,requiresConfirmation"
+      ],
+      "state": [
+        "SDK Dialog owns modal state/focus; Command owns filtering, highlight and pending/error state; task effects belong to the host."
+      ],
+      "runtime": {
+        "discovery": "sdk-children",
+        "mutationPath": "The real SDK Dialog trigger opens the Command. The wrapper refuses unknown/disabled IDs, awaits the host action and asks its SDK dialog controller to close after fulfillment. Controlled opening and query callbacks preserve upstream cancellation.",
+        "actions": [],
+        "outcome": "Discover the named dialog/command and current valid choices; invoke a supported action and verify the host record or view changed. A fulfilled host callback alone does not establish domain acceptance.",
+        "controls": [
+          "@ui-sdk/react/command",
+          "@ui-sdk/react/dialog"
+        ]
+      },
+      "restrictions": [
+        "CommandActionDetails in SDK beta.13 supplies event, not source/cancel; do not invent missing attribution. Query and open changes retain their documented change details.",
+        "Provide unique command IDs and specific labels. Host callbacks must validate authorization and signal rejected action promises.",
+        "requiresConfirmation marks the actual command for SDK policy; opening or closing is not the consequential action.",
+        "No second root primitive or mutation endpoint is added."
+      ],
+      "docs": [
+        "packages/liquid-glass/docs/agent-engineering.md",
+        "packages/liquid-glass/src/patterns/README.md",
+        "docs/hci/standards/library-patterns.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/glass_patterns_contract.py",
+          "scope": "Grouped SDK command discovery/dispatch, accepted local effect, disabled/confirmation or host-refusal behavior where exercised, keyboard search and modal focus recovery; scoped to the local showcase."
+        }
+      ],
+      "policies": [
+        "sdk-foundation",
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-filter-bar",
+      "kind": "composition",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/patterns",
+          "symbols": [
+            "LiquidFilterBar"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/patterns/components.tsx"
+      ],
+      "purpose": "Compose a labelled search field and multiple-select facets above a result list.",
+      "useWhen": [
+        "Narrow host-owned records with familiar search, facets and reset controls."
+      ],
+      "inputs": [
+        "searchLabel,query,onQueryChange exact Input callback,onReset(ButtonActionDetails)",
+        "Optional facets[{id,label,value,options,onValueChange,disabled}],resetLabel,placeholder,resultCount,disabled,className"
+      ],
+      "state": [
+        "Host owns query/facet values and the derived records; SDK Input and Select expose the accepted values."
+      ],
+      "runtime": {
+        "discovery": "sdk-children",
+        "mutationPath": "SDK Input and multiple Select forward their own cancellable value-change details. Reset invokes a real SDK Button callback; filtering remains a host data operation.",
+        "actions": [],
+        "outcome": "Discover the search field and facet choices, propose values, then verify both accepted values and the visible result set. Refused host changes must retain prior values.",
+        "controls": [
+          "@ui-sdk/react/input",
+          "@ui-sdk/react/select",
+          "@ui-sdk/react/button",
+          "@ui-sdk/react/field"
+        ]
+      },
+      "restrictions": [
+        "Use stable facet/option IDs and unique labels; preserve controlled state and call details.cancel synchronously when refusing a change.",
+        "Keep displayed resultCount consistent with actual filtered data. No built-in table engine, pagination or backend is implied."
+      ],
+      "docs": [
+        "packages/liquid-glass/docs/agent-engineering.md",
+        "packages/liquid-glass/src/patterns/README.md",
+        "docs/hci/standards/library-patterns.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/glass_patterns_contract.py",
+          "scope": "Actual query and facet changes through keyboard/SDK agent, matching visible records, reset, controlled refusal, source attribution and narrow/forced-colour layout."
+        }
+      ],
+      "policies": [
+        "sdk-foundation",
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-selection-bar",
+      "kind": "composition",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/patterns",
+          "symbols": [
+            "LiquidSelectionBar"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/patterns/components.tsx"
+      ],
+      "purpose": "Show selected-item count and genuine SDK bulk-action controls.",
+      "useWhen": [
+        "Apply contextual actions to a host-owned selection."
+      ],
+      "inputs": [
+        "label,selectedCount,actions[{id,label,disabled?,requiresConfirmation?}],onAction(id,ButtonActionDetails),onClear",
+        "Optional clearLabel,disabled,className"
+      ],
+      "state": [
+        "Host owns selected IDs, count and accepted bulk effects; SDK Buttons own pending state and Toolbar owns focus navigation."
+      ],
+      "runtime": {
+        "discovery": "sdk-children",
+        "mutationPath": "The SDK Toolbar contains SDK Button/ToolbarButton compositions. Each callback returns the host result, preserves actual action details and refuses disabled/empty selection.",
+        "actions": [],
+        "outcome": "Find a specifically named child action, invoke it and inspect exactly the intended selected records plus the updated selection/count. No root selection action is claimed.",
+        "controls": [
+          "@ui-sdk/react/button",
+          "@ui-sdk/react/toolbar"
+        ]
+      },
+      "restrictions": [
+        "This is selected-record presentation, not a text-selection floating toolbar or selection store.",
+        "The host must validate current records and permissions, including selections hidden by filters. Return asynchronous work to preserve SDK pending/error behavior.",
+        "Keep confirmation marks on consequential actions and meaningful labels on every item."
+      ],
+      "docs": [
+        "packages/liquid-glass/docs/agent-engineering.md",
+        "packages/liquid-glass/src/patterns/README.md",
+        "docs/hci/standards/library-patterns.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/glass_patterns_contract.py",
+          "scope": "Representative selection, bulk mutation and clear actions, disabled/rejected state, one accepted effect and keyboard toolbar behavior in the local saved-work task."
+        }
+      ],
+      "policies": [
+        "sdk-foundation",
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-detail-sheet",
+      "kind": "composition",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/patterns",
+          "symbols": [
+            "LiquidDetailSheet"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/patterns/components.tsx"
+      ],
+      "purpose": "Present focused record details in an SDK drawer.",
+      "useWhen": [
+        "Inspect or edit an object beside its surrounding list."
+      ],
+      "inputs": [
+        "title,triggerLabel,children; optional description,footer,disabled,className",
+        "SDK Drawer open/defaultOpen/onOpenChange/controller/side options; side defaults end"
+      ],
+      "state": [
+        "SDK Drawer owns controlled/uncontrolled open state and focus; supplied content and data remain host-owned."
+      ],
+      "runtime": {
+        "discovery": "sdk-children",
+        "mutationPath": "The actual DrawerTrigger, DrawerClose and public Drawer controller use the SDK open-change path. Supplied footer controls retain their own semantics.",
+        "actions": [],
+        "outcome": "Discover the named drawer, open it, inspect the chosen record, dismiss it and verify focus returns to the trigger. Controlled hosts publish accepted open state.",
+        "controls": [
+          "@ui-sdk/react/drawer"
+        ]
+      },
+      "restrictions": [
+        "Use one clear record identity per trigger; payload must not depend only on a DOM click handler because an agent can open the drawer directly.",
+        "Provide real SDK action children and preserve Escape, touch and focus behavior."
+      ],
+      "docs": [
+        "packages/liquid-glass/docs/agent-engineering.md",
+        "packages/liquid-glass/src/patterns/README.md",
+        "docs/hci/standards/library-patterns.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/glass_patterns_contract.py",
+          "scope": "Selected detail content, real SDK opening, Escape/close focus restoration and narrow popup fit in the saved-work showcase."
+        }
+      ],
+      "policies": [
+        "sdk-foundation",
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-empty-state",
+      "kind": "presentation",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/patterns",
+          "symbols": [
+            "LiquidEmptyState"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/patterns/components.tsx"
+      ],
+      "purpose": "Present a readable empty result with recovery content.",
+      "useWhen": [
+        "Explain an empty collection or filtered result set and provide a relevant next action."
+      ],
+      "inputs": [
+        "title; optional description,media,actions,className"
+      ],
+      "state": [
+        "Supplied content only; no mutable component value."
+      ],
+      "runtime": {
+        "discovery": "dom",
+        "mutationPath": "Renders passive content and an action slot. Supplied SDK controls keep their own host callbacks.",
+        "actions": [],
+        "outcome": "Read the title/description and operate a genuine supplied recovery control; the empty-state shell has no agent action."
+      },
+      "restrictions": [
+        "The media slot is decorative and hidden from assistive technology; essential information belongs in text.",
+        "Use genuine SDK controls in actions; this wrapper does not register arbitrary React children."
+      ],
+      "docs": [
+        "packages/liquid-glass/docs/agent-engineering.md",
+        "packages/liquid-glass/src/patterns/README.md",
+        "docs/hci/standards/library-patterns.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/glass_patterns_contract.py",
+          "scope": "Empty filtering result retains a readable explanation and working recovery control; narrow and forced-colour presentation are checked in context."
+        }
+      ],
+      "policies": [
+        "sdk-foundation",
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-prompt-composer",
+      "kind": "composition",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/assistant",
+          "symbols": [
+            "LiquidPromptComposer"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/assistant/components.tsx"
+      ],
+      "purpose": "Compose a controlled message draft with options and submit/stop controls.",
+      "useWhen": [
+        "Build an assistant input using established AI Elements and 21st.dev arrangements on the existing SDK."
+      ],
+      "inputs": [
+        "label,value,onValueChange,onSubmit({text,mode}, LiquidPromptSubmitDetails); optional actual SDK Input controller",
+        "Optional status:ready|running,onStop,modes[{id,label,disabled?}],mode,modeLabel,onModeChange,attachments,tools,hint,placeholder,submitLabel,stopLabel,maxLength,disabled,error,className; default maxLength is 4000"
+      ],
+      "state": [
+        "Host owns accepted draft, selected mode, pending/error lifecycle and messages; SDK fields and buttons expose their actual state.",
+        "Local pending/error presentation covers both submit routes. A rejected submit callback displays its error; draft clearing and accepted output remain host-owned."
+      ],
+      "runtime": {
+        "discovery": "sdk-children",
+        "mutationPath": "SDK Textarea, Select and Button callbacks share the host submission path. The documented keyboard-only Textarea submit shortcut is adapted to source:keyboard using withSource; Button keeps its actual SDK source. A shared in-flight guard/state prevents duplicate submissions; Send and Stop are separate keyed SDK Button instances.",
+        "actions": [],
+        "outcome": "Set the actual textarea, select valid options and submit through a named SDK control. Observe accepted lifecycle and message content, or retained draft/error after refusal. A local fixture result is not a model response.",
+        "controls": [
+          "@ui-sdk/react/textarea",
+          "@ui-sdk/react/select",
+          "@ui-sdk/react/button",
+          "@ui-sdk/react/field"
+        ]
+      },
+      "restrictions": [
+        "No model provider, upload service, streaming transport or persistence is included. Host callbacks must validate inputs and honor cancellation.",
+        "Disabled, running, blank, oversized and invalid-mode submissions are refused through the shared submit path. A supplied stop callback uses a real SDK Button; no readOnly prop is declared.",
+        "Reuse one provider and bridge; keep file acquisition mediated by the browser and actual SDK FileInput."
+      ],
+      "docs": [
+        "packages/liquid-glass/docs/agent-engineering.md",
+        "packages/liquid-glass/src/assistant/README.md",
+        "docs/hci/standards/library-patterns.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/glass_assistant_contract.py",
+          "scope": "Suggestion/draft state, exact accepted local response, SDK source and lifecycle, cancellation/refusal/disabled behavior, keyboard submission and narrow/forced-colour presentation in the local fixture."
+        }
+      ],
+      "policies": [
+        "sdk-foundation",
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-attachment-list",
+      "kind": "composition",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/assistant",
+          "symbols": [
+            "LiquidAttachmentList"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/assistant/components.tsx"
+      ],
+      "purpose": "Display host-provided attachment metadata and explicit removal controls.",
+      "useWhen": [
+        "Show selected local files or clearly identified project context next to a composer or message."
+      ],
+      "inputs": [
+        "attachments:[{id,name,description?,disabled?}]; optional label,onRemove(id,ButtonActionDetails),disabled,className"
+      ],
+      "state": [
+        "Host owns records; removing an attachment proposes a change through the callback and is accepted only when host props change."
+      ],
+      "runtime": {
+        "discovery": "sdk-children",
+        "mutationPath": "Each specific remove control is a genuine SDK Button. It returns the host callback result and does not acquire or upload files.",
+        "actions": [],
+        "outcome": "Find the named attachment removal control and verify the accepted attachment list no longer contains that stable ID.",
+        "controls": [
+          "@ui-sdk/react/button"
+        ]
+      },
+      "restrictions": [
+        "Keep filenames and content appropriate for display and preserve real MIME/type distinctions.",
+        "Local file selection does not establish upload; project context is not a newly selected file. Host owns retention, authorization and backend transfer."
+      ],
+      "docs": [
+        "packages/liquid-glass/docs/agent-engineering.md",
+        "packages/liquid-glass/src/assistant/README.md",
+        "docs/hci/standards/library-patterns.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/glass_assistant_contract.py",
+          "scope": "Named attachment removal through actual SDK actions and accepted host metadata, disabled/pending behavior where exercised, file-selection integration in the local fixture and narrow fit."
+        }
+      ],
+      "policies": [
+        "sdk-foundation",
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-suggestion-list",
+      "kind": "composition",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/assistant",
+          "symbols": [
+            "LiquidSuggestionList"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/assistant/components.tsx"
+      ],
+      "purpose": "Offer short actionable prompt suggestions.",
+      "useWhen": [
+        "Help someone start or refine a draft without duplicating composer state."
+      ],
+      "inputs": [
+        "suggestions:[{id,label,prompt,disabled?}],onChoose(suggestion,ButtonActionDetails); optional label,disabled,className"
+      ],
+      "state": [
+        "Suggestion content and accepted draft belong to the host; SDK Buttons own actual activation/pending semantics."
+      ],
+      "runtime": {
+        "discovery": "sdk-children",
+        "mutationPath": "Named SDK Buttons call one host callback. The host explicitly decides whether selection edits the draft or starts work.",
+        "actions": [],
+        "outcome": "Invoke a suggestion and verify its promised effect on the actual controlled draft or task; the showcase fills the draft.",
+        "controls": [
+          "@ui-sdk/react/button"
+        ]
+      },
+      "restrictions": [
+        "Do not infer a send from selecting a suggestion unless the host explicitly supplies that behavior.",
+        "Use distinct meaningful labels, stable IDs and the same host acceptance rules as manual drafting."
+      ],
+      "docs": [
+        "packages/liquid-glass/docs/agent-engineering.md",
+        "packages/liquid-glass/src/assistant/README.md",
+        "docs/hci/standards/library-patterns.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/glass_assistant_contract.py",
+          "scope": "SDK suggestion activation fills the actual draft and preserves disabled behavior and readable wrapping."
+        }
+      ],
+      "policies": [
+        "sdk-foundation",
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-message",
+      "kind": "presentation",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/assistant",
+          "symbols": [
+            "LiquidMessage"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/assistant/components.tsx"
+      ],
+      "purpose": "Present a user or assistant message with optional metadata and actions.",
+      "useWhen": [
+        "Render conversation content with familiar user-bubble and assistant-response hierarchy."
+      ],
+      "inputs": [
+        "id,author,role:user|assistant,children; optional meta,actions,className"
+      ],
+      "state": [
+        "Rendered host content only; no independent message store, transport or generated output."
+      ],
+      "runtime": {
+        "discovery": "dom",
+        "mutationPath": "Renders semantic content. Any supplied SDK action children retain their own host callbacks.",
+        "actions": [],
+        "outcome": "Read the accepted message content and operate genuine supplied controls; the passive wrapper has no root agent actions."
+      },
+      "restrictions": [
+        "No markdown parser, response branching or model streaming is implied. Treat untrusted message content as data.",
+        "Use stable message IDs and accessible author labels. Supply real SDK controls for actions."
+      ],
+      "docs": [
+        "packages/liquid-glass/docs/agent-engineering.md",
+        "packages/liquid-glass/src/assistant/README.md",
+        "docs/hci/standards/library-patterns.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/glass_assistant_contract.py",
+          "scope": "Actual accepted user/local-response content and cancellation outcome remain readable at desktop/narrow widths and under forced colours."
+        }
+      ],
+      "policies": [
+        "sdk-foundation",
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-source-list",
+      "kind": "composition",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/assistant",
+          "symbols": [
+            "LiquidSourceList"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/assistant/components.tsx"
+      ],
+      "purpose": "Disclose a compact list of named source references.",
+      "useWhen": [
+        "Attach inspectable references to a response or other evidence-based content."
+      ],
+      "inputs": [
+        "sources:[{id,title,url,description?}]; optional label,open,defaultOpen,onOpenChange exact SDK callback,className"
+      ],
+      "state": [
+        "SDK Collapsible owns open state; source metadata is host-provided and links remain semantic anchors."
+      ],
+      "runtime": {
+        "discovery": "sdk-children",
+        "mutationPath": "The actual SDK Collapsible exposes its disclosure action. References use SDK Buttons rendered as safe HTTP(S) anchors, preserving semantic link behavior and SDK discovery.",
+        "actions": [],
+        "outcome": "Open the named disclosure and inspect expected source titles and URLs. The reference links expose genuine SDK child actions. A source list does not prove a search was performed.",
+        "controls": [
+          "@ui-sdk/react/collapsible",
+          "@ui-sdk/react/button"
+        ]
+      },
+      "restrictions": [
+        "Validate source URL schemes and display meaningful titles. Sources must actually support the surrounding application content.",
+        "Reference anchors are rendered through actual SDK Buttons. The component performs no source retrieval; following a link uses the host browser navigation rules."
+      ],
+      "docs": [
+        "packages/liquid-glass/docs/agent-engineering.md",
+        "packages/liquid-glass/src/assistant/README.md",
+        "docs/hci/standards/library-patterns.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/glass_assistant_contract.py",
+          "scope": "SDK disclosure and reference-control discovery expose the expected local-fixture sources, actual hrefs, narrow layout and forced colours; the contract does not navigate to external sources."
+        }
+      ],
+      "policies": [
+        "sdk-foundation",
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "validation": "unvalidated"
     }
   ]
 }

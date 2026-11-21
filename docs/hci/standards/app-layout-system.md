@@ -108,4 +108,15 @@ Use **content/container constraints and real task affordances**, not just width 
 5. **Templates:** operations, content studio, customer portal, field workflow; each has a task story, UWE views, meaningful fixtures and device matrix.
 6. **Review:** update package manifest, recipe registry, agent contracts, source licences and `glass:agent-check` / `glass:verify`; production browser tests for rendered GPU pixels, keyboard, agent accepted result and mobile. Human approval is **separate**.
 
-**Decision:** keep the first functional UI prototype as an offline, CSS-only layout study until it is translated into compiled React/SDK compositions with a real provider and runtime tests. An offline screenshot is not a released component and must never be labelled a working security boundary.
+## Implemented application foundation (draft PR, not promoted)
+
+The legacy offline CSS-only layout study was rejected because it did not use the real kit. It is **not** the component baseline.
+
+**Current code in this draft:**
+- Reusable package exports at `@quantitative-hci/liquid-glass/layouts`: `LiquidAppShell`, `LiquidAppRail`, `LiquidAppWorkarea`, `LiquidAppHeader`, `LiquidAppContent`, `LiquidAppInspector`, `LiquidAppDock`, `LiquidAppNavigation`, and `LiquidWorkspaceSwitcher`; import the companion `@quantitative-hci/liquid-glass/layouts.css`.
+- An actual Vercel UI SDK composition (`@ui-sdk/react` Button/Menu/Field/Tabs/SegmentedControl/Select/Switch/Dialog), using the gallery's real `LiquidGlassProvider`, Manrope/Fraunces font presets and Quantive Isometric/Line icon set.
+- Task-first gallery view: `?collection=layouts` on the existing Quantive gallery. It demonstrates review work, organisational switching, person vs organisation settings, mobile detail, denied viewer operations, search/filter and recoverable states.
+- Explicit local state model in `docs/hci/examples/liquid-glass/src/layouts-state.ts` and tests in `tests/test_app_layout_state.mjs` and `tests/glass_layouts_contract.py`.
+- [Conceptual model and attention budget](../models/app-layout-conceptual-attention.md): labels, menus, task hierarchy, state invariants and what to measure.
+
+**Still required:** passing and recorded compile/agent/browser verification, render screenshots from the actual React gallery (not the old HTML), usable screen-reader/zoom work and human HCI review. The fixture has no production authentication, persistence, server tenancy, tenant revocation or payments. Package regions and SDK navigation are reusable **code**, not a complete backend app generator. Keep status **Unvalidated** until the separate human review is recorded.

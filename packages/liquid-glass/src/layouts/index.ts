@@ -1,6 +1,7 @@
 export {
   LiquidAppShell,
   LiquidAppRail,
+  LiquidAppWorkarea,
   LiquidAppHeader,
   LiquidAppContent,
   LiquidAppInspector,

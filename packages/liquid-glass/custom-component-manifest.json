@@ -9,13 +9,94 @@
     "meaning": "Upstream behaviour provenance. It does not establish human approval of Quantive's styling, compositions or custom components."
   },
   "components": [
-    { "id": "liquid-diagram", "name": "LiquidDiagram", "category": "Developer components", "exportPath": "@quantitative-hci/liquid-glass/developer", "validation": "unvalidated", "notation": ["UML class", "UML component", "UWE navigation", "UWE presentation"] },
-    { "id": "image-card", "name": "LiquidImageCard", "category": "Visual components", "exportPath": "@quantitative-hci/liquid-glass/media", "validation": "unvalidated" },
-    { "id": "media-gallery", "name": "LiquidMediaGallery", "category": "Visual components", "exportPath": "@quantitative-hci/liquid-glass/media", "validation": "unvalidated" },
-    { "id": "image-comparison", "name": "LiquidImageComparison", "category": "Visual components", "exportPath": "@quantitative-hci/liquid-glass/media", "validation": "unvalidated" },
-    { "id": "liquid-material", "name": "LiquidGlassProvider and glass theme", "category": "Appearance", "exportPath": "@quantitative-hci/liquid-glass/webgpu", "validation": "unvalidated" },
-    { "id": "liquid-icons", "name": "LiquidIcon", "category": "Appearance", "exportPath": "@quantitative-hci/liquid-glass/icons", "validation": "unvalidated" },
-    { "id": "overview-compositions", "name": "Overview and showcase compositions", "category": "Demo", "validation": "unvalidated" },
-    { "id": "diagram-label-editor", "name": "Diagram label editor", "category": "Developer components", "validation": "unvalidated" }
+    {
+      "id": "liquid-diagram",
+      "name": "LiquidDiagram",
+      "category": "Standards",
+      "exportPath": "@quantitative-hci/liquid-glass/standards",
+      "validation": "unvalidated",
+      "notation": [
+        "UML (14 diagram kinds)",
+        "UWE navigation and presentation",
+        "BPMN process",
+        "DMN requirements and decision table",
+        "CMMN case",
+        "BMM motivation projection",
+        "SBVR vocabulary projection",
+        "VDML value delivery",
+        "IFML interaction",
+        "SysML 1.7 blocks and requirements",
+        "BACM capability projection"
+      ]
+    },
+    {
+      "id": "image-card",
+      "name": "LiquidImageCard",
+      "category": "Graphics",
+      "exportPath": "@quantitative-hci/liquid-glass/media",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "media-gallery",
+      "name": "LiquidMediaGallery",
+      "category": "Graphics",
+      "exportPath": "@quantitative-hci/liquid-glass/media",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "image-comparison",
+      "name": "LiquidImageComparison",
+      "category": "Graphics",
+      "exportPath": "@quantitative-hci/liquid-glass/media",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-material",
+      "name": "LiquidGlassProvider and glass theme",
+      "category": "Appearance",
+      "exportPath": "@quantitative-hci/liquid-glass/webgpu",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-icons",
+      "name": "LiquidIcon",
+      "category": "Appearance",
+      "exportPath": "@quantitative-hci/liquid-glass/icons",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "overview-compositions",
+      "name": "Overview and showcase compositions",
+      "category": "Demo",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "diagram-label-editor",
+      "name": "Standards model editor",
+      "category": "Standards",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-viewport",
+      "name": "LiquidViewport",
+      "category": "Shared canvas",
+      "exportPath": "@quantitative-hci/liquid-glass/viewport",
+      "validation": "unvalidated",
+      "foundation": "@ui-sdk/core createViewport"
+    },
+    {
+      "id": "standards-catalogue",
+      "name": "Standards catalogue",
+      "category": "Standards",
+      "exportPath": "@quantitative-hci/liquid-glass/standards",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-graphic-studio",
+      "name": "LiquidGraphicStudio",
+      "category": "Graphics",
+      "exportPath": "@quantitative-hci/liquid-glass/graphics",
+      "validation": "unvalidated"
+    }
   ]
 }

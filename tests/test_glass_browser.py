@@ -20,6 +20,8 @@ from glass_agent_contract import verify_agent_contract
 from glass_appearance_contract import verify_appearance_contract
 from glass_browser_diagnostics import start_browser_profile
 from glass_developer_contract import verify_developer_contract, verify_visual_contract
+from glass_graphics_contract import verify_graphics_contract
+from glass_standards_contract import verify_standards_contract
 from glass_optics_contract import (
     SCREENSHOT_TIMEOUT_MS,
     _assert_rect_alignment,
@@ -267,7 +269,7 @@ async def run(args):
 
         async def all_components():
             catalogue = await page.locator("[data-catalogue-id]").evaluate_all("nodes => nodes.map(node => node.dataset.catalogueId)")
-            custom_collections = ["developer", "visual"]
+            custom_collections = ["standards", "visual"]
             assert all(catalogue.count(item) == 1 for item in custom_collections), f"Expected each custom collection exactly once: {catalogue}"
             actual = sorted(item for item in catalogue if item not in ["overview", *custom_collections])
             assert actual == expected_ids, actual
@@ -491,7 +493,9 @@ async def run(args):
             finally:
                 await custom_context.close()
 
-        await record("uml_uwe_selection_editing_exports_and_access", lambda: custom_components(verify_developer_contract), reset=False, timeout=60)
+        await record("uml_uwe_selection_editing_exports_and_access", lambda: custom_components(verify_developer_contract), reset=False, timeout=100)
+        await record("standards_catalogue_27_views_and_model_editing", lambda: custom_components(verify_standards_contract), reset=False, timeout=150)
+        await record("graphics_agent_human_edits_history_and_exports", lambda: custom_components(verify_graphics_contract), reset=False, timeout=90)
         await record("visual_media_gallery_comparison_and_dialogs", lambda: custom_components(verify_visual_contract), reset=False, timeout=40)
 
         async def preferences():

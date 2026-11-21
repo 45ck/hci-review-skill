@@ -39,6 +39,7 @@ import {
 } from "@ui-sdk/react/slider";
 import { Switch, SwitchThumb } from "@ui-sdk/react/switch";
 import { Toggle } from "@ui-sdk/react/toggle";
+import { Tabs, TabsList, TabsPanel, TabsTab, TabsIndicator } from "@ui-sdk/react/tabs";
 import {
   SegmentedControl,
   SegmentedControlIndicator,
@@ -73,8 +74,10 @@ import {
 import { inputDemos } from "./demos-inputs";
 import { surfaceDemos } from "./demos-surfaces";
 import { KitBackdrop, type BackdropName } from "./kit-backdrop";
-import { DeveloperShowcase } from "./developer-showcase";
-import { diagramModels } from "./developer-models";
+import { StandardsShowcase } from "./standards-showcase";
+import { standardsModels } from "./standards-models";
+import { GraphicsShowcase, initialGraphicDocument, initialGraphicAssets } from "./graphics-showcase";
+import type { GraphicAsset } from "@quantitative-hci/liquid-glass/graphics";
 import { VisualShowcase, visualAssets } from "./visual-showcase";
 import starterSource from "./starter-template.tsx?raw";
 import manifest from "../../../../../packages/liquid-glass/component-manifest.json";
@@ -87,8 +90,8 @@ import "./gallery.css";
 const demos: Record<string, ComponentType> = { ...inputDemos, ...surfaceDemos };
 const groups = [...new Set(manifest.components.map((item) => item.category))];
 const collections = [
-  { id: "visual", name: "Visual components", keywords: "image gallery media carousel card comparison photo showcase" },
-  { id: "developer", name: "Developer components", keywords: "uml uwe diagram class component navigation presentation model" },
+  { id: "visual", name: "Graphics", keywords: "image layers design canvas ai agent media gallery carousel card comparison photo showcase" },
+  { id: "standards", name: "Standards", keywords: "omg business bpmn dmn cmmn bmm sbvr vdml bacm ifml sysml uml uwe diagram class component navigation presentation model" },
 ];
 const accessOptions = [
   { value: "private", label: "Private" },
@@ -505,9 +508,9 @@ function Overview({ onExplore }: { onExplore: (id: string) => void }) {
         </div>
         <div className="kit-preview-description">
           <ValidationBadge />
-          <h2>A place for your imagery</h2>
-          <p>Image cards, a browsable gallery, detailed previews and an interactive comparison.</p>
-          <Button onClick={() => onExplore("visual")}>Explore visual components</Button>
+          <h2>Shape your next direction</h2>
+          <p>An editable design canvas, image layers, agent briefs and reusable media components.</p>
+          <Button onClick={() => onExplore("visual")}>Explore graphics</Button>
         </div>
       </section>
       <section className="kit-extension-preview kit-developer-preview" data-liquid-glass="" data-liquid-kind="panel" data-validation="unvalidated">
@@ -518,9 +521,9 @@ function Overview({ onExplore }: { onExplore: (id: string) => void }) {
         </div>
         <div className="kit-preview-description">
           <ValidationBadge />
-          <h2>Make the system visible</h2>
-          <p>Explore UML and UWE diagrams, inspect relationships, and edit the same model together.</p>
-          <Button onClick={() => onExplore("developer")}>Explore developer components</Button>
+          <h2>Make the model tangible</h2>
+          <p>Business processes, decisions, systems and interaction models. Pan, zoom, inspect and edit together.</p>
+          <Button onClick={() => onExplore("standards")}>Explore standards</Button>
         </div>
       </section>
     </div>
@@ -670,7 +673,10 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
   const [selected, setSelected] = useState("overview");
   const [restart, setRestart] = useState(0);
   const [copied, setCopied] = useState("");
-  const [developerModels, setDeveloperModels] = useState(() => structuredClone(diagramModels));
+  const [models, setModels] = useState(() => structuredClone(standardsModels));
+  const [graphicDocument, setGraphicDocument] = useState(() => structuredClone(initialGraphicDocument));
+  const [graphicAssets, setGraphicAssets] = useState<readonly GraphicAsset[]>(initialGraphicAssets);
+  const [visitedCollections, setVisitedCollections] = useState<string[]>([]);
   const { status, motion: effectiveMotion } = useLiquidGlass();
   const matches = manifest.components.filter((item) =>
     (item.name + " " + item.category)
@@ -687,6 +693,9 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
         ? selected
         : collectionMatches[0]?.id ?? matches[0]?.id;
   const collection = collections.find((item) => item.id === active);
+  useEffect(() => {
+    if (active === "visual" || active === "standards") setVisitedCollections(current => current.includes(active) ? current : [...current, active]);
+  }, [active]);
   const component = manifest.components.find((item) => item.id === active);
   const Demo = active ? demos[active] : undefined;
   const copy = async (value: string, result: string) => {
@@ -839,13 +848,22 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
             </div>
             <MaterialSettings {...props} />
           </div>
+          {(active === "visual" || visitedCollections.includes("visual")) && <div hidden={active !== "visual"}>
+            <SpecimenBoundary key="visual" name="Graphics">
+              <Tabs className="kit-graphics-tabs" defaultValue="canvas">
+                <TabsList aria-label="Graphics views"><TabsTab value="canvas">Design canvas</TabsTab><TabsTab value="images">Image components</TabsTab><TabsIndicator /></TabsList>
+                <TabsPanel value="canvas" keepMounted><GraphicsShowcase model={graphicDocument} assets={graphicAssets} onModelChange={setGraphicDocument} onAssetsChange={setGraphicAssets} /></TabsPanel>
+                <TabsPanel value="images" keepMounted><VisualShowcase /></TabsPanel>
+              </Tabs>
+            </SpecimenBoundary>
+          </div>}
+          {(active === "standards" || visitedCollections.includes("standards")) && <div hidden={active !== "standards"}>
+            <SpecimenBoundary key="standards" name="Standards"><StandardsShowcase models={models} onModelsChange={setModels} /></SpecimenBoundary>
+          </div>}
           {active === "overview" ? (
             <Overview onExplore={(id) => { setSelected(id); document.getElementById("kit-main")?.focus(); }} />
-          ) : active === "visual" ? (
-            <SpecimenBoundary key="visual" name="Visual components"><VisualShowcase /></SpecimenBoundary>
-          ) : active === "developer" ? (
-            <SpecimenBoundary key="developer" name="Developer components"><DeveloperShowcase models={developerModels} onModelsChange={setDeveloperModels} /></SpecimenBoundary>
-          ) : component && Demo ? (
+          ) : active === "visual" || active === "standards" ? null
+          : component && Demo ? (
             <section
               className="kit-specimen"
               data-component-id={component.id}

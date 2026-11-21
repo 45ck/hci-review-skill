@@ -109,8 +109,8 @@ async def verify_agent_contract(page, expect):
         catalogue = await entry("listbox", "Component catalogue")
         first_page = await choices(catalogue)
         available = {item["value"]: item["label"] for item in first_page.get("items", [])}
-        expected_choices = {"overview": "Overview", "visual": "Visual components",
-                            "developer": "Developer components", **families}
+        expected_choices = {"overview": "Overview", "visual": "Graphics",
+                            "standards": "Standards", **families}
         for family, label in expected_choices.items():
             if family not in available:
                 item = await choice(catalogue, label)

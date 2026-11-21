@@ -134,11 +134,14 @@ async def verify_layouts_contract(page, expect, *, base_url, output_dir):
     await expect(search_trigger).to_be_focused()
 
     browser_stage("layouts: actual viewports fit and compact details restore focus")
-    await page.goto(base_url + ("&" if "?" in base_url else "?") + "collection=layouts", wait_until="networkidle")
-    await expect(stage).to_be_visible()
     viewports = []
     for width in [1440, 1024, 768, 390, 320]:
         await page.set_viewport_size({"width": width, "height": 1000 if width >= 768 else 844})
+        # Each viewport must start with its own closed compact detail state;
+        # desktop selection otherwise carries an open inspector into mobile.
+        await page.goto(base_url + ("&" if "?" in base_url else "?") + "collection=layouts", wait_until="networkidle")
+        await expect(stage).to_be_visible()
+        await expect(app).to_have_attribute("data-details-open", "false")
         await stage.scroll_into_view_if_needed()
         await expect(app.get_by_role("button", name="Inspect Payment retry")).to_be_visible()
         fit = await _page_fits(page)

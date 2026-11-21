@@ -37,6 +37,21 @@ async def verify_chat_contract(page, expect, *, base_url, output_dir):
         }""", control["ref"])
         await expect(stage).to_have_attribute("data-chat-state", "submitted")
 
+    async def conversation_snapshot():
+        # innerText changes when an ancestor is hidden; compare exact DOM content instead.
+        return await stage.evaluate("""root => ({
+          threadId: root.dataset.threadId,
+          status: root.dataset.chatState,
+          notice: root.querySelector('[aria-label="Chat status"]').textContent,
+          messages: [...root.querySelectorAll('.qg-conversation-transcript [data-message-id]')].map(message => ({
+            id: message.dataset.messageId, role: message.dataset.messageRole, text: message.textContent
+          }))
+        })""")
+
+    async def assert_conversation_unchanged(expected):
+        actual = await conversation_snapshot()
+        assert actual == expected, {"expected": expected, "actual": actual}
+
     async def capture(name):
         await page.screenshot(path=str(output / name), animations="allow", timeout=SCREENSHOT_TIMEOUT_MS)
         screenshots.append(name)
@@ -103,11 +118,13 @@ async def verify_chat_contract(page, expect, *, base_url, output_dir):
         await expect(prompt).to_have_value("Review the keyboard behavior.")
         await expect(stage.get_by_text("Simulated connection failure.", exact=False)).to_be_visible()
         user_count = await stage.locator('[data-message-role="user"]').count()
+        next_draft = "Keep this unsent draft while retrying the previous request."
+        await set_prompt(next_draft)
         await press("Retry response")
         await expect(stage).to_have_attribute("data-chat-state", "ready")
         await expect(stage.locator('[data-message-role="user"]')).to_have_count(user_count)
         await expect(stage.locator('[data-message-role="assistant"]')).to_have_count(2)
-        await expect(prompt).to_have_value("")
+        await expect(prompt).to_have_value(next_draft)
         await _act(page, await _entry(page, "collapsible", "Chat demo controls"), "setOpen", [False])
 
         browser_stage("chat: Stop and hidden-view cancellation prevent stale output")
@@ -118,20 +135,23 @@ async def verify_chat_contract(page, expect, *, base_url, output_dir):
         await expect(stage).to_have_attribute("data-chat-state", "ready")
         await expect(prompt).to_have_value(canceled_draft)
         await expect(status).to_contain_text("Response stopped.")
-        stopped = await stage.locator(".qg-conversation-transcript").inner_text()
+        stopped = await conversation_snapshot()
         assert (await page.evaluate("window.__chatRequest")).get("ok")
         await page.wait_for_timeout(1750)
-        assert await stage.locator(".qg-conversation-transcript").inner_text() == stopped
+        await assert_conversation_unchanged(stopped)
         await set_prompt("Keep the draft when I leave this example.")
         await start_request()
         await _select(page, "listbox", "Component catalogue", value="patterns")
         await expect(stage).not_to_be_visible()
-        hidden = await stage.locator(".qg-conversation-transcript").inner_text()
+        await expect(stage).to_have_attribute("data-chat-state", "ready")
+        await expect(status).to_have_text("Response stopped while this example was hidden. Your draft is kept.")
+        hidden = await conversation_snapshot()
         await page.wait_for_timeout(1750)
+        await assert_conversation_unchanged(hidden)
         await _select(page, "listbox", "Component catalogue", value="chat")
         await expect(stage).to_have_attribute("data-chat-state", "ready")
         await expect(prompt).to_have_value("Keep the draft when I leave this example.")
-        assert await stage.locator(".qg-conversation-transcript").inner_text() == hidden
+        await assert_conversation_unchanged(hidden)
 
         browser_stage("chat: keyboard submission is bounded and layout changes retain the thread")
         user_count = await stage.locator('[data-message-role="user"]').count()
@@ -166,7 +186,7 @@ async def verify_chat_contract(page, expect, *, base_url, output_dir):
             "namedControls": named, "templates": choices, "threads": threads,
             "refusals": {"overLimit": refused, "disabledTemplate": unavailable},
             "accepted": {"result": accepted, "source": "agent", "attachmentMetadata": True},
-            "retry": {"sameUserMessage": True}, "stop": {"draftKept": canceled_draft, "noLateOutput": True},
+            "retry": {"sameUserMessage": True, "newDraftPreserved": next_draft}, "stop": {"draftKept": canceled_draft, "noLateOutput": True},
             "hidden": {"draftKept": True, "noLateOutput": True}, "keyboard": {"oneSubmission": True, "source": "keyboard"},
             "mobile": mobile, "forcedColours": forced, "screenshots": screenshots,
         }

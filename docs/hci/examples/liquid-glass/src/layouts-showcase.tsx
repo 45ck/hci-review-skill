@@ -390,8 +390,8 @@ export function LayoutsShowcase({ active = true }: { active?: boolean }) {
                     </TabsList>
                     <TabsPanel value="profile" className="qg-app-tab-body">
                       <form onSubmit={(event) => { event.preventDefault(); const name = accountDraft.trim(); if (!name) return; setAccountName(name); setNotice("Profile name changed in this local example."); }}>
-                        <Field><FieldLabel>Name</FieldLabel>
-                          <Input required aria-label="Account name" value={accountDraft} onValueChange={setAccountDraft} />
+                        <Field><FieldLabel>Account name</FieldLabel>
+                          <Input required value={accountDraft} onValueChange={setAccountDraft} />
                         </Field>
                         <Button type="submit" disabled={!accountDraft.trim() || accountDraft.trim() === accountName}>Save name</Button>
                       </form>

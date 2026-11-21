@@ -16,6 +16,98 @@ ROOT = Path(__file__).resolve().parents[1]
 REPORT = ROOT / "test-results/package-consumer.json"
 
 
+class BrowserEvidence:
+    def __init__(self):
+        self.output = ROOT / "test-results"
+        self.output.mkdir(parents=True, exist_ok=True)
+        self.started = time.monotonic()
+        self.stage = "startup"
+        self.events = []
+        self.responses = {}
+
+    def record(self, event, **details):
+        self.events.append({"seconds": round(time.monotonic() - self.started, 3), "stage": self.stage,
+                            "event": event, **details})
+        self.events = self.events[-500:]
+
+    def watch(self, page, label):
+        page.on("console", lambda message: self.record("console", page=label, kind=message.type,
+                                                       text=message.text[:6000], location=message.location))
+        page.on("pageerror", lambda error: self.record("pageerror", page=label, error=str(error),
+                                                       stack=getattr(error, "stack", None)))
+        page.on("requestfailed", lambda request: self.record("requestfailed", page=label, url=request.url,
+                                                             resource=request.resource_type, failure=request.failure))
+        page.on("crash", lambda: self.record("crash", page=label))
+
+        def response_received(response):
+            self.record("response", page=label, url=response.url, status=response.status,
+                        resource=response.request.resource_type)
+            if response.request.is_navigation_request() and response.frame == page.main_frame:
+                self.responses[page] = response
+
+        page.on("response", response_received)
+        return page
+
+    def save_events(self):
+        (self.output / "consumer-browser-events.json").write_text(json.dumps(self.events, indent=2) + "\n")
+
+    async def check(self, stage, page, operation):
+        self.stage = stage
+        self.record("stage-start", url=page.url)
+        try:
+            result = await operation()
+            self.record("stage-passed", url=page.url)
+            return result
+        except Exception as error:
+            await self.failure(page, error)
+            raise
+        finally:
+            self.save_events()
+
+    async def failure(self, page, error):
+        prefix = self.output / f"consumer-failure-{self.stage}"
+        details = {"stage": self.stage, "url": page.url, "error": str(error), "events": self.events}
+        response = self.responses.get(page)
+        if response:
+            details["documentResponse"] = {"url": response.url, "status": response.status,
+                                           "statusText": response.status_text}
+            try:
+                prefix.with_suffix(".response.html").write_text(await asyncio.wait_for(response.text(), timeout=3))
+            except Exception as capture_error:
+                details["responseCaptureError"] = str(capture_error)
+        try:
+            prefix.with_suffix(".html").write_text(await asyncio.wait_for(page.content(), timeout=3))
+            details["dom"] = await asyncio.wait_for(page.evaluate("""() => {
+              const state = window.__consumerTransport;
+              let snapshot;
+              try { snapshot = window.consumerAgent?.snapshot(); }
+              catch (error) { snapshot = {error: String(error)}; }
+              return {
+                title: document.title, readyState: document.readyState,
+                bodyText: document.body?.innerText.slice(0, 16000),
+                rootHtml: document.getElementById('root')?.innerHTML.slice(0, 16000),
+                headings: [...document.querySelectorAll('h1,h2,h3,[role=heading]')].map(element => ({
+                  text: element.textContent, display: getComputedStyle(element).display,
+                  visibility: getComputedStyle(element).visibility, rect: element.getBoundingClientRect().toJSON()
+                })),
+                scripts: [...document.scripts].map(script => script.src),
+                transport: state ? {...state, active: Object.keys(state.active)} : null,
+                agentSnapshot: snapshot
+              };
+            }"""), timeout=3)
+        except Exception as capture_error:
+            details["domCaptureError"] = str(capture_error)
+        try:
+            await page.screenshot(path=str(prefix.with_suffix(".png")), full_page=True, timeout=5000)
+        except Exception as capture_error:
+            details["screenshotCaptureError"] = str(capture_error)
+        prefix.with_suffix(".json").write_text(json.dumps(details, indent=2) + "\n")
+        failures = [event for event in self.events if event["event"] in ("pageerror", "requestfailed", "crash")
+                    or event["event"] == "response" and event["status"] >= 400]
+        print(json.dumps({"consumerFailure": self.stage, "url": page.url, "diagnostics": str(prefix.with_suffix(".json")),
+                          "browserErrors": failures}, indent=2), flush=True)
+
+
 def transport_script(enabled):
     return """(() => {
       window.__consumerVisitId = crypto.randomUUID();
@@ -24,12 +116,17 @@ def transport_script(enabled):
       const state = {active: {}, registered: [], unregistered: [], duplicates: []};
       window.__consumerTransport = state;
       Object.defineProperty(document, 'modelContext', {configurable: true, value: ENABLED ? {
-        registerTool(tool) {
+        async registerTool(tool, {signal} = {}) {
+          if (signal?.aborted) throw new DOMException('Registration aborted', 'AbortError');
           if (state.active[tool.name]) { state.duplicates.push(tool.name); throw new Error('Duplicate tool registration: ' + tool.name); }
           state.active[tool.name] = tool;
           state.registered.push(tool.name);
-        },
-        unregisterTool(name) { delete state.active[name]; state.unregistered.push(name); }
+          signal?.addEventListener('abort', () => {
+            if (state.active[tool.name] !== tool) return;
+            delete state.active[tool.name];
+            state.unregistered.push(tool.name);
+          }, {once: true});
+        }
       } : undefined});
     })();""".replace("ENABLED", "true" if enabled else "false")
 
@@ -187,8 +284,11 @@ def start_server(directory, mode, processes):
     if os.environ.get("SITES_MANAGED_LINUX_CONTAINER") == "1":
         raise RuntimeError("Use the Sites preview daemon and pass --base-url/--dev-url in this environment.")
     port = free_port()
-    process = subprocess.Popen(["npm", "run", mode, "--", "--port", str(port)], cwd=directory,
-                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+    log = ROOT / f"test-results/consumer-{mode}-server.log"
+    log.parent.mkdir(parents=True, exist_ok=True)
+    with log.open("w") as stream:
+        process = subprocess.Popen(["npm", "run", mode, "--", "--port", str(port)], cwd=directory,
+                                   stdout=stream, stderr=subprocess.STDOUT, start_new_session=True)
     processes.append(process)
     url = f"http://127.0.0.1:{port}/studio/"
     deadline = time.monotonic() + 20
@@ -210,6 +310,7 @@ async def run(args, directory, processes):
     global expect
     expect = playwright_expect
     results = {}
+    evidence = BrowserEvidence()
     async with async_playwright() as playwright:
         browser = await playwright.chromium.launch(headless=True, ignore_default_args=["--disable-back-forward-cache"])
         try:
@@ -217,25 +318,27 @@ async def run(args, directory, processes):
                 base = (args.base_url or start_server(directory, "preview", processes)).rstrip("/") + "/"
                 context = await browser.new_context(viewport={"width": 1280, "height": 960})
                 await context.add_init_script(transport_script(True))
-                page = await context.new_page()
-                results["workspace"] = await workspace(page, base, True)
-                results["documentation"] = await documentation(page, base)
+                page = evidence.watch(await context.new_page(), "production")
+                results["workspace"] = await evidence.check("workspace", page, lambda: workspace(page, base, True))
+                results["documentation"] = await evidence.check("documentation", page, lambda: documentation(page, base))
                 await page.screenshot(path=str(ROOT / "test-results/consumer-desktop.png"), full_page=True)
-                results["copiedStarter"] = await starter(page, base)
-                results["bfcache"] = await bfcache(page, base)
+                results["copiedStarter"] = await evidence.check("copied-starter", page, lambda: starter(page, base))
+                results["bfcache"] = await evidence.check("bfcache", page, lambda: bfcache(page, base))
                 await context.close()
                 context = await browser.new_context(viewport={"width": 390, "height": 844})
                 await context.add_init_script(transport_script(False))
-                page = await context.new_page()
-                results["withoutWebMcp"] = await workspace(page, base, False)
+                page = evidence.watch(await context.new_page(), "without-webmcp")
+                results["withoutWebMcp"] = await evidence.check("without-webmcp", page, lambda: workspace(page, base, False))
                 await context.close()
             if not args.skip_hmr:
                 dev = (args.dev_url or start_server(directory, "dev", processes)).rstrip("/") + "/"
                 context = await browser.new_context(viewport={"width": 1280, "height": 960})
                 await context.add_init_script(transport_script(True))
-                results["hmr"] = await hmr(await context.new_page(), dev, directory)
+                page = evidence.watch(await context.new_page(), "development")
+                results["hmr"] = await evidence.check("hmr", page, lambda: hmr(page, dev, directory))
                 await context.close()
         finally:
+            evidence.save_events()
             await browser.close()
     return results
 
@@ -260,13 +363,17 @@ def main():
         if not args.skip_hmr and not args.dev_url:
             parser.error("Pass a daemon-backed --dev-url, or use --skip-hmr and run --only-hmr separately.")
     processes = []
+    output = ROOT / ("test-results/consumer-hmr.json" if args.only_hmr else "test-results/consumer-browser.json")
+    output.parent.mkdir(parents=True, exist_ok=True)
     try:
         results = asyncio.run(run(args, directory, processes))
-        output = ROOT / ("test-results/consumer-hmr.json" if args.only_hmr else "test-results/consumer-browser.json")
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(json.dumps({"directory": str(directory), "browser": "Chromium", "results": results}, indent=2) + "\n")
+        output.write_text(json.dumps({"status": "passed", "directory": str(directory), "browser": "Chromium", "results": results}, indent=2) + "\n")
         print(json.dumps(results, indent=2))
         print(f"Consumer browser acceptance passed; evidence: {output}")
+    except Exception as error:
+        output.write_text(json.dumps({"status": "failed", "directory": str(directory), "browser": "Chromium",
+                                      "error": str(error), "errorType": type(error).__name__}, indent=2) + "\n")
+        raise
     finally:
         for process in processes:
             if process.poll() is None:

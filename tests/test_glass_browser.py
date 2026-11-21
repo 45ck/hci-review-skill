@@ -24,6 +24,7 @@ from glass_developer_contract import verify_developer_contract, verify_visual_co
 from glass_graphics_contract import verify_graphics_contract
 from glass_interaction_contract import verify_interactions_contract
 from glass_sections_contract import verify_sections_contract
+from glass_layouts_contract import verify_layouts_contract
 from glass_model_document_contract import verify_model_document_contract
 from glass_standards_contract import verify_standards_contract
 from glass_optics_contract import (
@@ -65,6 +66,7 @@ BROWSER_CHECK_NAMES = (
     "visual_media_gallery_comparison_and_dialogs",
     "interactions_pointer_keyboard_agent_and_preferences",
     "sections_chapters_navigation_and_preferences",
+    "layouts_real_sdk_responsive_tenant_and_state",
     "system_preferences_explicit_opt_in_and_forced_colours",
     "unavailable_gpu_css_motion_and_popup",
     "short_overview_motion_video",
@@ -300,7 +302,7 @@ async def run(args):
 
         async def all_components():
             catalogue = await page.locator("[data-catalogue-id]").evaluate_all("nodes => nodes.map(node => node.dataset.catalogueId)")
-            custom_collections = ["standards", "visual", "agents", "interactions", "sections"]
+            custom_collections = ["standards", "visual", "agents", "interactions", "sections", "layouts"]
             assert all(catalogue.count(item) == 1 for item in custom_collections), f"Expected each custom collection exactly once: {catalogue}"
             actual = sorted(item for item in catalogue if item not in ["overview", *custom_collections])
             assert actual == expected_ids, actual
@@ -533,6 +535,7 @@ async def run(args):
         await record("visual_media_gallery_comparison_and_dialogs", lambda: custom_components(verify_visual_contract), reset=False, timeout=40)
         await record("interactions_pointer_keyboard_agent_and_preferences", lambda: custom_components(verify_interactions_contract), reset=False, timeout=100)
         await record("sections_chapters_navigation_and_preferences", lambda: custom_components(verify_sections_contract), reset=False, timeout=90)
+        await record("layouts_real_sdk_responsive_tenant_and_state", lambda: custom_components(verify_layouts_contract), reset=False, timeout=85)
 
         async def preferences():
             preference_context = await new_context(viewport={"width": 1440, "height": 1000})

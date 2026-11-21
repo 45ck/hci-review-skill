@@ -66,6 +66,9 @@
     --liquid-control-opacity: 0.86;
     --liquid-navigation-opacity: 0.9;
     --liquid-overlay-opacity: 0.94;
+    --liquid-control-edge-opacity: 0.22;
+    --liquid-navigation-edge-opacity: 0.4;
+    --liquid-overlay-edge-opacity: 0.88;
     --liquid-face-opacity: 0.1;
     --liquid-input-opacity: 0.18;
     --liquid-popup-opacity: 0.42;
@@ -181,6 +184,9 @@
       --liquid-control-opacity: 0.86;
       --liquid-navigation-opacity: 0.9;
       --liquid-overlay-opacity: 0.96;
+      --liquid-control-edge-opacity: 0.58;
+      --liquid-navigation-edge-opacity: 0.7;
+      --liquid-overlay-edge-opacity: 0.9;
       --liquid-face-opacity: 0.12;
       --liquid-input-opacity: 0.2;
       --liquid-popup-opacity: 0.5;
@@ -200,6 +206,9 @@
       --liquid-control-opacity: 0.18;
       --liquid-navigation-opacity: 0.34;
       --liquid-overlay-opacity: 0.9;
+      --liquid-control-edge-opacity: 0.08;
+      --liquid-navigation-edge-opacity: 0.18;
+      --liquid-overlay-edge-opacity: 0.82;
       --liquid-face-opacity: 0.06;
       --liquid-input-opacity: 0.12;
     }
@@ -211,16 +220,21 @@
       --liquid-control-opacity: 0.7;
       --liquid-navigation-opacity: 0.78;
       --liquid-overlay-opacity: 0.94;
+      --liquid-control-edge-opacity: 0.48;
+      --liquid-navigation-edge-opacity: 0.6;
+      --liquid-overlay-edge-opacity: 0.88;
     }
 
     /* The renderer reads these resolved role tokens; registration metadata remains engine-owned. */
     :is([data-liquid-glass], [data-slot]) {
       --liquid-optic-opacity: var(--liquid-control-opacity);
+      --liquid-optic-edge-opacity: var(--liquid-control-edge-opacity);
       --liquid-optic-reflection: 1;
     }
     :is([data-slot="toolbar"], [data-slot="menubar"], [data-slot="tabs-list"],
       [data-slot="segmented-control"], [data-slot="navigation-menu-list"], [data-slot="pagination-content"]) {
       --liquid-optic-opacity: var(--liquid-navigation-opacity);
+      --liquid-optic-edge-opacity: var(--liquid-navigation-edge-opacity);
     }
     :is([data-slot="menu-content"], [data-slot="select-content"], [data-slot="combobox-content"],
       [data-slot="autocomplete-content"], [data-slot="trigger-menu-content"],
@@ -230,6 +244,7 @@
       [data-slot="navigation-menu-content"], [data-slot="navigation-menu-viewport"], [data-slot="toast"],
       [data-liquid-kind="popup"]) {
       --liquid-optic-opacity: var(--liquid-overlay-opacity);
+      --liquid-optic-edge-opacity: var(--liquid-overlay-edge-opacity);
     }
 
     /* The renderer marks registered surfaces; clear faces must expose its output. */
@@ -1133,14 +1148,17 @@
 
     [data-liquid-intent="control"] {
       --liquid-optic-opacity: var(--liquid-control-opacity);
+      --liquid-optic-edge-opacity: var(--liquid-control-edge-opacity);
       background-color: var(--liquid-control);
     }
     [data-liquid-intent="navigation"] {
       --liquid-optic-opacity: var(--liquid-navigation-opacity);
+      --liquid-optic-edge-opacity: var(--liquid-navigation-edge-opacity);
       background-color: var(--liquid-navigation);
     }
     [data-liquid-intent="overlay"] {
       --liquid-optic-opacity: var(--liquid-overlay-opacity);
+      --liquid-optic-edge-opacity: var(--liquid-overlay-edge-opacity);
       background-color: var(--liquid-popup);
     }
     /* Match the base surface specificity so its sheen cannot cover the reading background. */
@@ -1152,6 +1170,7 @@
       --liquid-selection: var(--liquid-selection-fallback);
       --liquid-navigation: var(--liquid-navigation-fallback);
       --liquid-optic-opacity: 1;
+      --liquid-optic-edge-opacity: 1;
       --liquid-optic-reflection: 0;
       --liquid-static-reflection: none;
       --liquid-face-overlays: none;

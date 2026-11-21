@@ -2,8 +2,8 @@
 
 body { margin: 0; color: #142a39; background: #e7f0f3; }
 .backdrop { width: 100%; height: 100%; background: linear-gradient(135deg, #d8e9ef, #f4e5d8); }
-.consumer-shell { min-height: 900px; }
-.consumer-content { width: min(880px, 100%); margin: auto; padding: 24px; display: grid; gap: 20px; }
+.consumer-shell { min-height: 900px; grid-template-columns: minmax(0, 1fr); }
+.consumer-content { box-sizing: border-box; width: min(880px, 100%); margin: auto; padding: 24px; display: grid; gap: 20px; }
 .consumer-content h1 { display: flex; align-items: center; gap: 12px; }
 .consumer-panel { display: grid; gap: 14px; padding: 24px; }
 .lifecycle-controls { position: relative; z-index: 2; display: flex; gap: 16px; padding: 12px 24px; background: white; }

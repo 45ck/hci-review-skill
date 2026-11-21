@@ -1,9 +1,9 @@
 .qgv-viewport { min-width: 0; color: var(--liquid-ink, #163348); }
 .qgv-expand-row { display: flex; justify-content: flex-end; margin-bottom: 10px; }
 .qgv-body { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-width: 0; min-height: 0; }
-.qgv-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding-bottom: 12px; }
-.qgv-zoom-controls, .qgv-view-controls, .qgv-pan-controls { display: flex; align-items: center; gap: 6px; }
-.qgv-controls [data-slot="button"], .qgv-controls [data-slot="toggle"] { min-width: 40px; min-height: 40px; font-size: 12px; white-space: nowrap; }
+.qgv-controls { display: flex; flex-wrap: wrap; align-items: center; min-width: 0; gap: 10px 16px; padding-bottom: 12px; }
+.qgv-zoom-controls, .qgv-view-controls, .qgv-pan-controls { display: flex; flex-wrap: wrap; align-items: center; min-width: 0; max-width: 100%; gap: 6px; }
+.qgv-controls [data-slot="button"], .qgv-controls [data-slot="toggle"] { min-width: 40px; max-width: 100%; min-height: 40px; font-size: 12px; white-space: normal; overflow-wrap: anywhere; }
 .qgv-zoom-controls > [data-slot="button"], .qgv-pan-controls > [data-slot="button"] { width: 40px; padding-inline: 0; font-size: 18px; }
 .qgv-zoom-controls [data-slot="number-input"] { width: 90px; min-width: 0; }
 .qgv-zoom-input { position: relative; width: 90px; }

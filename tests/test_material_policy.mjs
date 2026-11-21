@@ -5,7 +5,7 @@ import test from "node:test";
 
 const source = readFileSync(new URL("../packages/liquid-glass/src/webgpu/policy.ts", import.meta.url), "utf8");
 const policyModule = `data:text/javascript;base64,${Buffer.from(stripTypeScriptTypes(source)).toString("base64")}`;
-const { resolveLiquidMaterial, readLiquidTint } = await import(policyModule);
+const { resolveLiquidMaterial, readLiquidTint, readLiquidEdgeOpacity } = await import(policyModule);
 const surfaceSource = readFileSync(new URL("../packages/liquid-glass/src/webgpu/surfaces.ts", import.meta.url), "utf8").replace('from "./policy"', `from "${policyModule}"`);
 const { getReadingFallbackReason } = await import(`data:text/javascript;base64,${Buffer.from(stripTypeScriptTypes(surfaceSource)).toString("base64")}`);
 const request = { theme: "system", material: "regular", increaseContrast: false, transparency: "system" };
@@ -71,6 +71,15 @@ test("malformed optical overrides do not upload NaN or substitute a bright popup
   for (const [rgb, opacity] of [["", ""], ["17 34", ".9"], ["17 NaN 52", ".9"], ["#112234", ".9"], ["17 34 52", ""], ["17 34 52", "Infinity"]]) {
     assert.deepEqual(readLiquidTint(rgb, opacity), [0, 0, 0, 0]);
   }
+});
+
+test("edge tint stays bounded by the face, and invalid overrides retain that face tint", () => {
+  assert.equal(readLiquidEdgeOpacity(".22", .86), .22);
+  assert.equal(readLiquidEdgeOpacity("2", .86), .86);
+  assert.equal(readLiquidEdgeOpacity("-1", .86), 0);
+  assert.equal(readLiquidEdgeOpacity(".22", 0), 0);
+  for (const invalid of ["", " ", "NaN", "Infinity", ".2 .4", "20%"])
+    assert.equal(readLiquidEdgeOpacity(invalid, .86), .86);
 });
 
 const node = (parentElement = null, dataset = {}) => ({ parentElement, dataset });

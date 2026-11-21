@@ -143,7 +143,7 @@ export class LiquidRenderer {
           surface.clip.height,
           surface.radius,
           surface.reflection,
-          0,
+          surface.edgeOpacity,
           0,
           effect?.x ?? surface.rect.x + surface.rect.width * 0.5,
           effect?.y ?? surface.rect.y + surface.rect.height * 0.5,

@@ -31,3 +31,9 @@ export function readLiquidTint(rgb: string, opacity: string): [number, number, n
     return [0, 0, 0, 0];
   return [...channels.map(value => Math.max(0, Math.min(255, value)) / 255), Math.max(0, Math.min(1, alpha))] as [number, number, number, number];
 }
+
+// Missing or malformed edge overrides retain the face tint; they must not expose a new clear edge.
+export function readLiquidEdgeOpacity(opacity: string, faceOpacity: number): number {
+  const alpha = opacity.trim() ? Number(opacity) : NaN;
+  return Number.isFinite(alpha) ? Math.max(0, Math.min(faceOpacity, alpha)) : faceOpacity;
+}

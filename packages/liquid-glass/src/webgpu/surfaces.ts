@@ -1,4 +1,4 @@
-import { readLiquidTint } from "./policy";
+import { readLiquidEdgeOpacity, readLiquidTint } from "./policy";
 
 export const LIQUID_SURFACE_SLOTS = [
   "button",
@@ -79,6 +79,7 @@ export type LiquidSurface = {
   radius: number;
   popup: HTMLElement | null;
   tint: [number, number, number, number];
+  edgeOpacity: number;
   reflection: number;
 };
 export type ReadingFallbackReason = "reading-surface" | "reading-plane";
@@ -195,13 +196,15 @@ export function collectSurfaces(
       ? (Math.min(rect.width, rect.height) * parseFloat(corner)) / 100
       : parseFloat(corner) || 0;
     const reflection = Number(style.getPropertyValue("--liquid-optic-reflection") || 1);
+    const tint = readLiquidTint(style.getPropertyValue("--liquid-optic-rgb"), style.getPropertyValue("--liquid-optic-opacity"));
     result.push({
       element,
       rect,
       clip,
       radius: Math.min(radius, rect.width / 2, rect.height / 2),
       popup,
-      tint: readLiquidTint(style.getPropertyValue("--liquid-optic-rgb"), style.getPropertyValue("--liquid-optic-opacity")),
+      tint,
+      edgeOpacity: readLiquidEdgeOpacity(style.getPropertyValue("--liquid-optic-edge-opacity"), tint[3]),
       reflection: Number.isFinite(reflection) ? Math.max(0, Math.min(1, reflection)) : 1,
     });
   }

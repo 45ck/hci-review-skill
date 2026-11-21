@@ -91,6 +91,10 @@ class BrowserEvidence:
                   visibility: getComputedStyle(element).visibility, rect: element.getBoundingClientRect().toJSON()
                 })),
                 scripts: [...document.scripts].map(script => script.src),
+                lifecycle: {visitId: window.__consumerVisitId, pageShows: window.__consumerPageShows},
+                navigation: performance.getEntriesByType('navigation').map(entry => ({
+                  type: entry.type, notRestoredReasons: entry.notRestoredReasons?.toJSON?.() ?? null
+                })),
                 transport: state ? {...state, active: Object.keys(state.active)} : null,
                 agentSnapshot: snapshot
               };
@@ -148,11 +152,41 @@ async def transport(page, count):
     return state
 
 
+async def page_fit(page):
+    await page.evaluate("() => document.fonts.ready")
+    geometry = await page.evaluate("""() => {
+      const shell = document.querySelector('.consumer-shell');
+      const workarea = shell.querySelector('.qg-application-workarea');
+      const content = shell.querySelector('.consumer-content');
+      const measure = element => ({
+        rect: element.getBoundingClientRect().toJSON(),
+        clientWidth: element.clientWidth, scrollWidth: element.scrollWidth
+      });
+      return {
+        viewportWidth: document.documentElement.clientWidth,
+        documentWidth: document.documentElement.scrollWidth,
+        shell: measure(shell), workarea: measure(workarea), content: measure(content)
+      };
+    }""")
+    assert geometry["documentWidth"] <= geometry["viewportWidth"] + 1, f"Page overflows horizontally: {geometry}"
+    shell = geometry["shell"]["rect"]
+    workarea = geometry["workarea"]["rect"]
+    assert abs(shell["left"] - workarea["left"]) <= 1 and abs(shell["width"] - workarea["width"]) <= 1, \
+        f"The rail-free work area must fill its shell: {geometry}"
+    for region in ("shell", "workarea", "content"):
+        area = geometry[region]
+        assert area["rect"]["left"] >= -1 and area["rect"]["right"] <= geometry["viewportWidth"] + 1, \
+            f"{region} extends outside the viewport: {geometry}"
+        assert area["scrollWidth"] <= area["clientWidth"] + 1, f"{region} needs horizontal scrolling: {geometry}"
+    return geometry
+
+
 async def workspace(page, url, with_transport):
     errors = []
     page.on("pageerror", lambda error: errors.append(str(error)))
     await page.goto(url, wait_until="networkidle")
     await expect(page.get_by_role("heading", name="Installed package workspace")).to_be_visible()
+    geometry = await page_fit(page)
     if with_transport:
         await transport(page, 3)
     result = await act(page, "input", "Workspace name", "setValue", ["Orion"])
@@ -193,7 +227,7 @@ async def workspace(page, url, with_transport):
     assert not errors, errors
     return {"transport": "instrumented WebMCP" if with_transport else "unavailable", "acceptedState": True,
             "hostCancellation": True, "confirmationRefusal": True, "viewportAcceptance": True,
-            "keyboard": True, "unmountAndRemount": True}
+            "keyboard": True, "unmountAndRemount": True, "pageFit": geometry}
 
 
 async def starter(page, url):
@@ -304,7 +338,7 @@ def start_server(directory, mode, processes):
     raise RuntimeError(f"Consumer {mode} server did not become ready")
 
 
-async def run(args, directory, processes):
+async def run(args, directory, processes, browser_info):
     from playwright.async_api import async_playwright, expect as playwright_expect
 
     global expect
@@ -312,7 +346,13 @@ async def run(args, directory, processes):
     results = {}
     evidence = BrowserEvidence()
     async with async_playwright() as playwright:
-        browser = await playwright.chromium.launch(headless=True, ignore_default_args=["--disable-back-forward-cache"])
+        # Match the gallery's regular Chromium headless mode. The default
+        # headless shell disables BFCache independently of this default flag.
+        channel = "chromium"
+        browser = await playwright.chromium.launch(headless=True, channel=channel,
+                                                   ignore_default_args=["--disable-back-forward-cache"])
+        browser_info.update({"browser": browser.version, "browserChannel": channel})
+        evidence.record("browser-launched", **browser_info)
         try:
             if not args.only_hmr:
                 base = (args.base_url or start_server(directory, "preview", processes)).rstrip("/") + "/"
@@ -329,6 +369,7 @@ async def run(args, directory, processes):
                 await context.add_init_script(transport_script(False))
                 page = evidence.watch(await context.new_page(), "without-webmcp")
                 results["withoutWebMcp"] = await evidence.check("without-webmcp", page, lambda: workspace(page, base, False))
+                await page.screenshot(path=str(ROOT / "test-results/consumer-mobile.png"), full_page=True)
                 await context.close()
             if not args.skip_hmr:
                 dev = (args.dev_url or start_server(directory, "dev", processes)).rstrip("/") + "/"
@@ -363,15 +404,16 @@ def main():
         if not args.skip_hmr and not args.dev_url:
             parser.error("Pass a daemon-backed --dev-url, or use --skip-hmr and run --only-hmr separately.")
     processes = []
+    browser_info = {}
     output = ROOT / ("test-results/consumer-hmr.json" if args.only_hmr else "test-results/consumer-browser.json")
     output.parent.mkdir(parents=True, exist_ok=True)
     try:
-        results = asyncio.run(run(args, directory, processes))
-        output.write_text(json.dumps({"status": "passed", "directory": str(directory), "browser": "Chromium", "results": results}, indent=2) + "\n")
+        results = asyncio.run(run(args, directory, processes, browser_info))
+        output.write_text(json.dumps({"status": "passed", "directory": str(directory), **browser_info, "results": results}, indent=2) + "\n")
         print(json.dumps(results, indent=2))
         print(f"Consumer browser acceptance passed; evidence: {output}")
     except Exception as error:
-        output.write_text(json.dumps({"status": "failed", "directory": str(directory), "browser": "Chromium",
+        output.write_text(json.dumps({"status": "failed", "directory": str(directory), **browser_info,
                                       "error": str(error), "errorType": type(error).__name__}, indent=2) + "\n")
         raise
     finally:

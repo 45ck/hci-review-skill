@@ -97,7 +97,10 @@ fn fragment_main(vertex: Vertex) -> @location(0) vec4f {
   let cool_shine = pow(max(dot(normal, fill_half), 0.0), 48.0) * edge_weight * 0.15;
   let rim = ring * (0.08 + max(dot(normal, key), 0.0) * 0.24) + fresnel * edge_weight * 0.12;
   let contact = pointer_glow * surface.light.z * 0.12 + envelope * amplitude * 0.12;
-  let transmitted = mix(vec3f(red, green, blue), surface.tint.rgb, surface.tint.a);
+  // Keep the face tint under content. The curved bevel exposes more of the
+  // genuinely displaced backdrop; its role/theme tint is independent of strength.
+  let tint_opacity = mix(surface.tint.a, surface.style.z, edge_weight * edge_weight);
+  let transmitted = mix(vec3f(red, green, blue), surface.tint.rgb, tint_opacity);
   let underside = max(edge_normal.y, 0.0) * edge_weight * 0.045;
   let colour = transmitted * (1.0 - underside)
              + (vec3f(1.0, 0.98, 0.93) * (shine + rim + contact)

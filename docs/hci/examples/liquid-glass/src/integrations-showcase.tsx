@@ -126,7 +126,7 @@ export function IntegrationsShowcase() {
         <Tabs key={runtime.id} defaultValue={runtime.files[0].id} className="integration-code" onValueChange={() => setCopied("")}>
           <TabsList aria-label="Integration source files">{runtime.files.map(file => <TabsTab key={file.id} value={file.id}>{file.label}</TabsTab>)}<TabsIndicator /></TabsList>
           {runtime.files.map(file => <TabsPanel key={file.id} value={file.id}>
-            <div className="integration-code-heading"><code>{file.name}</code><Button onClick={() => copy(file.source, file.name)}><LiquidIcon name="copy" />Copy integration code</Button></div>
+            <div className="integration-code-heading"><code>{file.name}</code><Button onClick={() => copy(file.source, file.name)}><LiquidIcon name="copy" />Copy {file.name}</Button></div>
             <pre tabIndex={0} aria-label={`${runtime.name} ${file.label} source`}><code>{file.source}</code></pre>
           </TabsPanel>)}
         </Tabs>

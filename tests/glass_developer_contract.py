@@ -140,6 +140,31 @@ async def _page_fits(page):
     return dimensions
 
 
+async def _viewport_controls_fit(viewer):
+    geometry = await viewer.locator(".qgv-controls").evaluate("""root => {
+        const measure = node => ({
+            rect: node.getBoundingClientRect().toJSON(),
+            clientWidth: node.clientWidth, scrollWidth: node.scrollWidth,
+            clientHeight: node.clientHeight, scrollHeight: node.scrollHeight
+        });
+        return {row: measure(root),
+            groups: [...root.children].map(node => ({name: node.className, ...measure(node)})),
+            controls: [...root.querySelectorAll('[data-slot="button"], [data-slot="toggle"]')]
+                .map(node => ({label: node.getAttribute('aria-label') || node.textContent, ...measure(node)}))};
+    }""")
+    row = geometry["row"]
+    assert row["scrollWidth"] <= row["clientWidth"] + 1, f"Viewport controls overflow their row: {geometry}"
+    for element in [*geometry["groups"], *geometry["controls"]]:
+        assert element["rect"]["left"] >= row["rect"]["left"] - 1, geometry
+        assert element["rect"]["right"] <= row["rect"]["right"] + 1, geometry
+        assert element["scrollWidth"] <= element["clientWidth"] + 1, f"Viewport label is clipped horizontally: {element}"
+        assert element["scrollHeight"] <= element["clientHeight"] + 1, f"Viewport label is clipped vertically: {element}"
+    for control in geometry["controls"]:
+        assert control["label"].strip(), control
+        assert control["rect"]["width"] >= 39 and control["rect"]["height"] >= 39, control
+    return geometry
+
+
 async def _diagram_camera(viewer):
     return await viewer.locator(".qgv-viewport").evaluate("""root => {
         const world = root.querySelector('.qgv-world');
@@ -450,6 +475,7 @@ async def verify_developer_contract(page, expect, *, base_url, output_dir):
     await expect(viewer.locator('[data-diagram-selection="image-asset"]')).to_be_visible()
     await _act(page, await _entry(page, "liquid-viewport", "Diagram viewport"), "fit", [])
     mobile_canvas = await _diagram_fits(viewer)
+    mobile_controls = await _viewport_controls_fit(viewer)
     surface = viewer.locator(".qgv-surface")
     await surface.scroll_into_view_if_needed()
     box = await surface.bounding_box()
@@ -488,7 +514,8 @@ async def verify_developer_contract(page, expect, *, base_url, output_dir):
             "sectionReturnPreserved": True, "agentReadableJson": True,
             "readOnlyMutationRefused": not readonly_attempt.get("ok", False),
             "viewport": navigation, "touchPinch": {"before": before_pinch, "after": after_pinch},
-            "vectorExport": filename, "mobile": mobile, "mobileCanvas": mobile_canvas, "forcedColourFocus": focus,
+            "vectorExport": filename, "mobile": mobile, "mobileCanvas": mobile_canvas, "mobileControls": mobile_controls,
+            "forcedColourFocus": focus,
             "screenshots": [mobile_screenshot, forced_screenshot]}
 
 

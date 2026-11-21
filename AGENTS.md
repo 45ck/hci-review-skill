@@ -61,3 +61,14 @@ Run `npm run glass:verify` for kit changes and `python3 tests/test_glass_browser
 Verify GPU contribution on actual button, input and panel rectangles, optical-strength changes, backdrop recapture, top-layer popup visibility and focus, all 55 catalogue specimens, and the narrow overview layout. Verify changing motion pixels, constant capture revisions during interaction, eventual idle, and both system and explicit app preferences. Save screenshots of the overview, desktop popup, mobile overview and GPU comparisons. A `ready` attribute by itself is insufficient rendering evidence.
 
 Report actual commands, exit codes, browser, viewports, pixel checks and any unavailable path. Automated checks do not establish optical equivalence, WCAG conformance or improved human usability. Preserve original HCI calculators, protocols and recorded pilot results as independent research; the old workbench and pilot are not part of the hosted kit. Keep internal access private unless the user instructs otherwise.
+
+## CI cost and delivery
+
+- Batch a coherent implementation candidate after focused local checks; avoid repeated cosmetic pushes or unchanged full reruns.
+- Use one integration owner for shared CI, dependency and lockfile changes; reconcile concurrent work before publishing.
+- Read failed logs, reproduce the smallest failure, then retry only the necessary failed job and its dependents with a stated reason.
+- Keep required QA, security, coverage and release gates. Never bypass hooks, use skip markers or weaken checks to reduce cost.
+- Request previews or manual heavy checks only for a concrete review or acceptance need under the existing delivery policy.
+- Record the commit, actual commands/results, run links and retry reason; mark unavailable checks NOT_RUN. Runner minutes and deployment counts are not invoices.
+- Keep `glass:verify` and required browser/GPU evidence. Focused manual browser diagnostics do not replace the full candidate gate.
+- Use the [CI cost guide](docs/hci/standards/ci-costs.md) for this repository's commands and warnings.

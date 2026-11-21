@@ -23,10 +23,12 @@
 [data-slot="menu-content"].qg-quality-popup { width: 260px; min-width: 0; max-width: min(320px, calc(100vw - 16px), var(--available-width)); max-height: var(--available-height); overflow: auto; }
 .qg-quality-popup [data-slot="menu-item"] { min-height: 44px; white-space: normal; overflow-wrap: anywhere; line-height: 1.4; }
 /* Deliberate, isolated faults exercise the detectors; never applied to product menus. */
-[data-slot="menu-content"].qg-quality-popup[data-fault="anchor-offset"] { margin-inline-start: 28px !important; margin-inline-end: -28px !important; }
+[data-slot="menu-content"].qg-quality-popup[data-fault="anchor-offset"] { translate: 28px 0 !important; }
+[data-slot="menu-content"].qg-quality-popup[data-fault="anchor-offset"][dir="rtl"] { translate: -28px 0 !important; }
 [data-slot="menu-content"].qg-quality-popup[data-fault="overflow"] { width: calc(100vw + 64px); max-width: none; }
-/* Faults intentionally override the SDK's inline margin reset; healthy menus never do. */
-[data-slot="menu-content"].qg-quality-popup[data-fault="overlap"][data-side="bottom"] { margin-top: -40px !important; margin-bottom: 40px !important; }
-[data-slot="menu-content"].qg-quality-popup[data-fault="overlap"][data-side="top"] { margin-top: 40px !important; margin-bottom: -40px !important; }
+/* Margins exercise native layout-shift entries while open. Translation preserves the
+   deliberate fault when the SDK compensates those margins during a later reopen. */
+[data-slot="menu-content"].qg-quality-popup[data-fault="overlap"][data-side="bottom"] { margin-top: -40px !important; margin-bottom: 40px !important; translate: 0 -40px !important; }
+[data-slot="menu-content"].qg-quality-popup[data-fault="overlap"][data-side="top"] { margin-top: 40px !important; margin-bottom: -40px !important; translate: 0 40px !important; }
 @media (max-width: 420px) { .qg-quality-lab-panel { padding: 12px; } .qg-quality-choices { gap: 10px; } .qg-quality-lab-heading [data-slot="dialog-title"] { font-size: 18px; } }
 @media (forced-colors: active) { .qg-quality-lab-panel, .qg-quality-lab-report { border-color: CanvasText; } }

@@ -554,7 +554,9 @@ async def run(args):
         await record("sections_chapters_navigation_and_preferences", lambda: custom_components(verify_sections_contract), reset=False, timeout=90)
         await record("layouts_real_sdk_responsive_tenant_and_state", lambda: custom_components(verify_layouts_contract), reset=False, timeout=85)
         await record("review_overlay_semantics_choices_and_freshness", lambda: custom_components(verify_review_contract), reset=False, timeout=100)
-        await record("layouts_quality_seeded_geometry_and_fault_detection", lambda: custom_components(verify_layout_quality_contract), reset=False, timeout=60)
+        # Aggregate budget for application menus/diagnostics, eight seeded layouts and
+        # three fault/reopen/recovery flows; detector and per-operation limits stay fixed.
+        await record("layouts_quality_seeded_geometry_and_fault_detection", lambda: custom_components(verify_layout_quality_contract), reset=False, timeout=120)
         await record("patterns_commands_filters_selection_and_details", lambda: custom_components(verify_patterns_contract), reset=False, timeout=100)
         await record("assistant_composition_cancellation_and_sources", lambda: custom_components(verify_assistant_contract), reset=False, timeout=100)
         await record("catalogue_components_examples_and_navigation", lambda: custom_components(verify_catalogue_navigation), reset=False, timeout=100)

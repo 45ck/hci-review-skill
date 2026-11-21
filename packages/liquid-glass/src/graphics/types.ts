@@ -1,3 +1,5 @@
+import type { ChangeDetails } from "@ui-sdk/core";
+
 export type GraphicLayerKind = "image" | "text" | "shape";
 
 export interface GraphicAsset {
@@ -66,10 +68,11 @@ export interface GraphicVariant {
   document: GraphicDocument;
 }
 
-export interface GraphicChangeDetails {
+export type GraphicChangeDetails = Omit<ChangeDetails, "reason"> & {
   reason: "properties" | "move" | "resize" | "add" | "duplicate" | "delete" | "reorder" | "visibility" | "lock" | "artboard" | "undo" | "redo" | "variant" | "json" | "image-import";
   layerId?: string;
-}
+  signal: AbortSignal;
+};
 
 export interface GraphicAgentContext {
   schemaVersion: 1;

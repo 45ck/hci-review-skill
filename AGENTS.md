@@ -1,5 +1,17 @@
 # Quantitative HCI Liquid Glass standard
 
+## Agent-first engineering is the default
+
+Build reusable behaviours, visual components and design tools that agents can discover, compose, operate and verify. Preserve accessible human interaction and a predictable documented contract. This extends the [Vercel UI SDK mission](https://github.com/vercel-labs/ui); a catalogue entry or attractive demo alone does not satisfy it.
+
+For every current or future package change, read `packages/liquid-glass/docs/llms.txt` and the relevant contract in `packages/liquid-glass/agent-contracts.json`. Follow `docs/hci/standards/agent-engineering.md`. Keep every public runtime export classified, documented and linked to evidence. Update its contract when inputs, actions, state, composition or restrictions change; update the schema and checker together when the contract format changes. Supported kit rendering is React. Do not infer support for another framework from upstream's adapters.
+
+Separate headless primitives, SDK compositions, passive presentation and pure utilities. New interactive behaviour belongs in a `definePrimitive` with explicit allowed actions and cancellable changes, rendered through the SDK's public adapter. Reuse an existing SDK control or behaviour before adding one. Compositions expose their genuine SDK children; passive surfaces and utilities get no invented agent actions. Keep public state and result schemas inspectable, and validate custom action inputs at the shared change path.
+
+Agent-ready means a real bridge can find the intended control, discover valid inputs, invoke a supported action and observe the accepted result. Assert those outcomes, including rejection and cancellation, rather than treating `act().ok`, a manifest, TypeScript or a screenshot as proof. Read installed SDK docs/types and preserve human keyboard, focus, selection, touch and fallback behaviour. Do not create a second mutation API or use DOM-only handlers for rules that agents must obey.
+
+Run `npm run glass:agent-check` for the export/contract/documentation gate and `npm run glass:verify` for package changes. Run relevant browser contracts for changed interaction paths as required below. Static contract coverage, runtime test coverage and human **Unvalidated** status are separate evidence.
+
 ## Build the actual kit
 
 Use the shared Liquid Glass kit for new high-fidelity internal interfaces without an established product design system. The default theme combines real UI SDK controls with the reusable WebGPU material. Keep the same control semantics and layout in the solid fallback. Read `docs/hci/standards/liquid-glass.md` before changing the material or renderer.

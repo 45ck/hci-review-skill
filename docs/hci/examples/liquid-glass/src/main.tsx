@@ -915,6 +915,10 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
           </div>
           <footer className="kit-footer">
             <span>Quantive Liquid Glass</span>
+            <nav aria-label="Agent engineering resources">
+              <a href="/agent-engineering.md" target="_blank" rel="noreferrer">Agent guide</a>
+              <a href="/agent-index.json" target="_blank" rel="noreferrer">Component contracts</a>
+            </nav>
             <span>React · UI SDK · WebGPU</span>
           </footer>
         </main>

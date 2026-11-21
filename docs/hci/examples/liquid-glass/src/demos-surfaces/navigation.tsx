@@ -319,7 +319,7 @@ export function AccordionDemo() {
 export function CollapsibleDemo() {
   return (
     <Collapsible data-variant="card">
-      <CollapsibleTrigger>
+      <CollapsibleTrigger aria-label="Material details">
         <span className="demo-stack">
           <strong>Material details</strong>
           <span className="demo-muted">3 shared tokens</span>

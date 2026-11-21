@@ -550,8 +550,12 @@ p {
   justify-content: space-between;
   gap: 14px;
   color: #2f5267;
-  font-size: 12px;
+  flex-wrap: wrap;
+  font-size: 14px;
 }
+.kit-footer nav { display: flex; flex-wrap: wrap; gap: 16px; }
+.kit-footer a { color: inherit; text-underline-offset: 3px; }
+.kit-footer a:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; border-radius: 2px; }
 .kit-empty {
   font-size: 16px;
   padding: 36px 0;

@@ -23,6 +23,7 @@ type EngineOptions = Options & {
   onChange: (state: LiquidGlassState) => void;
   materialReduced: boolean;
 };
+const GEOMETRY_TRANSITION = /^(transform|translate|scale|rotate|left|right|top|bottom|width|height|min-width|max-width|min-height|max-height|margin.*|padding.*|border.*radius)$/;
 
 export function createLiquidGlassEngine(config: EngineOptions) {
   let options: Options = config;
@@ -32,6 +33,7 @@ export function createLiquidGlassEngine(config: EngineOptions) {
   let frame = 0;
   let captureTimer = 0;
   let pendingCapture: Promise<void> | null = null;
+  let resolveCaptureFrame: (() => void) | null = null;
   let captureAgain = false;
   let hasBackdrop = false;
   let state: LiquidGlassState = { status: config.materialReduced ? "reduced" : "loading", surfaceCount: 0 };
@@ -64,6 +66,12 @@ export function createLiquidGlassEngine(config: EngineOptions) {
     schedule,
     surface: (element) => surfaceMap.get(element),
   });
+
+  function settleCaptureFrame() {
+    const resolve = resolveCaptureFrame;
+    resolveCaptureFrame = null;
+    resolve?.();
+  }
 
   function untrackNative(animation: Animation) {
     const tracked = nativeAnimations.get(animation);
@@ -160,16 +168,18 @@ export function createLiquidGlassEngine(config: EngineOptions) {
     device?.destroy();
     device = undefined;
     publish({ status: "error", surfaceCount: 0 });
+    settleCaptureFrame();
   };
 
   function paint() {
-    if (frame) cancelAnimationFrame(frame);
     frame = 0;
     if (
       disposed ||
       document.visibilityState === "hidden"
-    )
+    ) {
+      settleCaptureFrame();
       return;
+    }
     const now = performance.now();
     for (const [animation, tracked] of nativeAnimations) {
       if (now >= tracked.deadline || !tracked.target.isConnected ||
@@ -336,6 +346,8 @@ export function createLiquidGlassEngine(config: EngineOptions) {
       publish({ status: "ready", surfaceCount: surfaces.length });
     } catch (error) {
       fail(error);
+    } finally {
+      settleCaptureFrame();
     }
   }
 
@@ -344,6 +356,19 @@ export function createLiquidGlassEngine(config: EngineOptions) {
       if (html.dataset.liquidMotionState !== "running") html.dataset.liquidMotionState = "running";
       frame = requestAnimationFrame(paint);
     }
+  }
+
+  function waitForCaptureFrame(): Promise<void> {
+    geometryDirty = true;
+    return new Promise((resolve) => {
+      // Capture awaits can cross a hide, failure or unmount before registration.
+      if (disposed || !device || !renderer || document.visibilityState === "hidden") {
+        resolve();
+        return;
+      }
+      resolveCaptureFrame = resolve;
+      schedule();
+    });
   }
 
   const refresh = (): Promise<void> => {
@@ -408,7 +433,10 @@ export function createLiquidGlassEngine(config: EngineOptions) {
           };
           hasBackdrop = true;
           html.dataset.liquidCaptureRevision = String(++captureRevision);
-          paint();
+          // Upload can block while the document animation clock stays fixed.
+          // Measure and draw on the shared RAF after that clock advances.
+          await waitForCaptureFrame();
+          if (disposed || !device || !renderer) return;
           await device.queue.onSubmittedWorkDone();
         } finally {
           bitmap.close();
@@ -450,6 +478,7 @@ export function createLiquidGlassEngine(config: EngineOptions) {
     if (document.visibilityState === "hidden") {
       cancelAnimationFrame(frame);
       frame = 0;
+      settleCaptureFrame();
       for (const animation of nativeAnimations.keys()) untrackNative(animation);
       geometryAnimations.clear();
       popupEntries.clear();
@@ -467,7 +496,7 @@ export function createLiquidGlassEngine(config: EngineOptions) {
     if (options.motion !== "enabled" || !(event.target instanceof HTMLElement) ||
         event.target.closest("[data-liquid-canvas],[data-liquid-backdrop]")) return;
     const transition = event instanceof TransitionEvent;
-    if (transition && !/^(opacity|transform|translate|scale|rotate|left|right|top|bottom|width|height|min-width|max-width|min-height|max-height|margin.*|padding.*|border.*radius)$/.test(event.propertyName)) return;
+    if (transition && event.propertyName !== "opacity" && !GEOMETRY_TRANSITION.test(event.propertyName)) return;
     if (!transition && !event.target.matches("[data-liquid-travelling],[data-slot$='-content'],[data-slot='drawer'],[data-liquid-glass]")) return;
     const style = getComputedStyle(event.target);
     const durations = cssMilliseconds(transition ? style.transitionDuration : style.animationDuration);
@@ -481,8 +510,16 @@ export function createLiquidGlassEngine(config: EngineOptions) {
   };
   const finishGeometry = (event: TransitionEvent | AnimationEvent) => {
     if (!(event.target instanceof Element)) return;
-    const name = event instanceof TransitionEvent ? `transition:${event.propertyName}` : `animation:${event.animationName}`;
-    if (!geometryAnimations.get(event.target)?.delete(name)) return;
+    const target = event.target;
+    const transition = event instanceof TransitionEvent;
+    const name = transition ? `transition:${event.propertyName}` : `animation:${event.animationName}`;
+    const tracked = geometryAnimations.get(target)?.delete(name);
+    // A compositor transition may finish after the bounded tracker expires.
+    // Its final geometry still needs one read; unrelated decorative ends do not.
+    const ownedGeometryEnd = transition && GEOMETRY_TRANSITION.test(event.propertyName) &&
+      target.isConnected && !target.closest("[data-liquid-canvas],[data-liquid-backdrop]") &&
+      surfaces.some((surface) => target.contains(surface.element));
+    if (!tracked && !ownedGeometryEnd) return;
     invalidate(`animation-end:${event.target instanceof HTMLElement ? event.target.dataset.slot ?? event.target.tagName.toLowerCase() : "element"}:${name}`);
   };
   const ownMutation = (record: MutationRecord) => {
@@ -642,6 +679,7 @@ export function createLiquidGlassEngine(config: EngineOptions) {
     destroy() {
       disposed = true;
       cancelAnimationFrame(frame);
+      settleCaptureFrame();
       clearTimeout(captureTimer);
       observer.disconnect();
       backdropObserver.disconnect();

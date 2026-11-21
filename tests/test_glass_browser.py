@@ -56,6 +56,7 @@ async def run(args):
         "commit": os.environ.get("GITHUB_SHA"),
         "sdkVersion": manifest["sdkVersion"],
         "upstreamCommit": manifest["upstreamCommit"],
+        "popupTimelineRequested": args.popup_timeline,
         "scope": "Scripted real-control, agent, keyboard, preference, responsive-layout and GPU pixel evidence; not a human study or optical-equivalence claim.",
         "checks": [],
     }
@@ -297,7 +298,8 @@ async def run(args):
             collection = page.get_by_role("button", name="New collection", exact=True)
             browser_stage("keyboard: open collection dialog and inspect popup canvas")
             await collection.focus()
-            await arm_popup_render_timeline(page)
+            if args.popup_timeline:
+                await arm_popup_render_timeline(page)
             await collection.press("Enter")
             dialog = page.get_by_role("dialog", name="Create a collection", exact=True)
             await expect(dialog).to_be_visible()
@@ -350,7 +352,8 @@ async def run(args):
                 const hit = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
                 return hit === node || node.contains(hit);
             }"""), "The popup renderer covers its live input"
-            await page.evaluate("window.__glassPopupTimeline?.stop('popup inspected')")
+            if args.popup_timeline:
+                await page.evaluate("window.__glassPopupTimeline?.stop('popup inspected')")
             await page.screenshot(path=str(output.parent / "dialog-desktop.png"), animations="allow", timeout=SCREENSHOT_TIMEOUT_MS)
             await page.keyboard.press("Escape")
             await expect(dialog).not_to_be_visible()
@@ -368,7 +371,8 @@ async def run(args):
             try:
                 return await keyboard_and_popup()
             finally:
-                report["popupRenderTimeline"] = await finish_popup_render_timeline(page, output.parent)
+                if args.popup_timeline:
+                    report["popupRenderTimeline"] = await finish_popup_render_timeline(page, output.parent)
                 await finish_profile(profile)
 
         await record("keyboard_selection_and_real_popup", profiled_keyboard_popup, timeout=25)
@@ -587,6 +591,7 @@ def main():
     parser.add_argument("--output", default="test-results/liquid-glass.json")
     parser.add_argument("--executable", default=None)
     parser.add_argument("--software-gpu", action="store_true", help="Require software WebGPU for a reviewed loopback build only")
+    parser.add_argument("--popup-timeline", action="store_true", help="Collect bounded popup geometry diagnostics; extra layout reads can affect animation timing")
     return asyncio.run(run(parser.parse_args()))
 
 

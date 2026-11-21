@@ -109,7 +109,7 @@ export function DeveloperShowcase({ models, onModelsChange }: {
           <h2 id="developer-edit-heading">Adapt this example</h2>
           <ValidationBadge />
         </div>
-        <p>Rename the selected element. The diagram, accessible descriptions and exports update together. Your model changes stay here while you explore the kit; reloading starts fresh.</p>
+        <p>Rename the selected element. Diagram labels, element choices, relationship endpoint names and JSON/SVG exports update together. Example descriptions remain as written. Your model changes stay while you explore the kit; reloading starts fresh.</p>
         <form className="developer-label-form" onSubmit={(event) => { event.preventDefault(); applyLabel(); }} noValidate>
           <Field invalid={Boolean(error)}>
             <FieldLabel>Element label</FieldLabel>

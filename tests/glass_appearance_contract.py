@@ -9,6 +9,7 @@ from collections import Counter
 from math import ceil, floor
 import re
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from glass_optics_contract import (
     SCREENSHOT_TIMEOUT_MS,
@@ -106,11 +107,26 @@ async def verify_appearance_contract(page, expect, *, base_url, output_dir, requ
         assert evidence["revision"] >= initial_revision, evidence
         return evidence
 
-    browser_stage("appearance: load isolated default kit")
+    browser_stage("appearance: recover invalid stored presets on initial mount")
+    address = urlsplit(base_url)
+    origin = f"{address.scheme}://{address.netloc}"
+    storage = await page.context.storage_state()
+    stored_before_mount = {
+        item["name"]: item["value"]
+        for site in storage.get("origins", []) if site["origin"] == origin
+        for item in site.get("localStorage", [])
+    }
+    invalid_stored = {
+        "font": stored_before_mount.get("qg-kit-font"),
+        "icons": stored_before_mount.get("qg-kit-icons"),
+    }
+    assert invalid_stored == {"font": "__unsupported_font__", "icons": "__unsupported_icons__"}, invalid_stored
     await page.goto(base_url, wait_until="networkidle")
     await expect(root).to_have_attribute("data-liquid-font", "studio")
     await expect(root).to_have_attribute("data-liquid-icons", "isometric")
     await ready()
+    recovered_storage = await page.evaluate("({font: localStorage.getItem('qg-kit-font'), icons: localStorage.getItem('qg-kit-icons')})")
+    assert recovered_storage == {"font": "studio", "icons": "isometric"}, recovered_storage
     studio = await fonts("studio", "Manrope", "Manrope")
     field = page.get_by_label("Project name", exact=True)
     await field.fill("Unsent studio draft")
@@ -258,19 +274,11 @@ async def verify_appearance_contract(page, expect, *, base_url, output_dir, requ
     assert (await _entry(page, "select", "Font set"))["value"] == "studio"
     assert (await _entry(page, "select", "Icon style"))["value"] == "isometric"
     await close_settings()
-    browser_stage("appearance: invalid stored presets use defaults")
-    await page.evaluate("""() => {
-        localStorage.setItem('qg-kit-font', '__unsupported_font__');
-        localStorage.setItem('qg-kit-icons', '__unsupported_icons__');
-    }""")
-    await page.reload(wait_until="networkidle")
-    await expect(root).to_have_attribute("data-liquid-font", "studio")
-    await expect(root).to_have_attribute("data-liquid-icons", "isometric")
-    await ready()
     return {"defaults": {"fontSet": "studio", "iconSet": "isometric"},
             "fonts": {"studio": studio, "editorial": editorial, "system": system},
             "icons": icons, "iconPixelDifference": icon_difference,
             "choices": choices_used, "stateContinuity": preserved,
             "copyStarter": {"fontSet": "editorial", "iconSet": "line", "clipboardIO": "isolated writeText spy"},
             "persisted": stored, "resetDefaults": True, "invalidStorageDefaults": True,
+            "invalidStorageRecovery": {"beforeMount": invalid_stored, "afterMount": recovered_storage},
             "forcedColoursUseLine": True, "forcedColourLabelPixels": forced_label, "screenshots": screenshots}

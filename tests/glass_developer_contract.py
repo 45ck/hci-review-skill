@@ -242,6 +242,46 @@ async def verify_visual_contract(page, expect, *, base_url, output_dir):
     gallery = page.locator('[data-custom-component="media-gallery"]')
     comparison = page.locator('[data-custom-component="image-comparison"]')
     card = page.locator('[data-custom-component="image-card"]')
+
+    async def gallery_layout(viewport_name):
+        evidence = await gallery.evaluate("""root => {
+            const rect = node => {
+                const box = node.getBoundingClientRect();
+                return {left: box.left, right: box.right, top: box.top, bottom: box.bottom, width: box.width};
+            };
+            const inner = node => {
+                const box = node.getBoundingClientRect();
+                const style = getComputedStyle(node);
+                const left = box.left + parseFloat(style.borderLeftWidth) + parseFloat(style.paddingLeft);
+                const right = box.right - parseFloat(style.borderRightWidth) - parseFloat(style.paddingRight);
+                return {left, right, width: right - left};
+            };
+            const carousel = root.querySelector('[data-slot="carousel"]');
+            return {galleryInner: inner(root), carousel: rect(carousel), carouselInner: inner(carousel),
+                viewport: rect(carousel.querySelector('[data-slot="carousel-viewport"]')),
+                caption: rect(root.querySelector('.qg-media-gallery-caption')),
+                buttons: [...root.querySelectorAll('.qg-media-paging button')].map(button => {
+                    const range = document.createRange();
+                    range.selectNodeContents(button);
+                    const text = range.getBoundingClientRect();
+                    return {label: button.textContent.trim(), box: rect(button),
+                        text: {left: text.left, right: text.right, top: text.top, bottom: text.bottom},
+                        clientWidth: button.clientWidth, scrollWidth: button.scrollWidth};
+                })};
+        }""")
+        assert abs(evidence["carousel"]["width"] - evidence["galleryInner"]["width"]) <= 1, f"Gallery carousel leaves available width unused ({viewport_name}): {evidence}"
+        assert abs(evidence["viewport"]["width"] - evidence["carouselInner"]["width"]) <= 1, f"Gallery image is squeezed into a column ({viewport_name}): {evidence}"
+        assert abs(evidence["viewport"]["left"] - evidence["carouselInner"]["left"]) <= 1, evidence
+        assert evidence["caption"]["top"] >= evidence["viewport"]["bottom"] - 1, f"Gallery caption is beside or overlapping the image ({viewport_name}): {evidence}"
+        assert len(evidence["buttons"]) == 2, evidence
+        for button in evidence["buttons"]:
+            box, text = button["box"], button["text"]
+            assert box["left"] <= text["left"] + 1 and text["right"] <= box["right"] + 1, f"Paging label does not fit ({viewport_name}): {button}"
+            assert box["top"] <= text["top"] + 1 and text["bottom"] <= box["bottom"] + 1, f"Paging label clips vertically ({viewport_name}): {button}"
+            assert button["scrollWidth"] <= button["clientWidth"] + 1, button
+        assert evidence["buttons"][0]["box"]["right"] <= evidence["buttons"][1]["box"]["left"] + 1, f"Paging buttons overlap ({viewport_name}): {evidence}"
+        return evidence
+
     for component in [gallery, comparison, card]:
         await expect(component).to_be_visible()
         await expect(component).to_have_attribute("data-validation", "unvalidated")
@@ -306,6 +346,10 @@ async def verify_visual_contract(page, expect, *, base_url, output_dir):
         }))"""))
     assert len({image["path"] for image in images}) >= 3, images
     assert all(image["sameOrigin"] and image["width"] > 0 and image["height"] > 0 and (image["alt"].strip() or image["namedThumbnail"]) for image in images), images
+    desktop_gallery_layout = await gallery_layout("desktop")
+    await gallery.scroll_into_view_if_needed()
+    await settled_motion(page)
+    await gallery.screenshot(path=str(output / "visual-gallery-desktop.png"), animations="allow", timeout=SCREENSHOT_TIMEOUT_MS)
     await page.evaluate("window.scrollTo(0, 0)")
     await settled_motion(page)
     await page.screenshot(path=str(output / "visual-components-desktop.png"), animations="allow", timeout=SCREENSHOT_TIMEOUT_MS)
@@ -313,6 +357,10 @@ async def verify_visual_contract(page, expect, *, base_url, output_dir):
     browser_stage("visual: narrow layout, named detail and recovery")
     await page.set_viewport_size({"width": 390, "height": 844})
     mobile = await _page_fits(page)
+    mobile_gallery_layout = await gallery_layout("mobile")
+    await gallery.scroll_into_view_if_needed()
+    await settled_motion(page)
+    await gallery.screenshot(path=str(output / "visual-gallery-mobile.png"), animations="allow", timeout=SCREENSHOT_TIMEOUT_MS)
     story_trigger = page.get_by_role("button", name="Explore Emerald coast", exact=True)
     await story_trigger.scroll_into_view_if_needed()
     await story_trigger.press("Enter")
@@ -332,4 +380,5 @@ async def verify_visual_contract(page, expect, *, base_url, output_dir):
             "carouselSources": ["agent", "pointer", "keyboard"], "saveTracksArtwork": True,
             "detailMatchesSelection": True, "dialogEscapeFocus": True,
             "comparisonValues": [0, 75, 50, 100], "comparisonPixels": reveal_difference, "mobile": mobile,
-            "screenshots": ["visual-components-desktop.png", "visual-components-mobile-dialog.png", "visual-components-forced-colours.png"]}
+            "galleryLayout": {"desktop": desktop_gallery_layout, "mobile": mobile_gallery_layout},
+            "screenshots": ["visual-components-desktop.png", "visual-gallery-desktop.png", "visual-gallery-mobile.png", "visual-components-mobile-dialog.png", "visual-components-forced-colours.png"]}

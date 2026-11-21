@@ -35,6 +35,7 @@ export function LiquidDiagram({ model, selectedId, onSelectionChange, className 
   const selected = model.nodes.find((node) => node.id === (selectedId ?? localSelection)) ?? model.nodes[0];
   const scene = useMemo(() => errors.length ? [] : diagramScene(model, selected?.id), [model, selected?.id, errors]);
   const parents = new Set(model.nodes.map((node) => node.parentId));
+  const containmentCount = model.nodes.filter((node) => node.parentId).length;
   const nodes = new Map(model.nodes.map((node) => [node.id, node]));
 
   function selectNode(nodeId: string, details: DiagramSelectionDetails) {
@@ -120,7 +121,7 @@ export function LiquidDiagram({ model, selectedId, onSelectionChange, className 
           </section>
           <section className="qgd-relationships" aria-label="Diagram relationships">
             <p className="qgd-eyebrow">Read the model</p>
-            <h4>{model.nodes.length} elements · {model.edges.length} relationships</h4>
+            <h4>{model.nodes.length} elements · {model.edges.length} links{containmentCount > 0 ? ` · ${containmentCount} containments` : ""}</h4>
             {model.edges.length > 0 && <ul>{model.edges.map((edge) => <li key={edge.id} data-diagram-relation={edge.id}>
               <span className="qgd-relationship-kind">{relationshipNames[edge.kind]}</span>
               <strong>{nodes.get(edge.source)?.name} <span aria-label="to">→</span> {nodes.get(edge.target)?.name}</strong>

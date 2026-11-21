@@ -13,7 +13,7 @@ async def verify_model_document_contract(page, expect, *, base_url, output_dir):
     await _select(page, "listbox", "Component catalogue", value="standards")
     await _select(page, "select", "Diagram model", value="uml-class")
     entry = await _entry(page, "model-document", "Model document")
-    assert set(entry["actions"]) == {"inspect", "preview", "applyTransaction", "undo", "redo", "select"}, entry
+    assert set(entry["actions"]) == {"inspect", "preview", "applyTransaction", "undo", "redo", "select", "cancelPending"}, entry
     assert "past" not in entry["value"] and "model" not in entry["value"], entry
     root = page.locator('[data-model-id="uml-class"][data-model-revision]')
     await expect(root).to_have_attribute("data-validation", "unvalidated")
@@ -32,6 +32,10 @@ async def verify_model_document_contract(page, expect, *, base_url, output_dir):
 
     initial = await inspect()
     assert initial["modelId"] == "uml-class" and initial["limits"]["operations"] == 100, initial
+    idle_cancel = await command("cancelPending")
+    assert idle_cancel["ok"] and idle_cancel["status"] == "unchanged" and not idle_cancel["changed"], idle_cancel
+    after_cancel = await inspect()
+    assert after_cancel["revision"] == initial["revision"] and after_cancel["model"] == initial["model"], after_cancel
     choices = await _call(page, "query", {"within": entry["ref"]})
     assert isinstance(choices, list) and len(choices) == 1, choices
     nodes = {node["id"]: node for node in initial["model"]["nodes"]}
@@ -145,6 +149,7 @@ async def verify_model_document_contract(page, expect, *, base_url, output_dir):
             "reviewStatus": "Unvalidated", "namedPrimitive": entry["label"],
             "actions": entry["actions"], "discoveredElementIds": sorted(nodes),
             "previewWithoutMutation": True, "atomicBatchSingleCheckpoint": True,
+            "acceptedClonedHostDocument": True, "idleCancellationWithoutMutation": True,
             "invalidBatchRollback": True, "staleRevisionRejected": True,
             "selectionSettlesWithoutRevision": True, "noOpPreservesRedo": True,
             "monotonicRevisions": revisions, "humanAgentSharedHistory": True,

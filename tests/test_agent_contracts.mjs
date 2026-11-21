@@ -35,6 +35,27 @@ function rejects(result, pattern) {
   assert(result.errors.some((error) => pattern.test(error)), result.errors.join("\n"));
 }
 
+function countActionSchemas() {
+  return { $defs: { count: {
+    type: "object", properties: { contract: { const: "count" }, action: { enum: ["set", "reset"] }, args: { type: "array" } },
+    required: ["contract", "action", "args"], additionalProperties: false,
+    oneOf: [
+      { properties: { action: { const: "set" }, args: { type: "array", prefixItems: [{ type: "number" }], minItems: 1, maxItems: 1, items: false } }, examples: [{ contract: "count", action: "set", args: [1] }], "x-invalidExamples": [{ value: { contract: "count", action: "set", args: ["one"] }, reason: "Use a number." }] },
+      { properties: { action: { const: "reset" }, args: { type: "array", minItems: 0, maxItems: 0, items: false } }, examples: [{ contract: "count", action: "reset", args: [] }], "x-invalidExamples": [{ value: { contract: "count", action: "reset", args: [1] }, reason: "No arguments." }] },
+    ],
+  } } };
+}
+
+function countPrimitive(f) {
+  f.write(sourcePath, 'import {definePrimitive} from "@ui-sdk/core"; export const count = definePrimitive({name:"count",state:()=>({value:0}),api:()=>({set(){},reset(){}}),agent:{actions:["set","reset"]}});');
+  f.manifest.entries[0] = { ...f.manifest.entries[0], id: "count", kind: "primitive", validation: "unvalidated", exports: [{ path: name, symbols: ["count"] }],
+    runtime: { discovery: "sdk", mutationPath: "Shared primitive.", outcome: "Observe state.", actions: ["set", "reset"], primitive: { source: sourcePath, symbol: "count", name: "count", actions: ["set", "reset"] }, actionParameters: { set: ["value:number"], reset: [] }, actionSchema: "./agent-action-inputs.json#/$defs/count" } };
+  const inputs = countActionSchemas();
+  const write = () => f.write("packages/liquid-glass/agent-action-inputs.json", JSON.stringify(inputs));
+  write();
+  return { inputs, write };
+}
+
 test("current public API has complete, resolvable contracts", () => {
   const result = validateAgentContracts({ root });
   assert.deepEqual(result.errors, []);
@@ -122,8 +143,9 @@ test("custom primitive action drift and missing primitive entries fail", (t) => 
   f.write(sourcePath, primitiveSource);
   f.manifest.entries[0] = {
     ...f.manifest.entries[0], id: "count", kind: "primitive", exports: [{ path: name, symbols: ["count"] }], validation: "unvalidated",
-    runtime: { discovery: "sdk", mutationPath: "Shared primitive.", outcome: "Observe state.", actions: ["set"], primitive: { source: sourcePath, symbol: "count", name: "count", actions: ["set"] }, actionParameters: { set: ["value:number"] } },
+    runtime: { discovery: "sdk", mutationPath: "Shared primitive.", outcome: "Observe state.", actions: ["set"], primitive: { source: sourcePath, symbol: "count", name: "count", actions: ["set"] }, actionParameters: { set: ["value:number"] }, actionSchema: "./agent-action-inputs.json#/$defs/count" },
   };
+  f.write("packages/liquid-glass/agent-action-inputs.json", JSON.stringify(countActionSchemas()));
   rejects(f.check(), /primitive agent.actions drifted/);
   f.manifest.entries[0].runtime.actions.push("reset");
   f.manifest.entries[0].runtime.primitive.actions.push("reset");
@@ -131,6 +153,37 @@ test("custom primitive action drift and missing primitive entries fail", (t) => 
   assert.deepEqual(f.check().errors, []);
   f.write("packages/liquid-glass/src/unlisted.ts", 'import {definePrimitive} from "@ui-sdk/core"; const extra = definePrimitive({name:"extra",agent:{actions:["set"]}});');
   rejects(f.check(), /undocumented custom primitive extra/);
+});
+
+test("a primitive cannot omit or borrow another action schema fragment", (t) => {
+  const f = fixture(t); countPrimitive(f);
+  assert.deepEqual(f.check().errors, []);
+  delete f.manifest.entries[0].runtime.actionSchema;
+  rejects(f.check(), /needs its own resolvable action schema fragment/);
+  f.manifest.entries[0].runtime.actionSchema = "./agent-action-inputs.json#/$defs/another";
+  rejects(f.check(), /needs its own resolvable action schema fragment/);
+});
+
+test("action input schema drift and unsupported validation keywords fail closed", (t) => {
+  const f = fixture(t), artifact = countPrimitive(f);
+  artifact.inputs.$defs.count.oneOf[1].properties.action.const = "clear";
+  artifact.write();
+  rejects(f.check(), /action schema names differ/);
+  artifact.inputs.$defs.count.oneOf[1].properties.action.const = "reset";
+  artifact.inputs.$defs.count.oneOf[0].properties.args.prefixItems[0].multipleOf = 2;
+  artifact.write();
+  rejects(f.check(), /unsupported schema keyword multipleOf/);
+});
+
+test("incorrect examples and argument documentation fail the contract gate", (t) => {
+  const f = fixture(t), artifact = countPrimitive(f);
+  artifact.inputs.$defs.count.oneOf[0].examples[0].args = ["one"];
+  artifact.write();
+  rejects(f.check(), /valid example fails/);
+  artifact.inputs.$defs.count.oneOf[0].examples[0].args = [1];
+  artifact.write();
+  f.manifest.entries[0].runtime.actionParameters.set = [];
+  rejects(f.check(), /action parameter arity differs/);
 });
 
 test("compositions must route through controls actually imported by their source", (t) => {

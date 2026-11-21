@@ -1,15 +1,16 @@
-import { createChange, definePrimitive, type ChangeDetails } from "@ui-sdk/core";
+import { createChange, definePrimitive } from "@ui-sdk/core";
 import { applyModelTransaction, inspectModelDocument, modelDocumentSnapshot, previewModelTransaction,
   redoModelDocument, rejectedModelResult, selectModelElement, undoModelDocument } from "./document";
+import { createModelChangeController } from "./controlled-change";
 import type { ModelActionResult, ModelDocument, ModelDocumentContext, ModelDocumentHandle, ModelDocumentInput,
-  ModelDocumentReason, ModelDocumentResult, ModelDocumentSnapshot } from "./types";
+  ModelDocumentChangeDetails, ModelDocumentReason, ModelDocumentResult, ModelDocumentSnapshot } from "./types";
 
-export type ModelSnapshotChangeDetails = ChangeDetails<ModelDocumentReason> & { proposedDocument: ModelDocument };
+export type ModelSnapshotChangeDetails = ModelDocumentChangeDetails & { proposedDocument: ModelDocument };
 
 export interface LiquidModelDocumentOptions extends ModelDocumentContext {
   document: ModelDocument;
   value: ModelDocumentSnapshot;
-  onValueChange: (snapshot: ModelDocumentSnapshot, details: ModelSnapshotChangeDetails) => void;
+  onValueChange: (snapshot: ModelDocumentSnapshot, details: ModelSnapshotChangeDetails) => void | Promise<void>;
   disabled?: boolean;
   readOnly?: boolean;
   onResult?: (result: ModelActionResult) => void;
@@ -21,6 +22,7 @@ export interface ModelDocumentRenderContext {
   disabled: boolean;
   readOnly: boolean;
   lastResult: ModelActionResult | null;
+  pendingRevision: number | null;
 }
 
 function actionResult(result: ModelDocumentResult, status: ModelActionResult["status"]): ModelActionResult {
@@ -35,48 +37,47 @@ export const liquidModelDocument = definePrimitive({
     models: "list", validateModel: "callback", onResult: "callback",
   },
   controlled: ["value"],
-  state: (options: LiquidModelDocumentOptions) => ({ value: options.value, disabled: options.disabled ?? false, readOnly: options.readOnly ?? false, lastResult: null as ModelActionResult | null }),
+  state: (options: LiquidModelDocumentOptions) => ({ value: options.value, disabled: options.disabled ?? false, readOnly: options.readOnly ?? false, lastResult: null as ModelActionResult | null, pendingRevision: null as number | null }),
   sync: options => ({ value: options.value, disabled: options.disabled ?? false, readOnly: options.readOnly ?? false }),
   api: context => {
-    const change = createChange(context);
-    let pending: { base: ModelDocument; proposal: ModelDocument; result: ModelDocumentResult } | null = null;
-    context.onOptions(options => {
-      if (!pending || options.document === pending.base) return;
-      const settled = options.document === pending.proposal
-        ? actionResult(pending.result, "applied")
-        : actionResult(rejectedModelResult(options.document, "controlled-not-accepted", "The host supplied a different document. Inspect the current state before retrying."), "rejected");
-      pending = null;
-      context.store.set({ lastResult: settled });
-    });
-    const current = () => context.options().document;
-    const report = (result: ModelActionResult) => {
-      context.store.set({ lastResult: result });
+    const controller = createModelChangeController(context.options().document, result => {
+      context.store.set({ lastResult: result, pendingRevision: controller.state().pendingRevision ?? null });
       context.options().onResult?.(result);
-      return result;
-    };
+    });
+    let dispatchResult: ModelDocumentResult | null = null;
+    const change = createChange({ ...context, options: () => ({ ...context.options(),
+      onValueChange(snapshot: ModelDocumentSnapshot, details: ModelSnapshotChangeDetails) {
+        const result = dispatchResult;
+        if (!result) { details.cancel(); return; }
+        controller.request(result, details, (proposal, enhanced) => context.options().onValueChange(snapshot, {
+          reason: enhanced.reason, source: enhanced.source, event: enhanced.event, signal: enhanced.signal,
+          proposedDocument: proposal, cancel: enhanced.cancel, get canceled() { return enhanced.canceled; },
+        }));
+      },
+    }) });
+    context.onOptions(options => { controller.observe(options.document); });
+    context.onDestroy(controller.dispose);
+    const current = () => controller.state().document;
+    const report = controller.report;
     const reject = (code: string, message: string) => report(actionResult(rejectedModelResult(current(), code, message), "rejected"));
     const canRequest = (selection = false): ModelActionResult | null => {
       const options = context.options();
       if (options.disabled) return reject("disabled", "The model document is disabled.");
       if (options.readOnly && !selection) return reject("read-only", "The model is read-only. Inspection and selection remain available.");
-      if (pending) return reject("pending-controlled-change", "Wait for the host to accept the previous document change before requesting another.");
+      if (controller.state().pendingRevision !== undefined) return reject("pending-controlled-change", "Wait for the host to accept the previous document change, or cancel the pending change.");
       return null;
     };
     const publish = (result: ModelDocumentResult, reason: ModelDocumentReason, input?: ModelDocumentInput): ModelActionResult => {
       if (!result.ok) return report(actionResult(result, "rejected"));
       if (!result.changed) return report(actionResult(result, "unchanged"));
-      const base = current();
       const event = typeof Event !== "undefined" && input?.event instanceof Event ? input.event : undefined;
-      const accepted = change("value", modelDocumentSnapshot(result.document), { reason, event, proposedDocument: result.document });
-      if (!accepted) return reject("cancelled", "The host cancelled this change. The document and history were not changed.");
-      const after = current();
-      if (after === result.document) return report(actionResult(result, "applied"));
-      if (after !== base) return reject("controlled-conflict", "The host supplied a different document while this change was being requested. Inspect the current state before retrying.");
-      pending = { base, proposal: result.document, result };
-      return report({ ...actionResult(result, "requested"), changed: false, revision: base.revision, requestedRevision: result.revision });
+      dispatchResult = result;
+      try { change("value", modelDocumentSnapshot(result.document), { reason, event, proposedDocument: result.document }); }
+      finally { dispatchResult = null; }
+      return controller.state().lastResult!;
     };
     return {
-      inspect: () => ({ ...inspectModelDocument(current(), context.options()), readOnly: Boolean(context.options().readOnly), disabled: Boolean(context.options().disabled), pendingRevision: pending?.proposal.revision, lastResult: context.store.get().lastResult }),
+      inspect: () => ({ ...inspectModelDocument(current(), context.options()), readOnly: Boolean(context.options().readOnly), disabled: Boolean(context.options().disabled), pendingRevision: controller.state().pendingRevision, lastResult: context.store.get().lastResult }),
       getDocument: current,
       items: () => current().model.nodes.map(node => ({ value: node.id, label: node.name })),
       preview(transaction: unknown) {
@@ -95,6 +96,7 @@ export const liquidModelDocument = definePrimitive({
       select(nodeId: string | null, input?: ModelDocumentInput) {
         return canRequest(true) ?? publish(selectModelElement(current(), nodeId), "model-select", input);
       },
+      cancelPending: controller.cancelPending,
     };
   },
   slots: slot => ({
@@ -103,9 +105,9 @@ export const liquidModelDocument = definePrimitive({
       attrs: state => ({ "data-validation": "unvalidated", "data-model-id": state.value.modelId,
         "data-model-revision": String(state.value.revision), "data-model-readonly": String(state.readOnly),
         "data-model-disabled": String(state.disabled), "aria-disabled": String(state.disabled),
-        "data-model-result": state.lastResult?.status }),
-      state: (state, { api }) => ({ document: api.getDocument(), api, disabled: state.disabled, readOnly: state.readOnly, lastResult: state.lastResult }),
+        "data-model-result": state.lastResult?.status, "data-model-pending-revision": state.pendingRevision === null ? undefined : String(state.pendingRevision) }),
+      state: (state, { api }) => ({ document: api.getDocument(), api, disabled: state.disabled, readOnly: state.readOnly, lastResult: state.lastResult, pendingRevision: state.pendingRevision }),
     }),
   }),
-  agent: { actions: ["inspect", "preview", "applyTransaction", "undo", "redo", "select"], items: api => api.items() },
+  agent: { actions: ["inspect", "preview", "applyTransaction", "undo", "redo", "select", "cancelPending"], items: api => api.items() },
 });

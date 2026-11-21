@@ -6,6 +6,8 @@ The workspace pins `@ui-sdk/core` and `@ui-sdk/react` to **0.1.0-beta.13**. Impo
 
 **Agent engineering comes first.** Choose components by their task, typed inputs, state and observable result. Start with [docs/llms.txt](docs/llms.txt), the [agent engineering guide](docs/agent-engineering.md) and [agent-contracts.json](agent-contracts.json), validated against [its schema](agent-contracts.schema.json). The contracts distinguish primitives with their own SDK actions, compositions of SDK controls, passive presentation and pure utilities. React is the supported rendering adapter for this kit.
 
+Custom action arguments have [JSON schemas](agent-action-inputs.json) with valid and invalid examples. Run `npm run glass:contract -- validate liquid-viewport panBy '[80,-40]'` from the repository root for structural preflight; live revision, identity, authorization and host acceptance still govern execution. The hosted index and individual contracts carry schema links, source provenance and content fingerprints. `/agent-release.json` identifies the emitted documentation set, and `glass:build` verifies that it matches the built page.
+
 **Review status:** custom Quantive components, glass styling, icons and compositions are **Unvalidated**: no human UI/UX team has reviewed or approved them. **SDK foundation** identifies upstream behaviour provenance; it is not an approval of this adaptation. The [custom component manifest](custom-component-manifest.json) records this distinction. Automated checks do not promote review status.
 
 ## Interactions and page sections

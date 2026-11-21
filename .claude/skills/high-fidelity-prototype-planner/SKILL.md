@@ -35,10 +35,6 @@ Plan high-fidelity prototypes when interaction detail, visual hierarchy, timing,
 4. Surface uncertainty explicitly instead of masking it with confident UX language.
 5. Recommend the next most useful research, design, or evaluation step.
 
-## Visual default for new high-fidelity prototypes
-
-Use Apple-inspired Liquid Glass on navigation and controls when a new high-fidelity prototype has no established design system. Use solid surfaces for readable content and dense data. Keep the border highlight optional, preserve text contrast and keyboard focus, and provide an opaque fallback for reduced transparency. Respect the product’s design system, touch input and reduced motion. Evaluate the treatment against the task and the [Quantitative HCI example](https://github.com/45ck/hci-review-skill/tree/main/docs/hci/examples).
-
 ## Quality gates
 - Findings are tied to a user goal or task, not generic taste.
 - Assumptions are marked as assumptions.

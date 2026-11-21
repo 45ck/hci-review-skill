@@ -7,26 +7,48 @@
     --liquid-muted: #496478;
     --liquid-blue: #1264e8;
     --liquid-danger: #b8213f;
-    --liquid-border: rgb(255 255 255 / 0.76);
+    --liquid-border: rgb(255 255 255 / 0.22);
+    --liquid-rim: rgb(255 255 255 / 0.82);
+    --liquid-inner-rim: rgb(255 255 255 / 0.48);
+    --liquid-underside: rgb(48 113 156 / 0.12);
     --liquid-line: rgb(28 65 91 / 0.17);
-    --liquid-control-fallback: rgb(249 253 255 / 0.78);
+    --liquid-control-fallback: rgb(241 250 255 / 0.78);
     --liquid-input-fallback: rgb(253 254 255 / 0.84);
-    --liquid-panel-fallback: rgb(245 251 255 / 0.8);
+    --liquid-panel-fallback: rgb(240 249 255 / 0.76);
     --liquid-popup-fallback: rgb(249 253 255 / 0.96);
+    --liquid-selection-fallback: #edf6ff;
     --liquid-control: var(--liquid-control-fallback);
     --liquid-input: var(--liquid-input-fallback);
     --liquid-panel: var(--liquid-panel-fallback);
     --liquid-popup: var(--liquid-popup-fallback);
-    --liquid-backdrop: blur(16px) saturate(1.12);
+    --liquid-selection: var(--liquid-selection-fallback);
+    --liquid-backdrop: blur(14px) saturate(1.16) brightness(1.03);
     --liquid-shadow:
-      0 8px 24px -14px rgb(21 58 83 / 0.3),
-      inset 0 1px 0 rgb(255 255 255 / 0.85),
-      inset 0 -1px 0 rgb(255 255 255 / 0.24);
+      0 12px 28px -16px rgb(0 40 90 / 0.22),
+      0 2px 5px -3px rgb(0 40 90 / 0.12),
+      inset 0 -1px 3px rgb(0 126 220 / 0.06);
+    --liquid-shadow-raised:
+      0 16px 32px -18px rgb(0 40 90 / 0.26),
+      0 3px 8px -4px rgb(0 40 90 / 0.12),
+      inset 0 -1px 3px rgb(0 126 220 / 0.08);
+    --liquid-shadow-pressed:
+      0 3px 10px -6px rgb(0 40 90 / 0.22),
+      inset 0 1px 4px rgb(22 65 96 / 0.13),
+      inset 0 -1px 1px rgb(255 255 255 / 0.42);
     --liquid-popup-shadow:
-      0 22px 64px -26px rgb(17 43 65 / 0.38),
-      0 5px 16px -10px rgb(17 43 65 / 0.2),
-      inset 0 1px 0 rgb(255 255 255 / 0.9);
-    --liquid-duration: 150ms;
+      0 24px 56px -26px rgb(17 43 65 / 0.24),
+      0 4px 10px -6px rgb(17 43 65 / 0.13),
+      inset 0 -1px 2px rgb(0 126 220 / 0.05);
+    --liquid-duration: 0ms;
+    --liquid-duration-hover: 180ms;
+    --liquid-duration-press: 90ms;
+    --liquid-duration-release: 280ms;
+    --liquid-duration-selection: 380ms;
+    --liquid-duration-enter: 240ms;
+    --liquid-duration-exit: 160ms;
+    --liquid-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    --liquid-ease-press: cubic-bezier(0.2, 0, 0.4, 1);
+    --liquid-ease-spring: cubic-bezier(0.22, 1.15, 0.36, 1);
     --ui-background: var(--liquid-popup-fallback);
     --ui-foreground: var(--liquid-ink);
     --ui-muted: rgb(43 103 163 / 0.09);
@@ -55,10 +77,13 @@
 
     /* The renderer marks registered surfaces; clear faces must expose its output. */
     &[data-liquid-status="ready"] [data-liquid-surface] {
-      --liquid-control: rgb(255 255 255 / 0.12);
+      --liquid-control: rgb(255 255 255 / 0.1);
       --liquid-input: rgb(255 255 255 / 0.18);
-      --liquid-panel: rgb(255 255 255 / 0.14);
+      --liquid-panel: rgb(255 255 255 / 0.1);
       --liquid-popup: rgb(250 253 255 / 0.42);
+      --liquid-selection: rgb(255 255 255 / 0.34);
+      /* The shader supplies the inner lip; avoid a second bright CSS outline. */
+      --liquid-inner-rim: transparent;
       --liquid-backdrop: none;
     }
     :is([data-liquid-glass="off"], [data-liquid-glass="off"] [data-liquid-surface]) {
@@ -66,7 +91,9 @@
       --liquid-input: var(--liquid-input-fallback);
       --liquid-panel: var(--liquid-panel-fallback);
       --liquid-popup: var(--liquid-popup-fallback);
-      --liquid-backdrop: blur(16px) saturate(1.12);
+      --liquid-selection: var(--liquid-selection-fallback);
+      --liquid-inner-rim: rgb(255 255 255 / 0.48);
+      --liquid-backdrop: blur(14px) saturate(1.16) brightness(1.03);
     }
     :is(.qg-gpu-canvas, .qg-gpu-popup-canvas) {
       pointer-events: none;
@@ -109,7 +136,7 @@
       border: 1px solid var(--liquid-border);
       color: var(--liquid-ink);
       background: var(--liquid-control);
-      box-shadow: var(--liquid-shadow);
+      box-shadow: var(--liquid-shadow), inset 0 1px 0 var(--liquid-inner-rim);
       backdrop-filter: var(--liquid-backdrop);
       -webkit-backdrop-filter: var(--liquid-backdrop);
       transition:
@@ -187,8 +214,9 @@
       [data-disabled], :disabled, [data-variant], [data-invalid], [aria-invalid="true"],
       [data-pressed], [aria-pressed="true"], [data-checked], [data-selected], [data-open]
     ):hover {
-      border-color: rgb(255 255 255 / 0.98);
-      background: color-mix(in srgb, var(--liquid-control) 76%, #fff 24%);
+      border-color: rgb(255 255 255 / 0.32);
+      border-top-color: var(--liquid-rim);
+      background: color-mix(in srgb, var(--liquid-control) 94%, #fff 6%);
     }
 
     :is(
@@ -213,7 +241,7 @@
       border-radius: 12px;
       color: var(--liquid-ink);
       background: var(--liquid-input);
-      box-shadow: var(--liquid-shadow);
+      box-shadow: var(--liquid-shadow), inset 0 1px 0 var(--liquid-inner-rim);
       backdrop-filter: var(--liquid-backdrop);
       -webkit-backdrop-filter: var(--liquid-backdrop);
       font-size: 16px;
@@ -334,11 +362,42 @@
       color: var(--liquid-muted);
     }
     [data-slot="tabs-tab"][data-selected],
+    [data-slot="tabs-indicator"],
     [data-slot="segmented-control-indicator"] {
       border-color: var(--liquid-blue);
       border-radius: 999px;
-      background: rgb(255 255 255 / 0.68);
-      box-shadow: 0 3px 10px -5px rgb(23 57 80 / 0.28), inset 0 1px 0 #fff;
+      background: var(--liquid-selection);
+      box-shadow:
+        0 6px 16px -8px rgb(20 74 117 / 0.24),
+        inset 0 1px 0 var(--liquid-inner-rim),
+        inset 0 -1px 3px rgb(0 126 220 / 0.08);
+      color: var(--liquid-ink);
+    }
+    [data-slot="tabs-list"]:has(> [data-slot="tabs-indicator"]) {
+      position: relative;
+      isolation: isolate;
+    }
+    [data-slot="tabs-indicator"] {
+      position: absolute;
+      top: var(--active-tab-top);
+      left: var(--active-tab-left);
+      width: var(--active-tab-width);
+      height: var(--active-tab-height);
+      border: 1px solid var(--liquid-blue);
+      pointer-events: none;
+      z-index: 0;
+    }
+    [data-slot="tabs-list"]:has(> [data-slot="tabs-indicator"]) > [data-slot="tabs-tab"] {
+      position: relative;
+      z-index: 1;
+      border-color: transparent;
+      background: transparent;
+      box-shadow: none;
+    }
+    [data-slot="segmented-control-indicator"] {
+      pointer-events: none;
+    }
+    [data-slot="segmented-control-item"][data-checked] {
       color: var(--liquid-ink);
     }
     [data-slot="tabs-panel"] {
@@ -399,9 +458,15 @@
       color: #fff;
     }
     [data-slot="switch"] {
-      width: 46px;
-      height: 28px;
-      padding: 3px;
+      --liquid-switch-width: 46px;
+      --liquid-switch-height: 28px;
+      --liquid-switch-thumb: 20px;
+      --liquid-switch-padding: 3px;
+      --liquid-switch-travel: calc(var(--liquid-switch-width) - var(--liquid-switch-thumb) - var(--liquid-switch-padding) * 2 - 2px);
+      --liquid-switch-direction: 1;
+      width: var(--liquid-switch-width);
+      height: var(--liquid-switch-height);
+      padding: var(--liquid-switch-padding);
       border-color: rgb(48 84 110 / 0.22);
       border-radius: 999px;
       background: rgb(56 91 119 / 0.2);
@@ -412,11 +477,20 @@
       background: var(--liquid-blue);
     }
     [data-slot="switch-thumb"] {
-      width: 20px;
-      height: 20px;
+      width: var(--liquid-switch-thumb);
+      height: var(--liquid-switch-thumb);
+      margin-inline: 0;
       border-radius: 50%;
-      background: #fff;
-      box-shadow: 0 1px 4px rgb(15 46 73 / 0.24);
+      background: linear-gradient(160deg, #fff 20%, #eaf5fc);
+      box-shadow: 0 2px 5px rgb(15 46 73 / 0.22), inset 0 1px 0 #fff;
+      translate: 0;
+    }
+    [data-slot="switch"]:dir(rtl) {
+      --liquid-switch-direction: -1;
+    }
+    [data-slot="switch-thumb"][data-checked] {
+      margin-inline-start: 0;
+      translate: calc(var(--liquid-switch-travel) * var(--liquid-switch-direction)) 0;
     }
     [data-slot="slider-control"] {
       min-height: 40px;
@@ -460,7 +534,7 @@
       border: 1px solid var(--liquid-border);
       border-radius: 20px;
       background: var(--liquid-panel);
-      box-shadow: var(--liquid-shadow);
+      box-shadow: var(--liquid-shadow), inset 0 1px 0 var(--liquid-inner-rim);
       backdrop-filter: var(--liquid-backdrop);
       -webkit-backdrop-filter: var(--liquid-backdrop);
       color: var(--liquid-ink);
@@ -609,10 +683,10 @@
       [data-slot="navigation-menu-viewport"], [data-slot="toast"], [data-liquid-kind="popup"]) {
       isolation: isolate;
       max-width: calc(100vw - 32px);
-      border: 1px solid rgb(255 255 255 / 0.9);
+      border: 1px solid var(--liquid-border);
       border-radius: 20px;
       background: var(--liquid-popup);
-      box-shadow: var(--liquid-popup-shadow);
+      box-shadow: var(--liquid-popup-shadow), inset 0 1px 0 var(--liquid-inner-rim);
       backdrop-filter: var(--liquid-backdrop);
       -webkit-backdrop-filter: var(--liquid-backdrop);
       color: var(--liquid-ink);
@@ -782,26 +856,303 @@
       white-space: nowrap;
     }
 
+    /* Layered reflection is material only; SDK icons and touch-target pseudo-elements stay intact. */
+    :is(
+      [data-liquid-glass]:not([data-liquid-glass="off"]),
+      [data-slot="button"], [data-slot="toggle"],
+      [data-slot="dialog-trigger"], [data-slot="alert-dialog-trigger"],
+      [data-slot="drawer-trigger"], [data-slot="popover-trigger"],
+      [data-slot="menu-trigger"], [data-slot="tooltip-trigger"],
+      [data-slot="dialog-close"], [data-slot="alert-dialog-close"],
+      [data-slot="drawer-close"], [data-slot="popover-close"],
+      [data-slot="file-input-trigger"], [data-slot="toast-action"],
+      [data-slot="color-picker-eye-dropper"],
+      [data-slot="input"], [data-slot="textarea"], [data-slot="input-group"],
+      [data-slot="password-input"], [data-slot="number-input-group"],
+      [data-slot="date-input"], [data-slot="time-input"],
+      [data-slot="autocomplete-input"], [data-slot="combobox-input"],
+      [data-slot="color-picker-input"], [data-slot="color-picker-channel-input"],
+      [data-slot="date-picker-input"], [data-slot="trigger-menu-input"],
+      [data-slot="token-input-editor"], [data-slot="otp-input-slot"],
+      [data-slot="select-trigger"], [data-slot="combobox-trigger"],
+      [data-slot="toolbar"], [data-slot="menubar"], [data-slot="segmented-control"],
+      [data-slot="segmented-control-indicator"], [data-slot="tabs-list"], [data-slot="tabs-indicator"],
+      [data-slot="navigation-menu-list"], [data-slot="pagination-content"],
+      [data-slot="carousel-previous"], [data-slot="carousel-next"],
+      [data-slot="accordion"], [data-slot="collapsible"], [data-slot="command"],
+      [data-slot="listbox"], [data-slot="tree"], [data-slot="calendar"],
+      [data-slot="scroll-area"], [data-slot="resizable"], [data-slot="file-input-dropzone"],
+      [data-slot="menu-content"], [data-slot="select-content"], [data-slot="combobox-content"],
+      [data-slot="autocomplete-content"], [data-slot="trigger-menu-content"],
+      [data-slot="popover-content"], [data-slot="hover-card-content"], [data-slot="tooltip-content"],
+      [data-slot="dialog-content"], [data-slot="alert-dialog-content"], [data-slot="drawer-content"],
+      [data-slot="date-picker-content"], [data-slot="color-picker-content"],
+      [data-slot="command-content"], [data-slot="navigation-menu-content"],
+      [data-slot="navigation-menu-viewport"], [data-slot="toast"], [data-slot="slider-thumb"]
+    ) {
+      --liquid-static-reflection: linear-gradient(156deg,
+        rgb(255 255 255 / 0.24), rgb(255 255 255 / 0.04) 34%,
+        transparent 56%, rgb(110 199 241 / 0.04));
+      --liquid-face-overlays: var(--liquid-static-reflection);
+      border-top-color: var(--liquid-rim);
+      border-bottom-color: var(--liquid-underside);
+      background-image: var(--liquid-face-overlays);
+      background-clip: padding-box;
+    }
+    [data-liquid-kind="content"] {
+      --liquid-static-reflection: none;
+      --liquid-face-overlays: none;
+    }
+    :is([data-slot="tabs-indicator"], [data-slot="segmented-control-indicator"]) {
+      border-color: var(--liquid-blue);
+    }
+    :is([data-slot="input-group"], [data-slot="password-input"], [data-slot="number-input-group"], [data-slot="token-input-editor"])
+      :is([data-slot="input"], [data-slot="combobox-input"], [data-slot="password-input-control"], [data-slot="number-input-control"]),
+    :is([data-slot="toolbar"], [data-slot="menubar"], [data-slot="menu-content"])
+      :is([data-slot="button"], [data-slot="toggle"], [data-slot="menu-trigger"]),
+    [data-slot="date-picker-content"] [data-slot="calendar"],
+    [data-slot="navigation-menu-viewport"] [data-slot="navigation-menu-content"] {
+      background-image: none;
+    }
+
     [data-slot][data-variant="solid"] {
       border-color: #1264e8;
       background: linear-gradient(180deg, #2783fa, #1264e8);
+      background-image: var(--liquid-face-overlays, linear-gradient(transparent, transparent)), linear-gradient(180deg, #2783fa, #1264e8);
       color: #fff;
       box-shadow: 0 5px 14px -7px rgb(18 100 232 / 0.55), inset 0 1px 0 rgb(255 255 255 / 0.25);
     }
     [data-slot][data-variant="solid"]:hover:not([data-disabled], :disabled) {
       background: linear-gradient(180deg, #1d76ed, #0e58d1);
+      background-image: var(--liquid-face-overlays, linear-gradient(transparent, transparent)), linear-gradient(180deg, #1d76ed, #0e58d1);
     }
     [data-slot][data-variant="destructive"] {
       border-color: rgb(184 33 63 / 0.28);
       background: rgb(255 235 240 / 0.84);
+      background-image: var(--liquid-face-overlays, none);
       color: var(--liquid-danger);
     }
     [data-slot][data-variant="destructive"]:hover:not([data-disabled], :disabled) {
       background: rgb(255 219 228 / 0.92);
+      background-image: var(--liquid-face-overlays, none);
     }
     [data-slot="menu-item"][data-destructive] {
       color: var(--liquid-danger);
     }
+
+    /* Motion changes decorative material and measured SDK parts, never control text. */
+    &[data-liquid-motion="enabled"] {
+      --liquid-duration: var(--liquid-duration-hover);
+
+      @supports (transition-timing-function: linear(0, 1)) {
+        & {
+          /* Unit-mass spring, stiffness 420 and damping 34, sampled over 380ms. */
+          --liquid-ease-spring: linear(0, 0.137 8%, 0.388 16%, 0.621 24%, 0.793 32%,
+            0.902 40%, 0.974 50%, 1.002 60%, 1.009 70%, 1.008 80%, 1.005 90%, 1);
+        }
+      }
+
+      :is([data-liquid-active], [data-liquid-pressed], [data-liquid-ripple]):not([data-liquid-kind="content"]) {
+        --liquid-face-overlays:
+          radial-gradient(circle at var(--liquid-fx-ripple-x, 50%) var(--liquid-fx-ripple-y, 50%),
+            transparent max(0px, calc(var(--liquid-fx-ripple-radius, 0px) - 10px)),
+            rgb(255 255 255 / calc(var(--liquid-fx-ripple-opacity, 0) * 0.56)) max(0px, calc(var(--liquid-fx-ripple-radius, 0px) - 3px)),
+            transparent var(--liquid-fx-ripple-radius, 0px)),
+          radial-gradient(ellipse 112px 72px at var(--liquid-fx-x, 35%) var(--liquid-fx-y, 0%),
+            rgb(255 255 255 / calc(var(--liquid-fx-light, 0) * 0.3)), transparent 72%),
+          var(--liquid-static-reflection, linear-gradient(transparent, transparent));
+      }
+
+      :is([data-slot="button"], [data-slot="toggle"], [data-slot="toolbar-button"],
+        [data-slot="dialog-trigger"], [data-slot="alert-dialog-trigger"], [data-slot="drawer-trigger"],
+        [data-slot="popover-trigger"], [data-slot="menu-trigger"], [data-slot="tooltip-trigger"],
+        [data-slot="dialog-close"], [data-slot="alert-dialog-close"], [data-slot="drawer-close"],
+        [data-slot="popover-close"], [data-slot="file-input-trigger"], [data-slot="toast-action"],
+        [data-slot="select-trigger"], [data-slot="combobox-trigger"],
+        [data-slot="carousel-previous"], [data-slot="carousel-next"],
+        [data-slot="pagination-link"], [data-slot="pagination-previous"], [data-slot="pagination-next"]) {
+        transition:
+          background-color var(--liquid-duration-hover) var(--liquid-ease-out),
+          border-color var(--liquid-duration-hover) var(--liquid-ease-out),
+          box-shadow var(--liquid-duration-release) var(--liquid-ease-spring),
+          filter 0s linear 300ms;
+
+        &:not([data-disabled], :disabled, [aria-disabled="true"], [data-pending]):is(:hover, [data-liquid-active]) {
+          box-shadow: var(--liquid-shadow-raised), inset 0 1px 0 var(--liquid-inner-rim);
+        }
+        &:not([data-disabled], :disabled, [aria-disabled="true"], [data-pending]):is(:active, [data-liquid-pressed]) {
+          box-shadow: var(--liquid-shadow-pressed);
+          transition:
+            background-color var(--liquid-duration-press) var(--liquid-ease-press),
+            border-color var(--liquid-duration-press) var(--liquid-ease-press),
+            box-shadow var(--liquid-duration-press) var(--liquid-ease-press),
+            filter 0s linear 300ms;
+        }
+        &[data-pending] {
+          transition-delay: 0s, 0s, 0s, 150ms;
+        }
+      }
+
+      :is([data-slot="input"], [data-slot="textarea"], [data-slot="input-group"],
+        [data-slot="number-input-group"], [data-slot="password-input"],
+        [data-slot="date-input"], [data-slot="time-input"], [data-slot="token-input-editor"],
+        [data-slot="autocomplete-input"], [data-slot="combobox-input"],
+        [data-slot="date-picker-input"], [data-slot="color-picker-input"], [data-slot="otp-input-slot"]) {
+        transition:
+          border-color var(--liquid-duration-hover) var(--liquid-ease-out),
+          box-shadow var(--liquid-duration-hover) var(--liquid-ease-out),
+          background-color var(--liquid-duration-hover) var(--liquid-ease-out);
+      }
+
+      :is([data-slot="tabs-indicator"], [data-slot="segmented-control-indicator"]) {
+        --liquid-travel-x: 1.06;
+        --liquid-travel-y: 0.95;
+        --liquid-settle-x: 0.995;
+        --liquid-settle-y: 1.01;
+        transition:
+          top var(--liquid-duration-selection) var(--liquid-ease-spring),
+          left var(--liquid-duration-selection) var(--liquid-ease-spring),
+          width var(--liquid-duration-selection) var(--liquid-ease-spring),
+          height var(--liquid-duration-selection) var(--liquid-ease-spring);
+
+        &[data-orientation="vertical"] {
+          --liquid-travel-x: 0.95;
+          --liquid-travel-y: 1.06;
+          --liquid-settle-x: 1.01;
+          --liquid-settle-y: 0.995;
+        }
+        &[data-activation-direction="left"] { transform-origin: right center; }
+        &[data-activation-direction="right"] { transform-origin: left center; }
+        &[data-activation-direction="up"] { transform-origin: center bottom; }
+        &[data-activation-direction="down"] { transform-origin: center top; }
+        &[data-liquid-travelling="a"] {
+          animation: qg-liquid-travel-a var(--liquid-duration-selection) var(--liquid-ease-out);
+        }
+        &[data-liquid-travelling="b"] {
+          animation: qg-liquid-travel-b var(--liquid-duration-selection) var(--liquid-ease-out);
+        }
+        &[data-activation-direction="none"] {
+          transition: none;
+          animation: none;
+        }
+      }
+      :is([data-slot="tabs-tab"], [data-slot="segmented-control-item"],
+        [data-slot="menu-item"], [data-slot="menu-checkbox-item"], [data-slot="menu-radio-item"],
+        [data-slot="select-item"], [data-slot="combobox-item"], [data-slot="autocomplete-item"],
+        [data-slot="listbox-item"], [data-slot="command-item"], [data-slot="trigger-menu-item"]) {
+        transition: color var(--liquid-duration-hover) var(--liquid-ease-out),
+          background-color var(--liquid-duration-hover) var(--liquid-ease-out);
+      }
+
+      [data-slot="switch"] {
+        transition: background-color var(--liquid-duration-hover) var(--liquid-ease-out),
+          border-color var(--liquid-duration-hover) var(--liquid-ease-out);
+      }
+      [data-slot="switch-thumb"] {
+        transition: translate 260ms var(--liquid-ease-spring),
+          scale var(--liquid-duration-release) var(--liquid-ease-spring),
+          box-shadow var(--liquid-duration-hover) var(--liquid-ease-out);
+      }
+      [data-slot="switch"]:not([data-disabled], :disabled, [aria-disabled="true"]):is(:active, [data-liquid-pressed]) [data-slot="switch-thumb"] {
+        scale: 1.15 0.92;
+        transition-duration: 260ms, var(--liquid-duration-press), var(--liquid-duration-press);
+      }
+      [data-slot="slider-thumb"] {
+        transition: scale var(--liquid-duration-release) var(--liquid-ease-spring),
+          box-shadow var(--liquid-duration-hover) var(--liquid-ease-out);
+      }
+      [data-slot="slider-thumb"]:not([data-disabled]):is(:hover, :focus-within) {
+        scale: 1.08;
+      }
+      [data-slot="slider-thumb"]:not([data-disabled]):is(:active, [data-dragging], [data-liquid-pressed]) {
+        scale: 1.13;
+      }
+      :is([data-slot="checkbox-indicator"], [data-slot="radio-indicator"]) {
+        transition: scale 220ms var(--liquid-ease-spring), opacity 120ms var(--liquid-ease-out);
+      }
+      :is([data-slot="checkbox"], [data-slot="radio"]):not([data-checked], [data-indeterminate])
+        :is([data-slot="checkbox-indicator"], [data-slot="radio-indicator"]) {
+        scale: 0.7;
+        opacity: 0;
+      }
+      :is([data-slot="checkbox"], [data-slot="radio"]):is([data-checked], [data-indeterminate])
+        :is([data-slot="checkbox-indicator"], [data-slot="radio-indicator"]) {
+        scale: 1;
+        opacity: 1;
+      }
+
+      /* Popup lifecycle is owned by the SDK. Its data attributes retain exit content. */
+      :is([data-slot="menu-content"], [data-slot="select-content"], [data-slot="combobox-content"],
+        [data-slot="autocomplete-content"], [data-slot="trigger-menu-content"],
+        [data-slot="popover-content"], [data-slot="hover-card-content"], [data-slot="tooltip-content"],
+        [data-slot="dialog-content"], [data-slot="alert-dialog-content"],
+        [data-slot="date-picker-content"], [data-slot="color-picker-content"],
+        [data-slot="command-content"], [data-slot="navigation-menu-content"]) {
+        --liquid-popup-enter-x: 0px;
+        --liquid-popup-enter-y: 6px;
+        opacity: 1;
+        translate: 0 0;
+        transition: opacity var(--liquid-duration-exit) var(--liquid-ease-out),
+          translate var(--liquid-duration-enter) var(--liquid-ease-out);
+
+        &[data-side="top"] { --liquid-popup-enter-y: -6px; }
+        &[data-side="left"] { --liquid-popup-enter-x: -6px; --liquid-popup-enter-y: 0px; }
+        &[data-side="right"] { --liquid-popup-enter-x: 6px; --liquid-popup-enter-y: 0px; }
+        &:is([data-starting-style], [data-ending-style]) {
+          opacity: 0;
+          translate: var(--liquid-popup-enter-x) var(--liquid-popup-enter-y);
+        }
+        &[data-ending-style] { transition-duration: var(--liquid-duration-exit); }
+      }
+      :is([data-slot="dialog-backdrop"], [data-slot="alert-dialog-backdrop"]) {
+        transition: opacity var(--liquid-duration-exit) var(--liquid-ease-out);
+        &:is([data-starting-style], [data-ending-style]) { opacity: 0; }
+      }
+      [data-slot="toast"] {
+        --liquid-toast-enter: 0px;
+        translate: var(--toast-swipe-x, 0px) calc(var(--toast-swipe-y, 0px) + var(--liquid-toast-enter));
+        transition: opacity var(--liquid-duration-exit) var(--liquid-ease-out),
+          translate var(--liquid-duration-enter) var(--liquid-ease-out);
+        &:is([data-starting-style], [data-ending-style]) {
+          --liquid-toast-enter: 8px;
+          opacity: 0;
+        }
+        &[data-swiping] { transition: none; }
+      }
+
+      [data-slot="accordion-panel"] { height: var(--accordion-panel-height); }
+      [data-slot="collapsible-panel"] { height: var(--collapsible-panel-height); }
+      :is([data-slot="accordion-panel"], [data-slot="collapsible-panel"]) {
+        overflow: hidden;
+        transition: height var(--liquid-duration-enter) var(--liquid-ease-out),
+          padding-block-end var(--liquid-duration-enter) var(--liquid-ease-out),
+          opacity var(--liquid-duration-exit) var(--liquid-ease-out);
+        &:is([data-starting-style], [data-ending-style]) {
+          height: 0;
+          padding-block-end: 0;
+          opacity: 0;
+        }
+      }
+      :is([data-slot="select-trigger"], [data-slot="combobox-trigger"],
+        [data-slot="navigation-menu-trigger"], [data-slot="accordion-trigger"], [data-slot="collapsible-trigger"])::after {
+        transition: rotate 200ms var(--liquid-ease-out);
+      }
+      :is([data-slot="progress-indicator"], [data-slot="meter-indicator"]) {
+        transition: width var(--liquid-duration-enter) var(--liquid-ease-out);
+      }
+    }
+
+    /* Explicit app preferences also stop decorative transitions supplied by web.css. */
+    &:is([data-liquid-motion="off"], [data-liquid-motion="reduced"]) {
+      --liquid-duration: 0ms;
+      :is([data-slot], [data-liquid-glass]):not([data-slot^="drawer-"]),
+      :is([data-slot], [data-liquid-glass]):not([data-slot^="drawer-"])::before,
+      :is([data-slot], [data-liquid-glass]):not([data-slot^="drawer-"])::after {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+
     :is(button, input, textarea, select, a, [tabindex], [data-slot]):focus-visible {
       outline: 3px solid var(--ui-ring-border);
       outline-offset: 3px;
@@ -832,7 +1183,7 @@
       cursor: not-allowed;
       opacity: 0.5;
     }
-    [data-slot][data-loading] {
+    [data-slot]:is([data-loading], [data-pending]) {
       cursor: progress;
     }
 
@@ -851,35 +1202,37 @@
       background: var(--liquid-panel-fallback);
     }
     @media (prefers-reduced-transparency: reduce) {
-      & {
+      &:not([data-liquid-transparency="glass"]) {
         --liquid-control-fallback: #f7fbff;
         --liquid-input-fallback: #fff;
         --liquid-panel-fallback: #f4f9ff;
         --liquid-popup-fallback: #fbfdff;
-      }
-      :is([data-slot], [data-liquid-glass]) {
-        --liquid-control: var(--liquid-control-fallback) !important;
-        --liquid-input: var(--liquid-input-fallback) !important;
-        --liquid-panel: var(--liquid-panel-fallback) !important;
-        --liquid-popup: var(--liquid-popup-fallback) !important;
-        backdrop-filter: none !important;
-        -webkit-backdrop-filter: none !important;
-      }
-      :is(.qg-gpu-canvas, .qg-gpu-popup-canvas) {
-        visibility: hidden;
-      }
-      [data-liquid-kind="content"] {
-        background: var(--liquid-panel-fallback);
+
+        :is([data-slot], [data-liquid-glass]) {
+          --liquid-control: var(--liquid-control-fallback) !important;
+          --liquid-input: var(--liquid-input-fallback) !important;
+          --liquid-panel: var(--liquid-panel-fallback) !important;
+          --liquid-popup: var(--liquid-popup-fallback) !important;
+          --liquid-selection: var(--liquid-selection-fallback) !important;
+          backdrop-filter: none !important;
+          -webkit-backdrop-filter: none !important;
+        }
+        :is(.qg-gpu-canvas, .qg-gpu-popup-canvas) {
+          visibility: hidden;
+        }
+        [data-liquid-kind="content"] {
+          background: var(--liquid-panel-fallback);
+        }
       }
     }
     @media (prefers-reduced-motion: reduce) {
-      & {
+      &:not([data-liquid-motion="enabled"]) {
         --liquid-duration: 0ms;
-      }
-      *, *::before, *::after {
-        animation: none !important;
-        transition: none !important;
-        scroll-behavior: auto !important;
+        *, *::before, *::after {
+          animation: none !important;
+          transition: none !important;
+          scroll-behavior: auto !important;
+        }
       }
     }
     @media (prefers-contrast: more) {
@@ -896,6 +1249,8 @@
         --liquid-ink: CanvasText;
         --liquid-muted: CanvasText;
         --liquid-border: ButtonText;
+        --liquid-rim: ButtonText;
+        --liquid-underside: ButtonText;
         --liquid-line: ButtonText;
         --liquid-blue: Highlight;
         --liquid-danger: LinkText;
@@ -903,6 +1258,7 @@
         --liquid-input-fallback: Canvas;
         --liquid-panel-fallback: Canvas;
         --liquid-popup-fallback: Canvas;
+        --liquid-selection-fallback: Canvas;
         --ui-input: ButtonText;
         --ui-ring-border: Highlight;
       }
@@ -911,12 +1267,21 @@
         --liquid-input: Canvas !important;
         --liquid-panel: Canvas !important;
         --liquid-popup: Canvas !important;
+        --liquid-selection: Canvas !important;
+        background-image: none !important;
         box-shadow: none !important;
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
       }
       :is(.qg-gpu-canvas, .qg-gpu-popup-canvas) {
         visibility: hidden;
+      }
+      [data-slot="switch-thumb"] {
+        background: ButtonText !important;
+      }
+      [data-slot="switch"][data-checked] [data-slot="switch-thumb"],
+      [data-slot="radio"][data-checked] [data-slot="radio-indicator"] {
+        background: HighlightText !important;
       }
       [data-slot][data-variant="solid"],
       :is([data-slot="switch"], [data-slot="checkbox"], [data-slot="radio"])[data-checked],
@@ -931,5 +1296,16 @@
         outline-color: Highlight !important;
       }
     }
+  }
+
+  @keyframes qg-liquid-travel-a {
+    0%, 100% { scale: 1 1; }
+    28% { scale: var(--liquid-travel-x, 1.06) var(--liquid-travel-y, 0.95); }
+    62% { scale: var(--liquid-settle-x, 0.995) var(--liquid-settle-y, 1.01); }
+  }
+  @keyframes qg-liquid-travel-b {
+    0%, 100% { scale: 1 1; }
+    28% { scale: var(--liquid-travel-x, 1.06) var(--liquid-travel-y, 0.95); }
+    62% { scale: var(--liquid-settle-x, 0.995) var(--liquid-settle-y, 1.01); }
   }
 }

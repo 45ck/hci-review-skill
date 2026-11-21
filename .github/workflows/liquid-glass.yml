@@ -16,6 +16,7 @@ on:
       - 'tests/test_glass_browser.py'
       - 'tests/glass_agent_contract.py'
       - 'tests/glass_optics_contract.py'
+      - 'tests/glass_browser_diagnostics.py'
   workflow_dispatch:
 
 permissions:

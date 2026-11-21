@@ -20,6 +20,12 @@ The kit adapts the signed-distance shape, refraction, colour dispersion and Fres
 
 `html2canvas-pro` version `2.6.3` is provided under MIT, copyright Niklas von Hertzen and contributors. Its notice is retained with the distribution. WebGPU TypeScript types are development-only and retain their upstream licence.
 
+## Interaction and material references
+
+The user supplied the source of [Nimbus Liquid Glass Navbar](https://21st.dev/@gughigug/components/liquid-glass-navbar) by Guglielmo Giannattasio and [Coffee Pour Menu](https://21st.dev/@aakashmehra/components/coffee-pour-menu) by Aakash. Their visible 21st.dev pages identify MIT licensing. Directional rim light, a damped ripple and a travelling spring selection informed the shared kit implementation. The kit continues to use UI SDK controls and its own shared WebGPU renderer; it does not package either complete reference component or add their runtime dependencies.
+
+The [Liquid Glass Checkout](https://21st.dev/@gughigug/components/liquid-glass-checkout), [Glassmorphism Folder Cards](https://21st.dev/@kedhareswer/components/glass-folder-cards) and [Glassy Dashboard](https://21st.dev/@automateflows/components/glassy-dashboard) previews were inspected as visual references for layered reflections, underside shading and quieter surface depth. Their locked component source was not retrieved.
+
 ## Apple visual reference
 
 Apple's Liquid Glass and Human Interface Guidelines are visual and interaction references. No Apple framework, proprietary rendering implementation, endorsement or affiliation is represented by this web material. Apple names and marks remain their owners' property.

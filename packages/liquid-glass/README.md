@@ -51,6 +51,8 @@ Keep your content and controls outside the `backdrop` prop. Supply a fully paint
   backdrop={<YourBackdrop />}
   refraction={0.3}
   dispersion={0.008}
+  motion="system"
+  transparency="system"
   onStatusChange={(status) => console.info(status)}
 >
   <YourInterface />
@@ -63,12 +65,14 @@ Keep your content and controls outside the `backdrop` prop. Supply a fully paint
 | `backdrop`       | The only DOM region captured for the optical texture.                                                                                                         |
 | `refraction`     | Bevel/lens strength; defaults to `0.3`, bounded to `0.01–0.8`. Zero is not a no-effect mode because the model also has independent colour and lighting terms. |
 | `dispersion`     | RGB separation; defaults to `0.008`, bounded to `0–0.05`.                                                                                                     |
+| `motion`         | `"system"` by default: animate unless the device requests reduced motion. `true` explicitly enables animation for this app; `false` keeps static optics. |
+| `transparency`   | `"system"` by default: follow reduced transparency. `"glass"` explicitly requests glass; `"solid"` suppresses refraction. Forced colours always use the solid treatment. |
 | `onStatusChange` | Receives the actual renderer status when it changes.                                                                                                          |
 
 Inside the provider:
 
 ```tsx
-const { status, surfaceCount, refresh } = useLiquidGlass();
+const { status, surfaceCount, motion, refresh } = useLiquidGlass();
 ```
 
 Import `useLiquidGlass` from the same `/webgpu` entry. `surfaceCount` counts currently visible registered surfaces. `refresh()` returns a promise for a backdrop capture and submitted render work when a GPU renderer exists; it does not enable unsupported hardware.
@@ -79,9 +83,13 @@ Import `useLiquidGlass` from the same `/webgpu` entry. `surfaceCount` counts cur
 | `ready`       | The renderer has captured a backdrop and drawn the measured surfaces.          |
 | `unavailable` | No WebGPU API or usable adapter; controls use the CSS fallback.                |
 | `error`       | Initialization, capture or rendering failed; controls use the CSS fallback.    |
-| `reduced`     | Forced colours or reduced transparency has suppressed optics.                  |
+| `reduced`     | Solid appearance, forced colours or reduced transparency has suppressed optics. |
 
-Reduced motion keeps static optics and user-requested redraws while suppressing transition-following animation. There is no perpetual capture or rendering loop.
+The hook's `motion` is the effective state: `"enabled"`, `"reduced"` or `"off"`. Use it to show an accurate animation control. A system preference can otherwise make an apparently enabled toggle misleading. Explicit app choices override only that preference; they never change the device's settings. Forced colours remain authoritative.
+
+With motion enabled, pointer light follows the active surface, activation produces a bounded ripple, and the SDK's actual tabs and segmented indicators travel with a short spring. Switch thumbs and popup surfaces use the same motion vocabulary. Reduced motion keeps static optics and requested control/layout updates. Animation stops after the response settles; the backdrop is not recaptured per frame.
+
+The motion option controls this material layer. Drawer retains the SDK's own drag/snap physics and device motion handling; the kit follows its moving geometry even when decorative motion is off, without replacing its engine-owned positioning.
 
 ## Registering surfaces
 
@@ -97,6 +105,10 @@ The provider owns these diagnostic attributes on `html`:
 - `data-liquid-render-revision`
 - `data-liquid-capture-revision`
 - `data-liquid-error`, present after a renderer failure
+- `data-liquid-motion`, the effective animation preference
+- `data-liquid-transparency`, the requested material preference
+- `data-liquid-reduced-reason`, when a solid preference suppresses the renderer
+- `data-liquid-motion-state`, `data-liquid-motion-revision` and `data-liquid-active-effects`, for bounded animation verification
 
 An actual registered element receives `data-liquid-surface="viewport"` or `"popup"`. These are renderer-owned markers; application code should not set them. The stylesheet makes a face clear only when it is registered and the renderer is ready.
 
@@ -122,7 +134,7 @@ The agent uses the SDK's `snapshot`, `query` and `act` APIs against the same con
 
 ## Capture, performance and limits
 
-Backdrop mutations and resizing trigger a debounced recapture. Scrolling, dragging, focus and component-state mutations redraw surface geometry without recapturing the backdrop. Idle pointer movement does not rescan the page. The renderer supports **256 visible surfaces**, with pixel ratio capped at **2** and the device texture limit. Offscreen surfaces are omitted. Textures, buffers, canvases, device, observers and queued work are released on unmount; renderer failures release GPU resources and retain functional CSS controls.
+Backdrop mutations and resizing trigger a debounced recapture. Scrolling, dragging, focus and component-state mutations redraw surface geometry without recapturing the backdrop. Pointer-light and ripple frames reuse cached geometry; moving indicators and popup transitions update their measured positions. The renderer supports **256 visible surfaces**, with pixel ratio capped at **2** and the device texture limit. Offscreen surfaces are omitted. Hidden documents pause motion. Textures, buffers, canvases, device, observers and queued work are released on unmount; renderer failures release GPU resources and retain functional CSS controls.
 
 The capture is a snapshot created by html2canvas-pro. Live video, protected cross-origin content, some embedded media and unsupported DOM/CSS need another rendering strategy. This implementation samples the supplied backdrop, so it does not refract arbitrary live foreground controls into one another. The shader is a visual approximation derived from the reference, not physical ray tracing or Apple's implementation.
 
@@ -134,6 +146,8 @@ CSS fallback keeps the interface functional when WebGPU is unavailable. Report i
 
 ## Provenance and licences
 
-The refractive model is adapted from [arya3d/liquid-glass-webgpu](https://github.com/arya3d/liquid-glass-webgpu), commit `90cb73931bbaf38bd54b3263cd3fda1daef1869c`, linked by the [reference video](https://www.youtube.com/watch?v=lq-ikfNVx7g). Retain the [MIT notice](LICENSES/arya3d-MIT.txt) with redistributed substantial portions. [`src/webgpu/NOTICE.md`](src/webgpu/NOTICE.md) records the changes from its single-pill renderer.
+The refractive model began as an adaptation of [arya3d/liquid-glass-webgpu](https://github.com/arya3d/liquid-glass-webgpu), commit `90cb73931bbaf38bd54b3263cd3fda1daef1869c`, linked by the [reference video](https://www.youtube.com/watch?v=lq-ikfNVx7g). The current material confines displacement to the local bevel and adds responsive directional light. Retain the [MIT notice](LICENSES/arya3d-MIT.txt) with redistributed substantial portions. [`src/webgpu/NOTICE.md`](src/webgpu/NOTICE.md) records the changes from its single-pill renderer.
+
+The motion and layered-light direction also draws on the user-supplied [Nimbus Liquid Glass Navbar](https://21st.dev/@gughigug/components/liquid-glass-navbar) by Guglielmo Giannattasio and [Coffee Pour Menu](https://21st.dev/@aakashmehra/components/coffee-pour-menu) by Aakash. Both preview pages identify their source as MIT. Their WebGL/SVG component implementations are not substituted for UI SDK; this kit implements the interaction cues in its shared WebGPU/CSS material.
 
 UI SDK remains Apache-2.0; html2canvas-pro and the original material code retain their licences. See [third-party notices](../../THIRD_PARTY_NOTICES.md). Apple is a visual reference, not an endorser or supplier of this kit.

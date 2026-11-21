@@ -2,7 +2,7 @@
 
 A private UI kit that applies a shared WebGPU material to real Vercel UI SDK components. Its default overview contains working buttons, fields, choices, switches, sliders and a collection dialog. The searchable catalogue includes all **55 component families**, with one selected specimen shown at a time.
 
-The GPU treatment is the default. Refraction and colour dispersion are adjustable in **Material settings**, and **Backdrop** changes the scene sampled by the glass. Labels and interaction stay in the DOM. The same controls remain usable through the solid fallback when WebGPU is unavailable or a transparency preference requires it.
+The GPU treatment and animation are enabled under normal device preferences. Refraction and colour dispersion are adjustable in **Material settings**, and **Backdrop** changes the scene sampled by the glass. **Appearance** offers Follow device, Glass and Solid. **Animate glass** shows the effective motion state; turning it on explicitly enables animation for this kit. These choices are remembered locally without changing device settings. Labels and interaction stay in the DOM.
 
 ## Run
 
@@ -28,7 +28,8 @@ Open the local address printed by Vite. The hosted site opens the kit directly; 
 | --- | --- |
 | Overview | Edit Project name, choose Project access, change Notifications or Sound, and adjust Volume. |
 | Collection dialog | Open New collection, enter Collection name, create or cancel, and check keyboard focus. |
-| Material settings | Compare low and high Refraction strength, vary Colour dispersion and switch Backdrop. |
+| Material settings | Choose Glass if Follow device is showing Solid material, enable Animate glass, compare refraction and switch Backdrop. |
+| Motion | Move across a control, press it, switch Workspace view, toggle Sound and open New collection. Reflections, ripples, selection and popup depth respond. |
 | Catalogue | Search a family and select it from Component catalogue. Every item uses the real upstream component. |
 | Popups | Open menus, dialogs, popovers and drawers; their controls must remain above the backdrop and operable. |
 | Accessibility preferences | Check forced colours, reduced transparency and reduced motion with the same labels, state and actions. |
@@ -41,7 +42,7 @@ All data and state changes belong to the demonstration. There is no form backend
 
 The integration adapts the shader from [arya3d/liquid-glass-webgpu](https://github.com/arya3d/liquid-glass-webgpu/tree/90cb73931bbaf38bd54b3263cd3fda1daef1869c), the project linked by the [reference video](https://www.youtube.com/watch?v=lq-ikfNVx7g). Its attribution and MIT notice are retained. The renderer samples the supplied decorative backdrop; it does not automatically capture arbitrary live application content and is not Apple's native renderer.
 
-Reduced motion keeps static refraction without decorative animation. Forced colours and reduced transparency suppress the GPU effect. Unsupported adapters have a usable fallback, and verification reports that path separately from successful GPU rendering.
+Follow device respects reduced motion and reduced transparency. Explicit app choices can enable those effects for this demo; forced colours always retain the system treatment. Unsupported adapters have a usable CSS fallback with corresponding interaction feedback, and verification reports that path separately from successful GPU rendering. Reset material restores automatic device preferences.
 
 ## Behaviour and agent integration
 
@@ -68,6 +69,7 @@ CI adds `--software-gpu`. This uses the established Chromium SwiftShader flags o
 | Interaction | Real agent actions, keyboard selection, dialog dismissal and focus restoration. |
 | Optical contribution | Actual button, input and panel rectangles with GPU canvases visible and hidden. |
 | Material changes | Pixel changes after refraction-strength changes; a new capture revision and changed pixels after a backdrop change. |
+| Motion | Actual changing frames, selection travel, eventual idle and a constant backdrop capture revision during interaction. |
 | Popup rendering | A real top-layer dialog has a visible local GPU canvas and operable controls. |
 | Responsive layout | The default mobile overview has no page-level horizontal overflow. |
 | Preferences | Static reduced-motion rendering and the forced-colour fallback preserve controls and focus. |

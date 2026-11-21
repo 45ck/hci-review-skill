@@ -13,8 +13,10 @@ export const LIQUID_SURFACE_SLOTS = [
   "combobox-input",
   "autocomplete-input",
   "segmented-control",
+  "segmented-control-indicator",
   "toolbar",
   "tabs-list",
+  "tabs-indicator",
   "accordion",
   "collapsible",
   "menu-content",
@@ -134,20 +136,29 @@ export function collectSurfaces(
       continue;
     if (
       element.checkVisibility &&
-      !element.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true })
+      !element.checkVisibility({ checkOpacity: !popup, checkVisibilityCSS: true })
     )
       continue;
     const style = getComputedStyle(element);
     if (
       style.visibility !== "visible" ||
       style.display === "none" ||
-      Number(style.opacity) === 0
+      (element !== popup && Number(style.opacity) === 0)
     )
       continue;
+    // A local canvas inherits its top-layer host's opening/closing opacity.
+    // Keep that host registered at opacity 0 so its first visible frame has
+    // glass even if the fade completes between geometry invalidations.
+    // Opacity-zero descendants inside the host still have no visible surface.
     let clip = intersection(rect, viewport);
     let ancestor = element === popup ? null : element.parentElement;
+    let transparent = false;
     while (ancestor && ancestor !== document.documentElement) {
       const ancestorStyle = getComputedStyle(ancestor);
+      if (ancestor !== popup && Number(ancestorStyle.opacity) === 0) {
+        transparent = true;
+        break;
+      }
       if (
         /(hidden|clip|auto|scroll)/.test(
           `${ancestorStyle.overflowX} ${ancestorStyle.overflowY}`,
@@ -157,7 +168,7 @@ export function collectSurfaces(
       if (ancestor === popup) break;
       ancestor = ancestor.parentElement;
     }
-    if (clip.width < 1 || clip.height < 1) continue;
+    if (transparent || clip.width < 1 || clip.height < 1) continue;
     const corner = style.borderTopLeftRadius.split(" ")[0];
     const radius = corner.endsWith("%")
       ? (Math.min(rect.width, rect.height) * parseFloat(corner)) / 100

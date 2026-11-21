@@ -1,6 +1,7 @@
 /// <reference types="@webgpu/types" />
 import { LIQUID_GLASS_SHADER } from "./shader";
 import type { Box, LiquidSurface } from "./surfaces";
+import type { SurfaceMotion } from "./motion";
 
 const MAX_SURFACES = 256;
 export class LiquidRenderer {
@@ -78,7 +79,7 @@ export class LiquidRenderer {
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
       }),
       data: this.device.createBuffer({
-        size: MAX_SURFACES * 48,
+        size: MAX_SURFACES * 80,
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
       }),
     });
@@ -92,6 +93,7 @@ export class LiquidRenderer {
     refraction: number,
     dispersion: number,
     ratio: number,
+    motion: ReadonlyMap<HTMLElement, SurfaceMotion>,
   ) {
     if (!this.texture || !view.width || !view.height) return;
     this.attach(canvas);
@@ -126,8 +128,9 @@ export class LiquidRenderer {
       0,
     ]);
     this.device.queue.writeBuffer(layer.uniform, 0, settings);
-    const data = new Float32Array(Math.max(1, surfaces.length) * 12);
-    surfaces.forEach((surface, index) =>
+    const data = new Float32Array(Math.max(1, surfaces.length) * 20);
+    surfaces.forEach((surface, index) => {
+      const effect = motion.get(surface.element);
       data.set(
         [
           surface.rect.x,
@@ -142,10 +145,18 @@ export class LiquidRenderer {
           surface.popup ? 0.42 : 0,
           0,
           0,
+          effect?.x ?? surface.rect.x + surface.rect.width * 0.5,
+          effect?.y ?? surface.rect.y + surface.rect.height * 0.5,
+          effect?.light ?? 0,
+          effect?.press ?? 0,
+          effect?.rippleX ?? 0,
+          effect?.rippleY ?? 0,
+          effect?.rippleAge ?? 0,
+          effect?.rippleStrength ?? 0,
         ],
-        index * 12,
-      ),
-    );
+        index * 20,
+      );
+    });
     this.device.queue.writeBuffer(layer.data, 0, data);
     layer.bind ??= this.device.createBindGroup({
       layout: this.pipeline.getBindGroupLayout(0),

@@ -10,10 +10,13 @@ import {
 import type { ReactNode } from "react";
 import { createLiquidGlassEngine } from "./webgpu/engine";
 import type { LiquidGlassState, LiquidGlassStatus } from "./webgpu/engine";
+import type { LiquidGlassMotion } from "./webgpu/motion";
 export type { LiquidGlassStatus } from "./webgpu/engine";
+export type { LiquidGlassMotion } from "./webgpu/motion";
 
 type LiquidGlassContextValue = LiquidGlassState & {
   refresh: () => Promise<void>;
+  motion: LiquidGlassMotion;
 };
 const LiquidGlassContext = createContext<LiquidGlassContextValue | null>(null);
 
@@ -29,12 +32,16 @@ export function LiquidGlassProvider({
   backdrop,
   refraction = 0.3,
   dispersion = 0.008,
+  motion = "system",
+  transparency = "system",
   onStatusChange,
 }: {
   children: ReactNode;
   backdrop: ReactNode;
   refraction?: number;
   dispersion?: number;
+  motion?: boolean | "system";
+  transparency?: "system" | "glass" | "solid";
   onStatusChange?: (status: LiquidGlassStatus) => void;
 }) {
   const root = useRef<HTMLDivElement>(null);
@@ -45,12 +52,18 @@ export function LiquidGlassProvider({
   );
   const callback = useRef(onStatusChange);
   callback.current = onStatusChange;
-  const [reduced, setReduced] = useState(false);
+  const [preferences, setPreferences] = useState({ motion: false, transparency: false, colours: false });
+  const reduced = preferences.colours || transparency === "solid" ||
+    (transparency === "system" && preferences.transparency);
+  const resolvedMotion: LiquidGlassMotion = motion === false ? "off" :
+    motion === "system" && preferences.motion ? "reduced" : "enabled";
+  const reducedReason = preferences.colours ? "forced-colors" :
+    transparency === "solid" ? "solid-choice" : reduced ? "reduced-transparency" : null;
   const [state, setState] = useState<LiquidGlassState>({
     status: "loading",
     surfaceCount: 0,
   });
-  const settings = useRef({ refraction, dispersion });
+  const settings = useRef({ refraction, dispersion, motion: resolvedMotion });
   settings.current = {
     refraction: Math.max(
       0.01,
@@ -60,16 +73,22 @@ export function LiquidGlassProvider({
       0,
       Math.min(0.05, Number.isFinite(dispersion) ? dispersion : 0.008),
     ),
+    motion: resolvedMotion,
   };
 
   useEffect(() => {
-    const preference = matchMedia(
-      "(prefers-reduced-transparency: reduce), (forced-colors: active)",
-    );
-    const update = () => setReduced(preference.matches);
+    const queries = {
+      motion: matchMedia("(prefers-reduced-motion: reduce)"),
+      transparency: matchMedia("(prefers-reduced-transparency: reduce)"),
+      colours: matchMedia("(forced-colors: active)"),
+    };
+    const update = () => setPreferences({
+      motion: queries.motion.matches, transparency: queries.transparency.matches,
+      colours: queries.colours.matches,
+    });
     update();
-    preference.addEventListener("change", update);
-    return () => preference.removeEventListener("change", update);
+    for (const query of Object.values(queries)) query.addEventListener("change", update);
+    return () => { for (const query of Object.values(queries)) query.removeEventListener("change", update); };
   }, []);
 
   useEffect(() => {
@@ -82,6 +101,12 @@ export function LiquidGlassProvider({
       "data-liquid-render-revision",
       "data-liquid-capture-revision",
       "data-liquid-error",
+      "data-liquid-motion",
+      "data-liquid-motion-state",
+      "data-liquid-motion-revision",
+      "data-liquid-active-effects",
+      "data-liquid-transparency",
+      "data-liquid-reduced-reason",
     ];
     const previous = attributes.map((name) => html.getAttribute(name));
     html.dataset.liquidGlassKit = "true";
@@ -89,18 +114,21 @@ export function LiquidGlassProvider({
     html.dataset.liquidSurfaceCount = "0";
     html.dataset.liquidRenderRevision = "0";
     html.dataset.liquidCaptureRevision = "0";
+    html.dataset.liquidMotion = settings.current.motion;
+    html.dataset.liquidMotionState = "idle";
+    html.dataset.liquidMotionRevision = "0";
+    html.dataset.liquidActiveEffects = "0";
     delete html.dataset.liquidError;
     canvas.current.style.visibility = "hidden";
     setState({ status: reduced ? "reduced" : "loading", surfaceCount: 0 });
-    if (!reduced) {
-      engine.current = createLiquidGlassEngine({
-        root: root.current,
-        backdrop: background.current,
-        canvas: canvas.current,
-        ...settings.current,
-        onChange: setState,
-      });
-    }
+    engine.current = createLiquidGlassEngine({
+      root: root.current,
+      backdrop: background.current,
+      canvas: canvas.current,
+      ...settings.current,
+      materialReduced: reduced,
+      onChange: setState,
+    });
     return () => {
       engine.current?.destroy();
       engine.current = null;
@@ -113,15 +141,19 @@ export function LiquidGlassProvider({
   }, [reduced]);
 
   useEffect(() => {
+    document.documentElement.dataset.liquidMotion = resolvedMotion;
+    document.documentElement.dataset.liquidTransparency = transparency;
+    if (reducedReason) document.documentElement.dataset.liquidReducedReason = reducedReason;
+    else delete document.documentElement.dataset.liquidReducedReason;
     engine.current?.update(settings.current);
-  }, [refraction, dispersion]);
+  }, [refraction, dispersion, resolvedMotion, transparency, reducedReason, reduced]);
   useEffect(() => {
     callback.current?.(state.status);
   }, [state.status]);
   const refresh = useCallback(async () => {
     await engine.current?.refresh();
   }, []);
-  const context = useMemo(() => ({ ...state, refresh }), [state, refresh]);
+  const context = useMemo(() => ({ ...state, refresh, motion: resolvedMotion }), [state, refresh, resolvedMotion]);
   return (
     <LiquidGlassContext.Provider value={context}>
       <div

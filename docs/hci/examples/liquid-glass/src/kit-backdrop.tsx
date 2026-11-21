@@ -2,11 +2,11 @@ export type BackdropName = "coast" | "dawn" | "grid";
 
 const palettes = {
   coast: {
-    base: "#deedf4",
-    upper: "#b3d4ed",
-    lower: "#82b9cb",
-    wave: "#f0d4b9",
-    edge: "#4380a4",
+    base: "#e4f0f8",
+    upper: "#bfd9ef",
+    lower: "#9dcfdf",
+    wave: "#ead6c5",
+    edge: "#69a9c7",
     line: "#effaff",
   },
   dawn: {
@@ -43,7 +43,7 @@ export function KitBackdrop({ variant }: { variant: BackdropName }) {
           <stop stopColor={p.base} />
           <stop offset="1" stopColor={p.upper} />
         </linearGradient>
-        <linearGradient id="kit-water" x1="0" x2="1" y1="0" y2="1">
+        <linearGradient id="kit-water" x1="0" x2="0.8" y1="0" y2="1">
           <stop stopColor={p.lower} />
           <stop offset="1" stopColor={p.edge} />
         </linearGradient>
@@ -51,6 +51,10 @@ export function KitBackdrop({ variant }: { variant: BackdropName }) {
           <stop stopColor={p.wave} />
           <stop offset="1" stopColor={p.base} />
         </linearGradient>
+        <radialGradient id="kit-soft-light" cx=".23" cy=".13" r=".82">
+          <stop stopColor="#ffffff" stopOpacity=".4" />
+          <stop offset=".68" stopColor="#ffffff" stopOpacity="0" />
+        </radialGradient>
         <pattern
           id="kit-grid"
           width="64"
@@ -91,27 +95,27 @@ export function KitBackdrop({ variant }: { variant: BackdropName }) {
         d="M-100 1120C220 600 640 1110 910 560S1410 180 1750 50V1100Z"
         fill="url(#kit-sand)"
       />
-      {Array.from({ length: 20 }, (_, i) => (
+      {Array.from({ length: 5 }, (_, i) => (
         <path
           key={i}
           d={
             "M-160 " +
-            (610 + i * 18) +
+            (610 + i * 45) +
             "C220 " +
-            (125 + i * 18) +
+            (125 + i * 45) +
             " 650 " +
-            (910 + i * 18) +
+            (910 + i * 45) +
             " 1000 " +
-            (240 + i * 18) +
+            (240 + i * 45) +
             "S1450 " +
-            (-260 + i * 18) +
+            (-260 + i * 45) +
             " 1800 " +
-            (-360 + i * 18)
+            (-360 + i * 45)
           }
           fill="none"
           stroke={p.line}
-          strokeWidth={i % 5 === 0 ? "3" : "1.5"}
-          opacity={i % 5 === 0 ? ".72" : ".38"}
+          strokeWidth={i === 0 ? "2" : "1"}
+          opacity={i === 0 ? ".36" : ".18"}
         />
       ))}
       <ellipse
@@ -122,6 +126,7 @@ export function KitBackdrop({ variant }: { variant: BackdropName }) {
         fill="#ffffff"
         opacity=".21"
       />
+      <rect width="1600" height="1000" fill="url(#kit-soft-light)" />
       {variant === "grid" && (
         <rect width="1600" height="1000" fill="url(#kit-grid)" />
       )}

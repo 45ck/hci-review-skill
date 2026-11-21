@@ -202,6 +202,24 @@ p {
   letter-spacing: -0.055em;
   margin: 0;
 }
+.kit-intro {
+  max-width: 42ch;
+  margin: 13px 0 0;
+  color: #35576b;
+  font-size: 15px;
+  line-height: 1.6;
+}
+.kit-motion-setting {
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgb(60 105 135 / 0.15);
+}
+.kit-motion-setting p {
+  margin: 9px 0 0;
+  max-width: 34ch;
+  color: #35576b;
+  font-size: 13px;
+  line-height: 1.5;
+}
 .kit-overview {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

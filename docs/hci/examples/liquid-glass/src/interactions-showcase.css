@@ -1,0 +1,45 @@
+.interaction-showcase { display: grid; gap: 24px; width: 100%; }
+.interaction-intro { display: grid; grid-template-columns: 1.1fr .85fr; align-items: end; gap: 24px; }
+.interaction-eyebrow { margin: 0 0 10px; color: #386078; font-size: .875rem; }
+.interaction-intro h2 { margin: 0; max-width: 550px; font: 600 clamp(28px, 3.2vw, 40px)/1.15 var(--liquid-font-heading); letter-spacing: -.045em; text-wrap: balance; }
+.interaction-intro-note { display: grid; gap: 12px; justify-items: start; }
+.interaction-intro-note p { margin: 0; color: #3c596c; font-size: 1rem; line-height: 1.6; }
+.interaction-settings { display: flex; flex-wrap: wrap; gap: 20px 36px; align-items: end; padding: 20px 24px; border-radius: 20px; }
+.interaction-settings [data-slot="field"] { min-width: 0; gap: 9px; }
+.interaction-settings [data-slot="field-label"] { font-size: .875rem; }
+.interaction-settings [data-slot="segmented-control"] { flex-wrap: nowrap; }
+.interaction-settings [data-slot="segmented-control-item"] { min-height: 40px; }
+.interaction-workspace { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(230px, .8fr); gap: 24px; align-items: start; }
+.interaction-scene { position: relative; min-height: 430px; border-radius: 22px; overflow: hidden; isolation: isolate; background: #1b6175; box-shadow: 0 16px 32px -24px #123d59; color: #fff; }
+.interaction-scene::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgb(5 24 42 / .5), transparent 32%, rgb(5 24 42 / .08) 53%, rgb(5 24 42 / .8)); pointer-events: none; }
+.interaction-landscape { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; }
+.interaction-scene[data-palette="warm"] .interaction-landscape { filter: sepia(.38) saturate(.9) hue-rotate(-21deg); }
+.interaction-scene-top { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 24px; color: #fff; font-size: .875rem; }
+.interaction-scene-count { display: flex; align-items: center; gap: 8px; }
+.interaction-scene-caption { position: absolute; bottom: 28px; left: 28px; right: 24px; }
+.interaction-scene-caption > span { display: block; margin-bottom: 12px; color: #d8edf1; font-size: .875rem; }
+.interaction-scene-caption h3 { margin: 0; max-width: 100%; overflow-wrap: anywhere; font: 500 clamp(32px, 4vw, 52px)/1.08 var(--liquid-font-heading); letter-spacing: -.05em; color: #fff; }
+.interaction-scene-caption p { margin: 12px 0 0; font-size: 1rem; color: #e1edf2; }
+.interaction-saved { position: absolute; right: 22px; top: 63px; display: inline-flex; align-items: center; gap: 8px; border-radius: 20px; padding: 8px 12px; background: #e2f3ee; color: #174a3b; font-size: .875rem; box-shadow: 0 4px 16px rgb(6 25 25 / .15); }
+.interaction-copies { position: absolute; top: 110px; right: 24px; display: flex; flex-direction: column; gap: 8px; }
+.interaction-copies > span { display: flex; width: 120px; align-items: center; gap: 8px; padding: 7px; border-radius: 12px; background: rgb(247 252 254 / .94); box-shadow: 0 8px 20px rgb(9 30 43 / .16); color: #254c5f; font-size: .875rem; }
+.interaction-copies img { width: 40px; height: 40px; object-fit: cover; border-radius: 7px; }
+.interaction-controls { display: grid; gap: 13px; border-radius: 22px; padding: 23px; min-width: 0; }
+.interaction-controls-heading { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 4px; }
+.interaction-controls-heading > svg { flex: none; color: #28637f; }
+.interaction-controls-heading h3 { margin: 0; font-size: 1rem; line-height: 1.5; font-weight: 650; color: #1c4056; }
+.interaction-controls [data-slot="button"] { min-height: 44px; width: 100%; justify-content: center; }
+.interaction-controls [data-slot="field"] { gap: 8px; margin-bottom: 4px; }
+.interaction-controls [data-slot="input"] { min-width: 0; width: 100%; }
+.interaction-controls [data-slot="button"]:not([data-pending]) [data-show="pending"], .interaction-controls [data-slot="button"][data-pending] [data-show="idle"] { display: none; }
+.interaction-state { display: grid; gap: 5px; padding-top: 10px; color: #264b5f; font-size: .875rem; line-height: 1.5; }
+.interaction-state > strong { font-size: 1rem; font-weight: 600; }
+.interaction-draft-count { font-size: .875rem; line-height: 1.5; color: #32556b; }
+.interaction-local-note { margin: -3px 0 0; color: #536c7c; font-size: .8125rem; line-height: 1.5; }
+.interaction-footnote { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; padding: 18px 0 0; border-top: 1px solid rgb(45 87 110 / .15); color: #415e71; }
+.interaction-footnote > p { margin: 0; font-size: .875rem; line-height: 1.75; }
+.interaction-footnote kbd { padding: 2px 5px; background: rgb(247 253 255 / .8); border: 1px solid #a8bfca; border-radius: 4px; font-size: .8125rem; color: #254a5e; }
+@media (max-width: 1100px) { .interaction-workspace { grid-template-columns: minmax(0, 1.4fr) minmax(220px, .9fr); gap: 18px; } .interaction-controls { padding: 18px; } }
+@media (max-width: 850px) { .interaction-workspace { grid-template-columns: 1fr; } .interaction-intro, .interaction-footnote { grid-template-columns: 1fr; gap: 16px; } .interaction-scene { min-height: 390px; } .interaction-controls { grid-template-columns: 1fr 1fr; gap: 14px; padding: 22px; } .interaction-controls-heading, .interaction-controls [data-slot="field"], .interaction-state, .interaction-draft-count, .interaction-local-note { grid-column: 1/-1; } }
+@media (max-width: 500px) { .interaction-settings { padding: 16px; gap: 16px; } .interaction-settings [data-slot="field"] { width: 100%; } .interaction-settings [data-slot="segmented-control"] { width: 100%; } .interaction-settings [data-slot="segmented-control-item"] { flex: 1; padding-inline: 8px; } .interaction-scene { min-height: 350px; } .interaction-scene-top { padding: 18px; } .interaction-scene-caption { bottom: 22px; left: 20px; } .interaction-controls { grid-template-columns: 1fr; padding: 18px; } .interaction-controls > * { grid-column: 1; } .interaction-scene-caption h3 { font-size: 36px; } .interaction-saved { right: 16px; } }
+@media (forced-colors: active) { .interaction-scene { border: 1px solid CanvasText; color: CanvasText; background: Canvas; } .interaction-landscape, .interaction-scene::after { display: none; } .interaction-scene-top, .interaction-scene-caption h3, .interaction-scene-caption p, .interaction-scene-caption > span, .interaction-settings, .interaction-controls, .interaction-state, .interaction-draft-count, .interaction-controls-heading h3, .interaction-local-note, .interaction-intro-note p, .interaction-eyebrow, .interaction-footnote { color: CanvasText; background: Canvas; } .interaction-saved, .interaction-copies > span { color: CanvasText; background: Canvas; border: 1px solid CanvasText; } }

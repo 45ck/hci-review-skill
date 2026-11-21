@@ -1,0 +1,29 @@
+.qgs-demo { width: 100%; min-width: 0; }
+.qgs-demo-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 2rem; }
+.qgs-demo-follow { display: flex; align-items: center; gap: .75rem; }
+.qgs-demo-follow [data-slot="field-label"] { margin: 0; font-size: .875rem; }
+.qgs-demo-hero { padding: clamp(1.25rem, 3vw, 2.75rem); border: 1px solid #ffffffb8; border-radius: 2rem; background: rgb(250 253 255 / .88); box-shadow: 0 22px 65px -44px #163f6577; }
+.qgs-demo-hero .qgs-section-header h2 { font-size: clamp(2.5rem, 5.5cqi, 5rem); max-width: 9ch; }
+.qgs-demo-hero .qgs-section-heading { max-width: 36rem; }
+.qgs-demo-hero[data-section-layout="immersive"] .qgs-section-header { align-items: end; }
+.qgs-demo-hero[data-section-layout="immersive"] .qgs-section-header h2 { max-width: 18ch; }
+.qgs-demo-hero .qgs-showcase-image { border-radius: 1rem; }
+.qgs-demo .qgs-chapters { padding: 0 clamp(.25rem, 2vw, 1.5rem); }
+.qgs-demo-contour-section { padding: clamp(1.25rem, 3vw, 2.5rem); background: rgb(250 253 255 / .88); border: 1px solid #ffffffb8; border-radius: 1.75rem; }
+.qgs-demo-contour-section .qgs-section-header { flex-wrap: wrap; }
+.qgs-demo-contour-preview { border-radius: 1rem; background: linear-gradient(120deg, #eaf9fa, #f5eeff); overflow: hidden; }
+.qgs-demo-contour-preview .qgs-contour { height: 12rem; }
+.qgs-demo-note { font-size: .875rem; line-height: 1.6; color: #496478; margin: 1rem .25rem 0; max-width: 65rem; }
+@media (max-width: 600px) {
+  .qgs-demo-hero { padding: 1.25rem; border-radius: 1.5rem; }
+  .qgs-demo-hero .qgs-section-header h2 { font-size: 2.75rem; }
+  .qgs-demo-hero[data-section-layout="immersive"] .qgs-section-header { align-items: start; }
+  .qgs-demo-toolbar { align-items: stretch; }
+  .qgs-demo-toolbar > [data-slot="button"] { flex-grow: 1; }
+  .qgs-demo-contour-section .qgs-section-actions { width: 100%; }
+  .qgs-demo-contour-section [data-slot="segmented-control"] { max-width: 100%; }
+}
+@media (forced-colors: active) {
+  .qgs-demo-hero, .qgs-demo-contour-section, .qgs-demo-contour-preview { background: Canvas; color: CanvasText; border-color: CanvasText; }
+  .qgs-demo-note { color: CanvasText; }
+}

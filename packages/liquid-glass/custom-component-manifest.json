@@ -227,6 +227,78 @@
       "category": "Agents",
       "exportPath": "@quantitative-hci/liquid-glass/agents",
       "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-cursor",
+      "name": "LiquidCursor",
+      "category": "Interactions",
+      "exportPath": "@quantitative-hci/liquid-glass/interactions",
+      "validation": "unvalidated",
+      "contract": "docs/hci/standards/interaction-sections.md"
+    },
+    {
+      "id": "liquid-click-feedback",
+      "name": "LiquidClickFeedback",
+      "category": "Interactions",
+      "exportPath": "@quantitative-hci/liquid-glass/interactions",
+      "validation": "unvalidated",
+      "contract": "docs/hci/standards/interaction-sections.md"
+    },
+    {
+      "id": "liquid-context-menu",
+      "name": "LiquidContextMenu",
+      "category": "Interactions",
+      "exportPath": "@quantitative-hci/liquid-glass/interactions",
+      "validation": "unvalidated",
+      "contract": "docs/hci/standards/interaction-sections.md"
+    },
+    {
+      "id": "liquid-magnetic",
+      "name": "LiquidMagnetic",
+      "category": "Interactions",
+      "exportPath": "@quantitative-hci/liquid-glass/interactions",
+      "validation": "unvalidated",
+      "contract": "docs/hci/standards/interaction-sections.md"
+    },
+    {
+      "id": "liquid-section",
+      "name": "LiquidSection",
+      "category": "Sections",
+      "exportPath": "@quantitative-hci/liquid-glass/sections",
+      "validation": "unvalidated",
+      "contract": "docs/hci/standards/interaction-sections.md"
+    },
+    {
+      "id": "liquid-showcase-section",
+      "name": "LiquidShowcaseSection",
+      "category": "Sections",
+      "exportPath": "@quantitative-hci/liquid-glass/sections",
+      "validation": "unvalidated",
+      "contract": "docs/hci/standards/interaction-sections.md"
+    },
+    {
+      "id": "liquid-chapter-section",
+      "name": "LiquidChapterSection",
+      "category": "Sections",
+      "exportPath": "@quantitative-hci/liquid-glass/sections",
+      "validation": "unvalidated",
+      "contract": "docs/hci/standards/interaction-sections.md"
+    },
+    {
+      "id": "liquid-section-contour",
+      "name": "LiquidSectionContour",
+      "category": "Sections",
+      "exportPath": "@quantitative-hci/liquid-glass/sections",
+      "validation": "unvalidated",
+      "contract": "docs/hci/standards/interaction-sections.md"
+    },
+    {
+      "id": "liquid-reveal",
+      "name": "LiquidReveal",
+      "category": "Sections",
+      "exportPath": "@quantitative-hci/liquid-glass/sections",
+      "validation": "unvalidated",
+      "contract": "docs/hci/standards/interaction-sections.md"
     }
   ]
 }

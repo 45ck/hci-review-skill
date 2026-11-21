@@ -34,7 +34,7 @@ import "@quantitative-hci/liquid-glass/sections.css";
 
 Use these inside the same provider and `kit.css` shown below. Cursor and click decoration preserve real SDK controls and native input behavior. Context actions use the SDK menu's pointer, keyboard and agent paths, including disabled, pending and confirmation semantics. Magnetic movement affects only a decorative icon inside a stationary control. Sections combine semantic headings, actual actions and readable media; chapter selection shares a controlled value with natural scroll following. Reduced motion, forced colours and hidden regions stop decorative effects.
 
-The [interaction API](src/interactions/README.md) and [component contract](../../docs/hci/standards/interaction-sections.md) document exact props, state and boundaries. The gallery provides six [compiled TSX examples](../../docs/hci/examples/liquid-glass/src/recipes) with **Copy example** and **Copy agent brief**. These examples include a standalone provider; reuse an existing provider and the host's single agent bridge when integrating. This remains a private workspace package, not an npm release.
+The [interaction API](src/interactions/README.md) and [component contract](../../docs/hci/standards/interaction-sections.md) document exact props, state and boundaries. The gallery provides seven [compiled TSX examples](../../docs/hci/examples/liquid-glass/src/recipes) with **Copy example** and **Copy agent brief**. These examples include a standalone provider; reuse an existing provider and the host's single agent bridge when integrating. This remains a private workspace package, not an npm release.
 
 ```ts
 import { liquidComponentRecipes, findLiquidRecipes } from "@quantitative-hci/liquid-glass/recipes";
@@ -286,3 +286,11 @@ The refractive model began as an adaptation of [arya3d/liquid-glass-webgpu](http
 The motion and layered-light direction also draws on the user-supplied [Nimbus Liquid Glass Navbar](https://21st.dev/@gughigug/components/liquid-glass-navbar) by Guglielmo Giannattasio and [Coffee Pour Menu](https://21st.dev/@aakashmehra/components/coffee-pour-menu) by Aakash. Both preview pages identify their source as MIT. Their WebGL/SVG component implementations are not substituted for UI SDK; this kit implements the interaction cues in its shared WebGPU/CSS material.
 
 UI SDK remains Apache-2.0; html2canvas-pro and the original material code retain their licences. See [third-party notices](../../THIRD_PARTY_NOTICES.md). Apple is a visual reference, not an endorser or supplier of this kit.
+
+## Chat above your runtime
+
+Use `LiquidChat`, `LiquidConversationList` and `LiquidPromptTemplatePicker` from `/chat`, with `/chat.css`. Pass the host’s accepted messages, draft and lifecycle; connect submission, Stop and Retry to your existing runtime. The core chat adds no model client or second conversation store. Read the [chat API](src/chat/README.md) and [integration standard](../../docs/hci/standards/chat-integrations.md).
+
+Optional `/chat/ai-sdk`, `/chat/ag-ui`, `/chat/openai` and `/chat/anthropic` entries project supported public message parts into the controlled interface. Install the matching SDK peer for the entry you use. The gallery exposes compiled Vercel AI SDK, CopilotKit headless, AG-UI, application-owned and direct server-client examples. The server factory supports OpenAI, Anthropic and OpenRouter. Credentials, file handling, model capabilities, persistence and tool authorization remain host responsibilities. No live provider connection is claimed by the static gallery.
+
+The component library lists all canonical entries with task search and exact imports. Runnable examples use the actual compiled recipe source in separate documents; source and agent briefs are copyable. Reuse your existing application provider and bridge when adopting an example.

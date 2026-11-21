@@ -379,6 +379,27 @@
       "exportPath": "@quantitative-hci/liquid-glass/assistant",
       "validation": "unvalidated",
       "contract": "docs/hci/standards/library-patterns.md"
+    },
+    {
+      "id": "liquid-chat",
+      "name": "LiquidChat",
+      "category": "Chat",
+      "exportPath": "@quantitative-hci/liquid-glass/chat",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-conversation-list",
+      "name": "LiquidConversationList",
+      "category": "Chat",
+      "exportPath": "@quantitative-hci/liquid-glass/chat",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-prompt-template-picker",
+      "name": "LiquidPromptTemplatePicker",
+      "category": "Chat",
+      "exportPath": "@quantitative-hci/liquid-glass/chat",
+      "validation": "unvalidated"
     }
   ]
 }

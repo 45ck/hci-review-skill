@@ -7664,6 +7664,403 @@
         "proof-boundary"
       ],
       "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-chat",
+      "kind": "composition",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/chat",
+          "symbols": [
+            "LiquidChat"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/chat/components.tsx",
+        "packages/liquid-glass/src/chat/types.ts"
+      ],
+      "purpose": "Render a controlled conversation above the host chat or agent runtime.",
+      "useWhen": [
+        "Render a controlled conversation above the host chat or agent runtime."
+      ],
+      "inputs": [
+        "messages: readonly LiquidChatMessage[],status:ready|submitted|streaming|error,value,onValueChange,onSubmit; optional onStop,onRetry,error",
+        "Optional title,description,author,label,headerActions,sidebar,templates,empty,notice,className,renderPart,messageActions and composer settings",
+        "Message parts are text, source, attachment metadata, tool status/data or an explicit unsupported label."
+      ],
+      "state": [
+        "Host owns accepted messages, drafts, threads, run state and errors. The composition keeps no parallel conversation store."
+      ],
+      "runtime": {
+        "discovery": "sdk-children",
+        "mutationPath": "Genuine SDK child controls forward the same controlled host callbacks for people and agents.",
+        "actions": [],
+        "outcome": "Inspect the accepted host state after operating the named SDK controls; local fixtures do not establish provider execution.",
+        "controls": [
+          "@ui-sdk/react/button",
+          "@ui-sdk/react/collapsible",
+          "@ui-sdk/react/textarea",
+          "@ui-sdk/react/select",
+          "@ui-sdk/react/field"
+        ]
+      },
+      "restrictions": [
+        "The package adds no provider credentials, transport, model executor, persistence or tool authorization.",
+        "Text renders as plain text; unsupported parts remain explicit and hidden reasoning is not rendered. The default attachment view does not fetch URLs.",
+        "Tool cards are read-only host-reported status; compose AgentToolRequest through renderPart for actual authorized review.",
+        "The host must cancel subscriptions/work and isolate stale results when threads, visibility or mounting change. Stop does not prove remote execution has ended."
+      ],
+      "policies": [
+        "sdk-foundation",
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "docs": [
+        "packages/liquid-glass/src/chat/README.md",
+        "docs/hci/standards/chat-integrations.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/glass_chat_contract.py",
+          "scope": "Local chat thread selection, per-thread draft retention, actual template and submission controls, streaming fixture, retry, cancellation and mobile/forced-colour layout. No live model or remote file operation."
+        }
+      ],
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-conversation-list",
+      "kind": "composition",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/chat",
+          "symbols": [
+            "LiquidConversationList"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/chat/components.tsx",
+        "packages/liquid-glass/src/chat/types.ts"
+      ],
+      "purpose": "Choose or create a host-owned conversation through SDK controls.",
+      "useWhen": [
+        "Choose or create a host-owned conversation through SDK controls."
+      ],
+      "inputs": [
+        "conversations:readonly{id,title,description?,disabled?}[],value:string|null,onValueChange with SDK Listbox change details",
+        "Optional onCreate,label,createLabel,disabled,createDisabled,className"
+      ],
+      "state": [
+        "Host owns conversations, accepted selected ID and per-thread state."
+      ],
+      "runtime": {
+        "discovery": "sdk-children",
+        "mutationPath": "Genuine SDK child controls forward the same controlled host callbacks for people and agents.",
+        "actions": [],
+        "outcome": "Inspect the accepted host state after operating the named SDK controls; local fixtures do not establish provider execution.",
+        "controls": [
+          "@ui-sdk/react/listbox",
+          "@ui-sdk/react/button"
+        ]
+      },
+      "restrictions": [
+        "Invalid, null and disabled selections are refused before host change; valid proposals retain cancellable SDK details.",
+        "Creating conversations, loading history and cancelling prior thread runs are host responsibilities.",
+        "Stable conversation IDs must be unique. Source attribution does not authorize access to a thread."
+      ],
+      "policies": [
+        "sdk-foundation",
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "docs": [
+        "packages/liquid-glass/src/chat/README.md",
+        "docs/hci/standards/chat-integrations.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/glass_chat_contract.py",
+          "scope": "Local chat thread selection, per-thread draft retention, actual template and submission controls, streaming fixture, retry, cancellation and mobile/forced-colour layout. No live model or remote file operation."
+        }
+      ],
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-prompt-template-picker",
+      "kind": "composition",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/chat",
+          "symbols": [
+            "LiquidPromptTemplatePicker"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/chat/components.tsx",
+        "packages/liquid-glass/src/chat/types.ts"
+      ],
+      "purpose": "Choose a reusable prompt template through an SDK menu.",
+      "useWhen": [
+        "Choose a reusable prompt template through an SDK menu."
+      ],
+      "inputs": [
+        "templates:readonly{id,label,prompt,disabled?}[],onChoose(template, MenuActionDetails)",
+        "Optional label,disabled,className"
+      ],
+      "state": [
+        "Host owns templates and the accepted draft or execution outcome."
+      ],
+      "runtime": {
+        "discovery": "sdk-children",
+        "mutationPath": "Genuine SDK child controls forward the same controlled host callbacks for people and agents.",
+        "actions": [],
+        "outcome": "Inspect the accepted host state after operating the named SDK controls; local fixtures do not establish provider execution.",
+        "controls": [
+          "@ui-sdk/react/menu"
+        ]
+      },
+      "restrictions": [
+        "The installed MenuActionDetails has optional event only; no source or cancel field is invented.",
+        "Invalid and disabled actions are refused. Return asynchronous host work to retain SDK pending/error presentation.",
+        "The host decides whether choosing a template fills a draft or submits; the gallery fills its actual controlled textarea."
+      ],
+      "policies": [
+        "sdk-foundation",
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "docs": [
+        "packages/liquid-glass/src/chat/README.md",
+        "docs/hci/standards/chat-integrations.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/glass_chat_contract.py",
+          "scope": "Local chat thread selection, per-thread draft retention, actual template and submission controls, streaming fixture, retry, cancellation and mobile/forced-colour layout. No live model or remote file operation."
+        }
+      ],
+      "validation": "unvalidated"
+    },
+    {
+      "id": "chat-ai-sdk-projection",
+      "kind": "pure-utility",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/chat/ai-sdk",
+          "symbols": [
+            "projectVercelMessages"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/chat/adapters/ai-sdk.ts",
+        "packages/liquid-glass/src/chat/adapters/helpers.ts",
+        "packages/liquid-glass/src/chat/types.ts"
+      ],
+      "purpose": "Project Vercel AI SDK UIMessage.parts, including sources, files and tool status into Quantive chat display parts.",
+      "useWhen": [
+        "Project Vercel AI SDK UIMessage.parts, including sources, files and tool status into Quantive chat display parts."
+      ],
+      "inputs": [
+        "UIMessage[] from ai 7.0.179"
+      ],
+      "state": [
+        "New LiquidChatMessage[] display projection; authoritative runtime data is unchanged."
+      ],
+      "runtime": {
+        "discovery": "none",
+        "mutationPath": "Pure projection returns new display records without mutating the SDK snapshot, running a model, dispatching a tool or changing host state.",
+        "actions": [],
+        "outcome": "Read the projected display parts and preserve the runtime snapshot as authoritative. Projection is not proof of completion or authorization."
+      },
+      "restrictions": [
+        "Install the matching optional SDK peer dependency; the core chat UI imports no provider SDK.",
+        "This is a supported display projection, not a network transport, full protocol implementation, tool executor or universal modality adapter.",
+        "Preserve source and tool-call identities. Unknown content becomes an unsupported label; reasoning payloads are not copied into visible text.",
+        "Only the owning runtime and validated lifecycle establish completion; a mapped tool request does not imply execution or approval."
+      ],
+      "policies": [
+        "shared-state",
+        "proof-boundary"
+      ],
+      "docs": [
+        "packages/liquid-glass/src/chat/README.md",
+        "docs/hci/standards/chat-integrations.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/test_chat_adapters.mjs",
+          "scope": "Deterministic official-type fixtures verify text/media/source/tool projection, unknown parts, preserved call identities, partial/failed states and nonmutation; no live service call."
+        }
+      ],
+      "validation": "not-applicable"
+    },
+    {
+      "id": "chat-ag-ui-projection",
+      "kind": "pure-utility",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/chat/ag-ui",
+          "symbols": [
+            "projectAgUiMessages"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/chat/adapters/ag-ui.ts",
+        "packages/liquid-glass/src/chat/adapters/helpers.ts",
+        "packages/liquid-glass/src/chat/types.ts"
+      ],
+      "purpose": "Project AG-UI messages and tool results linked by their call IDs into Quantive chat display parts.",
+      "useWhen": [
+        "Project AG-UI messages and tool results linked by their call IDs into Quantive chat display parts."
+      ],
+      "inputs": [
+        "Message[] from @ag-ui/core 1.0.5"
+      ],
+      "state": [
+        "New LiquidChatMessage[] display projection; authoritative runtime data is unchanged."
+      ],
+      "runtime": {
+        "discovery": "none",
+        "mutationPath": "Pure projection returns new display records without mutating the SDK snapshot, running a model, dispatching a tool or changing host state.",
+        "actions": [],
+        "outcome": "Read the projected display parts and preserve the runtime snapshot as authoritative. Projection is not proof of completion or authorization."
+      },
+      "restrictions": [
+        "Install the matching optional SDK peer dependency; the core chat UI imports no provider SDK.",
+        "This is a supported display projection, not a network transport, full protocol implementation, tool executor or universal modality adapter.",
+        "Preserve source and tool-call identities. Unknown content becomes an unsupported label; reasoning payloads are not copied into visible text.",
+        "Only the owning runtime and validated lifecycle establish completion; a mapped tool request does not imply execution or approval."
+      ],
+      "policies": [
+        "shared-state",
+        "proof-boundary"
+      ],
+      "docs": [
+        "packages/liquid-glass/src/chat/README.md",
+        "docs/hci/standards/chat-integrations.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/test_chat_adapters.mjs",
+          "scope": "Deterministic official-type fixtures verify text/media/source/tool projection, unknown parts, preserved call identities, partial/failed states and nonmutation; no live service call."
+        }
+      ],
+      "validation": "not-applicable"
+    },
+    {
+      "id": "chat-openai-projection",
+      "kind": "pure-utility",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/chat/openai",
+          "symbols": [
+            "projectOpenAIResponse"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/chat/adapters/openai.ts",
+        "packages/liquid-glass/src/chat/adapters/helpers.ts",
+        "packages/liquid-glass/src/chat/types.ts"
+      ],
+      "purpose": "Project OpenAI Responses public output items into Quantive chat display parts.",
+      "useWhen": [
+        "Project OpenAI Responses public output items into Quantive chat display parts."
+      ],
+      "inputs": [
+        "Responses.Response from openai 7.62.0"
+      ],
+      "state": [
+        "New LiquidChatMessage[] display projection; authoritative runtime data is unchanged."
+      ],
+      "runtime": {
+        "discovery": "none",
+        "mutationPath": "Pure projection returns new display records without mutating the SDK snapshot, running a model, dispatching a tool or changing host state.",
+        "actions": [],
+        "outcome": "Read the projected display parts and preserve the runtime snapshot as authoritative. Projection is not proof of completion or authorization."
+      },
+      "restrictions": [
+        "Install the matching optional SDK peer dependency; the core chat UI imports no provider SDK.",
+        "This is a supported display projection, not a network transport, full protocol implementation, tool executor or universal modality adapter.",
+        "Preserve source and tool-call identities. Unknown content becomes an unsupported label; reasoning payloads are not copied into visible text.",
+        "Only the owning runtime and validated lifecycle establish completion; a mapped tool request does not imply execution or approval."
+      ],
+      "policies": [
+        "shared-state",
+        "proof-boundary"
+      ],
+      "docs": [
+        "packages/liquid-glass/src/chat/README.md",
+        "docs/hci/standards/chat-integrations.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/test_chat_adapters.mjs",
+          "scope": "Deterministic official-type fixtures verify text/media/source/tool projection, unknown parts, preserved call identities, partial/failed states and nonmutation; no live service call."
+        }
+      ],
+      "validation": "not-applicable"
+    },
+    {
+      "id": "chat-anthropic-projection",
+      "kind": "pure-utility",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/chat/anthropic",
+          "symbols": [
+            "projectAnthropicMessage"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/chat/adapters/anthropic.ts",
+        "packages/liquid-glass/src/chat/adapters/helpers.ts",
+        "packages/liquid-glass/src/chat/types.ts"
+      ],
+      "purpose": "Project Claude Messages public content blocks into Quantive chat display parts.",
+      "useWhen": [
+        "Project Claude Messages public content blocks into Quantive chat display parts."
+      ],
+      "inputs": [
+        "Message from @anthropic-ai/sdk 1.12.0"
+      ],
+      "state": [
+        "New LiquidChatMessage[] display projection; authoritative runtime data is unchanged."
+      ],
+      "runtime": {
+        "discovery": "none",
+        "mutationPath": "Pure projection returns new display records without mutating the SDK snapshot, running a model, dispatching a tool or changing host state.",
+        "actions": [],
+        "outcome": "Read the projected display parts and preserve the runtime snapshot as authoritative. Projection is not proof of completion or authorization."
+      },
+      "restrictions": [
+        "Install the matching optional SDK peer dependency; the core chat UI imports no provider SDK.",
+        "This is a supported display projection, not a network transport, full protocol implementation, tool executor or universal modality adapter.",
+        "Preserve source and tool-call identities. Unknown content becomes an unsupported label; reasoning payloads are not copied into visible text.",
+        "Only the owning runtime and validated lifecycle establish completion; a mapped tool request does not imply execution or approval."
+      ],
+      "policies": [
+        "shared-state",
+        "proof-boundary"
+      ],
+      "docs": [
+        "packages/liquid-glass/src/chat/README.md",
+        "docs/hci/standards/chat-integrations.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/test_chat_adapters.mjs",
+          "scope": "Deterministic official-type fixtures verify text/media/source/tool projection, unknown parts, preserved call identities, partial/failed states and nonmutation; no live service call."
+        }
+      ],
+      "validation": "not-applicable"
     }
   ]
 }

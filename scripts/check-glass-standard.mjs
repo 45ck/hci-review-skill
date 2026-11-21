@@ -67,6 +67,12 @@ for (const [entry, path] of Object.entries({
   "./patterns.css": "./src/patterns/patterns.css",
   "./assistant": "./src/assistant/index.ts",
   "./assistant.css": "./src/assistant/assistant.css",
+  "./chat": "./src/chat/index.ts",
+  "./chat.css": "./src/chat/chat.css",
+  "./chat/ai-sdk": "./src/chat/adapters/ai-sdk.ts",
+  "./chat/ag-ui": "./src/chat/adapters/ag-ui.ts",
+  "./chat/openai": "./src/chat/adapters/openai.ts",
+  "./chat/anthropic": "./src/chat/adapters/anthropic.ts",
   "./recipes": "./src/recipes.ts",
   "./fonts.css": "./src/fonts.css",
 })) {
@@ -104,7 +110,7 @@ for (const id of expected) {
 for (const path of sourceFiles) {
   const source = read(path);
   check(!/["']@ui-sdk\/react["']/.test(source) && !source.includes("@ui-sdk/core/internal/"), `${relative(root, path)}: use documented SDK entries.`);
-  check(!/["']@quantitative-hci\/liquid-glass\/(?!webgpu["']|appearance["']|icons["']|validation["']|developer(?:\.css)?["']|standards(?:\.css)?["']|viewport(?:\.css)?["']|graphics(?:\.css)?["']|media(?:\.css)?["']|modeling["']|agents(?:\.css)?["']|interactions(?:\.css)?["']|sections(?:\.css)?["']|patterns(?:\.css)?["']|assistant(?:\.css)?["']|recipes["']|material["']|fonts\.css["']|kit\.css["']|styles\.css["']|tokens\.css["'])/.test(source), `${relative(root, path)}: use direct SDK primitives and documented shared kit APIs.`);
+  check(!/["']@quantitative-hci\/liquid-glass\/(?!webgpu["']|appearance["']|icons["']|validation["']|developer(?:\.css)?["']|standards(?:\.css)?["']|viewport(?:\.css)?["']|graphics(?:\.css)?["']|media(?:\.css)?["']|modeling["']|agents(?:\.css)?["']|interactions(?:\.css)?["']|sections(?:\.css)?["']|patterns(?:\.css)?["']|assistant(?:\.css)?["']|chat(?:\.css|\/(?:ai-sdk|ag-ui|openai|anthropic))?["']|recipes["']|material["']|fonts\.css["']|kit\.css["']|styles\.css["']|tokens\.css["'])/.test(source), `${relative(root, path)}: use direct SDK primitives and documented shared kit APIs.`);
 }
 
 const customManifest = json(join(packageDir, "custom-component-manifest.json"));

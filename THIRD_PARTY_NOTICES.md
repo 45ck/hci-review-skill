@@ -40,6 +40,12 @@ The Patterns and Assistant collections use familiar compositions described by [s
 
 The public [21st.dev Aadi Prompt Input](https://21st.dev/@aadixc0de/components/prompt-input) and [Kokonut AI Input With File](https://21st.dev/@kokonutd/components/ai-input-with-file) listings also informed the composer arrangement. Both listings identify MIT licensing; Kokonut's [repository licence](https://github.com/kokonut-labs/kokonutui/blob/main/LICENSE) is copyright 2025 kokonutUI. Account-gated source was not retrieved. These are pattern references: the additions contain no copied third-party component source. Quantive composes its existing UI SDK controls and shared material, without packaging those complete external components or their interaction dependencies. See [Established library patterns](docs/hci/standards/library-patterns.md) for the inspected sources, feature boundaries and evidence requirements. Preserve the relevant licence and notices if a later change directly copies or adapts third-party source.
 
+## Chat runtime integrations
+
+The chat adapters and integration examples are original Quantive source written against the published interfaces of Vercel AI SDK, OpenAI's JavaScript SDK, Anthropic's TypeScript SDK, OpenRouter's AI SDK provider, CopilotKit and AG-UI. Their exact development dependency versions are recorded in `package-lock.json`; the inspected primary documentation and integration boundaries are recorded in [Chat integrations](docs/hci/standards/chat-integrations.md).
+
+The shared chat view does not bundle these providers or agent runtimes. Individual projection entry points use the corresponding SDK's types, and the gallery displays integration source without executing provider clients. Applications that install or bundle the integrations must retain the licences and notices supplied with those dependencies. No external chat component implementation has been copied into this kit.
+
 ## Apple visual reference
 
 Apple's Liquid Glass and Human Interface Guidelines are visual and interaction references. No Apple framework, proprietary rendering implementation, endorsement or affiliation is represented by this web material. Apple names and marks remain their owners' property.

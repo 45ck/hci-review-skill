@@ -95,6 +95,16 @@ Import LiquidPromptComposer, LiquidAttachmentList, LiquidSuggestionList, LiquidM
 
 The compiled assistant-composer.tsx recipe shows these composition boundaries. The gallery runs a clearly labelled, bounded local response fixture with cancellation, not an AI backend. Reuse existing AgentToolRequest and AgentTaskPanel when a conversation needs tool review or task history. Use one existing provider and one createAgent bridge; there is no second mutation endpoint.
 
+## Chat and integrations
+
+Import LiquidChat, LiquidConversationList and LiquidPromptTemplatePicker from @quantitative-hci/liquid-glass/chat and load chat.css after kit.css. The chat is controlled: messages, status, draft, accepted thread selection and execution belong to the host. Reuse the existing provider and one SDK bridge. The component's genuine SDK children expose human and agent controls without a second conversation store.
+
+Use /chat/ai-sdk (projectVercelMessages), /chat/ag-ui (projectAgUiMessages), /chat/openai (projectOpenAIResponse) or /chat/anthropic (projectAnthropicMessage) for the matching optional SDK type projection. Each returns display records without operating the runtime. Unknown parts remain visible; hidden reasoning is not rendered. Attachment metadata is not an upload, and a tool disclosure is not execution or approval. Use renderPart with the existing AgentToolRequest for authorized review.
+
+The Chat workspace demonstrates threads, templates, bounded local streaming, Stop and error/retry. The AI integrations page exposes actual compiled Vercel AI SDK, CopilotKit headless, AG-UI, custom-host and direct provider examples. OpenAI, Anthropic and OpenRouter provider configuration belongs on the server. These examples are typechecked against pinned packages, not live-provider validation. See packages/liquid-glass/src/chat/README.md and docs/hci/standards/chat-integrations.md for exact boundaries and source links.
+
+The All components page exposes every canonical SDK/custom entry. Examples run the exact registered compiled TSX in separate documents; each standalone example has its own provider and bridge. Compose its inner content into the application's existing provider during integration. Sidebar search filters without changing the accepted selected page.
+
 ## State, preferences and review
 
 Use meaningful accessible names and real UI SDK callbacks. Do not synthesize clicks to operate an agent-facing state model or expose a second mutation API. Decorative cursor/click/contour/reveal elements have no agent actions. Keep disabled controls disabled for all input routes. Respect data-agent-secret, data-agent-hidden and data-agent-confirm; the demo refuses actions requiring a person.

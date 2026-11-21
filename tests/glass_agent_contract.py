@@ -110,6 +110,7 @@ async def verify_agent_contract(page, expect):
         first_page = await choices(catalogue)
         available = {item["value"]: item["label"] for item in first_page.get("items", [])}
         expected_choices = {"overview": "Overview", "interactions": "Interactions",
+                            "chat": "Chat workspace",
                             "sections": "Sections", "patterns": "Patterns", "assistant": "Assistant", "visual": "Graphics",
                             "standards": "Standards", "agents": "Agents", **families}
         for family, label in expected_choices.items():

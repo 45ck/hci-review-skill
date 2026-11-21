@@ -11,6 +11,8 @@ import type { ReactNode } from "react";
 import { createLiquidGlassEngine } from "./webgpu/engine";
 import type { LiquidGlassState, LiquidGlassStatus } from "./webgpu/engine";
 import type { LiquidGlassMotion } from "./webgpu/motion";
+import { DEFAULT_LIQUID_APPEARANCE, LiquidAppearanceProvider } from "./appearance";
+import type { LiquidFontSet, LiquidIconSet } from "./appearance";
 export type { LiquidGlassStatus } from "./webgpu/engine";
 export type { LiquidGlassMotion } from "./webgpu/motion";
 
@@ -34,6 +36,8 @@ export function LiquidGlassProvider({
   dispersion = 0.008,
   motion = "system",
   transparency = "system",
+  fontSet = DEFAULT_LIQUID_APPEARANCE.fontSet,
+  iconSet = DEFAULT_LIQUID_APPEARANCE.iconSet,
   onStatusChange,
 }: {
   children: ReactNode;
@@ -42,6 +46,8 @@ export function LiquidGlassProvider({
   dispersion?: number;
   motion?: boolean | "system";
   transparency?: "system" | "glass" | "solid";
+  fontSet?: LiquidFontSet;
+  iconSet?: LiquidIconSet;
   onStatusChange?: (status: LiquidGlassStatus) => void;
 }) {
   const root = useRef<HTMLDivElement>(null);
@@ -146,7 +152,7 @@ export function LiquidGlassProvider({
     if (reducedReason) document.documentElement.dataset.liquidReducedReason = reducedReason;
     else delete document.documentElement.dataset.liquidReducedReason;
     engine.current?.update(settings.current);
-  }, [refraction, dispersion, resolvedMotion, transparency, reducedReason, reduced]);
+  }, [refraction, dispersion, resolvedMotion, transparency, reducedReason, reduced, fontSet, iconSet]);
   useEffect(() => {
     callback.current?.(state.status);
   }, [state.status]);
@@ -155,54 +161,56 @@ export function LiquidGlassProvider({
   }, []);
   const context = useMemo(() => ({ ...state, refresh, motion: resolvedMotion }), [state, refresh, resolvedMotion]);
   return (
-    <LiquidGlassContext.Provider value={context}>
-      <div
-        ref={root}
-        className="qg-liquid-provider"
-        style={{
-          position: "relative",
-          isolation: "isolate",
-          minHeight: "100vh",
-        }}
-      >
+    <LiquidAppearanceProvider fontSet={fontSet} iconSet={iconSet}>
+      <LiquidGlassContext.Provider value={context}>
         <div
-          ref={background}
-          className="qg-liquid-backdrop"
-          data-liquid-backdrop=""
-          aria-hidden="true"
+          ref={root}
+          className="qg-liquid-provider"
           style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: -1,
-            pointerEvents: "none",
-            overflow: "hidden",
+            position: "relative",
+            isolation: "isolate",
+            minHeight: "100vh",
           }}
         >
-          {backdrop}
+          <div
+            ref={background}
+            className="qg-liquid-backdrop"
+            data-liquid-backdrop=""
+            aria-hidden="true"
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: -1,
+              pointerEvents: "none",
+              overflow: "hidden",
+            }}
+          >
+            {backdrop}
+          </div>
+          <canvas
+            ref={canvas}
+            className="qg-gpu-canvas"
+            data-liquid-canvas="viewport"
+            data-html2canvas-ignore=""
+            aria-hidden="true"
+            style={{
+              position: "fixed",
+              inset: 0,
+              width: "100vw",
+              height: "100vh",
+              zIndex: 0,
+              pointerEvents: "none",
+              display: "block",
+            }}
+          />
+          <div
+            className="qg-liquid-content"
+            style={{ position: "relative", zIndex: 1 }}
+          >
+            {children}
+          </div>
         </div>
-        <canvas
-          ref={canvas}
-          className="qg-gpu-canvas"
-          data-liquid-canvas="viewport"
-          data-html2canvas-ignore=""
-          aria-hidden="true"
-          style={{
-            position: "fixed",
-            inset: 0,
-            width: "100vw",
-            height: "100vh",
-            zIndex: 0,
-            pointerEvents: "none",
-            display: "block",
-          }}
-        />
-        <div
-          className="qg-liquid-content"
-          style={{ position: "relative", zIndex: 1 }}
-        >
-          {children}
-        </div>
-      </div>
-    </LiquidGlassContext.Provider>
+      </LiquidGlassContext.Provider>
+    </LiquidAppearanceProvider>
   );
 }

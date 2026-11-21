@@ -5,10 +5,9 @@ import {
   Check,
   ChevronDown,
   Plus,
-  SlidersHorizontal,
-  Sparkles,
   X,
 } from "lucide-react";
+import { LiquidIcon } from "@quantitative-hci/liquid-glass/icons";
 import {
   AlertDialog,
   AlertDialogBackdrop,
@@ -170,10 +169,10 @@ export function CommandDemo() {
               <Plus aria-hidden /> New canvas
             </CommandItem>
             <CommandItem value="Material settings">
-              <SlidersHorizontal aria-hidden /> Material settings
+              <LiquidIcon name="settings" /> Material settings
             </CommandItem>
             <CommandItem value="Saved collection">
-              <Bookmark aria-hidden /> Saved collection
+              <LiquidIcon name="bookmark" /> Saved collection
             </CommandItem>
           </CommandGroup>
         </CommandList>
@@ -192,7 +191,7 @@ export function DialogDemo() {
     <div className="demo-stack">
       <Dialog>
         <DialogTrigger>
-          <Sparkles aria-hidden /> Save a preset
+          <LiquidIcon name="sparkles" /> Save a preset
         </DialogTrigger>
         <DialogBackdrop />
         <DialogContent>
@@ -236,7 +235,7 @@ export function DrawerDemo() {
     <div className="demo-stack">
       <Drawer>
         <DrawerTrigger>
-          <SlidersHorizontal aria-hidden /> Arrange workspace
+          <LiquidIcon name="settings" /> Arrange workspace
         </DrawerTrigger>
         <DrawerBackdrop />
         <DrawerContent>
@@ -339,7 +338,7 @@ export function PopoverDemo() {
     <div className="demo-stack">
       <Popover>
         <PopoverTrigger>
-          <SlidersHorizontal aria-hidden /> Quick settings
+          <LiquidIcon name="settings" /> Quick settings
         </PopoverTrigger>
         <PopoverContent>
           <PopoverTitle>Lighting</PopoverTitle>

@@ -53,6 +53,8 @@ Keep your content and controls outside the `backdrop` prop. Supply a fully paint
   dispersion={0.008}
   motion="system"
   transparency="system"
+  fontSet="studio"
+  iconSet="isometric"
   onStatusChange={(status) => console.info(status)}
 >
   <YourInterface />
@@ -67,6 +69,8 @@ Keep your content and controls outside the `backdrop` prop. Supply a fully paint
 | `dispersion`     | RGB separation; defaults to `0.008`, bounded to `0–0.05`.                                                                                                     |
 | `motion`         | `"system"` by default: animate unless the device requests reduced motion. `true` explicitly enables animation for this app; `false` keeps static optics. |
 | `transparency`   | `"system"` by default: follow reduced transparency. `"glass"` explicitly requests glass; `"solid"` suppresses refraction. Forced colours always use the solid treatment. |
+| `fontSet`        | `"studio"` by default: Manrope throughout. `"editorial"` uses Fraunces headings with Manrope controls and body copy. `"system"` uses the device's native sans serif stack. |
+| `iconSet`        | `"isometric"` by default for the kit's decorative object icons; `"line"` selects their simpler line treatment. Labels and SDK control affordances retain their semantics. |
 | `onStatusChange` | Receives the actual renderer status when it changes.                                                                                                          |
 
 Inside the provider:
@@ -90,6 +94,22 @@ The hook's `motion` is the effective state: `"enabled"`, `"reduced"` or `"off"`.
 With motion enabled, pointer light follows the active surface, activation produces a bounded ripple, and the SDK's actual tabs and segmented indicators travel with a short spring. Switch thumbs and popup surfaces use the same motion vocabulary. Reduced motion keeps static optics and requested control/layout updates. Animation stops after the response settles; the backdrop is not recaptured per frame.
 
 The motion option controls this material layer. Drawer retains the SDK's own drag/snap physics and device motion handling; the kit follows its moving geometry even when decorative motion is off, without replacing its engine-owned positioning.
+
+## Typography and icon preferences
+
+The default appearance is exported as `DEFAULT_LIQUID_APPEARANCE` from `@quantitative-hci/liquid-glass/appearance`. `useLiquidAppearance()` returns `{ fontSet, iconSet }`; the same entry exports `LiquidFontSet`, `LiquidIconSet` and `LiquidAppearance` types. Change the controlled props on `LiquidGlassProvider` to update the whole interface without remounting its controls or recreating the renderer.
+
+| Font set | Headings | Controls and body | Intended use |
+| --- | --- | --- | --- |
+| Studio | Manrope | Manrope | Default product interface. |
+| Editorial | Fraunces with optical sizing | Manrope | A more expressive heading style with familiar control typography. |
+| System | Native system sans serif | Native system sans serif | Device-native appearance with no custom font requirement. |
+
+`kit.css` includes `fonts.css` and local WOFF2 assets. Manrope and Fraunces are unchanged Google Fonts distributions, licensed under SIL OFL 1.1. Latin and Latin-ext subsets are included; characters outside those subsets use the fallback stack. Fonts are served with the app, and unused font faces are not requested. Original download URLs, sizes and SHA-256 hashes are recorded in [`src/assets/fonts/sources.json`](src/assets/fonts/sources.json). Keep the [Manrope](LICENSES/Manrope-OFL.txt) and [Fraunces](LICENSES/Fraunces-OFL.txt) notices with redistributed fonts.
+
+The provider applies `data-liquid-font` and `data-liquid-icons` to the document so native top-layer popups share the selected appearance. Previous values are restored when it unmounts. Use one provider per document, as for the WebGPU material. The shared CSS exposes `--liquid-font-body`, `--liquid-font-heading` and `--liquid-heading-tracking` for custom content; technical code keeps its existing monospace font.
+
+The demo exposes **Font set** and **Icon style** in Material settings. It stores only validated values under `qg-kit-font` and `qg-kit-icons`. Reset material restores Studio and Isometric, while Copy starter includes the currently selected font and icon props. These are visual preferences: they do not change the task model, labels, focus order or current form values. Choose typography through representative reading and task tests; a font change by itself is not evidence of improved usability.
 
 ## Registering surfaces
 

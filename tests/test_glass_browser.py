@@ -17,6 +17,7 @@ from time import perf_counter
 from urllib.parse import urlparse
 
 from glass_agent_contract import verify_agent_contract
+from glass_appearance_contract import verify_appearance_contract
 from glass_browser_diagnostics import start_browser_profile
 from glass_optics_contract import (
     SCREENSHOT_TIMEOUT_MS,
@@ -400,6 +401,23 @@ async def run(args):
             return {**dimensions, "viewport": {"width": 390, "height": 844}, "switchUsable": True, "screenshot": "overview-mobile.png"}
 
         await record("mobile_overview_fits_and_remains_usable", mobile, timeout=20)
+
+        async def appearance():
+            appearance_context = await new_context(viewport={"width": 1440, "height": 1000})
+            appearance_page = await appearance_context.new_page()
+            await observe_errors(appearance_page)
+            try:
+                return await verify_appearance_contract(
+                    appearance_page, expect, base_url=args.base_url,
+                    output_dir=output.parent, require_gpu=args.software_gpu,
+                )
+            except Exception:
+                await failure_evidence(appearance_page)
+                raise
+            finally:
+                await appearance_context.close()
+
+        await record("font_icon_presets_state_and_export", appearance, reset=False, timeout=45)
 
         async def preferences():
             preference_context = await new_context(viewport={"width": 1440, "height": 1000})

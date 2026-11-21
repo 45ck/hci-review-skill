@@ -1,6 +1,7 @@
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
+import { createHash } from "node:crypto";
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const packageDir = join(root, "packages/liquid-glass");
@@ -41,6 +42,26 @@ for (const name of ["@ui-sdk/core", "@ui-sdk/react"]) {
 check(gallery.dependencies?.["@quantitative-hci/liquid-glass"], "The demo must consume the shared kit package.");
 check(pkg.exports?.["./webgpu"] === "./src/webgpu.tsx", "Export the reusable WebGPU provider from the package.");
 check(pkg.exports?.["./kit.css"] === "./src/kit.css", "Export the shared kit stylesheet.");
+for (const [entry, path] of Object.entries({
+  "./appearance": "./src/appearance.tsx",
+  "./icons": "./src/icons.tsx",
+  "./fonts.css": "./src/fonts.css",
+})) {
+  check(pkg.exports?.[entry] === path && existsSync(join(packageDir, path)), `Retain the public ${entry} entry.`);
+}
+const fontDirectory = join(packageDir, "src/assets/fonts");
+const fontSources = json(join(fontDirectory, "sources.json"));
+check(fontSources.fonts?.length === 4, "Retain the reviewed Latin and Latin-ext font subsets.");
+for (const font of fontSources.fonts ?? []) {
+  const path = join(fontDirectory, font.file);
+  check(existsSync(path), `Missing bundled font ${font.file}.`);
+  if (!existsSync(path)) continue;
+  const bytes = readFileSync(path);
+  check(bytes.length === font.bytes && createHash("sha256").update(bytes).digest("hex") === font.sha256, `Font ${font.file} differs from its recorded source; review and update provenance.`);
+}
+for (const family of ["Manrope", "Fraunces"]) {
+  check(existsSync(join(packageDir, "LICENSES", `${family}-OFL.txt`)) && existsSync(join(galleryDir, "public/licenses", `${family.toLowerCase()}-OFL.txt`)), `Preserve ${family}'s licence in the package and demo.`);
+}
 for (const path of ["node_modules/@ui-sdk/core/skills/ui-sdk/SKILL.md", "node_modules/@ui-sdk/react/docs/llms.txt", "node_modules/@ui-sdk/react/docs/agents.md"]) {
   check(existsSync(join(root, path)), `Missing installed official SDK guidance: ${path}.`);
 }
@@ -60,7 +81,7 @@ for (const id of expected) {
 for (const path of sourceFiles) {
   const source = read(path);
   check(!/["']@ui-sdk\/react["']/.test(source) && !source.includes("@ui-sdk/core/internal/"), `${relative(root, path)}: use documented SDK entries.`);
-  check(!/["']@quantitative-hci\/liquid-glass\/(?!webgpu["']|material["']|kit\.css["']|styles\.css["']|tokens\.css["'])/.test(source), `${relative(root, path)}: use direct SDK primitives and the shared material/provider APIs.`);
+  check(!/["']@quantitative-hci\/liquid-glass\/(?!webgpu["']|appearance["']|icons["']|material["']|fonts\.css["']|kit\.css["']|styles\.css["']|tokens\.css["'])/.test(source), `${relative(root, path)}: use direct SDK primitives and the shared material/provider APIs.`);
 }
 
 const main = read(join(galleryDir, "src/main.tsx"));

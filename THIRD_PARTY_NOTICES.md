@@ -14,6 +14,14 @@ React and React DOM are copyright Meta Platforms, Inc. and affiliates, under the
 
 Lucide icons are provided under the [ISC licence](https://github.com/lucide-icons/lucide/blob/main/LICENSE). The gallery uses the pinned `lucide-react` dependency for interface icons.
 
+## Bundled typography
+
+Manrope is copyright 2018 The Manrope Project Authors, and Fraunces is copyright 2018 The Fraunces Project Authors. Both are distributed under the SIL Open Font License 1.1. The kit includes unchanged Google Fonts WOFF2 subsets; the exact source URLs, retrieval date, sizes and SHA-256 hashes are recorded in `packages/liquid-glass/src/assets/fonts/sources.json`. The full licences are retained in `packages/liquid-glass/LICENSES/` and the demo's `public/licenses/` directory. Fonts are served with the application and do not require a runtime font CDN.
+
+## Quantive Glass artwork
+
+The custom object icons are original vector redraws of an image-generated art-direction sheet. The reference, generation prompt and reproducible vector source are preserved in `packages/liquid-glass/assets/icon-reference/`; the standalone SVGs and provenance are in `packages/liquid-glass/assets/icons/`. Production assets contain vector geometry, with no embedded raster. They are covered by this repository's MIT licence. The generated reference is not part of the runtime bundle.
+
 ## Reference WebGPU shader
 
 The kit adapts the signed-distance shape, refraction, colour dispersion and Fresnel terms from [arya3d/liquid-glass-webgpu](https://github.com/arya3d/liquid-glass-webgpu), commit `90cb73931bbaf38bd54b3263cd3fda1daef1869c`, copyright 2026 arya3d, under the MIT licence. The local renderer instances the adapted shader across actual SDK control and panel bounds, shares its GPU pipeline and backdrop texture, and uses local canvases for top-layer popups. It is not an unchanged shader in an isolated lens scene. The complete notice is retained at `packages/liquid-glass/LICENSES/arya3d-MIT.txt` and ships at `docs/hci/examples/liquid-glass/public/licenses/arya3d-liquid-glass-MIT.txt`.

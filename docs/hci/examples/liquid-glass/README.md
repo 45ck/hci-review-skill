@@ -100,7 +100,7 @@ CI adds `--software-gpu`. This uses the established Chromium SwiftShader flags o
 
 The JSON report records browser metadata, status, pixel differences, timing and per-check outcomes. Screenshots include the desktop overview, desktop popup, mobile overview and GPU comparisons. Software rendering is functional evidence, not a hardware performance benchmark.
 
-`npm run glass:check` verifies source coverage, pins, direct imports, renderer integration and attribution. `npm run glass:build` typechecks and builds. The path-filtered CI job has bounded runtime, cancellation of superseded runs and seven-day artifacts.
+`npm run glass:check` verifies source coverage, pins, direct imports, renderer integration and attribution. `npm run glass:build` typechecks and builds. CI starts on every pull request so the required `verify` check can finish for unrelated changes. A lightweight path check skips the full job only after successfully identifying a PR with no relevant UI changes; detection failures and manual runs execute verification. The full job keeps its bounded runtime, cancellation of superseded runs and seven-day artifacts.
 
 `npm run glass:semantic-check`, included in `glass:verify`, runs the shared-rule tests, static TSX lint and source-bound contextual receipt checks. Changes to the gallery shell, App layouts, review tool or their configured shared appearance dependencies invalidate the corresponding assessment in `docs/hci/reviews/semantic-review.json`. The gate verifies a current recorded assessment; it cannot prove that the assessment is correct or that a person has validated the interface. Add explicit scopes when extending this requirement to other screens.
 

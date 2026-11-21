@@ -84,14 +84,19 @@ async def verify_review_contract(page, expect, *, base_url, output_dir):
               <div data-quantive-review-root><button style="width:48px;height:40px"></button><p>TOOL_REVIEW_SENTINEL</p></div>
               <p id="review-visible-text">Preview content<span style="display:none">CSS_HIDDEN_REVIEW_SENTINEL</span></p>
               <label for="review-radio-probe">Balanced</label><button id="review-radio-probe" role="radio" style="width:40px;height:40px"></button>
+              <span hidden id="review-hidden-label">HIDDEN_LABEL_REVIEW_SENTINEL</span><button aria-labelledby="review-hidden-label" style="width:40px;height:40px"></button>
+              <span style="display:none" id="review-css-hidden-label">CSS_HIDDEN_LABEL_REVIEW_SENTINEL</span><button aria-labelledby="review-css-hidden-label" style="width:40px;height:40px"></button>
+              <label hidden for="review-hidden-native-control" id="review-hidden-native-label">HIDDEN_NATIVE_LABEL_REVIEW_SENTINEL</label><button id="review-hidden-native-control" style="width:40px;height:40px"></button>
+              <span data-agent-secret id="review-protected-label" style="display:inline-block;width:40px;height:40px;overflow:hidden;white-space:nowrap">PROTECTED_LABEL_REVIEW_SENTINEL</span><button aria-labelledby="review-protected-label" style="width:40px;height:40px"></button>
               <input aria-label="Fixture value" value="EDITABLE_REVIEW_SENTINEL" style="width:150px;height:40px" />`;
             node.append(probe);
         }""")
         await press("Refresh checks")
         await expect_current()
         await expect(panel.locator("[data-review-finding]")).to_have_count(base_finding_count)
+        await expect(panel.get_by_text(re.compile(r"4 control names were not inspected"))).to_be_visible()
         evidence = await panel.inner_text()
-        for sentinel in ["HIDDEN_REVIEW_SENTINEL", "SECRET_REVIEW_SENTINEL", "AGENT_HIDDEN_SENTINEL", "TOOL_REVIEW_SENTINEL", "CSS_HIDDEN_REVIEW_SENTINEL", "EDITABLE_REVIEW_SENTINEL"]:
+        for sentinel in ["HIDDEN_REVIEW_SENTINEL", "SECRET_REVIEW_SENTINEL", "AGENT_HIDDEN_SENTINEL", "TOOL_REVIEW_SENTINEL", "CSS_HIDDEN_REVIEW_SENTINEL", "EDITABLE_REVIEW_SENTINEL", "HIDDEN_LABEL_REVIEW_SENTINEL", "CSS_HIDDEN_LABEL_REVIEW_SENTINEL", "HIDDEN_NATIVE_LABEL_REVIEW_SENTINEL", "PROTECTED_LABEL_REVIEW_SENTINEL"]:
             assert sentinel not in evidence, f"Excluded content appeared in review UI: {sentinel}"
 
         browser_stage("review: keyboard choice exports stable decision identity")
@@ -133,6 +138,9 @@ async def verify_review_contract(page, expect, *, base_url, output_dir):
             node.querySelector('[data-agent-hidden] p').textContent = 'CHANGED_AGENT_HIDDEN_SENTINEL';
             node.querySelector('[data-quantive-review-root] p').textContent = 'CHANGED_TOOL_SENTINEL';
             node.querySelector('#review-visible-text span').textContent = 'CHANGED_CSS_HIDDEN_SENTINEL';
+            for (const id of ['review-hidden-label', 'review-css-hidden-label', 'review-hidden-native-label', 'review-protected-label']) {
+                node.querySelector('#' + id).textContent = 'CHANGED_EXTERNAL_LABEL_SENTINEL';
+            }
             node.querySelector('input').value = 'CHANGED_EDITABLE_SENTINEL';
         }""")
         await press("Refresh checks")
@@ -195,7 +203,7 @@ async def verify_review_contract(page, expect, *, base_url, output_dir):
         completed = True
         return {
             "fixtureRules": ["repeated-subtitle", "generic-action", "control-name"],
-            "excludedContent": ["hidden", "CSS-hidden", "agent-hidden", "secret", "review UI", "editable values"],
+            "excludedContent": ["hidden", "CSS-hidden", "agent-hidden", "secret", "review UI", "editable values", "hidden/protected referenced and native labels"],
             "packet": packet,
             "agentSelectionRefusal": refused,
             "staleExportRefused": True,

@@ -1,5 +1,5 @@
 /** Shared, bounded review rules. A review candidate is not a human quality score. */
-export const REVIEW_RULE_VERSION = "1.0.0";
+export const REVIEW_RULE_VERSION = "1.0.1";
 
 export type ReviewSeverity = "error" | "warning" | "review";
 export type ReviewCertainty = "measured" | "heuristic" | "contextual";
@@ -132,6 +132,7 @@ export function analyzeReviewSnapshot(snapshot: ReviewSnapshot): ReviewReport {
   }
   const identity = { ...snapshot, elements, omittedElements, ruleVersion: REVIEW_RULE_VERSION };
   const summary: Record<ReviewSeverity, number> = { error: 0, warning: 0, review: 0 };
+  const unresolvedNames = elements.filter(element => element.kind === "control" && element.nameKnown === false).length;
   findings.forEach(finding => summary[finding.severity]++);
   return { fingerprint: `qgr-${hash(JSON.stringify(identity))}`, ruleVersion: REVIEW_RULE_VERSION,
     viewport: { ...snapshot.viewport }, scope: snapshot.scope, elementCount: elements.length, findings, summary,
@@ -140,6 +141,7 @@ export function analyzeReviewSnapshot(snapshot: ReviewSnapshot): ReviewReport {
       snapshot.source === "source"
         ? `Static JSX literals only; ${snapshot.omittedDynamic ?? 0} dynamic candidates were not evaluated and ${snapshot.omittedExamples ?? 0} explicitly marked deliberate examples were excluded. Browser states and layout are not covered.`
         : "Only the supplied rendered region and current state are inspected. Hidden views, secret content and editable values are excluded.",
+      ...(snapshot.source !== "source" && unresolvedNames ? [`${unresolvedNames} control ${unresolvedNames === 1 ? "name was" : "names were"} not inspected because a referenced label was hidden, protected or unavailable. Verify those names in the browser accessibility tree; no unnamed-control failure is inferred.`] : []),
       "Wording, repetition, heading order and task relevance need contextual review. There is no LLM, semantic inference or automatic rewriting.",
       "These checks do not establish full accessibility conformance, factual accuracy or human usability. Choices request work; they do not apply changes.",
     ] };

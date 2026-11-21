@@ -7,48 +7,58 @@ const contentSelector = `h1,h2,h3,h4,h5,h6,[role="heading"],p,${controlSelector}
 
 function isPrivate(element: Element): boolean { return Boolean(element.closest(privateSelector)); }
 
-function visible(element: Element, root: HTMLElement): boolean {
-  if (isPrivate(element)) return false;
+function textExcluded(element: Element, root: HTMLElement): boolean {
+  if (isPrivate(element)) return true;
   // A modal dev drawer can make this entire region inert/aria-hidden. Neither means
   // its painted layout disappeared. Real hidden descendants still stay excluded.
   for (let node: Element | null = element; node; node = node.parentElement) {
-    if (node.hasAttribute("hidden")) return false;
-    if (node !== root && root.contains(node) && node.getAttribute("aria-hidden") === "true") return false;
+    if (node.hasAttribute("hidden")) return true;
+    if (node !== root && !node.contains(root) && node.getAttribute("aria-hidden") === "true") return true;
     const style = getComputedStyle(node);
-    if (style.display === "none" || style.visibility === "hidden" || style.visibility === "collapse" || style.opacity === "0") return false;
+    if (style.display === "none" || style.visibility === "hidden" || style.visibility === "collapse" || style.opacity === "0") return true;
   }
+  return false;
+}
+
+function visible(element: Element, root: HTMLElement): boolean {
+  if (textExcluded(element, root)) return false;
   const rect = element.getBoundingClientRect();
   return element.getClientRects().length > 0 && rect.width > 2 && rect.height > 2;
 }
 
-function safeText(element: Element): string {
-  if (isPrivate(element) || element.matches("input,textarea,select,script,style,pre,code")) return "";
+function safeText(element: Element, root: HTMLElement): string {
+  if (textExcluded(element, root) || element.matches("input,textarea,select,script,style,pre,code")) return "";
   const pieces: string[] = [];
   for (const node of element.childNodes) {
     if (node.nodeType === Node.TEXT_NODE) pieces.push(node.textContent ?? "");
-    else if (node instanceof Element && !node.hasAttribute("hidden") && node.getAttribute("aria-hidden") !== "true") {
-      const style = getComputedStyle(node);
-      if (style.display !== "none" && style.visibility !== "hidden" && style.visibility !== "collapse" && style.opacity !== "0") pieces.push(safeText(node));
-    }
+    else if (node instanceof Element) pieces.push(safeText(node, root));
   }
   return pieces.join(" ").replace(/\s+/g, " ").trim().slice(0, 1200);
 }
 
-function nameOf(element: Element): string {
+function nameOf(element: Element, root: HTMLElement): { name: string; known: boolean } {
+  const named = (name: string) => ({ name, known: true });
+  const unresolved = () => ({ name: "", known: false });
   const refs = element.getAttribute("aria-labelledby")?.trim().split(/\s+/).filter(Boolean) ?? [];
-  const referenced = refs.map(id => element.ownerDocument.getElementById(id)).filter((item): item is HTMLElement => Boolean(item) && !isPrivate(item!)).map(safeText).join(" ").trim();
-  if (referenced) return referenced;
-  if (element.getAttribute("aria-label")?.trim()) return element.getAttribute("aria-label")!.trim();
+  const targets = refs.map(id => element.ownerDocument.getElementById(id));
+  // The browser can legitimately use a hidden referenced label. Respect the
+  // review's exclusion boundary without declaring that live control unnamed.
+  if (targets.some(target => !target || textExcluded(target, root))) return unresolved();
+  const referenced = targets.map(target => safeText(target!, root)).join(" ").trim();
+  if (referenced) return named(referenced);
+  if (element.getAttribute("aria-label")?.trim()) return named(element.getAttribute("aria-label")!.trim());
   if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement || element instanceof HTMLSelectElement || element instanceof HTMLButtonElement) {
-    const labels = [...(element.labels ?? [])].filter(label => !isPrivate(label)).map(safeText).join(" ").trim();
-    if (labels) return labels;
-    if (element instanceof HTMLInputElement && ["submit", "reset"].includes(element.type)) return element.type === "submit" ? "Submit" : "Reset";
+    const targets = [...(element.labels ?? [])];
+    if (targets.some(target => textExcluded(target, root))) return unresolved();
+    const labels = targets.map(target => safeText(target, root)).join(" ").trim();
+    if (labels) return named(labels);
+    if (element instanceof HTMLInputElement && ["submit", "reset"].includes(element.type)) return named(element.type === "submit" ? "Submit" : "Reset");
   }
-  const text = safeText(element);
-  if (text) return text;
+  const text = safeText(element, root);
+  if (text) return named(text);
   const image = element.querySelector("img[alt]");
-  if (image && !isPrivate(image) && image.getAttribute("alt")?.trim()) return image.getAttribute("alt")!.trim();
-  return element.getAttribute("title")?.trim() ?? "";
+  if (image && !textExcluded(image, root) && image.getAttribute("alt")?.trim()) return named(image.getAttribute("alt")!.trim());
+  return named(element.getAttribute("title")?.trim() ?? "");
 }
 
 function selector(element: Element): string {
@@ -88,7 +98,7 @@ export function scanReview(root: HTMLElement): ReviewReport {
       if (ancestor === root) break;
     }
     const section = node.closest('section,article,nav,[role="region"],[data-review-scope]');
-    const element: ReviewElement = { id: target, target, kind, text: safeText(node),
+    const element: ReviewElement = { id: target, target, kind, text: safeText(node, root),
       group: section && root.contains(section) ? selector(section) : rootTarget,
       width: Math.round(rect.width * 2) / 2, height: Math.round(rect.height * 2) / 2,
       x: Math.round(rect.left - bounds.left + scrollX), y: Math.round(rect.top - bounds.top + scrollY) };
@@ -98,8 +108,9 @@ export function scanReview(root: HTMLElement): ReviewReport {
       headingIds.set(node, element.id);
     }
     if (kind === "control") {
-      element.name = nameOf(node);
-      element.nameKnown = true;
+      const name = nameOf(node, root);
+      element.name = name.name;
+      element.nameKnown = name.known;
       element.checkTargetSize = !(tag === "a" && node.closest("p,li"));
       // A select's option text is content, not its accessible name. User-entered
       // field values never enter text, evidence or the snapshot fingerprint.

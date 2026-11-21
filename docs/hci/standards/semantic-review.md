@@ -41,6 +41,8 @@ The browser adapter excludes the tool's own `[data-quantive-review-root]` subtre
 
 CSS-hidden descendants and retained hidden views are excluded. Very small backing native inputs used by SDK controls are excluded by their painted dimensions; the actual visible SDK control is inspected. A modal review drawer may make the background region inert or ARIA-hidden without hiding its pixels, so the root's modal state does not turn the report into a false empty pass. Relevant hidden descendants still remain out of scope.
 
+These exclusions also apply to the root of an external label referenced by `aria-labelledby` or a native associated `<label>`. Browsers may legitimately use a hidden label to name a control. The scanner leaves that name unresolved, counts the omission in its limitations and requests a browser accessibility-tree check; it neither copies the hidden text into the report/fingerprint nor invents an unnamed-control error.
+
 The extractor is bounded to 1,000 observed elements, 1,200 characters of text per element and 200 findings. It reports omitted elements/findings as incomplete coverage and asks for a smaller scope. These budgets are performance limits, not sampling that validates the omitted content. Scrolling a nested container is accounted for in element coordinates; a scroll alone should not invalidate the content decision.
 
 ## Required workflow for a layout change

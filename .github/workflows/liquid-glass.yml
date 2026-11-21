@@ -2,62 +2,6 @@ name: WebGPU Liquid Glass kit
 
 on:
   pull_request:
-    paths:
-      - '.github/workflows/liquid-glass.yml'
-      - 'AGENTS.md'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'packages/liquid-glass/**'
-      - 'docs/hci/examples/liquid-glass/**'
-      - 'docs/hci/standards/liquid-glass.md'
-      - 'docs/hci/examples/README.md'
-      - 'THIRD_PARTY_NOTICES.md'
-      - 'scripts/check-glass-standard.mjs'
-      - 'scripts/check-standards-models.mjs'
-      - 'scripts/check-agent-tasks.mjs'
-      - 'scripts/check-agent-contracts.mjs'
-      - 'scripts/agent-contract.mjs'
-      - 'scripts/agent-action-validation.mjs'
-      - 'scripts/agent-documents.mjs'
-      - 'tests/test_model_controlled.mjs'
-      - 'tests/test_agent_documents.mjs'
-      - 'tests/test_agent_action_inputs.mjs'
-      - 'tests/test_agent_contracts.mjs'
-      - 'tests/test_graphics_controlled.mjs'
-      - 'tests/glass_agent_inventory_contract.py'
-      - 'tests/test_agent_inventory.py'
-      - 'docs/hci/standards/agent-engineering.md'
-      - 'scripts/check-modelling-profiles.mjs'
-      - 'tests/test_glass_browser.py'
-      - 'tests/glass_agent_contract.py'
-      - 'tests/glass_appearance_contract.py'
-      - 'tests/glass_developer_contract.py'
-      - 'tests/glass_standards_contract.py'
-      - 'tests/glass_model_document_contract.py'
-      - 'tests/glass_graphics_contract.py'
-      - 'tests/glass_interaction_contract.py'
-      - 'tests/glass_sections_contract.py'
-      - 'tests/glass_layouts_contract.py'
-      - 'tests/test_app_layout_state.mjs'
-      - 'scripts/check-semantic-ui.mjs'
-      - 'scripts/check-ui-review-evidence.mjs'
-      - 'tests/test_semantic_review.mjs'
-      - 'tests/test_ui_review_evidence.mjs'
-      - 'tests/glass_review_contract.py'
-      - 'docs/hci/reviews/**'
-      - 'docs/hci/standards/semantic-review.md'
-      - 'docs/hci/standards/app-layout-system.md'
-      - 'tests/glass_patterns_contract.py'
-      - 'tests/glass_assistant_contract.py'
-      - 'docs/hci/standards/library-patterns.md'
-      - 'docs/hci/standards/interaction-sections.md'
-      - 'docs/hci/standards/standards-components.md'
-      - 'docs/hci/standards/agent-first-modeling.md'
-      - 'docs/hci/standards/omg-coverage.md'
-      - 'docs/hci/standards/developer-components.md'
-      - 'docs/hci/models/developer-model-exploration.md'
-      - 'tests/glass_optics_contract.py'
-      - 'tests/glass_browser_diagnostics.py'
   workflow_dispatch:
     inputs:
       browser_check:
@@ -74,7 +18,48 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      ui: ${{ steps.paths.outputs.ui }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Detect changes requiring UI verification
+        id: paths
+        shell: bash
+        env:
+          GLASS_EVENT_NAME: ${{ github.event_name }}
+          GLASS_PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          GLASS_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          if [[ "$GLASS_EVENT_NAME" == "workflow_dispatch" ]]; then
+            echo "ui=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          [[ "$GLASS_PR_BASE_SHA" =~ ^[a-f0-9]{40}$ && "$GLASS_PR_HEAD_SHA" =~ ^[a-f0-9]{40}$ ]]
+          review_changed_paths_file="$(mktemp)"
+          trap 'rm -f "$review_changed_paths_file"' EXIT
+          git diff --name-only --no-renames -z "$GLASS_PR_BASE_SHA" "$GLASS_PR_HEAD_SHA" -- > "$review_changed_paths_file"
+          review_ui_changed=false
+          while IFS= read -r -d '' review_changed_path; do
+            case "$review_changed_path" in
+              .github/workflows/liquid-glass.yml|AGENTS.md|package.json|package-lock.json|THIRD_PARTY_NOTICES.md|packages/liquid-glass/*|docs/hci/examples/liquid-glass/*|docs/hci/standards/*|docs/hci/reviews/*|docs/hci/examples/README.md|docs/hci/models/developer-model-exploration.md|scripts/*|tests/*)
+                review_ui_changed=true
+                break
+                ;;
+            esac
+          done < "$review_changed_paths_file"
+          echo "ui=$review_ui_changed" >> "$GITHUB_OUTPUT"
+
   verify:
+    name: ${{ github.event_name == 'workflow_dispatch' && inputs.browser_check != '' && 'diagnostic-verify' || 'verify' }}
+    needs: changes
+    if: ${{ always() && (needs.changes.result != 'success' || needs.changes.outputs.ui != 'false') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:

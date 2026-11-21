@@ -29,6 +29,7 @@ test("unnamed measured controls fail while unresolved dynamic names remain uncla
   const report = analyzeReviewSnapshot(snapshot);
   assert.equal(report.summary.error, 1);
   assert.equal(report.findings[0].target, "#empty");
+  assert(report.limitations.some(text => /1 control name was not inspected/.test(text)));
 });
 
 test("repetition is scoped to meaningful regions and literal subtitle equality is advisory", () => {

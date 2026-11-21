@@ -4,8 +4,9 @@ This module uses the caller's browser page. Motion proves accepted host state;
 an agent dispatch result alone is never treated as evidence of a state change.
 """
 
+import json
 from pathlib import Path
-from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+from urllib.parse import parse_qsl, unquote, urlencode, urlsplit, urlunsplit
 
 from glass_developer_contract import _choices, _named_controls, _page_fits, _select
 from glass_optics_contract import SCREENSHOT_TIMEOUT_MS, _act, _call, _entry, browser_stage
@@ -225,6 +226,8 @@ async def verify_motion_collection_contract(page, expect, *, base_url, output_di
         named["work"] = await _named_controls(page)
         status = stage.locator("[data-sample-phase]")
         run_button = stage.get_by_role("button", name="Run local sample", exact=True)
+        artifact_link = stage.locator('a[data-motion-artifact="material-study"]')
+        await expect(artifact_link).to_have_count(0)
 
         async def start_sample():
             button = await _entry(page, "button", "Run local sample")
@@ -234,6 +237,7 @@ async def verify_motion_collection_contract(page, expect, *, base_url, output_di
             }""", button["ref"])
             await expect(status).to_have_attribute("data-sample-phase", "pending")
             await expect(run_button).to_have_attribute("aria-busy", "true")
+            await expect(artifact_link).to_have_count(0)
 
         await start_sample()
         first_id = await stage.locator('.mg-work-events [data-motion-item]').first.get_attribute("data-motion-item")
@@ -245,11 +249,13 @@ async def verify_motion_collection_contract(page, expect, *, base_url, output_di
         await press("Cancel local sample")
         await expect(status).to_have_attribute("data-sample-phase", "cancelled")
         await expect(run_button).not_to_have_attribute("aria-busy", "true")
+        await expect(artifact_link).to_have_count(0)
         cancelled_run = await page.evaluate("window.__motionRequest")
         assert cancelled_run.get("ok"), cancelled_run
         cancelled_events = await stage.locator(".mg-work-events").inner_text()
         await page.wait_for_timeout(1950)
         await expect(status).to_have_attribute("data-sample-phase", "cancelled")
+        await expect(artifact_link).to_have_count(0)
         assert await stage.locator(".mg-work-events").inner_text() == cancelled_events, "Cancelled work committed a late result"
 
         browser_stage("motion: explicit fixture error and retry expose actual accepted result")
@@ -257,6 +263,7 @@ async def verify_motion_collection_contract(page, expect, *, base_url, output_di
         failed_run = await refused(await _entry(page, "button", "Run local sample"), "press", [])
         assert not failed_run.get("ok"), failed_run
         await expect(status).to_have_attribute("data-sample-phase", "error")
+        await expect(artifact_link).to_have_count(0)
         await expect(stage.get_by_role("button", name="Retry local sample", exact=True)).to_be_visible()
         await expect(stage.locator(".qgm-feedback")).to_have_attribute("data-motion-status", "error")
         retry = await press("Retry local sample")
@@ -265,6 +272,28 @@ async def verify_motion_collection_contract(page, expect, *, base_url, output_di
         await expect(stage.locator(".qgm-feedback")).to_have_attribute("data-motion-status", "success")
         await expect(stage.locator('.mg-work-events [data-event-state="working"]')).to_have_count(0)
         await expect(stage.locator('.mg-work-events [data-event-state="complete"]')).to_have_count(3)
+        await expect(artifact_link).to_be_visible()
+        await _entry(page, "button", "Download sample artifact")
+        artifact_href = await artifact_link.get_attribute("href")
+        prefix = "data:application/json;charset=utf-8,"
+        assert artifact_href and artifact_href.startswith(prefix), "Accepted work did not expose a JSON artifact"
+        assert await artifact_link.get_attribute("download") == "material-study.json"
+        artifact = json.loads(unquote(artifact_href[len(prefix):]))
+        registry = json.loads((Path(__file__).resolve().parents[1] / "packages/liquid-glass/motion-recipes.json").read_text(encoding="utf-8"))
+        registered = {recipe["id"]: recipe for recipe in registry["recipes"]}
+        assert artifact["schemaVersion"] == 1 and artifact["kind"] == "quantive-motion-plan", artifact
+        assert artifact["source"] == "local-motion-fixture", artifact
+        assert artifact["registry"] == {"schemaVersion": registry["schemaVersion"], "recipeCount": len(registered)}, artifact["registry"]
+        assert artifact["policyAtRunStart"] == {"preset": "responsive", "mode": "system", "effective": "enabled"}, artifact["policyAtRunStart"]
+        assert [step["target"] for step in artifact["steps"]] == ["playback", "list", "dialog", "number", "async-action"]
+        for step in artifact["steps"]:
+            recipe = step["recipe"]
+            assert recipe == registered.get(recipe["id"]), f"Artifact recipe differs from the registered specification: {recipe}"
+            assert recipe["intent"] == step["intent"] and step["target"] in recipe["targets"], step
+            assert step["presentation"] == "animate" and str(step["reason"]).strip(), step
+        artifact_evidence = {"filename": "material-study.json", "kind": artifact["kind"],
+                             "policyAtRunStart": artifact["policyAtRunStart"],
+                             "recipeIds": [step["recipe"]["id"] for step in artifact["steps"]]}
 
         browser_stage("motion: graph commands reject stale context and host-cancelled changes")
         workflow = stage.get_by_role("region", name="Motion workflow", exact=True)
@@ -344,7 +373,7 @@ async def verify_motion_collection_contract(page, expect, *, base_url, output_di
             "presence": {"boundedRemoval": True, "restored": True},
             "number": {"accessibleFinalValue": 160}, "dialog": {"keyboardFocusReturned": True},
             "async": {"cancelled": cancelled_run, "duplicate": duplicate, "noLateCompletion": True,
-                      "failure": failed_run, "retry": retry, "acceptedPhase": "success"},
+                      "failure": failed_run, "retry": retry, "acceptedPhase": "success", "artifact": artifact_evidence},
             "workflow": {"initialEvents": events, "acceptedStart": started_workflow, "staleDispatch": stale,
                          "cancelledDispatch": denied, "visibleAcceptance": acceptance, "keyboardResume": True},
             "recipes": {"reducedEndpoint": True, "noChangeSuppressed": True, "frequentAttentionSuppressed": True,

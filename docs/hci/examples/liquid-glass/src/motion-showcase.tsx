@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ComponentProps, type ReactNode } from "react";
+import { ArrowUpRight } from "lucide-react";
 import { Button } from "@ui-sdk/react/button";
 import { Toggle } from "@ui-sdk/react/toggle";
 import { SegmentedControl, SegmentedControlIndicator, SegmentedControlItem } from "@ui-sdk/react/segmented-control";
@@ -154,7 +155,7 @@ function InterfaceStudies() {
 
     <MotionCard title="Open a closer view." description="The SDK owns dismissal, focus and return.">
       <div className="mg-demo-stage"><Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogTrigger className="mg-detail-trigger" aria-label="Open material study details"><LiquidIcon name="layers" size={62} /><span><strong>Material study</strong><span>Open details</span></span><span aria-hidden="true">↗</span></DialogTrigger>
+        <DialogTrigger className="mg-detail-trigger" aria-label="Open material study details"><LiquidIcon name="layers" size={62} /><span><strong>Material study</strong><span>Open details</span></span><ArrowUpRight size={18} aria-hidden="true" /></DialogTrigger>
         <DialogBackdrop />
         <DialogContent className="mg-detail-dialog" data-liquid-glass>
           <LiquidMotion transitionKey={dialogOpen ? "open" : "closed"} recipe="scale">
@@ -166,11 +167,11 @@ function InterfaceStudies() {
           </LiquidMotion>
         </DialogContent>
       </Dialog></div>
-      <p className="mg-caption">A reveal composition; no shared geometry is claimed.</p>
+      <p className="mg-caption">Open the study, then return to the same control.</p>
     </MotionCard>
 
     <MotionCard title="Make changes traceable." description="Add, remove and reorder stable items.">
-      <div className="mg-list-stage"><LiquidMotionList label="Motion study collection" items={rows.map(row => ({ id: row.id, content: <div className="mg-list-row"><LiquidIcon name={row.icon} size={28} /><span>{row.label}</span><span aria-hidden="true">↗</span></div> }))} /></div>
+      <div className="mg-list-stage"><LiquidMotionList label="Motion study collection" items={rows.map(row => ({ id: row.id, content: <div className="mg-list-row"><LiquidIcon name={row.icon} size={28} /><span>{row.label}</span></div> }))} /></div>
       <div className="mg-card-actions mg-wrap"><Button disabled={rows.length >= 6} onClick={() => { const id = ++rowSequence.current; setRows(current => [...current, { id: `new-${id}`, label: `New study ${id}`, icon: "sparkles" }]); }}><LiquidIcon name="plus" size={17} />Add study</Button>
         <Button disabled={rows.length === 0} onClick={() => setRows(current => current.slice(0, -1))}>Remove last study</Button>
         <Button disabled={rows.length < 2} onClick={() => setRows(current => [...current].reverse())}>Reverse studies</Button></div>
@@ -208,6 +209,8 @@ function AgentWorkStudy({ active, stateExample }: { active: boolean; stateExampl
   const [outcome, setOutcome] = useState<"success" | "error">("success");
   const [events, setEvents] = useState<WorkEvent[]>([]);
   const [progress, setProgress] = useState(0);
+  const [artifact, setArtifact] = useState<string | null>(null);
+  const { preset, mode, effective } = useLiquidMotionPolicy();
   const generation = useRef(0);
   const pending = useRef<{ timers: ReturnType<typeof setTimeout>[]; resolve: () => void } | null>(null);
   const cancel = (announce = true) => {
@@ -215,7 +218,7 @@ function AgentWorkStudy({ active, stateExample }: { active: boolean; stateExampl
     const previous = pending.current;
     if (!previous) return;
     previous.timers.forEach(clearTimeout); previous.resolve(); pending.current = null;
-    if (announce) { setPhase("cancelled"); setEvents(current => current.map(item => item.state === "working" ? { ...item, label: "Run cancelled", state: "error" } : item)); }
+    if (announce) { setArtifact(null); setPhase("cancelled"); setEvents(current => current.map(item => item.state === "working" ? { ...item, label: "Run cancelled", state: "error" } : item)); }
   };
   useEffect(() => { if (!active) cancel(); }, [active]);
   useEffect(() => () => cancel(false), []);
@@ -223,7 +226,7 @@ function AgentWorkStudy({ active, stateExample }: { active: boolean; stateExampl
   const run = (result: "success" | "error") => {
     if (pending.current || !active) return;
     const id = ++generation.current;
-    setPhase("pending"); setProgress(0);
+    setArtifact(null); setPhase("pending"); setProgress(0);
     setEvents([{ id: `${id}-inspect`, label: "Inspecting local fixture", state: "working" }]);
     return new Promise<void>((resolve, reject) => {
       const schedule = (ms: number, effect: () => void) => setTimeout(() => { if (generation.current === id) effect(); }, ms);
@@ -232,7 +235,25 @@ function AgentWorkStudy({ active, stateExample }: { active: boolean; stateExampl
         schedule(1100, () => { setProgress(67); setEvents([{ id: `${id}-inspect`, label: "Context inspected", state: "complete" }, { id: `${id}-prepare`, label: "Sample artifact prepared", state: "complete" }, { id: `${id}-verify`, label: "Checking the local result", state: "working" }]); }),
         schedule(1800, () => {
           pending.current = null; setPhase(result);
-          if (result === "success") setProgress(100);
+          if (result === "success") {
+            const requests: { intent: LiquidMotionIntent; target: string }[] = [
+              { intent: "state", target: "playback" },
+              { intent: "continuity", target: "list" },
+              { intent: "presence", target: "dialog" },
+              { intent: "progress", target: "number" },
+              { intent: "feedback", target: "async-action" },
+            ];
+            setArtifact(JSON.stringify({
+              schemaVersion: 1,
+              kind: "quantive-motion-plan",
+              name: "Material study",
+              source: "local-motion-fixture",
+              registry: { schemaVersion: liquidMotionRegistry.schemaVersion, recipeCount: liquidMotionRecipes.length },
+              policyAtRunStart: { preset, mode, effective },
+              steps: requests.map(request => ({ ...request, ...selectLiquidMotionRecipe({ ...request, reducedMotion: effective !== "enabled" }) })),
+            }, null, 2));
+            setProgress(100);
+          } else setArtifact(null);
           setEvents(current => current.map(item => item.id === `${id}-verify` ? { ...item, label: result === "success" ? "Local result ready" : "Fixture check failed", state: result === "success" ? "complete" : "error" } : item));
           if (result === "success") resolve(); else reject(new Error("The selected local failure fixture completed. Retry is available."));
         }),
@@ -256,6 +277,7 @@ function AgentWorkStudy({ active, stateExample }: { active: boolean; stateExampl
         <Button disabled={!active} data-variant="primary" pendingAnnouncement="The local sample is running" onClick={() => run(outcome)}><LiquidIcon name="sparkles" size={22} />Run local sample</Button>
         <Button disabled={phase !== "pending"} onClick={() => cancel()}>Cancel local sample</Button>
         {phase === "error" && <Button pendingAnnouncement="Retrying the local sample" onClick={() => run("success")}>Retry local sample</Button>}
+        {phase === "success" && artifact && <Button data-motion-artifact="material-study" render={<a href={`data:application/json;charset=utf-8,${encodeURIComponent(artifact)}`} download="material-study.json" />}>Download sample artifact</Button>}
       </div>
       <output className="mg-work-status" aria-live="polite" data-sample-phase={phase}>{phase === "success" ? "The local fixture produced material-study.json." : phase === "error" ? "The failure is intentional. Retry runs the success fixture." : phase === "cancelled" ? "Pending work was stopped. Its later callbacks cannot replace this state." : ""}</output>
     </MotionCard>
@@ -344,7 +366,7 @@ function MotionRecipes() {
       <Collapsible><CollapsibleTrigger>Read the compiled example</CollapsibleTrigger><CollapsiblePanel><pre className="mg-source" tabIndex={0} aria-label="Motion system example source"><code>{motionRecipeSource}</code></pre></CollapsiblePanel></Collapsible>
     </MotionCard>
     <MotionCard title="Source studies." description="Eleven libraries informed this native layer.">
-      <div className="mg-source-links">{sources.map(source => <Button key={source.name} render={<a href={source.url} target="_blank" rel="noreferrer" />}>{source.name}<span aria-hidden="true">↗</span></Button>)}</div>
+      <div className="mg-source-links">{sources.map(source => <Button key={source.name} render={<a href={source.url} target="_blank" rel="noreferrer" />}>{source.name}<ArrowUpRight size={16} aria-hidden="true" /></Button>)}</div>
       <p className="mg-caption">Original Quantive implementations. Rive authoring, arbitrary SVG extrusion and full timeline editors remain separate capabilities.</p>
     </MotionCard>
   </div>;

@@ -168,7 +168,7 @@ Glyphrise turns SVG input into a 3D presentation with depth, bevel, lighting and
 5. Stop decoration on unmount, unavailability and motion-policy changes. Cancel superseded asynchronous work separately and prevent stale callbacks from replacing a later result.
 6. Verify the final value/order/open state and any application result. A frame count or a visually attractive transition is not the acceptance criterion.
 
-The gallery's agent-work demonstration is explicitly a **local fixture**. Timers exercise real pending, success, error, cancellation and retry component state; no model call, upload, generated file or external task is performed. Its progress values are fixture steps, not estimated progress for a real agent task.
+The gallery's agent-work demonstration is explicitly a **local fixture**. Timers exercise real pending, success, error, cancellation and retry component state. A successful run generates a downloadable `material-study.json` plan in memory from the actual motion registry; a new run, failure or cancellation clears the available artifact. No model call, upload or external task is performed. Its progress values are fixture steps, not estimated progress for a real agent task.
 
 ## Validation targets
 

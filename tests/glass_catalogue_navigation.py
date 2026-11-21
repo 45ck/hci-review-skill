@@ -81,7 +81,13 @@ async def verify_catalogue_navigation(page, expect, *, base_url, output_dir):
         await expect(cards).to_have_count(len(expected_ids))
 
         browser_stage("library: App layouts component opens its registered showcase")
+        expected_layout_ids = {entry["id"] for entry in custom if entry["category"] == "App layouts"}
+        assert len(expected_layout_ids) == 9, expected_layout_ids
         await _select(page, "select", "Component category", value="App layouts")
+        await expect(cards).to_have_count(9)
+        layout_ids = await cards.evaluate_all("nodes => nodes.map(node => node.dataset.libraryComponent)")
+        assert set(layout_ids) == expected_layout_ids, layout_ids
+        await set_input("Find a library component", "LiquidAppShell")
         await expect(cards).to_have_count(1)
         await expect(cards.first).to_have_attribute("data-library-component", "liquid-app-shell")
         await press("Open LiquidAppShell")

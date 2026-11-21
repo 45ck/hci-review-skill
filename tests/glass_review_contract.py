@@ -221,6 +221,25 @@ async def verify_review_contract(page, expect, *, base_url, output_dir):
         forced_fit = await _page_fits(page)
         await panel.get_by_role("button", name="Close review", exact=True).click()
         await expect(panel).not_to_be_visible()
+        browser_stage("review: catalogue detail opens the real tool without losing route context")
+        await page.emulate_media(reduced_motion="no-preference", forced_colors="none")
+        if original_viewport:
+            await page.set_viewport_size(original_viewport)
+        detail_url = urlunsplit(urlsplit(_review_url(base_url, collection="custom:liquid-review-overlay", context="review-discovery"))._replace(fragment="review-entry"))
+        await page.goto(detail_url, wait_until="networkidle")
+        await expect(panel).not_to_be_visible()
+        open_review = page.get_by_text("Open Review UI", exact=True)
+        await expect(open_review).to_be_visible()
+        destination = urlsplit(await open_review.get_attribute("href"))
+        assert dict(parse_qsl(destination.query)) == {**dict(parse_qsl(urlsplit(detail_url).query)), "review": "1"}
+        assert destination.fragment == "review-entry"
+        await open_review.click()
+        await expect(panel).to_be_visible()
+        await expect_current()
+        await expect(panel).to_have_attribute("data-review-scope", "custom:liquid-review-overlay")
+        assert dict(parse_qsl(urlsplit(page.url).query)).get("collection") == "custom:liquid-review-overlay"
+        await panel.get_by_role("button", name="Close review", exact=True).click()
+        await expect(panel).not_to_be_visible()
         completed = True
         return {
             "fixtureRules": ["repeated-subtitle", "generic-action", "control-name"],
@@ -228,6 +247,7 @@ async def verify_review_contract(page, expect, *, base_url, output_dir):
             "packet": packet,
             "agentSelectionRefusal": refused,
             "staleExportRefused": True,
+            "catalogueReviewEntryPreservesRoute": True,
             "temporaryHighlightRemoved": True,
             "viewports": viewports,
             "forcedColoursMobile": forced_fit,

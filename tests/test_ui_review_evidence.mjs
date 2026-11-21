@@ -35,6 +35,15 @@ test("a new file in a scoped directory cannot escape the review fingerprint", ()
   assert.match(validateReviewEvidence(root, record, scopes).join(" "), /source changed/);
 }));
 
+test("catalogue JSON copy changes invalidate the recorded review", () => withFixture((root, scopes, record) => {
+  const labels = join(root, "ui/catalogue.json");
+  writeFileSync(labels, JSON.stringify({ action: "Review UI" }));
+  record.reviews[0].fingerprint = reviewFingerprint(root, scopes.layout).fingerprint;
+  assert.deepEqual(validateReviewEvidence(root, record, scopes), []);
+  writeFileSync(labels, JSON.stringify({ action: "Approve release" }));
+  assert.match(validateReviewEvidence(root, record, scopes).join(" "), /source changed/);
+}));
+
 test("an unexplained fresh hash is insufficient evidence", () => withFixture((root, scopes, record) => {
   delete record.reviews[0].assessments.recovery;
   assert.match(validateReviewEvidence(root, record, scopes).join(" "), /missing recovery assessment/);

@@ -381,6 +381,27 @@
       "contract": "docs/hci/standards/library-patterns.md"
     },
     {
+      "id": "liquid-chat",
+      "name": "LiquidChat",
+      "category": "Chat",
+      "exportPath": "@quantitative-hci/liquid-glass/chat",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-conversation-list",
+      "name": "LiquidConversationList",
+      "category": "Chat",
+      "exportPath": "@quantitative-hci/liquid-glass/chat",
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-prompt-template-picker",
+      "name": "LiquidPromptTemplatePicker",
+      "category": "Chat",
+      "exportPath": "@quantitative-hci/liquid-glass/chat",
+      "validation": "unvalidated"
+    },
+    {
       "id": "liquid-app-shell",
       "name": "LiquidAppShell",
       "category": "App layouts",
@@ -451,6 +472,14 @@
       "exportPath": "@quantitative-hci/liquid-glass/layouts",
       "validation": "unvalidated",
       "contract": "docs/hci/standards/app-layout-system.md"
+    },
+    {
+      "id": "liquid-layout-diagnostics",
+      "name": "LiquidLayoutDiagnostics",
+      "category": "Layout quality",
+      "exportPath": "@quantitative-hci/liquid-glass/quality",
+      "validation": "unvalidated",
+      "contract": "docs/hci/standards/layout-quality.md"
     },
     {
       "id": "liquid-review-overlay",

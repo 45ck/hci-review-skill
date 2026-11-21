@@ -94,6 +94,20 @@ A real implementation requires all of the following, none supplied by a visual s
 
 Use **content/container constraints and real task affordances**, not just width breakpoints. Include 200%/400% zoom, large labels, localisation, text-spacing overrides, reduced transparency/motion, forced colours and keyboard-only paths. Preserve control identity and action semantics across device layouts.
 
+### Combined controls and popup placement
+
+Choose a preferred side from the control's purpose and position, then let the SDK resolve collisions. `start` and `end` follow the interface direction; they do not always mean physical left and right. Keep the trigger and adjacent action hit regions stationary while the popup opens or closes.
+
+| Context | Preferred side | Preferred alignment | Reason |
+| --- | --- | --- | --- |
+| Workspace switcher and leading state selector | Bottom | Start | The menu begins at the leading context control |
+| Notifications, account and trailing review actions | Bottom | End | Keep the popup attached to the trailing action group |
+| Mobile bottom-dock overflow | Top | End | Open into the work area above the dock |
+
+These controls use an 8px trigger gap and 8px viewport collision padding. A side or alignment flip is acceptable when it resolves a collision; an unnecessary flip, detached anchor, overflow or overlapping hit region is a test failure. Long labels wrap within the available popup width; content scrolls within the available height. The placement checker observes the SDK's resolved `data-side` and `data-align`, rather than implementing a second positioning engine.
+
+The [layout-quality standard](layout-quality.md) defines explicit probe baselines, scrolling/zoom handling, bounded shift observation and seeded geometry checks. The [visual-regression standard](visual-regression.md) describes reviewed pixel references and the optional hosted Chromatic comparison. These are separate from human HCI validation.
+
 ## Material and design-smell gates
 
 - Apply the **actual shared Quantive WebGPU provider** to intended controls and navigation, using the existing `data-liquid-glass` / exclusion conventions and solid fallback. Avoid independently implementing liquid-glass shaders or blur-only facsimiles inside production layouts.

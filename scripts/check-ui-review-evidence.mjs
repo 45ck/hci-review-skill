@@ -8,10 +8,26 @@ export const REVIEW_SCOPES = {
     "docs/hci/examples/liquid-glass/src/main.tsx",
     "docs/hci/examples/liquid-glass/src/gallery.css",
     "docs/hci/examples/liquid-glass/src/review-launcher.tsx",
+    "docs/hci/examples/liquid-glass/src/library-catalogue.ts",
+    "docs/hci/examples/liquid-glass/src/library-pages.tsx",
+    "docs/hci/examples/liquid-glass/src/library-pages.css",
+    "docs/hci/examples/liquid-glass/src/sdk-layout.css",
+    "packages/liquid-glass/src/recipes.ts",
+    "packages/liquid-glass/src/validation.tsx",
+    "packages/liquid-glass/component-manifest.json",
+    "packages/liquid-glass/custom-component-manifest.json",
+    "packages/liquid-glass/agent-contracts.json",
+    "packages/liquid-glass/component-recipes.json",
     "docs/hci/examples/liquid-glass/src/layouts-showcase.tsx",
     "docs/hci/examples/liquid-glass/src/layouts-showcase.css",
     "docs/hci/examples/liquid-glass/src/layouts-state.ts",
     "packages/liquid-glass/src/layouts",
+    "docs/hci/examples/liquid-glass/src/layout-quality-lab.tsx",
+    "docs/hci/examples/liquid-glass/src/layout-quality-lab.css",
+    "docs/hci/examples/liquid-glass/src/recipe-panel.tsx",
+    "docs/hci/examples/liquid-glass/src/example-preview.tsx",
+    "docs/hci/examples/liquid-glass/src/recipes/application-shell.tsx",
+    "packages/liquid-glass/src/quality",
     "packages/liquid-glass/src/kit.css",
     "packages/liquid-glass/src/fonts.css",
     "packages/liquid-glass/src/validation.css",
@@ -22,6 +38,16 @@ export const REVIEW_SCOPES = {
     "docs/hci/examples/liquid-glass/src/main.tsx",
     "docs/hci/examples/liquid-glass/src/gallery.css",
     "docs/hci/examples/liquid-glass/src/review-launcher.tsx",
+    "docs/hci/examples/liquid-glass/src/library-catalogue.ts",
+    "docs/hci/examples/liquid-glass/src/library-pages.tsx",
+    "docs/hci/examples/liquid-glass/src/library-pages.css",
+    "docs/hci/examples/liquid-glass/src/sdk-layout.css",
+    "packages/liquid-glass/src/recipes.ts",
+    "packages/liquid-glass/src/validation.tsx",
+    "packages/liquid-glass/component-manifest.json",
+    "packages/liquid-glass/custom-component-manifest.json",
+    "packages/liquid-glass/agent-contracts.json",
+    "packages/liquid-glass/component-recipes.json",
     "packages/liquid-glass/src/review",
     "packages/liquid-glass/src/kit.css",
     "packages/liquid-glass/src/fonts.css",
@@ -39,7 +65,7 @@ const hasText = (value) => typeof value === "string" && value.trim().length > 0;
 const hasTextItems = (value) => Array.isArray(value) && value.length > 0 && value.every(hasText);
 const sourceFiles = (path) => statSync(path).isDirectory()
   ? readdirSync(path).sort().flatMap((name) => sourceFiles(join(path, name)))
-  : /\.(?:tsx?|jsx?|mjs|css)$/.test(path) ? [path] : [];
+  : /\.(?:tsx?|jsx?|mjs|css|json)$/.test(path) ? [path] : [];
 
 export function reviewFingerprint(root, paths) {
   const files = [...new Set(paths.flatMap((path) => {

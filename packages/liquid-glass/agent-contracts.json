@@ -4860,7 +4860,7 @@
         "actionSchema": "./agent-action-inputs.json#/$defs/liquid-viewport"
       },
       "restrictions": [
-        "Zoom remains 0.1\u20134; dimensions and positions must be finite.",
+        "Zoom remains 0.1–4; dimensions and positions must be finite.",
         "Controlled host may cancel or decline camera updates; check the resulting camera.",
         "Keyboard/controls provide non-drag alternatives."
       ],
@@ -6736,7 +6736,7 @@
         "Add pointer emphasis to a decorative icon inside a real SDK button or link."
       ],
       "inputs": [
-        "children:decorative artwork; distance:CSS pixels clamped to 0\u201312; className",
+        "children:decorative artwork; distance:CSS pixels clamped to 0–12; className",
         "LiquidGlassProvider resolved motion and fine-pointer/forced-colour preferences"
       ],
       "state": [
@@ -7666,6 +7666,403 @@
       "validation": "unvalidated"
     },
     {
+      "id": "liquid-chat",
+      "kind": "composition",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/chat",
+          "symbols": [
+            "LiquidChat"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/chat/components.tsx",
+        "packages/liquid-glass/src/chat/types.ts"
+      ],
+      "purpose": "Render a controlled conversation above the host chat or agent runtime.",
+      "useWhen": [
+        "Render a controlled conversation above the host chat or agent runtime."
+      ],
+      "inputs": [
+        "messages: readonly LiquidChatMessage[],status:ready|submitted|streaming|error,value,onValueChange,onSubmit; optional onStop,onRetry,error",
+        "Optional title,description,author,label,headerActions,sidebar,templates,empty,notice,className,renderPart,messageActions and composer settings",
+        "Message parts are text, source, attachment metadata, tool status/data or an explicit unsupported label."
+      ],
+      "state": [
+        "Host owns accepted messages, drafts, threads, run state and errors. The composition keeps no parallel conversation store."
+      ],
+      "runtime": {
+        "discovery": "sdk-children",
+        "mutationPath": "Genuine SDK child controls forward the same controlled host callbacks for people and agents.",
+        "actions": [],
+        "outcome": "Inspect the accepted host state after operating the named SDK controls; local fixtures do not establish provider execution.",
+        "controls": [
+          "@ui-sdk/react/button",
+          "@ui-sdk/react/collapsible",
+          "@ui-sdk/react/textarea",
+          "@ui-sdk/react/select",
+          "@ui-sdk/react/field"
+        ]
+      },
+      "restrictions": [
+        "The package adds no provider credentials, transport, model executor, persistence or tool authorization.",
+        "Text renders as plain text; unsupported parts remain explicit and hidden reasoning is not rendered. The default attachment view does not fetch URLs.",
+        "Tool cards are read-only host-reported status; compose AgentToolRequest through renderPart for actual authorized review.",
+        "The host must cancel subscriptions/work and isolate stale results when threads, visibility or mounting change. Stop does not prove remote execution has ended."
+      ],
+      "policies": [
+        "sdk-foundation",
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "docs": [
+        "packages/liquid-glass/src/chat/README.md",
+        "docs/hci/standards/chat-integrations.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/glass_chat_contract.py",
+          "scope": "Local chat thread selection, per-thread draft retention, actual template and submission controls, streaming fixture, retry, cancellation and mobile/forced-colour layout. No live model or remote file operation."
+        }
+      ],
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-conversation-list",
+      "kind": "composition",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/chat",
+          "symbols": [
+            "LiquidConversationList"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/chat/components.tsx",
+        "packages/liquid-glass/src/chat/types.ts"
+      ],
+      "purpose": "Choose or create a host-owned conversation through SDK controls.",
+      "useWhen": [
+        "Choose or create a host-owned conversation through SDK controls."
+      ],
+      "inputs": [
+        "conversations:readonly{id,title,description?,disabled?}[],value:string|null,onValueChange with SDK Listbox change details",
+        "Optional onCreate,label,createLabel,disabled,createDisabled,className"
+      ],
+      "state": [
+        "Host owns conversations, accepted selected ID and per-thread state."
+      ],
+      "runtime": {
+        "discovery": "sdk-children",
+        "mutationPath": "Genuine SDK child controls forward the same controlled host callbacks for people and agents.",
+        "actions": [],
+        "outcome": "Inspect the accepted host state after operating the named SDK controls; local fixtures do not establish provider execution.",
+        "controls": [
+          "@ui-sdk/react/listbox",
+          "@ui-sdk/react/button"
+        ]
+      },
+      "restrictions": [
+        "Invalid, null and disabled selections are refused before host change; valid proposals retain cancellable SDK details.",
+        "Creating conversations, loading history and cancelling prior thread runs are host responsibilities.",
+        "Stable conversation IDs must be unique. Source attribution does not authorize access to a thread."
+      ],
+      "policies": [
+        "sdk-foundation",
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "docs": [
+        "packages/liquid-glass/src/chat/README.md",
+        "docs/hci/standards/chat-integrations.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/glass_chat_contract.py",
+          "scope": "Local chat thread selection, per-thread draft retention, actual template and submission controls, streaming fixture, retry, cancellation and mobile/forced-colour layout. No live model or remote file operation."
+        }
+      ],
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-prompt-template-picker",
+      "kind": "composition",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/chat",
+          "symbols": [
+            "LiquidPromptTemplatePicker"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/chat/components.tsx",
+        "packages/liquid-glass/src/chat/types.ts"
+      ],
+      "purpose": "Choose a reusable prompt template through an SDK menu.",
+      "useWhen": [
+        "Choose a reusable prompt template through an SDK menu."
+      ],
+      "inputs": [
+        "templates:readonly{id,label,prompt,disabled?}[],onChoose(template, MenuActionDetails)",
+        "Optional label,disabled,className"
+      ],
+      "state": [
+        "Host owns templates and the accepted draft or execution outcome."
+      ],
+      "runtime": {
+        "discovery": "sdk-children",
+        "mutationPath": "Genuine SDK child controls forward the same controlled host callbacks for people and agents.",
+        "actions": [],
+        "outcome": "Inspect the accepted host state after operating the named SDK controls; local fixtures do not establish provider execution.",
+        "controls": [
+          "@ui-sdk/react/menu"
+        ]
+      },
+      "restrictions": [
+        "The installed MenuActionDetails has optional event only; no source or cancel field is invented.",
+        "Invalid and disabled actions are refused. Return asynchronous host work to retain SDK pending/error presentation.",
+        "The host decides whether choosing a template fills a draft or submits; the gallery fills its actual controlled textarea."
+      ],
+      "policies": [
+        "sdk-foundation",
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "docs": [
+        "packages/liquid-glass/src/chat/README.md",
+        "docs/hci/standards/chat-integrations.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/glass_chat_contract.py",
+          "scope": "Local chat thread selection, per-thread draft retention, actual template and submission controls, streaming fixture, retry, cancellation and mobile/forced-colour layout. No live model or remote file operation."
+        }
+      ],
+      "validation": "unvalidated"
+    },
+    {
+      "id": "chat-ai-sdk-projection",
+      "kind": "pure-utility",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/chat/ai-sdk",
+          "symbols": [
+            "projectVercelMessages"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/chat/adapters/ai-sdk.ts",
+        "packages/liquid-glass/src/chat/adapters/helpers.ts",
+        "packages/liquid-glass/src/chat/types.ts"
+      ],
+      "purpose": "Project Vercel AI SDK UIMessage.parts, including sources, files and tool status into Quantive chat display parts.",
+      "useWhen": [
+        "Project Vercel AI SDK UIMessage.parts, including sources, files and tool status into Quantive chat display parts."
+      ],
+      "inputs": [
+        "UIMessage[] from ai 7.0.179"
+      ],
+      "state": [
+        "New LiquidChatMessage[] display projection; authoritative runtime data is unchanged."
+      ],
+      "runtime": {
+        "discovery": "none",
+        "mutationPath": "Pure projection returns new display records without mutating the SDK snapshot, running a model, dispatching a tool or changing host state.",
+        "actions": [],
+        "outcome": "Read the projected display parts and preserve the runtime snapshot as authoritative. Projection is not proof of completion or authorization."
+      },
+      "restrictions": [
+        "Install the matching optional SDK peer dependency; the core chat UI imports no provider SDK.",
+        "This is a supported display projection, not a network transport, full protocol implementation, tool executor or universal modality adapter.",
+        "Preserve source and tool-call identities. Unknown content becomes an unsupported label; reasoning payloads are not copied into visible text.",
+        "Only the owning runtime and validated lifecycle establish completion; a mapped tool request does not imply execution or approval."
+      ],
+      "policies": [
+        "shared-state",
+        "proof-boundary"
+      ],
+      "docs": [
+        "packages/liquid-glass/src/chat/README.md",
+        "docs/hci/standards/chat-integrations.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/test_chat_adapters.mjs",
+          "scope": "Deterministic official-type fixtures verify text/media/source/tool projection, unknown parts, preserved call identities, partial/failed states and nonmutation; no live service call."
+        }
+      ],
+      "validation": "not-applicable"
+    },
+    {
+      "id": "chat-ag-ui-projection",
+      "kind": "pure-utility",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/chat/ag-ui",
+          "symbols": [
+            "projectAgUiMessages"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/chat/adapters/ag-ui.ts",
+        "packages/liquid-glass/src/chat/adapters/helpers.ts",
+        "packages/liquid-glass/src/chat/types.ts"
+      ],
+      "purpose": "Project AG-UI messages and tool results linked by their call IDs into Quantive chat display parts.",
+      "useWhen": [
+        "Project AG-UI messages and tool results linked by their call IDs into Quantive chat display parts."
+      ],
+      "inputs": [
+        "Message[] from @ag-ui/core 1.0.5"
+      ],
+      "state": [
+        "New LiquidChatMessage[] display projection; authoritative runtime data is unchanged."
+      ],
+      "runtime": {
+        "discovery": "none",
+        "mutationPath": "Pure projection returns new display records without mutating the SDK snapshot, running a model, dispatching a tool or changing host state.",
+        "actions": [],
+        "outcome": "Read the projected display parts and preserve the runtime snapshot as authoritative. Projection is not proof of completion or authorization."
+      },
+      "restrictions": [
+        "Install the matching optional SDK peer dependency; the core chat UI imports no provider SDK.",
+        "This is a supported display projection, not a network transport, full protocol implementation, tool executor or universal modality adapter.",
+        "Preserve source and tool-call identities. Unknown content becomes an unsupported label; reasoning payloads are not copied into visible text.",
+        "Only the owning runtime and validated lifecycle establish completion; a mapped tool request does not imply execution or approval."
+      ],
+      "policies": [
+        "shared-state",
+        "proof-boundary"
+      ],
+      "docs": [
+        "packages/liquid-glass/src/chat/README.md",
+        "docs/hci/standards/chat-integrations.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/test_chat_adapters.mjs",
+          "scope": "Deterministic official-type fixtures verify text/media/source/tool projection, unknown parts, preserved call identities, partial/failed states and nonmutation; no live service call."
+        }
+      ],
+      "validation": "not-applicable"
+    },
+    {
+      "id": "chat-openai-projection",
+      "kind": "pure-utility",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/chat/openai",
+          "symbols": [
+            "projectOpenAIResponse"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/chat/adapters/openai.ts",
+        "packages/liquid-glass/src/chat/adapters/helpers.ts",
+        "packages/liquid-glass/src/chat/types.ts"
+      ],
+      "purpose": "Project OpenAI Responses public output items into Quantive chat display parts.",
+      "useWhen": [
+        "Project OpenAI Responses public output items into Quantive chat display parts."
+      ],
+      "inputs": [
+        "Responses.Response from openai 7.62.0"
+      ],
+      "state": [
+        "New LiquidChatMessage[] display projection; authoritative runtime data is unchanged."
+      ],
+      "runtime": {
+        "discovery": "none",
+        "mutationPath": "Pure projection returns new display records without mutating the SDK snapshot, running a model, dispatching a tool or changing host state.",
+        "actions": [],
+        "outcome": "Read the projected display parts and preserve the runtime snapshot as authoritative. Projection is not proof of completion or authorization."
+      },
+      "restrictions": [
+        "Install the matching optional SDK peer dependency; the core chat UI imports no provider SDK.",
+        "This is a supported display projection, not a network transport, full protocol implementation, tool executor or universal modality adapter.",
+        "Preserve source and tool-call identities. Unknown content becomes an unsupported label; reasoning payloads are not copied into visible text.",
+        "Only the owning runtime and validated lifecycle establish completion; a mapped tool request does not imply execution or approval."
+      ],
+      "policies": [
+        "shared-state",
+        "proof-boundary"
+      ],
+      "docs": [
+        "packages/liquid-glass/src/chat/README.md",
+        "docs/hci/standards/chat-integrations.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/test_chat_adapters.mjs",
+          "scope": "Deterministic official-type fixtures verify text/media/source/tool projection, unknown parts, preserved call identities, partial/failed states and nonmutation; no live service call."
+        }
+      ],
+      "validation": "not-applicable"
+    },
+    {
+      "id": "chat-anthropic-projection",
+      "kind": "pure-utility",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/chat/anthropic",
+          "symbols": [
+            "projectAnthropicMessage"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/chat/adapters/anthropic.ts",
+        "packages/liquid-glass/src/chat/adapters/helpers.ts",
+        "packages/liquid-glass/src/chat/types.ts"
+      ],
+      "purpose": "Project Claude Messages public content blocks into Quantive chat display parts.",
+      "useWhen": [
+        "Project Claude Messages public content blocks into Quantive chat display parts."
+      ],
+      "inputs": [
+        "Message from @anthropic-ai/sdk 1.12.0"
+      ],
+      "state": [
+        "New LiquidChatMessage[] display projection; authoritative runtime data is unchanged."
+      ],
+      "runtime": {
+        "discovery": "none",
+        "mutationPath": "Pure projection returns new display records without mutating the SDK snapshot, running a model, dispatching a tool or changing host state.",
+        "actions": [],
+        "outcome": "Read the projected display parts and preserve the runtime snapshot as authoritative. Projection is not proof of completion or authorization."
+      },
+      "restrictions": [
+        "Install the matching optional SDK peer dependency; the core chat UI imports no provider SDK.",
+        "This is a supported display projection, not a network transport, full protocol implementation, tool executor or universal modality adapter.",
+        "Preserve source and tool-call identities. Unknown content becomes an unsupported label; reasoning payloads are not copied into visible text.",
+        "Only the owning runtime and validated lifecycle establish completion; a mapped tool request does not imply execution or approval."
+      ],
+      "policies": [
+        "shared-state",
+        "proof-boundary"
+      ],
+      "docs": [
+        "packages/liquid-glass/src/chat/README.md",
+        "docs/hci/standards/chat-integrations.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/test_chat_adapters.mjs",
+          "scope": "Deterministic official-type fixtures verify text/media/source/tool projection, unknown parts, preserved call identities, partial/failed states and nonmutation; no live service call."
+        }
+      ],
+      "validation": "not-applicable"
+    },
+    {
       "id": "liquid-app-shell-regions",
       "kind": "presentation",
       "exports": [
@@ -7775,6 +8172,348 @@
         {
           "path": "tests/glass_layouts_contract.py",
           "scope": "Checks workspace switch, view-only denial, navigable regions and SDK control operation using fictional in-memory fixtures."
+        }
+      ],
+      "validation": "unvalidated"
+    },
+    {
+      "id": "layout-snapshot-capture",
+      "kind": "host-hook",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/quality",
+          "symbols": [
+            "captureLayoutSnapshot"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/quality/geometry.ts"
+      ],
+      "purpose": "Capture bounded, read-only geometry for explicitly marked stable controls without collecting arbitrary DOM text or values.",
+      "useWhen": [
+        "Establish a baseline around a known application transition using stable data-layout-probe identities."
+      ],
+      "inputs": [
+        "Connected Element root or null; optional scopeId and maxTargets (default 128, integer 1 through 512)."
+      ],
+      "state": [
+        "LayoutSnapshot version 1: capture status, context with scope identity/viewport/scroll/scale/DPR, target rectangles/visibility/coordinate modes, findings and capture limits."
+      ],
+      "runtime": {
+        "discovery": "none",
+        "mutationPath": "Reads marked DOM geometry and viewport context; records root identity in a WeakMap. Does not write application state, styles or control values.",
+        "actions": [],
+        "outcome": "Inspect status, findings and limits. Unsupported, invalid or truncated capture cannot establish a complete passing comparison; no independent SDK action exists."
+      },
+      "restrictions": [
+        "Probe and scope IDs must be stable bounded identifiers, not personal data or user-entered text.",
+        "Only explicitly marked targets are measured; the report is not a whole-page visual audit.",
+        "A fresh baseline is required after a different scope, incompatible viewport/zoom or contextual scroll change."
+      ],
+      "policies": [
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "docs": [
+        "docs/hci/standards/layout-quality.md",
+        "packages/liquid-glass/docs/agent-engineering.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/test_layout_quality.mjs",
+          "scope": "Deterministic unit/property checks for geometry, scroll/viewport context, popup policies, session-window scoring, bounded reports and observer cleanup; synthetic observer tests do not establish native browser support."
+        },
+        {
+          "path": "tests/glass_layout_quality_contract.py",
+          "scope": "Seeded real-SDK placement fixture with LTR/RTL, four viewport widths, control stationarity, popup geometry, intentional anchor/overflow/overlap faults and native layout-shift evidence. A reference identifies the check; only an executed result establishes its outcome."
+        }
+      ],
+      "validation": "not-applicable"
+    },
+    {
+      "id": "layout-snapshot-comparison",
+      "kind": "pure-utility",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/quality",
+          "symbols": [
+            "compareLayoutSnapshots"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/quality/geometry.ts"
+      ],
+      "purpose": "Compare compatible snapshots for unexplained movement, resizing, identity/visibility changes and explicitly disallowed overlaps.",
+      "useWhen": [
+        "Check whether known stable controls stayed within declared geometry budgets after an actual accepted interaction."
+      ],
+      "inputs": [
+        "Before/after LayoutSnapshot; positionTolerancePx and sizeTolerancePx default 1; optional allowViewportChange, property-specific expectedChanges with reasons, and nonOverlapping target pairs."
+      ],
+      "state": [
+        "LayoutComparison status pass/fail/incomparable/unsupported/invalid, nullable passed, compared count, findings, budgets and both contexts."
+      ],
+      "runtime": {
+        "discovery": "none",
+        "mutationPath": "Pure input/output calculation. It neither invokes SDK controls nor changes captured or application state.",
+        "actions": [],
+        "outcome": "passed true requires complete comparable visible geometry within explicit budgets; unknown/incomparable evidence yields passed null. Review finding codes and measured deltas."
+      },
+      "restrictions": [
+        "Compensates ordinary scroll, preserves fixed coordinates and rejects ambiguous contextual-scroll comparisons.",
+        "Viewport/zoom/DPR changes are incomparable unless explicitly allowed; do not use exceptions to conceal genuine movement.",
+        "Expected changes require a specific target, properties and reason; overlap checks require explicit independent target pairs."
+      ],
+      "policies": [
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "docs": [
+        "docs/hci/standards/layout-quality.md",
+        "packages/liquid-glass/docs/agent-engineering.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/test_layout_quality.mjs",
+          "scope": "Deterministic unit/property checks for geometry, scroll/viewport context, popup policies, session-window scoring, bounded reports and observer cleanup; synthetic observer tests do not establish native browser support."
+        },
+        {
+          "path": "tests/glass_layout_quality_contract.py",
+          "scope": "Seeded real-SDK placement fixture with LTR/RTL, four viewport widths, control stationarity, popup geometry, intentional anchor/overflow/overlap faults and native layout-shift evidence. A reference identifies the check; only an executed result establishes its outcome."
+        }
+      ],
+      "validation": "not-applicable"
+    },
+    {
+      "id": "popup-placement-inspection",
+      "kind": "pure-utility",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/quality",
+          "symbols": [
+            "inspectPopupPlacement"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/quality/geometry.ts"
+      ],
+      "purpose": "Inspect settled popup placement against its logical anchor, permitted collision handling, gap and viewport bounds.",
+      "useWhen": [
+        "Verify real SDK popup rectangles after placement settles, including logical RTL alignment, corner collisions and long content."
+      ],
+      "inputs": [
+        "PopupPlacementInput: trigger/popup/viewport rectangles, settled actualSide, preferredSide, optional align/actualAlign/direction, gapPx/collisionPaddingPx/tolerancePx and allowFlip/allowShift. Defaults are gap 8, collision padding 8 and tolerance 1 CSS px."
+      ],
+      "state": [
+        "PopupPlacementReport status and nullable passed, findings, declared budget, resolved sides/alignment, expected rectangle, gap/drift and overflow measurements."
+      ],
+      "runtime": {
+        "discovery": "none",
+        "mutationPath": "Pure input/output geometry calculation. SDK positioning remains authoritative; this utility never moves a popup or trigger.",
+        "actions": [],
+        "outcome": "A pass means supplied geometry matches the declared policy within tolerance. Missing actual placement metadata is unsupported; faults identify anchor drift, gap, overlap, overflow or invalid collision decisions."
+      },
+      "restrictions": [
+        "Read settled SDK side/alignment metadata; do not infer successful positioning from a preferred side or an open flag.",
+        "A popup may flip or shift only under the stated collision policy. Logical start/end must follow the current direction.",
+        "The caller supplies all rectangles and policy; this does not prove accessibility, usability or a browser action succeeded."
+      ],
+      "policies": [
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "docs": [
+        "docs/hci/standards/layout-quality.md",
+        "packages/liquid-glass/docs/agent-engineering.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/test_layout_quality.mjs",
+          "scope": "Deterministic unit/property checks for geometry, scroll/viewport context, popup policies, session-window scoring, bounded reports and observer cleanup; synthetic observer tests do not establish native browser support."
+        },
+        {
+          "path": "tests/glass_layout_quality_contract.py",
+          "scope": "Seeded real-SDK placement fixture with LTR/RTL, four viewport widths, control stationarity, popup geometry, intentional anchor/overflow/overlap faults and native layout-shift evidence. A reference identifies the check; only an executed result establishes its outcome."
+        }
+      ],
+      "validation": "not-applicable"
+    },
+    {
+      "id": "layout-shift-summary",
+      "kind": "pure-utility",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/quality",
+          "symbols": [
+            "summarizeLayoutShifts"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/quality/observer.ts"
+      ],
+      "purpose": "Summarize supplied layout-shift samples with maximum session-window scoring and separate recent-input shifts.",
+      "useWhen": [
+        "Replay captured shift histories or inspect a bounded observation window independently of DOM access."
+      ],
+      "inputs": [
+        "Readonly LayoutShiftSample entries; optional maxSamples (default 128, integer 1 through 512) and supported flag. Processes at most 10,000 supplied entries."
+      ],
+      "state": [
+        "LayoutShiftReport status, support/completeness, nullable cls, separate aggregate values/counts, maximum session, bounded sanitized samples and findings."
+      ],
+      "runtime": {
+        "discovery": "none",
+        "mutationPath": "Pure input/output calculation over supplied entries; copies only safe bounded probe IDs and rectangles into retained attribution.",
+        "actions": [],
+        "outcome": "CLS is the maximum unexpected-shift session with gaps under 1 second and duration under 5 seconds; recent-input entries are excluded and reported separately. Incomplete/unsupported scores remain null."
+      },
+      "restrictions": [
+        "This score describes supplied samples, not a full page lifetime or field Core Web Vitals result.",
+        "Dropping old detail from the ring buffer preserves aggregate scoring; invalid/truncated input makes the score incomplete.",
+        "No arbitrary text, DOM node references or telemetry transport is included."
+      ],
+      "policies": [
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "docs": [
+        "docs/hci/standards/layout-quality.md",
+        "packages/liquid-glass/docs/agent-engineering.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/test_layout_quality.mjs",
+          "scope": "Deterministic unit/property checks for geometry, scroll/viewport context, popup policies, session-window scoring, bounded reports and observer cleanup; synthetic observer tests do not establish native browser support."
+        }
+      ],
+      "validation": "not-applicable"
+    },
+    {
+      "id": "layout-shift-observer",
+      "kind": "host-hook",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/quality",
+          "symbols": [
+            "observeLayoutShifts"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/quality/observer.ts"
+      ],
+      "purpose": "Observe native browser layout-shift entries for a bounded interval with explicit capability, cleanup and privacy limits.",
+      "useWhen": [
+        "Offer opt-in local stability diagnostics without modifying the application layout or controls."
+      ],
+      "inputs": [
+        "LayoutShiftObserverOptions: root for probe attribution, maxSamples default 128 (1 through 512), maxDurationMs default 60000 (1 through 300000), buffered default false and optional onUpdate."
+      ],
+      "state": [
+        "Handle supported/snapshot()/stop(); reports include nullable scores, bounded samples, findings, observation timing, stopped state and reason."
+      ],
+      "runtime": {
+        "discovery": "none",
+        "mutationPath": "Registers a native PerformanceObserver, bounded timer and lifecycle listeners; snapshot drains pending records and stop disconnects idempotently. No application layout or control-state mutation.",
+        "actions": [],
+        "outcome": "Inspect report support, completeness and observed-window metadata. Native entry values remain document-wide; root limits source attribution only. No independent SDK action exists."
+      },
+      "restrictions": [
+        "Unsupported browser capability, rejected startup or incomplete data must never be presented as a zero-shift pass.",
+        "Stop on host cleanup/inactivity; the observer also stops at its time bound, hidden document or pagehide.",
+        "Retains at most five safe probe IDs/rectangles per sample and no arbitrary text, field values, DOM references or network transport.",
+        "Buffered entries may precede observer start; report their window honestly and do not claim full-lifetime CLS or attribution root-cause certainty."
+      ],
+      "policies": [
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "docs": [
+        "docs/hci/standards/layout-quality.md",
+        "packages/liquid-glass/docs/agent-engineering.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/test_layout_quality.mjs",
+          "scope": "Deterministic unit/property checks for geometry, scroll/viewport context, popup policies, session-window scoring, bounded reports and observer cleanup; synthetic observer tests do not establish native browser support."
+        },
+        {
+          "path": "tests/glass_layout_quality_contract.py",
+          "scope": "Seeded real-SDK placement fixture with LTR/RTL, four viewport widths, control stationarity, popup geometry, intentional anchor/overflow/overlap faults and native layout-shift evidence. A reference identifies the check; only an executed result establishes its outcome."
+        }
+      ],
+      "validation": "not-applicable"
+    },
+    {
+      "id": "liquid-layout-diagnostics",
+      "kind": "composition",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/quality",
+          "symbols": [
+            "LiquidLayoutDiagnostics"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/quality/diagnostics.tsx"
+      ],
+      "purpose": "Offer a local, opt-in layout diagnostic disclosure using genuine SDK Collapsible and Button controls.",
+      "useWhen": [
+        "Let a host capture stable-control baselines, compare geometry and record a short native shift window while retaining its existing application interface."
+      ],
+      "inputs": [
+        "target: () => Element | null; optional label (Layout diagnostics), active (true), defaultOpen (false) and children. Import quality.css after the shared kit styles."
+      ],
+      "state": [
+        "Component-owned disclosure, baseline/comparison/shift reports and status message; underlying application state remains host-owned."
+      ],
+      "runtime": {
+        "discovery": "sdk-children",
+        "mutationPath": "Actual SDK child controls open the disclosure, capture/check reports, start/stop a bounded observer and copy the current JSON to the clipboard. Reports stay local; no parallel mutation endpoint is exposed.",
+        "actions": [],
+        "outcome": "Read the rendered result/status and selectable report after each genuine SDK child action. Capture is limited to 64 probes; recording to 128 samples and 15 seconds. A copied report or a completed action is not proof of layout stability.",
+        "controls": [
+          "@ui-sdk/react/button",
+          "@ui-sdk/react/collapsible"
+        ]
+      },
+      "restrictions": [
+        "Custom composition remains visibly Unvalidated; automatic geometry/pixel evidence does not establish human usability or accessibility conformance.",
+        "Host must provide an appropriate connected scope and set active false when inactive; closing, deactivation and unmount stop observation.",
+        "Observed-window CLS is document-wide while root only scopes probe attribution. Diagnostics does not move controls or fix geometry.",
+        "Clipboard failure leaves the JSON report selectable and reports unavailability. No telemetry service, authorization system or persistence is supplied."
+      ],
+      "policies": [
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "docs": [
+        "docs/hci/standards/layout-quality.md",
+        "packages/liquid-glass/docs/agent-engineering.md"
+      ],
+      "evidence": [
+        {
+          "path": "scripts/check-agent-contracts.mjs",
+          "scope": "Static export, classification and genuine SDK child-import coverage for the diagnostics composition; this does not establish runtime acceptance of its controls."
+        },
+        {
+          "path": "tests/test_layout_quality.mjs",
+          "scope": "Underlying capture/comparison/observer/report helper checks. These do not by themselves exercise the rendered diagnostics disclosure or clipboard controls."
+        },
+        {
+          "path": "tests/glass_layout_quality_contract.py",
+          "scope": "Browser scenario invokes actual SDK disclosure, capture, comparison, start and stop controls and checks their rendered accepted reports and disabled states. Clipboard success/failure and human review are not established by these checks; a referenced check is not a claimed passing run."
         }
       ],
       "validation": "unvalidated"

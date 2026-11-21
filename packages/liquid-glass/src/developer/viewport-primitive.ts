@@ -1,6 +1,6 @@
 import {
   createChange, createViewport, definePrimitive, live,
-  type CanvasRect, type ChangeDetails, type Viewport, type ViewportReason,
+  type CanvasRect, type ChangeDetails, type SlotDefinition, type Viewport, type ViewportReason,
 } from "@ui-sdk/core";
 
 export type LiquidViewportChangeDetails = ChangeDetails<ViewportReason>;
@@ -25,7 +25,41 @@ const isViewport = (value: Viewport) => value &&
   [value.x, value.y, value.zoom].every(Number.isFinite) && value.zoom > 0 &&
   Math.abs(value.x) <= 10_000_000 && Math.abs(value.y) <= 10_000_000;
 
-export const liquidViewport = definePrimitive({
+type LiquidViewportState = {
+  viewport: Viewport;
+  width: number;
+  height: number;
+  fitted: boolean;
+  panMode: boolean;
+  expanded: boolean;
+};
+type LiquidViewportApi = {
+  viewport: ReturnType<typeof createViewport<LiquidViewportState>>;
+  getViewport: () => Viewport;
+  setViewport: (value: Viewport) => boolean;
+  panBy: (x: number, y: number) => boolean;
+  zoomTo: (zoom: number) => boolean;
+  zoomBy: (factor: number) => boolean;
+  actualSize: () => boolean;
+  fit: () => boolean;
+  reveal: (rect: CanvasRect) => boolean;
+  center: (rect: CanvasRect) => boolean;
+  focusSelection: () => boolean;
+  setPanMode: (value: boolean) => boolean;
+  setExpanded: (value: boolean) => boolean;
+  surfaceSize: (width: number, height: number) => void;
+  pointerdown: (event: PointerEvent) => void;
+  keydown: (event: KeyboardEvent, element?: HTMLElement) => void;
+  releasePanKey: (event?: Event) => void;
+};
+type LiquidViewportSlots = {
+  root: SlotDefinition<LiquidViewportState, LiquidViewportApi, { id?: string }>;
+  controls: SlotDefinition<LiquidViewportState, LiquidViewportApi, { id?: string }, { zoom: number; panMode: boolean; expanded: boolean }>;
+  surface: SlotDefinition<LiquidViewportState, LiquidViewportApi, { id?: string }>;
+  world: SlotDefinition<LiquidViewportState, LiquidViewportApi, { id?: string }>;
+};
+
+export const liquidViewport: ReturnType<typeof definePrimitive<LiquidViewportOptions, LiquidViewportState, LiquidViewportApi, LiquidViewportSlots>> = definePrimitive<LiquidViewportOptions, LiquidViewportState, LiquidViewportApi, LiquidViewportSlots>({
   name: "liquid-viewport",
   options: {
     width: "number", height: "number", resetKey: "string", selectionRect: "value",

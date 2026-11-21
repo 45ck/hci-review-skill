@@ -79,7 +79,7 @@ export class LiquidRenderer {
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
       }),
       data: this.device.createBuffer({
-        size: MAX_SURFACES * 80,
+        size: MAX_SURFACES * 96,
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
       }),
     });
@@ -128,7 +128,7 @@ export class LiquidRenderer {
       0,
     ]);
     this.device.queue.writeBuffer(layer.uniform, 0, settings);
-    const data = new Float32Array(Math.max(1, surfaces.length) * 20);
+    const data = new Float32Array(Math.max(1, surfaces.length) * 24);
     surfaces.forEach((surface, index) => {
       const effect = motion.get(surface.element);
       data.set(
@@ -142,7 +142,7 @@ export class LiquidRenderer {
           surface.clip.width,
           surface.clip.height,
           surface.radius,
-          surface.popup ? 0.42 : 0,
+          surface.reflection,
           0,
           0,
           effect?.x ?? surface.rect.x + surface.rect.width * 0.5,
@@ -153,8 +153,9 @@ export class LiquidRenderer {
           effect?.rippleY ?? 0,
           effect?.rippleAge ?? 0,
           effect?.rippleStrength ?? 0,
+          ...surface.tint,
         ],
-        index * 20,
+        index * 24,
       );
     });
     this.device.queue.writeBuffer(layer.data, 0, data);

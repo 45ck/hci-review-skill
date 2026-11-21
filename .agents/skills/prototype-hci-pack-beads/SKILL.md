@@ -163,8 +163,8 @@ For each critical journey, step through the interface and answer:
 
 Log breakdowns with exact step references.
 
-#### 10) Score
-Create `hci-scorecard.md` rating the prototype 1-5 on each dimension:
+#### 10) Record task evidence
+Create `hci-scorecard.md` using the current Quantitative HCI template. Record observations, evidence, severity and the next decision for each dimension:
 1. Clarity of purpose
 2. Navigation clarity
 3. Terminology consistency
@@ -174,7 +174,9 @@ Create `hci-scorecard.md` rating the prototype 1-5 on each dimension:
 7. Cross-screen consistency
 8. Failure path coverage
 
-Include total score out of 40, top 3 strengths, top 3 weaknesses, and priority fixes.
+Include the most consequential strengths, weaknesses and priority fixes. Keep critical task requirements and failed guardrails visible; do not sum subjective ratings or infer readiness from a numerical band.
+
+For a before/after comparison, use `docs/hci/templates/task-comparison.md` and the existing evaluation protocol. Record the task, variants, primary outcome, sampling unit, failures and conditions. Separate automated implementation checks, agent outcomes, human observations and reviewer judgement. Mark missing measurements explicitly; early designs can still be evaluated.
 
 #### 11) Synthesize
 Create `hci-summary.md` with:
@@ -258,11 +260,11 @@ bd update <parent-id> --description "<1-2 sentence scope summary>" --acceptance 
 
 ### Step 4 -- Create child issues per finding
 
-For each finding from the scorecard weaknesses and hci-summary top confusion risks:
+For each finding from the scorecard's task observations and hci-summary confusion risks, use the recorded evidence and task severity. Leave unassessed dimensions unclassified; missing evidence does not establish a defect.
 
 **MAJOR findings** -- always create:
 
-Scorecard dimensions rated 1-2 and top confusion risks from the summary:
+Evidence-backed blocking or high severity findings: a failed task or essential guardrail, an observed error, a costly workaround, or a recovery problem with a material task effect:
 
 ```bash
 bd create "[MAJOR] <finding-title>" -p 0 --json
@@ -270,7 +272,7 @@ bd create "[MAJOR] <finding-title>" -p 0 --json
 
 **MINOR findings** -- create only if the user passed `--include-minor`. Otherwise skip and note them in the output.
 
-Scorecard dimensions rated 3 and minor consistency issues:
+Evidence-backed low severity findings, including minor consistency issues with a recorded task effect:
 
 ```bash
 bd create "[MINOR] <finding-title>" -p 2 --json

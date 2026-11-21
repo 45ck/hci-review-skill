@@ -12,6 +12,7 @@ struct Surface {
   style: vec4f,
   light: vec4f,
   ripple: vec4f,
+  tint: vec4f,
 };
 @group(0) @binding(0) var<uniform> scene: Scene;
 @group(0) @binding(1) var backdrop_sampler: sampler;
@@ -96,11 +97,11 @@ fn fragment_main(vertex: Vertex) -> @location(0) vec4f {
   let cool_shine = pow(max(dot(normal, fill_half), 0.0), 48.0) * edge_weight * 0.15;
   let rim = ring * (0.08 + max(dot(normal, key), 0.0) * 0.24) + fresnel * edge_weight * 0.12;
   let contact = pointer_glow * surface.light.z * 0.12 + envelope * amplitude * 0.12;
-  let transmitted = mix(vec3f(red, green, blue), vec3f(0.9804, 0.9922, 1.0), surface.style.y);
+  let transmitted = mix(vec3f(red, green, blue), surface.tint.rgb, surface.tint.a);
   let underside = max(edge_normal.y, 0.0) * edge_weight * 0.045;
   let colour = transmitted * (1.0 - underside)
-             + vec3f(1.0, 0.98, 0.93) * (shine + rim + contact)
-             + vec3f(0.62, 0.83, 1.0) * cool_shine;
+             + (vec3f(1.0, 0.98, 0.93) * (shine + rim + contact)
+             + vec3f(0.62, 0.83, 1.0) * cool_shine) * surface.style.y;
   return vec4f(colour * coverage, coverage);
 }
 `;

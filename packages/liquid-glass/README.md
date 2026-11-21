@@ -1,5 +1,7 @@
 # Liquid Glass UI kit
 
+Installable private package: [distribution and agent documentation guide](docs/distribution.md). The compiled tarball includes ESM, declarations, CSS, fonts, licences and optional typed chat subpaths.
+
 `@quantitative-hci/liquid-glass` combines reusable WebGPU optics with real [UI SDK](https://github.com/vercel-labs/ui) components. The SDK supplies behaviour, keyboard interaction, focus, validation and the agent interface. The kit supplies the captured backdrop, refractive surface renderer and shared appearance.
 
 The workspace pins `@ui-sdk/core` and `@ui-sdk/react` to **0.1.0-beta.13**. Import the SDK's components directly. Existing package component re-exports remain compatibility aliases.
@@ -9,6 +11,21 @@ The workspace pins `@ui-sdk/core` and `@ui-sdk/react` to **0.1.0-beta.13**. Impo
 Custom action arguments have [JSON schemas](agent-action-inputs.json) with valid and invalid examples. Run `npm run glass:contract -- validate liquid-viewport panBy '[80,-40]'` from the repository root for structural preflight; live revision, identity, authorization and host acceptance still govern execution. The hosted index and individual contracts carry schema links, source provenance and content fingerprints. `/agent-release.json` identifies the emitted documentation set, and `glass:build` verifies that it matches the built page.
 
 **Review status:** custom Quantive components, glass styling, icons and compositions are **Unvalidated**: no human UI/UX team has reviewed or approved them. **SDK foundation** identifies upstream behaviour provenance; it is not an approval of this adaptation. The [custom component manifest](custom-component-manifest.json) records this distinction. Automated checks do not promote review status.
+
+## Application layouts
+
+```tsx
+import {
+  LiquidAppShell, LiquidAppRail, LiquidAppWorkarea, LiquidAppHeader,
+  LiquidAppContent, LiquidAppInspector, LiquidAppDock,
+  LiquidAppNavigation, LiquidWorkspaceSwitcher,
+} from "@quantitative-hci/liquid-glass/layouts";
+import "@quantitative-hci/liquid-glass/layouts.css";
+```
+
+Compose the passive regions under the shared provider and `kit.css`. Navigation uses real SDK Buttons; the workspace switcher uses the SDK Menu with stable values and returned callback Promises. The host owns active route/workspace state, allowed memberships, persistence and authorization. `LiquidAppContent` defaults to `main`; use `as="section"` when embedding it within an existing main landmark. Compact inspector visibility is a CSS/host-state contract, with focus and dismissal owned by the host; use `LiquidDetailSheet` for a drawer's interaction behaviour.
+
+Read the [layout API and application contract](../../docs/hci/standards/app-layout-system.md), the `liquid-app-shell-regions` and `liquid-app-navigation` entries in [agent-contracts.json](agent-contracts.json), and the [compiled application-shell recipe](../../docs/hci/examples/liquid-glass/src/recipes/application-shell.tsx). The gallery opens this collection at `?collection=layouts` and demonstrates a review decision, undo, workspace switching and compact detail navigation with fictional local data. Custom layouts remain **Unvalidated**.
 
 ## Established library patterns
 
@@ -294,3 +311,9 @@ Use `LiquidChat`, `LiquidConversationList` and `LiquidPromptTemplatePicker` from
 Optional `/chat/ai-sdk`, `/chat/ag-ui`, `/chat/openai` and `/chat/anthropic` entries project supported public message parts into the controlled interface. Install the matching SDK peer for the entry you use. The gallery exposes compiled Vercel AI SDK, CopilotKit headless, AG-UI, application-owned and direct server-client examples. The server factory supports OpenAI, Anthropic and OpenRouter. Credentials, file handling, model capabilities, persistence and tool authorization remain host responsibilities. No live provider connection is claimed by the static gallery.
 
 The component library lists all canonical entries with task search and exact imports. Runnable examples use the actual compiled recipe source in separate documents; source and agent briefs are copyable. Reuse your existing application provider and bridge when adopting an example.
+
+## Application integration
+
+Use the [material policy](docs/material-policy.md) for theme, surface purpose and preference precedence. The [viewport presentation API](docs/viewport.md) exposes scoped styling without replacing SDK behaviour. The [distribution guide](docs/distribution.md) explains the compiled private package and base-path-aware agent documentation.
+
+Supporting copy follows the [content composition standard](../../docs/hci/standards/content-composition.md). Record before/after tasks with the [task comparison template](../../docs/hci/templates/task-comparison.md); implementation checks and human outcomes are separate evidence.

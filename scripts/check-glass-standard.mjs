@@ -40,8 +40,9 @@ for (const name of ["@ui-sdk/core", "@ui-sdk/react"]) {
   check(json(join(root, "node_modules", name, "package.json")).version === manifest.sdkVersion, `Installed ${name} differs from the lock; run npm ci.`);
 }
 check(gallery.dependencies?.["@quantitative-hci/liquid-glass"], "The demo must consume the shared kit package.");
-check(pkg.exports?.["./webgpu"] === "./src/webgpu.tsx", "Export the reusable WebGPU provider from the package.");
-check(pkg.exports?.["./kit.css"] === "./src/kit.css", "Export the shared kit stylesheet.");
+const sourceExport = entry => typeof pkg.exports?.[entry] === "string" ? pkg.exports[entry] : pkg.exports?.[entry]?.["quantive-source"];
+check(sourceExport("./webgpu") === "./src/webgpu.tsx", "Export the reusable WebGPU provider from the package.");
+check(sourceExport("./kit.css") === "./src/kit.css", "Export the shared kit stylesheet.");
 for (const [entry, path] of Object.entries({
   "./appearance": "./src/appearance.tsx",
   "./icons": "./src/icons.tsx",
@@ -73,10 +74,12 @@ for (const [entry, path] of Object.entries({
   "./chat/ag-ui": "./src/chat/adapters/ag-ui.ts",
   "./chat/openai": "./src/chat/adapters/openai.ts",
   "./chat/anthropic": "./src/chat/adapters/anthropic.ts",
+  "./layouts": "./src/layouts/index.ts",
+  "./layouts.css": "./src/layouts/layouts.css",
   "./recipes": "./src/recipes.ts",
   "./fonts.css": "./src/fonts.css",
 })) {
-  check(pkg.exports?.[entry] === path && existsSync(join(packageDir, path)), `Retain the public ${entry} entry.`);
+  check(sourceExport(entry) === path && existsSync(join(packageDir, path)), `Retain the public ${entry} entry.`);
 }
 const fontDirectory = join(packageDir, "src/assets/fonts");
 const fontSources = json(join(fontDirectory, "sources.json"));
@@ -110,7 +113,7 @@ for (const id of expected) {
 for (const path of sourceFiles) {
   const source = read(path);
   check(!/["']@ui-sdk\/react["']/.test(source) && !source.includes("@ui-sdk/core/internal/"), `${relative(root, path)}: use documented SDK entries.`);
-  check(!/["']@quantitative-hci\/liquid-glass\/(?!webgpu["']|appearance["']|icons["']|validation["']|developer(?:\.css)?["']|standards(?:\.css)?["']|viewport(?:\.css)?["']|graphics(?:\.css)?["']|media(?:\.css)?["']|modeling["']|agents(?:\.css)?["']|interactions(?:\.css)?["']|sections(?:\.css)?["']|patterns(?:\.css)?["']|assistant(?:\.css)?["']|chat(?:\.css|\/(?:ai-sdk|ag-ui|openai|anthropic))?["']|recipes["']|material["']|fonts\.css["']|kit\.css["']|styles\.css["']|tokens\.css["'])/.test(source), `${relative(root, path)}: use direct SDK primitives and documented shared kit APIs.`);
+  check(!/["']@quantitative-hci\/liquid-glass\/(?!webgpu["']|appearance["']|icons["']|validation["']|developer(?:\.css)?["']|standards(?:\.css)?["']|viewport(?:\.css)?["']|graphics(?:\.css)?["']|media(?:\.css)?["']|modeling["']|agents(?:\.css)?["']|interactions(?:\.css)?["']|sections(?:\.css)?["']|patterns(?:\.css)?["']|assistant(?:\.css)?["']|chat(?:\.css|\/(?:ai-sdk|ag-ui|openai|anthropic))?["']|layouts(?:\.css)?["']|recipes["']|material["']|fonts\.css["']|kit\.css["']|styles\.css["']|tokens\.css["'])/.test(source), `${relative(root, path)}: use direct SDK primitives and documented shared kit APIs.`);
 }
 
 const customManifest = json(join(packageDir, "custom-component-manifest.json"));

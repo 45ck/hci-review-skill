@@ -42,6 +42,36 @@
     --liquid-muted: #496478;
     --liquid-blue: #1264e8;
     --liquid-danger: #b8213f;
+    --liquid-success: #246345;
+    --liquid-warning: #76500d;
+    --liquid-focus: #1264e8;
+    --liquid-accent-ink: #104caa;
+    --liquid-accent-fill: rgb(18 100 232 / 0.12);
+    --liquid-danger-fill: rgb(255 235 240 / 0.96);
+    --liquid-danger-hover: #ffdae4;
+    --liquid-on-primary: #fff;
+    --liquid-primary-from: #1766d9;
+    --liquid-primary-to: #1056c5;
+    --liquid-primary-hover-from: #115ac8;
+    --liquid-primary-hover-to: #0b4db4;
+    --liquid-canvas: #e9eff1;
+    --liquid-canvas-grid: #637d8a4d;
+    --liquid-control-solid: #f7fbff;
+    --liquid-input-solid: #fff;
+    --liquid-panel-solid: #f4f9ff;
+    --liquid-popup-solid: #fbfdff;
+    --liquid-reading-fallback: #fbfdff;
+    --liquid-navigation-fallback: rgb(241 249 255 / 0.96);
+    --liquid-optic-rgb: 250 253 255;
+    --liquid-control-opacity: 0.86;
+    --liquid-navigation-opacity: 0.9;
+    --liquid-overlay-opacity: 0.94;
+    --liquid-face-opacity: 0.1;
+    --liquid-input-opacity: 0.18;
+    --liquid-popup-opacity: 0.42;
+    --liquid-optic-reflection: 1;
+    --liquid-group-radius: 18px;
+    --liquid-group-item-radius: 12px;
     --liquid-border: rgb(255 255 255 / 0.22);
     --liquid-rim: rgb(255 255 255 / 0.82);
     --liquid-inner-rim: rgb(255 255 255 / 0.48);
@@ -57,6 +87,8 @@
     --liquid-panel: var(--liquid-panel-fallback);
     --liquid-popup: var(--liquid-popup-fallback);
     --liquid-selection: var(--liquid-selection-fallback);
+    --liquid-reading: var(--liquid-reading-fallback);
+    --liquid-navigation: var(--liquid-navigation-fallback);
     --liquid-backdrop: blur(14px) saturate(1.16) brightness(1.03);
     --liquid-shadow:
       0 12px 28px -16px rgb(0 40 90 / 0.22),
@@ -91,10 +123,10 @@
     --ui-border: var(--liquid-line);
     --ui-input: rgb(48 84 110 / 0.4);
     --ui-primary: var(--liquid-blue);
-    --ui-primary-foreground: #fff;
+    --ui-primary-foreground: var(--liquid-on-primary);
     --ui-destructive: var(--liquid-danger);
     --ui-ring: rgb(18 100 232 / 0.24);
-    --ui-ring-border: #1264e8;
+    --ui-ring-border: var(--liquid-focus);
     --ui-overlay: rgb(13 35 54 / 0.18);
     --ui-shadow: var(--liquid-popup-shadow);
     --ui-radius: 12px;
@@ -109,13 +141,105 @@
     color-scheme: light;
     -webkit-font-smoothing: antialiased;
 
+    &[data-liquid-theme="dark"] {
+      color-scheme: dark;
+      --liquid-ink: #edf5ff;
+      --liquid-muted: #becddd;
+      --liquid-blue: #8fc4ff;
+      --liquid-danger: #ffb0bf;
+      --liquid-success: #8ce1b5;
+      --liquid-warning: #f4cb7d;
+      --liquid-focus: #9dceff;
+      --liquid-accent-ink: #c4dfff;
+      --liquid-accent-fill: rgb(126 188 255 / 0.18);
+      --liquid-danger-fill: #472534;
+      --liquid-danger-hover: #5b2c3d;
+      --liquid-on-primary: #0b2139;
+      --liquid-primary-from: #acd5ff;
+      --liquid-primary-to: #88beff;
+      --liquid-primary-hover-from: #c6e2ff;
+      --liquid-primary-hover-to: #a5cfff;
+      --liquid-border: rgb(190 216 244 / 0.3);
+      --liquid-rim: rgb(217 237 255 / 0.28);
+      --liquid-inner-rim: rgb(217 237 255 / 0.14);
+      --liquid-underside: rgb(0 10 24 / 0.4);
+      --liquid-line: rgb(190 216 244 / 0.25);
+      --liquid-control-fallback: rgb(26 44 64 / 0.96);
+      --liquid-input-fallback: rgb(17 34 52 / 0.98);
+      --liquid-panel-fallback: rgb(20 37 56 / 0.96);
+      --liquid-popup-fallback: rgb(21 38 57 / 0.98);
+      --liquid-selection-fallback: #294969;
+      --liquid-control-solid: #1a2c40;
+      --liquid-input-solid: #112234;
+      --liquid-panel-solid: #142538;
+      --liquid-popup-solid: #152639;
+      --liquid-reading-fallback: #142538;
+      --liquid-navigation-fallback: rgb(20 37 56 / 0.97);
+      --liquid-canvas: #102030;
+      --liquid-canvas-grid: #8fa8c04d;
+      --liquid-optic-rgb: 17 34 52;
+      --liquid-control-opacity: 0.86;
+      --liquid-navigation-opacity: 0.9;
+      --liquid-overlay-opacity: 0.96;
+      --liquid-face-opacity: 0.12;
+      --liquid-input-opacity: 0.2;
+      --liquid-popup-opacity: 0.5;
+      --liquid-shadow: 0 12px 28px -16px rgb(0 6 18 / 0.5), inset 0 -1px 3px rgb(0 6 18 / 0.18);
+      --liquid-shadow-raised: 0 16px 32px -18px rgb(0 6 18 / 0.6);
+      --liquid-shadow-pressed: inset 0 2px 5px rgb(0 6 18 / 0.4);
+      --liquid-popup-shadow: 0 24px 56px -26px rgb(0 6 18 / 0.72), inset 0 -1px 2px rgb(0 6 18 / 0.3);
+      --ui-muted: rgb(161 201 247 / 0.14);
+      --ui-input: #8ba4bf;
+      --ui-overlay: rgb(0 8 20 / 0.6);
+    }
+    &[data-liquid-material="clear"] {
+      --liquid-control-fallback: rgb(var(--liquid-optic-rgb) / 0.58);
+      --liquid-input-fallback: rgb(var(--liquid-optic-rgb) / 0.74);
+      --liquid-panel-fallback: rgb(var(--liquid-optic-rgb) / 0.52);
+      --liquid-navigation-fallback: rgb(var(--liquid-optic-rgb) / 0.7);
+      --liquid-control-opacity: 0.18;
+      --liquid-navigation-opacity: 0.34;
+      --liquid-overlay-opacity: 0.9;
+      --liquid-face-opacity: 0.06;
+      --liquid-input-opacity: 0.12;
+    }
+    &[data-liquid-theme="dark"][data-liquid-material="clear"] {
+      --liquid-control-fallback: rgb(var(--liquid-optic-rgb) / 0.82);
+      --liquid-input-fallback: rgb(var(--liquid-optic-rgb) / 0.9);
+      --liquid-panel-fallback: rgb(var(--liquid-optic-rgb) / 0.8);
+      --liquid-navigation-fallback: rgb(var(--liquid-optic-rgb) / 0.9);
+      --liquid-control-opacity: 0.7;
+      --liquid-navigation-opacity: 0.78;
+      --liquid-overlay-opacity: 0.94;
+    }
+
+    /* The renderer reads these resolved role tokens; registration metadata remains engine-owned. */
+    :is([data-liquid-glass], [data-slot]) {
+      --liquid-optic-opacity: var(--liquid-control-opacity);
+      --liquid-optic-reflection: 1;
+    }
+    :is([data-slot="toolbar"], [data-slot="menubar"], [data-slot="tabs-list"],
+      [data-slot="segmented-control"], [data-slot="navigation-menu-list"], [data-slot="pagination-content"]) {
+      --liquid-optic-opacity: var(--liquid-navigation-opacity);
+    }
+    :is([data-slot="menu-content"], [data-slot="select-content"], [data-slot="combobox-content"],
+      [data-slot="autocomplete-content"], [data-slot="trigger-menu-content"],
+      [data-slot="popover-content"], [data-slot="hover-card-content"], [data-slot="tooltip-content"],
+      [data-slot="dialog-content"], [data-slot="alert-dialog-content"], [data-slot="drawer-content"],
+      [data-slot="date-picker-content"], [data-slot="color-picker-content"], [data-slot="command-content"],
+      [data-slot="navigation-menu-content"], [data-slot="navigation-menu-viewport"], [data-slot="toast"],
+      [data-liquid-kind="popup"]) {
+      --liquid-optic-opacity: var(--liquid-overlay-opacity);
+    }
+
     /* The renderer marks registered surfaces; clear faces must expose its output. */
     &[data-liquid-status="ready"] [data-liquid-surface] {
-      --liquid-control: rgb(255 255 255 / 0.1);
-      --liquid-input: rgb(255 255 255 / 0.18);
-      --liquid-panel: rgb(255 255 255 / 0.1);
-      --liquid-popup: rgb(250 253 255 / 0.42);
-      --liquid-selection: rgb(255 255 255 / 0.34);
+      --liquid-control: rgb(var(--liquid-optic-rgb) / var(--liquid-face-opacity));
+      --liquid-input: rgb(var(--liquid-optic-rgb) / var(--liquid-input-opacity));
+      --liquid-panel: rgb(var(--liquid-optic-rgb) / var(--liquid-face-opacity));
+      --liquid-popup: rgb(var(--liquid-optic-rgb) / var(--liquid-popup-opacity));
+      --liquid-selection: color-mix(in srgb, var(--liquid-selection-fallback) 68%, transparent);
+      --liquid-navigation: rgb(var(--liquid-optic-rgb) / var(--liquid-face-opacity));
       /* The shader supplies the inner lip; avoid a second bright CSS outline. */
       --liquid-inner-rim: transparent;
       --liquid-backdrop: none;
@@ -126,8 +250,19 @@
       --liquid-panel: var(--liquid-panel-fallback);
       --liquid-popup: var(--liquid-popup-fallback);
       --liquid-selection: var(--liquid-selection-fallback);
-      --liquid-inner-rim: rgb(255 255 255 / 0.48);
+      --liquid-navigation: var(--liquid-navigation-fallback);
+      --liquid-inner-rim: var(--liquid-rim);
       --liquid-backdrop: blur(14px) saturate(1.16) brightness(1.03);
+    }
+    &[data-liquid-status] [data-liquid-material-fallback] {
+      --liquid-control: var(--liquid-control-fallback);
+      --liquid-input: var(--liquid-input-fallback);
+      --liquid-panel: var(--liquid-panel-fallback);
+      --liquid-popup: var(--liquid-popup-fallback);
+      --liquid-selection: var(--liquid-selection-fallback);
+      --liquid-navigation: var(--liquid-navigation-fallback);
+      --liquid-inner-rim: var(--liquid-rim);
+      --liquid-backdrop: none;
     }
     :is(.qg-gpu-canvas, .qg-gpu-popup-canvas) {
       pointer-events: none;
@@ -188,7 +323,7 @@
       background: var(--liquid-control);
     }
     [data-liquid-kind="content"] {
-      background: rgb(250 253 255 / 0.86);
+      background: var(--liquid-reading);
     }
 
     :is(
@@ -351,8 +486,8 @@
     }
     [data-slot="token-input-token"] {
       border-radius: 8px;
-      background: rgb(18 100 232 / 0.1);
-      color: #174d91;
+      background: var(--liquid-accent-fill);
+      color: var(--liquid-accent-ink);
     }
     :is([data-slot="field-label"], [data-slot="label"], [data-slot="select-label"],
       [data-slot="combobox-label"], [data-slot="autocomplete-label"],
@@ -434,6 +569,32 @@
     [data-slot="segmented-control-item"][data-checked] {
       color: var(--liquid-ink);
     }
+    :is([data-slot="toolbar"], [data-slot="menubar"], [data-slot="segmented-control"],
+      [data-slot="tabs-list"], [data-slot="navigation-menu-list"], [data-slot="pagination-content"]):is([data-liquid-layout="wrap"], [data-liquid-layout="stack"]) {
+      display: flex;
+      align-items: stretch;
+      min-width: 0;
+      max-width: 100%;
+      border-radius: var(--liquid-group-radius);
+      &[data-liquid-layout="wrap"] { flex-flow: row wrap; }
+      &[data-liquid-layout="stack"] { flex-flow: column nowrap; }
+      > :is([data-slot="tabs-tab"], [data-slot="segmented-control-item"], [data-slot="button"],
+        [data-slot="toolbar-button"], [data-slot="menu-trigger"], [data-slot="menubar-trigger"],
+        [data-slot="navigation-menu-trigger"], [data-slot="pagination-link"]) {
+        min-width: 0;
+        max-width: 100%;
+        min-height: 44px;
+        border-radius: var(--liquid-group-item-radius);
+        white-space: normal;
+        overflow-wrap: anywhere;
+      }
+      &[data-liquid-layout="wrap"] > :is([data-slot="tabs-tab"], [data-slot="segmented-control-item"]) {
+        flex: 1 1 var(--liquid-group-item-basis, 8rem);
+      }
+      > :is([data-slot="tabs-indicator"], [data-slot="segmented-control-indicator"]) {
+        border-radius: var(--liquid-group-item-radius);
+      }
+    }
     [data-slot="tabs-panel"] {
       font-size: 16px;
       line-height: 1.6;
@@ -451,15 +612,15 @@
     :is([data-slot="toggle"], [data-slot="toolbar-button"]):is([data-pressed], [aria-pressed="true"]),
     [data-slot="pagination-link"]:is([data-current], [aria-current="page"]) {
       border-color: var(--liquid-blue);
-      background: rgb(18 100 232 / 0.13);
-      color: #104caa;
+      background: var(--liquid-accent-fill);
+      color: var(--liquid-accent-ink);
       box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.6);
     }
     :is([data-slot="navigation-menu-trigger"], [data-slot="menubar-trigger"])[data-open],
     [data-slot="navigation-menu-link"][data-current] {
       border-color: var(--liquid-blue);
-      background: rgb(18 100 232 / 0.12);
-      color: #104caa;
+      background: var(--liquid-accent-fill);
+      color: var(--liquid-accent-ink);
     }
     [data-slot="navigation-menu-list"] > [data-slot="navigation-menu-item"] > [data-slot="navigation-menu-link"] {
       min-height: 40px;
@@ -489,7 +650,7 @@
     :is([data-slot="checkbox"], [data-slot="radio"]):is([data-checked], [data-indeterminate]) {
       border-color: var(--liquid-blue);
       background: var(--liquid-blue);
-      color: #fff;
+      color: var(--liquid-on-primary);
     }
     [data-slot="switch"] {
       --liquid-switch-width: 46px;
@@ -616,8 +777,8 @@
       [data-slot="autocomplete-item"], [data-slot="command-item"], [data-slot="trigger-menu-item"],
       [data-slot="listbox-item"]):is([data-highlighted], [data-selected]),
     [data-slot="tree-item"][data-selected] > [data-slot="tree-label"] {
-      background: rgb(18 100 232 / 0.12);
-      color: #104caa;
+      background: var(--liquid-accent-fill);
+      color: var(--liquid-accent-ink);
     }
     [data-slot="menu-content"] [data-slot="menu-trigger"] {
       min-height: 40px;
@@ -630,8 +791,8 @@
       -webkit-backdrop-filter: none;
     }
     [data-slot="menu-content"] [data-slot="menu-trigger"]:is([data-highlighted], [data-open]) {
-      background: rgb(18 100 232 / 0.12);
-      color: #104caa;
+      background: var(--liquid-accent-fill);
+      color: var(--liquid-accent-ink);
     }
     :is([data-slot="menu-group-label"], [data-slot="command-group-label"]) {
       font-size: 12px;
@@ -652,7 +813,7 @@
     }
     [data-slot="calendar-day"][data-selected] {
       background: var(--liquid-blue);
-      color: #fff;
+      color: var(--liquid-on-primary);
     }
     [data-slot="calendar-heading"] {
       font-size: 14px;
@@ -804,7 +965,7 @@
       height: 10px;
       border: 2px solid var(--liquid-blue);
       border-radius: 50%;
-      background: #f3f9ff;
+      background: var(--liquid-reading);
     }
     [data-slot="timeline-connector"] {
       position: absolute;
@@ -850,7 +1011,7 @@
       color: var(--liquid-muted);
     }
     [data-slot="waterfall-row"][data-selected] {
-      background: rgb(18 100 232 / 0.1);
+      background: var(--liquid-accent-fill);
     }
     :is([data-slot="waterfall-header-row"] > :first-child, [data-slot="waterfall-row-header"]) {
       flex: 0 0 90px;
@@ -933,10 +1094,6 @@
       background-image: var(--liquid-face-overlays);
       background-clip: padding-box;
     }
-    [data-liquid-kind="content"] {
-      --liquid-static-reflection: none;
-      --liquid-face-overlays: none;
-    }
     :is([data-slot="tabs-indicator"], [data-slot="segmented-control-indicator"]) {
       border-color: var(--liquid-blue);
     }
@@ -950,28 +1107,57 @@
     }
 
     [data-slot][data-variant="solid"] {
-      border-color: #1264e8;
-      background: linear-gradient(180deg, #2783fa, #1264e8);
-      background-image: var(--liquid-face-overlays, linear-gradient(transparent, transparent)), linear-gradient(180deg, #2783fa, #1264e8);
-      color: #fff;
+      border-color: var(--liquid-blue);
+      background: linear-gradient(180deg, var(--liquid-primary-from), var(--liquid-primary-to));
+      background-image: var(--liquid-face-overlays, linear-gradient(transparent, transparent)), linear-gradient(180deg, var(--liquid-primary-from), var(--liquid-primary-to));
+      color: var(--liquid-on-primary);
       box-shadow: 0 5px 14px -7px rgb(18 100 232 / 0.55), inset 0 1px 0 rgb(255 255 255 / 0.25);
     }
     [data-slot][data-variant="solid"]:hover:not([data-disabled], :disabled) {
-      background: linear-gradient(180deg, #1d76ed, #0e58d1);
-      background-image: var(--liquid-face-overlays, linear-gradient(transparent, transparent)), linear-gradient(180deg, #1d76ed, #0e58d1);
+      background: linear-gradient(180deg, var(--liquid-primary-hover-from), var(--liquid-primary-hover-to));
+      background-image: var(--liquid-face-overlays, linear-gradient(transparent, transparent)), linear-gradient(180deg, var(--liquid-primary-hover-from), var(--liquid-primary-hover-to));
     }
     [data-slot][data-variant="destructive"] {
       border-color: rgb(184 33 63 / 0.28);
-      background: rgb(255 235 240 / 0.84);
+      background: var(--liquid-danger-fill);
       background-image: var(--liquid-face-overlays, none);
       color: var(--liquid-danger);
     }
     [data-slot][data-variant="destructive"]:hover:not([data-disabled], :disabled) {
-      background: rgb(255 219 228 / 0.92);
+      background: var(--liquid-danger-hover);
       background-image: var(--liquid-face-overlays, none);
     }
     [data-slot="menu-item"][data-destructive] {
       color: var(--liquid-danger);
+    }
+
+    [data-liquid-intent="control"] {
+      --liquid-optic-opacity: var(--liquid-control-opacity);
+      background-color: var(--liquid-control);
+    }
+    [data-liquid-intent="navigation"] {
+      --liquid-optic-opacity: var(--liquid-navigation-opacity);
+      background-color: var(--liquid-navigation);
+    }
+    [data-liquid-intent="overlay"] {
+      --liquid-optic-opacity: var(--liquid-overlay-opacity);
+      background-color: var(--liquid-popup);
+    }
+    /* Match the base surface specificity so its sheen cannot cover the reading background. */
+    &[data-liquid-status] :is([data-liquid-kind="content"], [data-liquid-intent="reading"]) {
+      --liquid-control: var(--liquid-control-fallback);
+      --liquid-input: var(--liquid-input-fallback);
+      --liquid-panel: var(--liquid-panel-fallback);
+      --liquid-popup: var(--liquid-popup-fallback);
+      --liquid-selection: var(--liquid-selection-fallback);
+      --liquid-navigation: var(--liquid-navigation-fallback);
+      --liquid-optic-opacity: 1;
+      --liquid-optic-reflection: 0;
+      --liquid-static-reflection: none;
+      --liquid-face-overlays: none;
+      background: var(--liquid-reading);
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
     }
 
     /* Motion changes decorative material and measured SDK parts, never control text. */
@@ -986,7 +1172,7 @@
         }
       }
 
-      :is([data-liquid-active], [data-liquid-pressed], [data-liquid-ripple]):not([data-liquid-kind="content"]) {
+      :is([data-liquid-active], [data-liquid-pressed], [data-liquid-ripple]):not([data-liquid-kind="content"], [data-liquid-intent="reading"]) {
         --liquid-face-overlays:
           radial-gradient(circle at var(--liquid-fx-ripple-x, 50%) var(--liquid-fx-ripple-y, 50%),
             transparent max(0px, calc(var(--liquid-fx-ripple-radius, 0px) - 10px)),
@@ -1222,10 +1408,11 @@
     }
 
     &[data-liquid-status="reduced"] {
-      --liquid-control-fallback: #f7fbff;
-      --liquid-input-fallback: #fff;
-      --liquid-panel-fallback: #f4f9ff;
-      --liquid-popup-fallback: #fbfdff;
+      --liquid-control-fallback: var(--liquid-control-solid);
+      --liquid-input-fallback: var(--liquid-input-solid);
+      --liquid-panel-fallback: var(--liquid-panel-solid);
+      --liquid-popup-fallback: var(--liquid-popup-solid);
+      --liquid-navigation-fallback: var(--liquid-panel-solid);
       --liquid-backdrop: none;
     }
     &[data-liquid-status="reduced"] :is([data-slot], [data-liquid-glass]) {
@@ -1237,10 +1424,11 @@
     }
     @media (prefers-reduced-transparency: reduce) {
       &:not([data-liquid-transparency="glass"]) {
-        --liquid-control-fallback: #f7fbff;
-        --liquid-input-fallback: #fff;
-        --liquid-panel-fallback: #f4f9ff;
-        --liquid-popup-fallback: #fbfdff;
+        --liquid-control-fallback: var(--liquid-control-solid);
+        --liquid-input-fallback: var(--liquid-input-solid);
+        --liquid-panel-fallback: var(--liquid-panel-solid);
+        --liquid-popup-fallback: var(--liquid-popup-solid);
+        --liquid-navigation-fallback: var(--liquid-panel-solid);
 
         :is([data-slot], [data-liquid-glass]) {
           --liquid-control: var(--liquid-control-fallback) !important;
@@ -1248,6 +1436,7 @@
           --liquid-panel: var(--liquid-panel-fallback) !important;
           --liquid-popup: var(--liquid-popup-fallback) !important;
           --liquid-selection: var(--liquid-selection-fallback) !important;
+          --liquid-navigation: var(--liquid-navigation-fallback) !important;
           backdrop-filter: none !important;
           -webkit-backdrop-filter: none !important;
         }
@@ -1269,32 +1458,57 @@
         }
       }
     }
-    @media (prefers-contrast: more) {
-      & {
-        --liquid-ink: #0d2538;
-        --liquid-muted: #31475a;
-        --liquid-border: #607b90;
-        --liquid-line: #71889c;
-        --ui-input: #536f84;
-      }
+    &[data-liquid-contrast="more"] {
+      --liquid-ink: #081823;
+      --liquid-muted: #243c4c;
+      --liquid-border: #4a6574;
+      --liquid-rim: #4a6574;
+      --liquid-line: #64818f;
+      --liquid-control-solid: #fff;
+      --liquid-input-solid: #fff;
+      --liquid-panel-solid: #fff;
+      --liquid-popup-solid: #fff;
+      --liquid-reading-fallback: #fff;
+      --ui-input: #536f84;
+    }
+    &[data-liquid-theme="dark"][data-liquid-contrast="more"] {
+      --liquid-ink: #fff;
+      --liquid-muted: #e2eff7;
+      --liquid-border: #a7c2d2;
+      --liquid-rim: #a7c2d2;
+      --liquid-line: #8aaaba;
+      --liquid-control-solid: #09141d;
+      --liquid-input-solid: #09141d;
+      --liquid-panel-solid: #09141d;
+      --liquid-popup-solid: #09141d;
+      --liquid-reading-fallback: #09141d;
+      --ui-input: #a7c2d2;
     }
     @media (forced-colors: active) {
       & {
-        --liquid-ink: CanvasText;
-        --liquid-muted: CanvasText;
-        --liquid-border: ButtonText;
-        --liquid-rim: ButtonText;
-        --liquid-underside: ButtonText;
-        --liquid-line: ButtonText;
-        --liquid-blue: Highlight;
-        --liquid-danger: LinkText;
-        --liquid-control-fallback: Canvas;
-        --liquid-input-fallback: Canvas;
-        --liquid-panel-fallback: Canvas;
-        --liquid-popup-fallback: Canvas;
-        --liquid-selection-fallback: Canvas;
-        --ui-input: ButtonText;
-        --ui-ring-border: Highlight;
+        --liquid-ink: CanvasText !important;
+        --liquid-muted: CanvasText !important;
+        --liquid-border: ButtonText !important;
+        --liquid-rim: ButtonText !important;
+        --liquid-underside: ButtonText !important;
+        --liquid-line: ButtonText !important;
+        --liquid-blue: Highlight !important;
+        --liquid-danger: LinkText !important;
+        --liquid-success: CanvasText !important;
+        --liquid-warning: CanvasText !important;
+        --liquid-control-fallback: Canvas !important;
+        --liquid-input-fallback: Canvas !important;
+        --liquid-panel-fallback: Canvas !important;
+        --liquid-popup-fallback: Canvas !important;
+        --liquid-selection-fallback: Canvas !important;
+        --liquid-reading-fallback: Canvas !important;
+        --liquid-navigation-fallback: Canvas !important;
+        --liquid-canvas: Canvas !important;
+        --liquid-canvas-grid: transparent !important;
+        --liquid-focus: Highlight !important;
+        --liquid-on-primary: HighlightText !important;
+        --ui-input: ButtonText !important;
+        --ui-ring-border: Highlight !important;
       }
       :is([data-slot], [data-liquid-glass]) {
         --liquid-control: Canvas !important;
@@ -1302,6 +1516,8 @@
         --liquid-panel: Canvas !important;
         --liquid-popup: Canvas !important;
         --liquid-selection: Canvas !important;
+        --liquid-reading: Canvas !important;
+        --liquid-navigation: Canvas !important;
         background-image: none !important;
         box-shadow: none !important;
         backdrop-filter: none !important;

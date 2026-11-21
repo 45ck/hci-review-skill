@@ -41,6 +41,9 @@ export default function LiquidGlassTemplate() {
       dispersion={0.008}
       motion="system"
       transparency="system"
+      theme="system"
+      material="regular"
+      increaseContrast={false}
       fontSet="studio"
       iconSet="isometric"
     >
@@ -59,7 +62,7 @@ export default function LiquidGlassTemplate() {
             <LiquidIcon name="folder" />
             Save project
           </Button>
-          <output aria-live="polite">{saved ? "Saved " + saved : ""}</output>
+          {saved && <output aria-live="polite">Saved {saved}</output>}
         </section>
       </main>
     </LiquidGlassProvider>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useImperativeHandle, useState, type ReactNode, type Ref } from "react";
+import { useId, useImperativeHandle, useState, type CSSProperties, type ReactNode, type Ref } from "react";
 import { createParts, usePart, usePrimitive } from "@ui-sdk/react/primitive";
 import { Button } from "@ui-sdk/react/button";
 import { Toggle } from "@ui-sdk/react/toggle";
@@ -9,6 +9,7 @@ import { Dialog, DialogBackdrop, DialogClose, DialogContent, DialogTitle, Dialog
 import type { CanvasRect, Viewport } from "@ui-sdk/core";
 import { liquidViewport, type LiquidViewportChangeDetails } from "./viewport-primitive";
 import { ValidationBadge } from "../validation";
+import type { LiquidSurfaceIntent } from "../webgpu";
 
 export type { CanvasRect, Viewport, LiquidViewportChangeDetails };
 
@@ -32,6 +33,17 @@ export interface LiquidViewportProps {
   resetKey?: string;
   className?: string;
   worldClassName?: string;
+  slotProps?: {
+    controls?: { className?: string; style?: CSSProperties };
+    canvas?: { className?: string; style?: CSSProperties };
+    hint?: { className?: string; style?: CSSProperties };
+    fullscreen?: {
+      className?: string;
+      style?: CSSProperties;
+      "data-liquid-glass"?: "" | "off";
+      "data-liquid-intent"?: LiquidSurfaceIntent;
+    };
+  };
   viewport?: Viewport;
   defaultViewport?: Viewport;
   onViewportChange?: (value: Viewport, details: LiquidViewportChangeDetails) => void;
@@ -42,7 +54,7 @@ const parts = createParts(liquidViewport, { controls: "div", surface: "div", wor
 
 export function LiquidViewport({
   label, width, height, children, selectionRect, resetKey, className = "", worldClassName = "",
-  viewport, defaultViewport, onViewportChange, ref,
+  viewport, defaultViewport, onViewportChange, ref, slotProps = {},
 }: LiquidViewportProps) {
   const [expanded, setExpanded] = useState(false);
   const [expandedContent, setExpandedContent] = useState(false);
@@ -64,7 +76,7 @@ export function LiquidViewport({
   }), [handle]);
 
   const body = <div className="qgv-body">
-    <parts.Controls className="qgv-controls">
+    <parts.Controls className={`qgv-controls ${slotProps.controls?.className ?? ""}`} style={slotProps.controls?.style}>
       {({ zoom, panMode }) => <>
         <div className="qgv-zoom-controls">
           <Button aria-label={`Zoom out ${lowerLabel}`} disabled={zoom <= 10} focusableWhenDisabled onClick={() => handle.api.zoomBy(1 / 1.25)}>−</Button>
@@ -90,10 +102,10 @@ export function LiquidViewport({
         </div>
       </>}
     </parts.Controls>
-    <parts.Surface className="qgv-surface" aria-label={`${label} canvas`} aria-describedby={hintId}>
+    <parts.Surface className={`qgv-surface ${slotProps.canvas?.className ?? ""}`} style={slotProps.canvas?.style} aria-label={`${label} canvas`} aria-describedby={hintId}>
       <parts.World className={`qgv-world ${worldClassName}`}>{children}</parts.World>
     </parts.Surface>
-    <p className="qgv-hint" id={hintId}>Drag empty space to pan. Scroll to move; pinch or Ctrl/⌘ + scroll to zoom. Focus the canvas for arrow keys, +/− zoom, 0 actual size and F fit. Hold Space or use Hand to move over elements.</p>
+    <p className={`qgv-hint ${slotProps.hint?.className ?? ""}`} style={slotProps.hint?.style} id={hintId}>Drag empty space to pan. Scroll to move; pinch or Ctrl/⌘ + scroll to zoom. Focus the canvas for arrow keys, +/− zoom, 0 actual size and F fit. Hold Space or use Hand to move over elements.</p>
   </div>;
 
   return usePart(handle, "root", {}, {
@@ -106,7 +118,7 @@ export function LiquidViewport({
       </div>
       {!expandedContent && body}
       <DialogBackdrop />
-      <DialogContent className="qgv-expanded" initialFocus="content" keepMounted>
+      <DialogContent className={`qgv-expanded ${slotProps.fullscreen?.className ?? ""}`} style={slotProps.fullscreen?.style} data-liquid-glass={slotProps.fullscreen?.["data-liquid-glass"]} data-liquid-intent={slotProps.fullscreen?.["data-liquid-intent"] ?? "reading"} initialFocus="content" keepMounted>
         <header className="qgv-expanded-heading">
           <div className="qgv-expanded-title"><DialogTitle>{label} fullscreen</DialogTitle><ValidationBadge /></div>
           <DialogClose aria-label={`Close fullscreen ${lowerLabel}`}>Close fullscreen</DialogClose>

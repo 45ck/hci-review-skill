@@ -37,14 +37,14 @@ export type LiquidCommandPaletteProps = {
   className?: string;
 };
 
-export function LiquidCommandPalette({ title, triggerLabel, searchLabel, groups, onAction, description = "Search the available actions.", placeholder = "Type a command…", shortcut = "mod+k", open, defaultOpen, onOpenChange, query, onQueryChange, className = "" }: LiquidCommandPaletteProps) {
+export function LiquidCommandPalette({ title, triggerLabel, searchLabel, groups, onAction, description, placeholder = "Type a command…", shortcut = "mod+k", open, defaultOpen, onOpenChange, query, onQueryChange, className = "" }: LiquidCommandPaletteProps) {
   const [controller] = useState(() => createDialogController());
   const search = useRef<HTMLInputElement>(null);
   return <Dialog controller={controller} open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange}>
     <DialogTrigger className={`qgp-command-trigger ${className}`} shortcut={shortcut ?? undefined}>{triggerLabel}<DialogShortcut /></DialogTrigger>
     <DialogBackdrop className="qgp-backdrop" />
     <DialogContent className="qgp-command-dialog" data-validation="unvalidated" initialFocus={() => search.current} keepMounted>
-      <header className="qgp-dialog-heading"><div><DialogTitle>{title}</DialogTitle><DialogDescription>{description}</DialogDescription></div><DialogClose aria-label={`Close ${title}`}>×</DialogClose></header>
+      <header className="qgp-dialog-heading"><div><DialogTitle>{title}</DialogTitle>{description?.trim() && <DialogDescription>{description}</DialogDescription>}</div><DialogClose aria-label={`Close ${title}`}>×</DialogClose></header>
       <Command aria-label={searchLabel} query={query} onQueryChange={onQueryChange} onAction={async (id, details) => {
         const command = groups.flatMap(group => group.items).find(item => item.id === id);
         if (!command || command.disabled) throw new Error("This command is unavailable.");

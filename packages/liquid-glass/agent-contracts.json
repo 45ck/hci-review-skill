@@ -3912,11 +3912,13 @@
       "inputs": [
         "children, backdrop",
         "refraction, dispersion, motion, transparency",
-        "fontSet, iconSet, onStatusChange"
+        "fontSet, iconSet, onStatusChange",
+        "theme: system|light|dark, material: regular|clear|solid, increaseContrast:boolean; data-liquid-intent on surfaces: control|navigation|reading|overlay"
       ],
       "state": [
         "loading/ready/unavailable/error/reduced renderer status",
-        "effective material/motion preferences"
+        "effective material/motion preferences",
+        "Resolved theme, material, contrast and reducedReason; preference policy is distinct from GPU availability."
       ],
       "runtime": {
         "discovery": "none",
@@ -3927,7 +3929,9 @@
       "restrictions": [
         "One provider per document; backdrop is decorative capture input.",
         "Preserve forced-colour/reduced-motion/reduced-transparency behavior.",
-        "Canvas cannot receive input or replace readable DOM; no standalone SDK registry entry."
+        "Canvas cannot receive input or replace readable DOM; no standalone SDK registry entry.",
+        "Forced colours and increased contrast remain solid; explicit Glass can override reduced transparency but cannot override forced colours or increased contrast.",
+        "Reading faces use stable semantic CSS fill. Controls behind an intervening reading background use theme-aware CSS fallback and are excluded from GPU surface claims; a native popup's local canvas defines a new rendering plane."
       ],
       "policies": [
         "shared-state",
@@ -3936,12 +3940,17 @@
       ],
       "docs": [
         "packages/liquid-glass/docs/agent-engineering.md",
-        "docs/hci/standards/liquid-glass.md"
+        "docs/hci/standards/liquid-glass.md",
+        "packages/liquid-glass/docs/material-policy.md"
       ],
       "evidence": [
         {
           "path": "tests/glass_optics_contract.py",
           "scope": "Renderer pixels, fallback, preference and motion behavior; no standalone provider agent actions."
+        },
+        {
+          "path": "tests/test_material_policy.mjs",
+          "scope": "Resolved theme and material preference precedence, safe optical tint inputs; automated implementation evidence only."
         }
       ],
       "validation": "unvalidated"
@@ -3968,7 +3977,7 @@
         "Must run inside LiquidGlassProvider"
       ],
       "state": [
-        "status, surfaceCount, motion, refresh"
+        "status, surfaceCount, motion, refresh, theme, material, contrast, reducedReason"
       ],
       "runtime": {
         "discovery": "none",
@@ -3986,7 +3995,8 @@
       ],
       "docs": [
         "packages/liquid-glass/docs/agent-engineering.md",
-        "packages/liquid-glass/README.md"
+        "packages/liquid-glass/README.md",
+        "packages/liquid-glass/docs/material-policy.md"
       ],
       "evidence": [
         {
@@ -4791,7 +4801,8 @@
       ],
       "inputs": [
         "label, width, height, children",
-        "viewport/defaultViewport, onViewportChange, selectionRect, resetKey"
+        "viewport/defaultViewport, onViewportChange, selectionRect, resetKey",
+        "slotProps: controls,canvas,hint,fullscreen className/style; fullscreen data-liquid-glass and data-liquid-intent presentation overrides"
       ],
       "state": [
         "viewport {x,y,zoom}, panMode, expanded"
@@ -4860,9 +4871,10 @@
         "actionSchema": "./agent-action-inputs.json#/$defs/liquid-viewport"
       },
       "restrictions": [
-        "Zoom remains 0.1\u20134; dimensions and positions must be finite.",
+        "Zoom remains 0.1–4; dimensions and positions must be finite.",
         "Controlled host may cancel or decline camera updates; check the resulting camera.",
-        "Keyboard/controls provide non-drag alternatives."
+        "Keyboard/controls provide non-drag alternatives.",
+        "Slot props append classes and apply styles only; required SDK refs, events, accessible names, hint association and dialog focus behavior remain component-owned."
       ],
       "policies": [
         "shared-state",
@@ -4872,7 +4884,8 @@
       "docs": [
         "packages/liquid-glass/docs/agent-engineering.md",
         "docs/hci/standards/standards-components.md",
-        "docs/hci/standards/agent-first-modeling.md"
+        "docs/hci/standards/agent-first-modeling.md",
+        "packages/liquid-glass/docs/viewport.md"
       ],
       "evidence": [
         {
@@ -6736,7 +6749,7 @@
         "Add pointer emphasis to a decorative icon inside a real SDK button or link."
       ],
       "inputs": [
-        "children:decorative artwork; distance:CSS pixels clamped to 0\u201312; className",
+        "children:decorative artwork; distance:CSS pixels clamped to 0–12; className",
         "LiquidGlassProvider resolved motion and fine-pointer/forced-colour preferences"
       ],
       "state": [
@@ -6914,12 +6927,14 @@
         "Call details.cancel synchronously to refuse a request; this callback does not expose an asynchronous acceptance or cancellation protocol.",
         "followScroll=false disables scroll-driven selection. Explicit desktop navigation may still align the selected article in the viewport.",
         "Preserve all readable chapter text and provide appropriate media alternatives; do not intercept wheel, touch scrolling or keyboard navigation.",
-        "No standalone chapter primitive/action is claimed; use the actual SDK child control."
+        "No standalone chapter primitive/action is claimed; use the actual SDK child control.",
+        "Wrapped chapter choices use data-liquid-layout=wrap with bounded container/item radii and DOM-order SDK keyboard navigation."
       ],
       "docs": [
         "packages/liquid-glass/docs/agent-engineering.md",
         "docs/hci/standards/interaction-sections.md",
-        "node_modules/@ui-sdk/react/docs/components/segmented-control.md"
+        "node_modules/@ui-sdk/react/docs/components/segmented-control.md",
+        "packages/liquid-glass/docs/material-policy.md"
       ],
       "evidence": [
         {
@@ -7111,7 +7126,8 @@
       ],
       "inputs": [
         "title,triggerLabel,searchLabel,groups with stable group and command IDs,onAction(id,CommandActionDetails)",
-        "Optional description,placeholder,shortcut:string|null (default mod+k; null removes the SDK shortcut binding),controlled open/defaultOpen/onOpenChange,query/onQueryChange,className; commands may include icon,keywords,shortcut,disabled,requiresConfirmation"
+        "Optional description,placeholder,shortcut:string|null (default mod+k; null removes the SDK shortcut binding),controlled open/defaultOpen/onOpenChange,query/onQueryChange,className; commands may include icon,keywords,shortcut,disabled,requiresConfirmation",
+        "description has no default; omitted, empty and whitespace-only text renders no description element"
       ],
       "state": [
         "SDK Dialog owns modal state/focus; Command owns filtering, highlight and pending/error state; task effects belong to the host."
@@ -7131,17 +7147,20 @@
         "Hosts that retain hidden pages must pass shortcut:null while inactive; a hidden ancestor alone does not disable the SDK global shortcut. The showcase binds its collection activity to this prop.",
         "Provide unique command IDs and specific labels. Host callbacks must validate authorization and signal rejected action promises.",
         "requiresConfirmation marks the actual command for SDK policy; opening or closing is not the consequential action.",
-        "No second root primitive or mutation endpoint is added."
+        "No second root primitive or mutation endpoint is added.",
+        "DialogTitle remains the accessible name; SDK description association exists only when meaningful description content is rendered."
       ],
       "docs": [
         "packages/liquid-glass/docs/agent-engineering.md",
         "packages/liquid-glass/src/patterns/README.md",
-        "docs/hci/standards/library-patterns.md"
+        "docs/hci/standards/library-patterns.md",
+        "docs/hci/standards/content-composition.md",
+        "docs/hci/templates/task-comparison.md"
       ],
       "evidence": [
         {
           "path": "tests/glass_patterns_contract.py",
-          "scope": "Grouped SDK command discovery/dispatch, accepted local effect, disabled/confirmation or host-refusal behavior where exercised, keyboard search and modal focus recovery, inactive shortcut isolation with closed state and interactive page after returning, and active shortcut rebinding; scoped to the local showcase."
+          "scope": "Grouped SDK command discovery/dispatch, accepted local effect, disabled/confirmation or host-refusal behavior where exercised, keyboard search and modal focus recovery, inactive shortcut isolation with closed state and interactive page after returning, and active shortcut rebinding; scoped to the local showcase. Supplied description association; title-only runnable work recipe with no empty description/reference, accepted filtering and keyboard focus return."
         }
       ],
       "policies": [
@@ -8058,6 +8077,180 @@
         {
           "path": "tests/test_chat_adapters.mjs",
           "scope": "Deterministic official-type fixtures verify text/media/source/tool projection, unknown parts, preserved call identities, partial/failed states and nonmutation; no live service call."
+        }
+      ],
+      "validation": "not-applicable"
+    },
+    {
+      "id": "liquid-app-shell-regions",
+      "kind": "presentation",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/layouts",
+          "symbols": [
+            "LiquidAppShell",
+            "LiquidAppRail",
+            "LiquidAppWorkarea",
+            "LiquidAppHeader",
+            "LiquidAppContent",
+            "LiquidAppInspector",
+            "LiquidAppDock"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/layouts/shell.tsx"
+      ],
+      "purpose": "Render semantic regions for responsive task-first applications while preserving host-provided content and state.",
+      "useWhen": [
+        "Compose a consistent workspace rail, header, content, inspector and mobile dock without inventing custom controls."
+      ],
+      "inputs": [
+        "children, className, standard HTML region attributes and optional accessible region labels",
+        "LiquidAppContent as: main (default) or section when embedded within an existing main landmark"
+      ],
+      "state": [
+        "Passive semantic regions; route, content, identity and authorisation remain external"
+      ],
+      "runtime": {
+        "discovery": "dom",
+        "mutationPath": "None; semantic regions do not mutate application state.",
+        "actions": [],
+        "outcome": "Rendered main, header, navigation, aside and dock remain discoverable to people and agents through their real child controls."
+      },
+      "restrictions": [
+        "Do not mistake the shell for a router, authentication service or tenant boundary.",
+        "Use the shared Liquid Glass provider and CSS; this module does not create a new renderer."
+      ],
+      "policies": [
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "docs": [
+        "docs/hci/standards/app-layout-system.md",
+        "packages/liquid-glass/docs/agent-engineering.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/glass_layouts_contract.py",
+          "scope": "Checks the hosted app composition regions and responsive task views; human usability and production tenancy remain unvalidated."
+        }
+      ],
+      "validation": "unvalidated"
+    },
+    {
+      "id": "liquid-app-navigation",
+      "kind": "composition",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/layouts",
+          "symbols": [
+            "LiquidAppNavigation",
+            "LiquidWorkspaceSwitcher"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/src/layouts/shell.tsx"
+      ],
+      "purpose": "Expose controlled workspace navigation and organisation switching through real Vercel UI SDK Button and Menu controls.",
+      "useWhen": [
+        "Provide consistent desktop navigation and an approved-workspace switcher in a tenant-aware application."
+      ],
+      "inputs": [
+        "items, activeId/value, onNavigate/onValueChange callbacks, optional counts, disabled state and accessible labels"
+      ],
+      "state": [
+        "Active route/workspace values are controlled by the host; the menu owns temporary open/close state"
+      ],
+      "runtime": {
+        "discovery": "sdk-children",
+        "mutationPath": "SDK Button clicks and MenuItem selections invoke controlled host callbacks; host must validate and accept or reject requested navigation and workspace transitions.",
+        "actions": [],
+        "outcome": "Read the host's resulting current route or workspace after the action; a click alone is not proof of an authorised switch.",
+        "controls": [
+          "@ui-sdk/react/button",
+          "@ui-sdk/react/menu"
+        ]
+      },
+      "restrictions": [
+        "Supply only workspaces the principal is allowed to see. Enforce tenant identity and resource authorisation on the server.",
+        "Never treat a client-side active workspace or role label as a permission grant.",
+        "Do not create a parallel DOM API for agents or bypass SDK controls."
+      ],
+      "policies": [
+        "shared-state",
+        "semantic-controls",
+        "proof-boundary"
+      ],
+      "docs": [
+        "docs/hci/standards/app-layout-system.md",
+        "docs/hci/standards/agent-engineering.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/glass_layouts_contract.py",
+          "scope": "Checks workspace switch, view-only denial, navigable regions and SDK control operation using fictional in-memory fixtures."
+        }
+      ],
+      "validation": "unvalidated"
+    },
+    {
+      "id": "agent-document-publisher",
+      "kind": "build-tool",
+      "exports": [
+        {
+          "path": "@quantitative-hci/liquid-glass/agent-documents",
+          "symbols": [
+            "createAgentDocuments",
+            "writeAgentDocuments",
+            "verifyAgentDocuments",
+            "validateDocumentSchemas",
+            "agentDocumentsPlugin",
+            "normalizeBasePath",
+            "sha256"
+          ]
+        }
+      ],
+      "sources": [
+        "packages/liquid-glass/tools/agent-documents.mjs"
+      ],
+      "purpose": "Publish and verify canonical fingerprinted agent documents in consuming applications.",
+      "useWhen": [
+        "Build an application at a root or nested public base path with documentation matching the installed kit."
+      ],
+      "inputs": [
+        "packageRoot?, source?, basePath? for generation",
+        "output and optional page for writing/verification; Vite plugin accepts the same documentation options"
+      ],
+      "state": [
+        "Build-time assets and frozen package provenance; no browser UI state."
+      ],
+      "runtime": {
+        "discovery": "none",
+        "mutationPath": "Node build tooling reads canonical package files and writes explicitly selected output files; the Vite adapter emits build assets.",
+        "actions": [],
+        "outcome": "Verify matching page identity, paths, schemas and fingerprints in the produced artifact."
+      },
+      "restrictions": [
+        "Node-only build API; do not import into a browser bundle.",
+        "Content identity is not authorization, test success or human review.",
+        "The package source identity is separate from the consuming application source."
+      ],
+      "policies": [
+        "proof-boundary"
+      ],
+      "docs": [
+        "packages/liquid-glass/docs/distribution.md"
+      ],
+      "evidence": [
+        {
+          "path": "tests/test_agent_documents.mjs",
+          "scope": "Document identity, canonical schema references, corruption and stale artifact rejection."
+        },
+        {
+          "path": "tests/test_liquid_glass_distribution.mjs",
+          "scope": "Packaged files, declared public entries and consumer integration where executed."
         }
       ],
       "validation": "not-applicable"

@@ -1,4 +1,4 @@
-import { createChange, definePrimitive } from "@ui-sdk/core";
+import { createChange, definePrimitive, type SlotDefinition } from "@ui-sdk/core";
 import { applyModelTransaction, inspectModelDocument, modelDocumentSnapshot, previewModelTransaction,
   redoModelDocument, rejectedModelResult, selectModelElement, undoModelDocument } from "./document";
 import { createModelChangeController } from "./controlled-change";
@@ -30,7 +30,22 @@ function actionResult(result: ModelDocumentResult, status: ModelActionResult["st
   return { ...value, status };
 }
 
-export const liquidModelDocument = definePrimitive({
+type LiquidModelDocumentState = {
+  value: ModelDocumentSnapshot;
+  disabled: boolean;
+  readOnly: boolean;
+  lastResult: ModelActionResult | null;
+  pendingRevision: number | null;
+};
+type LiquidModelDocumentApi = ModelDocumentHandle & {
+  getDocument: () => ModelDocument;
+  items: () => { value: string; label: string }[];
+};
+type LiquidModelDocumentSlots = {
+  root: SlotDefinition<LiquidModelDocumentState, LiquidModelDocumentApi, { id?: string }, ModelDocumentRenderContext>;
+};
+
+export const liquidModelDocument: ReturnType<typeof definePrimitive<LiquidModelDocumentOptions, LiquidModelDocumentState, LiquidModelDocumentApi, LiquidModelDocumentSlots>> = definePrimitive<LiquidModelDocumentOptions, LiquidModelDocumentState, LiquidModelDocumentApi, LiquidModelDocumentSlots>({
   name: "model-document",
   options: {
     document: "value", value: "value", onValueChange: "callback", disabled: "boolean", readOnly: "boolean",

@@ -4,6 +4,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type ComponentProps,
   type ComponentType,
   type ErrorInfo,
   type ReactNode,
@@ -81,6 +82,7 @@ import { createModelDocument } from "@quantitative-hci/liquid-glass/modeling";
 import { AgentsShowcase } from "./agents-showcase";
 import { InteractionsShowcase } from "./interactions-showcase";
 import { SectionsShowcase } from "./sections-showcase";
+import { LayoutsShowcase } from "./layouts-showcase";
 import { PatternsShowcase } from "./patterns-showcase";
 import { AssistantShowcase } from "./assistant-showcase";
 import { ChatShowcase } from "./chat-showcase";
@@ -105,6 +107,7 @@ const demos: Record<string, ComponentType> = { ...inputDemos, ...surfaceDemos };
 const groups = [...new Set(manifest.components.map((item) => item.category))];
 const collections = [
   { id: "chat", name: "Chat workspace", keywords: "conversation chats prompt template thread history streaming assistant messages" },
+  { id: "layouts", name: "App layouts", keywords: "application app shell workspace account organisation multitenancy menu dashboard navigation review queue phone mobile settings projects people states" },
   { id: "patterns", name: "Patterns", keywords: "command palette search filter facets selection bulk actions drawer detail sheet empty state library" },
   { id: "assistant", name: "Assistant", keywords: "ai elements prompt composer attachment message conversation sources citation suggestions" },
   { id: "interactions", name: "Interactions", keywords: "cursor pointer mouse click ripple feedback magnetic right click context menu gestures" },
@@ -128,6 +131,15 @@ const appearanceOptions = [
   { value: "glass", label: "Glass" },
   { value: "solid", label: "Solid" },
 ];
+const themeOptions = [
+  { value: "system", label: "Follow device" },
+  { value: "light", label: "Light" },
+  { value: "dark", label: "Dark" },
+];
+const materialOptions = [
+  { value: "regular", label: "Regular" },
+  { value: "clear", label: "Clear" },
+];
 const fontOptions = [
   { value: "studio", label: "Studio — Manrope" },
   { value: "editorial", label: "Editorial — Fraunces" },
@@ -139,6 +151,17 @@ const iconOptions = [
 ];
 type MotionPreference = boolean | "system";
 type TransparencyPreference = "system" | "glass" | "solid";
+type ThemePreference = NonNullable<ComponentProps<typeof LiquidGlassProvider>["theme"]>;
+type MaterialPreference = NonNullable<ComponentProps<typeof LiquidGlassProvider>["material"]>;
+
+function readChoicePreference<T extends string>(key: string, choices: readonly T[], fallback: T): T {
+  try {
+    const stored = localStorage.getItem(key);
+    return choices.find(value => value === stored) ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
 
 function readMotionPreference(): MotionPreference {
   try {
@@ -575,6 +598,12 @@ function MaterialSettings({
   setMotion,
   transparency,
   setTransparency,
+  theme,
+  setTheme,
+  material,
+  setMaterial,
+  increaseContrast,
+  setIncreaseContrast,
   fontSet,
   setFontSet,
   iconSet,
@@ -589,12 +618,18 @@ function MaterialSettings({
   setMotion: (v: MotionPreference) => void;
   transparency: TransparencyPreference;
   setTransparency: (v: TransparencyPreference) => void;
+  theme: ThemePreference;
+  setTheme: (v: ThemePreference) => void;
+  material: MaterialPreference;
+  setMaterial: (v: MaterialPreference) => void;
+  increaseContrast: boolean;
+  setIncreaseContrast: (v: boolean) => void;
   fontSet: LiquidFontSet;
   setFontSet: (v: LiquidFontSet) => void;
   iconSet: LiquidIconSet;
   setIconSet: (v: LiquidIconSet) => void;
 }) {
-  const { status, refresh, motion: resolvedMotion } = useLiquidGlass();
+  const { status, refresh, motion: resolvedMotion, reducedReason } = useLiquidGlass();
   return (
     <Popover>
       <PopoverTrigger aria-label="Material settings">
@@ -605,9 +640,11 @@ function MaterialSettings({
         align="end"
         sideOffset={12}
         className="kit-material-popover"
+        data-liquid-intent="reading"
       >
         <PopoverTitle>Glass material</PopoverTitle>
         <div className="kit-material-controls">
+          <Choice label="Theme" value={theme} options={themeOptions} onChange={(value) => setTheme(value as ThemePreference)} />
           <Choice
             label="Font set"
             value={fontSet}
@@ -626,6 +663,11 @@ function MaterialSettings({
             options={appearanceOptions}
             onChange={(value) => setTransparency(value as TransparencyPreference)}
           />
+          <Choice label="Glass finish" value={material} options={materialOptions} onChange={(value) => setMaterial(value as MaterialPreference)} />
+          <div className="kit-setting-row">
+            <span>Increase contrast</span>
+            <Switch aria-label="Increase contrast" checked={increaseContrast} onCheckedChange={setIncreaseContrast}><SwitchThumb /></Switch>
+          </div>
           <div className="kit-motion-setting">
             <div className="kit-setting-row">
               <span>Animate glass</span>
@@ -674,6 +716,9 @@ function MaterialSettings({
               setBackdrop("coast");
               setMotion("system");
               setTransparency("system");
+              setTheme("system");
+              setMaterial("regular");
+              setIncreaseContrast(false);
               setFontSet(DEFAULT_LIQUID_APPEARANCE.fontSet);
               setIconSet(DEFAULT_LIQUID_APPEARANCE.iconSet);
             }}
@@ -692,10 +737,16 @@ function MaterialSettings({
             {status === "loading"
               ? "Preparing WebGPU…"
               : status === "reduced"
-                ? transparency === "solid"
+                ? reducedReason === "increased-contrast"
+                  ? "Increased contrast uses solid surfaces."
+                  : reducedReason === "forced-colors"
+                    ? "Your device's forced colours use system-colour surfaces."
+                  : transparency === "solid"
                   ? "Solid material is selected."
                   : "A device preference is using solid surfaces. Choose Glass to preview transparency; forced colours remain solid."
-                : "This browser is showing the compatibility material. WebGPU is unavailable."}
+                : status === "error"
+                  ? "Glass rendering failed. The compatibility material is active."
+                  : "This browser is showing the compatibility material. WebGPU is unavailable."}
           </p>
         )}
       </PopoverContent>
@@ -724,6 +775,7 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
         if (id === "visual") setGraphicsView(params.get("graphicsview") === "images" ? "images" : "canvas");
       } else {
         setSelected("overview");
+        setSearch("");
       }
     };
     restoreCollection();
@@ -825,6 +877,10 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
           <Button onClick={() => copy(
             starterSource
               .replace('fontSet="studio"', `fontSet="${props.fontSet}"`)
+              .replace('theme="system"', `theme="${props.theme}"`)
+              .replace('transparency="system"', `transparency="${props.transparency}"`)
+              .replace('material="regular"', `material="${props.material}"`)
+              .replace('increaseContrast={false}', `increaseContrast={${props.increaseContrast}}`)
               .replace('iconSet="isometric"', `iconSet="${props.iconSet}"`),
             "Starter copied",
           )}>
@@ -918,11 +974,11 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
         <main className="kit-main" id="kit-main" tabIndex={-1}>
           <div className="kit-title-row">
             <div>
-              <p className="kit-eyebrow">
+              {active !== "layouts" && <p className="kit-eyebrow">
                 {active === "overview"
                   ? "The component collection"
                   : libraryPageTitle ? customComponent?.category ?? (example ? "Runnable example" : "Component library") : collection ? "Custom collection" : (component?.category ?? "Components")}
-              </p>
+              </p>}
               <h1>
                 {active === "overview"
                   ? "Liquid Glass"
@@ -974,13 +1030,16 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
           {(active === "sections" || visitedCollections.includes("sections")) && <div hidden={active !== "sections"}>
             <SpecimenBoundary key="sections" name="Sections"><SectionsShowcase /></SpecimenBoundary>
           </div>}
+          {(active === "layouts" || visitedCollections.includes("layouts")) && <div hidden={active !== "layouts"}>
+            <SpecimenBoundary key="layouts" name="App layouts"><LayoutsShowcase active={active === "layouts"} /></SpecimenBoundary>
+          </div>}
           {(active === "patterns" || visitedCollections.includes("patterns")) && <div hidden={active !== "patterns"}>
             <SpecimenBoundary key="patterns" name="Patterns"><PatternsShowcase active={active === "patterns"} /></SpecimenBoundary>
           </div>}
           {(active === "assistant" || visitedCollections.includes("assistant")) && <div hidden={active !== "assistant"}>
             <SpecimenBoundary key="assistant" name="Assistant"><AssistantShowcase /></SpecimenBoundary>
           </div>}
-          {(["interactions", "sections", "patterns", "assistant", "chat"].includes(active ?? "")) && <RecipePanel collection={active!} onNavigate={navigateLibrary} />}
+          {(["layouts", "interactions", "sections", "patterns", "assistant", "chat"].includes(active ?? "")) && <RecipePanel collection={active!} onNavigate={navigateLibrary} />}
           {active === "overview" ? (
             <Overview onExplore={navigateLibrary} />
           ) : collection || libraryPageTitle ? null
@@ -1052,16 +1111,22 @@ function App() {
   );
   const [fontSet, setFontSet] = useState<LiquidFontSet>(readFontPreference);
   const [iconSet, setIconSet] = useState<LiquidIconSet>(readIconPreference);
+  const [theme, setTheme] = useState<ThemePreference>(() => readChoicePreference("qg-kit-theme", ["system", "light", "dark"], "system"));
+  const [material, setMaterial] = useState<MaterialPreference>(() => readChoicePreference("qg-kit-finish", ["regular", "clear"], "regular"));
+  const [increaseContrast, setIncreaseContrast] = useState(() => readChoicePreference("qg-kit-contrast", ["true", "false"], "false") === "true");
   useEffect(() => {
     try {
       localStorage.setItem("qg-kit-motion", JSON.stringify(motion));
       localStorage.setItem("qg-kit-transparency", transparency);
       localStorage.setItem("qg-kit-font", fontSet);
       localStorage.setItem("qg-kit-icons", iconSet);
+      localStorage.setItem("qg-kit-theme", theme);
+      localStorage.setItem("qg-kit-finish", material);
+      localStorage.setItem("qg-kit-contrast", String(increaseContrast));
     } catch {
       // Storage can be unavailable in embedded or private browser contexts.
     }
-  }, [motion, transparency, fontSet, iconSet]);
+  }, [motion, transparency, fontSet, iconSet, theme, material, increaseContrast]);
   const backdropNode = useMemo(
     () => <KitBackdrop variant={backdrop} />,
     [backdrop],
@@ -1073,6 +1138,9 @@ function App() {
       dispersion={dispersion / 1000}
       motion={motion}
       transparency={transparency}
+      theme={theme}
+      material={material}
+      increaseContrast={increaseContrast}
       fontSet={fontSet}
       iconSet={iconSet}
     >
@@ -1086,6 +1154,12 @@ function App() {
         setMotion={setMotion}
         transparency={transparency}
         setTransparency={setTransparency}
+        theme={theme}
+        setTheme={setTheme}
+        material={material}
+        setMaterial={setMaterial}
+        increaseContrast={increaseContrast}
+        setIncreaseContrast={setIncreaseContrast}
         fontSet={fontSet}
         setFontSet={setFontSet}
         iconSet={iconSet}

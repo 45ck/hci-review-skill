@@ -29,7 +29,7 @@
   /* The SDK indicator may retain desktop coordinates while a resize animation settles. */
   overflow: clip; overflow-clip-margin: 6px;
 }
-.qgs-chapter-navigation [data-slot="segmented-control-item"] { flex: 1; min-width: 0; min-height: 2.75rem; padding-inline: .6rem; font-size: .875rem; white-space: normal; overflow-wrap: anywhere; }
+.qgs-chapter-navigation [data-slot="segmented-control-item"] { flex: 1 1 8rem; min-width: 0; min-height: 2.75rem; padding-inline: .6rem; font-size: .875rem; white-space: normal; overflow-wrap: anywhere; }
 .qgs-chapter-media { aspect-ratio: 4 / 5; max-height: 65dvh; overflow: hidden; border-radius: 1.5rem; background: var(--liquid-panel-fallback, #e8f3f7); }
 .qgs-chapter { display: flex; flex-direction: column; justify-content: center; min-height: 32rem; min-height: min(68dvh, 38rem); padding-block: 3rem; border-top: 1px solid var(--liquid-line, #b8cbd9); scroll-margin-block: 8rem; }
 .qgs-chapter:first-child { border-top: 0; }

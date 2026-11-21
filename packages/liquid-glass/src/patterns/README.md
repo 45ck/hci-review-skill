@@ -16,6 +16,8 @@ These follow the established command palette, table filtering/bulk selection, de
 
 `LiquidCommandPalette` also accepts controlled query/onQueryChange and open/onOpenChange, defaultOpen, description, placeholder and className. The installed beta13 CommandActionDetails contains an optional event; unlike ButtonActionDetails it does **not** advertise a source field. Do not infer an authenticated actor from either shape. Dialog, Input and Select change callbacks retain their actual SDK source/cancel details.
 
+Supporting copy is optional. An omitted, empty or whitespace-only command description renders no description element; the SDK title still names the dialog. Supply a description only when it adds useful context, such as a consequence or a constraint. `title="Article actions"` needs no subtitle saying "Search the available actions." A supplied description such as "Changes are saved to this draft." belongs only in a host that actually provides that behavior. Follow the [content composition standard](../../../../docs/hci/standards/content-composition.md) for headings, state messages and recovery copy.
+
 The default `shortcut` is `mod+k`; pass `shortcut={null}` to remove that global SDK trigger binding. Hosts that keep inactive pages mounted must disable their shortcuts explicitly, for example `shortcut={active ? "mod+k" : null}`. A hidden ancestor alone does not disable this SDK shortcut. The showcase wires its active collection state to this prop and verifies the dialog remains closed after returning, with the shortcut usable again while active.
 
 ## Controlled acceptance and operation
@@ -30,7 +32,9 @@ The gallery sample keeps its records and selection in React state. Filtering, ke
 
 `docs/hci/examples/liquid-glass/src/recipes/work-patterns.tsx` is the compiled source offered for copying. Compose its inner content into an existing provider; initialize the agent bridge once at the host boundary.
 
-`tests/glass_patterns_contract.py` checks the production gallery's named SDK discovery, command choices/results, disabled command, controlled query rejection, multiple status choices, selection and one bulk callback, detail title editing, keyboard focus return, hidden collection shortcut isolation and 390-pixel/forced-colour layout. Its existence is a declared scope, not a claim that any particular revision passed.
+`tests/glass_patterns_contract.py` checks the production gallery's named SDK discovery, command choices/results, disabled command, controlled query rejection, multiple status choices, selection and one bulk callback, detail title editing, keyboard focus return, hidden collection shortcut isolation and 390-pixel/forced-colour layout. It also checks the supplied description's accessible relationship and the runnable work recipe's title-only palette, accepted command result and focus return. Its existence is a declared scope, not a claim that any particular revision passed.
+
+Use the [before/after task record](../../../../docs/hci/templates/task-comparison.md) when evaluating a complete composition. The [article review example](../../../../docs/hci/examples/article-review-evidence.md) separates a proposed domain task from the existing local review fixture and leaves unmeasured human outcomes explicit. Reuse the application layout and host task state when composing a review/change/return flow; these patterns do not introduce another shell or execution store.
 
 ## References
 

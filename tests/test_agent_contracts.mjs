@@ -228,6 +228,29 @@ test("conditional exports cannot silently remove the public inventory", (t) => {
   assert.throws(() => collectPublicApi(f.root), /Conditional or array public exports/);
 });
 
+test("source-aware compiled exports retain complete canonical coverage", (t) => {
+  const f = fixture(t);
+  const exported = { "quantive-source": "./src/index.ts", types: "./dist/index.d.ts", import: "./dist/index.js" };
+  f.write("packages/liquid-glass/package.json", JSON.stringify({ name, exports: { ".": exported }, dependencies: { "@ui-sdk/core": "0.1.0-beta.13", "@ui-sdk/react": "0.1.0-beta.13" } }));
+  assert.deepEqual(f.check().errors, []);
+  f.write(sourcePath, 'export function formatCount(value:number) { return String(value); } export const undocumented = true;');
+  rejects(f.check(), /undocumented public export.*undocumented/);
+  exported.import = "../outside.js";
+  f.write("packages/liquid-glass/package.json", JSON.stringify({ name, exports: { ".": exported } }));
+  assert.throws(() => collectPublicApi(f.root), /Unsafe public export/);
+});
+
+test("build tools cannot claim live controls or human interface validation", (t) => {
+  const f = fixture(t);
+  f.manifest.entries[0].kind = "build-tool";
+  assert.deepEqual(f.check().errors, []);
+  f.manifest.entries[0].runtime.discovery = "sdk";
+  rejects(f.check(), /build tooling has no live UI discovery/);
+  f.manifest.entries[0].runtime.discovery = "none";
+  f.manifest.entries[0].validation = "unvalidated";
+  rejects(f.check(), /build tooling has no live UI discovery/);
+});
+
 test("directories cannot stand in for actual evidence files", (t) => {
   const f = fixture(t);
   f.manifest.entries[0].evidence[0].path = "packages/liquid-glass/src";

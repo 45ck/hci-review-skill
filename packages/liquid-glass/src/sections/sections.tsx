@@ -140,7 +140,7 @@ export function LiquidChapterSection({
   return <LiquidSection {...props} className={`qgs-chapters ${className}`} data-active-chapter={selected?.id ?? ""}>
     {!selected ? <p className="qgs-empty">Add a chapter to show its story and media.</p> : <div className="qgs-chapter-layout">
       <div className="qgs-chapter-stage">
-        <SegmentedControl aria-label={navigationLabel} value={selected.id} className="qgs-chapter-navigation"
+        <SegmentedControl aria-label={navigationLabel} value={selected.id} className="qgs-chapter-navigation" data-liquid-layout="wrap"
           onValueChange={(next, details) => {
             if (!next || !chapters.some(chapter => chapter.id === next)) { details.cancel(); return; }
             let cancelled = false;

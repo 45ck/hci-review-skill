@@ -1,3 +1,5 @@
+"use client";
+
 import {
   createContext,
   useCallback,
@@ -13,12 +15,21 @@ import type { LiquidGlassState, LiquidGlassStatus } from "./webgpu/engine";
 import type { LiquidGlassMotion } from "./webgpu/motion";
 import { DEFAULT_LIQUID_APPEARANCE, LiquidAppearanceProvider } from "./appearance";
 import type { LiquidFontSet, LiquidIconSet } from "./appearance";
+import type { GlassMaterial, GlassTheme } from "./material";
+import { resolveLiquidMaterial } from "./webgpu/policy";
+import type { LiquidReducedReason } from "./webgpu/policy";
 export type { LiquidGlassStatus } from "./webgpu/engine";
 export type { LiquidGlassMotion } from "./webgpu/motion";
+export type { GlassMaterial, GlassTheme } from "./material";
+export type { LiquidSurfaceIntent, LiquidReducedReason } from "./webgpu/policy";
 
 type LiquidGlassContextValue = LiquidGlassState & {
   refresh: () => Promise<void>;
   motion: LiquidGlassMotion;
+  theme: "light" | "dark";
+  material: GlassMaterial;
+  contrast: "normal" | "more";
+  reducedReason: LiquidReducedReason;
 };
 const LiquidGlassContext = createContext<LiquidGlassContextValue | null>(null);
 
@@ -36,6 +47,9 @@ export function LiquidGlassProvider({
   dispersion = 0.008,
   motion = "system",
   transparency = "system",
+  theme = "system",
+  material = "regular",
+  increaseContrast = false,
   fontSet = DEFAULT_LIQUID_APPEARANCE.fontSet,
   iconSet = DEFAULT_LIQUID_APPEARANCE.iconSet,
   onStatusChange,
@@ -46,6 +60,9 @@ export function LiquidGlassProvider({
   dispersion?: number;
   motion?: boolean | "system";
   transparency?: "system" | "glass" | "solid";
+  theme?: GlassTheme;
+  material?: GlassMaterial;
+  increaseContrast?: boolean;
   fontSet?: LiquidFontSet;
   iconSet?: LiquidIconSet;
   onStatusChange?: (status: LiquidGlassStatus) => void;
@@ -58,13 +75,13 @@ export function LiquidGlassProvider({
   );
   const callback = useRef(onStatusChange);
   callback.current = onStatusChange;
-  const [preferences, setPreferences] = useState({ motion: false, transparency: false, colours: false });
-  const reduced = preferences.colours || transparency === "solid" ||
-    (transparency === "system" && preferences.transparency);
+  const [preferences, setPreferences] = useState({ motion: false, transparency: false, colours: false, dark: false, contrast: false });
+  const policy = resolveLiquidMaterial({ theme, material, increaseContrast, transparency }, preferences);
+  const reduced = policy.material === "solid";
   const resolvedMotion: LiquidGlassMotion = motion === false ? "off" :
     motion === "system" && preferences.motion ? "reduced" : "enabled";
-  const reducedReason = preferences.colours ? "forced-colors" :
-    transparency === "solid" ? "solid-choice" : reduced ? "reduced-transparency" : null;
+  const { reducedReason } = policy;
+  const renderedTheme = useRef(policy.theme);
   const [state, setState] = useState<LiquidGlassState>({
     status: "loading",
     surfaceCount: 0,
@@ -87,10 +104,13 @@ export function LiquidGlassProvider({
       motion: matchMedia("(prefers-reduced-motion: reduce)"),
       transparency: matchMedia("(prefers-reduced-transparency: reduce)"),
       colours: matchMedia("(forced-colors: active)"),
+      dark: matchMedia("(prefers-color-scheme: dark)"),
+      contrast: matchMedia("(prefers-contrast: more)"),
     };
     const update = () => setPreferences({
       motion: queries.motion.matches, transparency: queries.transparency.matches,
       colours: queries.colours.matches,
+      dark: queries.dark.matches, contrast: queries.contrast.matches,
     });
     update();
     for (const query of Object.values(queries)) query.addEventListener("change", update);
@@ -113,9 +133,15 @@ export function LiquidGlassProvider({
       "data-liquid-active-effects",
       "data-liquid-transparency",
       "data-liquid-reduced-reason",
+      "data-liquid-theme",
+      "data-liquid-material",
+      "data-liquid-contrast",
     ];
     const previous = attributes.map((name) => html.getAttribute(name));
     html.dataset.liquidGlassKit = "true";
+    html.dataset.liquidTheme = policy.theme;
+    html.dataset.liquidMaterial = policy.material;
+    html.dataset.liquidContrast = policy.contrast;
     html.dataset.liquidStatus = reduced ? "reduced" : "loading";
     html.dataset.liquidSurfaceCount = "0";
     html.dataset.liquidRenderRevision = "0";
@@ -149,17 +175,26 @@ export function LiquidGlassProvider({
   useEffect(() => {
     document.documentElement.dataset.liquidMotion = resolvedMotion;
     document.documentElement.dataset.liquidTransparency = transparency;
+    document.documentElement.dataset.liquidTheme = policy.theme;
+    document.documentElement.dataset.liquidMaterial = policy.material;
+    document.documentElement.dataset.liquidContrast = policy.contrast;
     if (reducedReason) document.documentElement.dataset.liquidReducedReason = reducedReason;
     else delete document.documentElement.dataset.liquidReducedReason;
     engine.current?.update(settings.current);
-  }, [refraction, dispersion, resolvedMotion, transparency, reducedReason, reduced, fontSet, iconSet]);
+    // Theme tokens can change the supplied backdrop without a mutation inside it.
+    if (renderedTheme.current !== policy.theme) {
+      renderedTheme.current = policy.theme;
+      void engine.current?.refresh();
+    }
+  }, [refraction, dispersion, resolvedMotion, transparency, reducedReason, reduced, fontSet, iconSet, policy.theme, policy.material, policy.contrast]);
   useEffect(() => {
     callback.current?.(state.status);
   }, [state.status]);
   const refresh = useCallback(async () => {
     await engine.current?.refresh();
   }, []);
-  const context = useMemo(() => ({ ...state, refresh, motion: resolvedMotion }), [state, refresh, resolvedMotion]);
+  const context = useMemo(() => ({ ...state, refresh, motion: resolvedMotion, ...policy }),
+    [state, refresh, resolvedMotion, policy.theme, policy.material, policy.contrast, reducedReason]);
   return (
     <LiquidAppearanceProvider fontSet={fontSet} iconSet={iconSet}>
       <LiquidGlassContext.Provider value={context}>

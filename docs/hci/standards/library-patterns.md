@@ -14,6 +14,8 @@ The additive collections are **Patterns** (`?collection=patterns`) and **Assista
 
 Records, selected IDs, filters, draft text, attachments and message lifecycle belong to the host. The reusable components provide composition and presentation around genuine SDK controls. They do not supply a second application store, persistence layer, model provider or agent bridge.
 
+Follow the [content composition standard](content-composition.md): name the object and action, keep useful constraints, and omit repetitive supporting copy. The command palette has no default description; omitted, empty and whitespace-only descriptions render no description element. Its SDK title still provides the dialog's accessible name.
+
 ## Components and established patterns
 
 | Component | Familiar structure | SDK foundation and boundary |
@@ -66,3 +68,5 @@ The intended scenario names are `patterns_commands_filters_selection_and_details
 **Quantitative checks:** verify page width at 390 CSS pixels, usable popup bounds, stationary controls and settled work under normal/reduced motion and forced colours. Test accepted postconditions and rejection paths through the real SDK bridge. These observations establish implementation behaviour only.
 
 **Result boundary:** familiar library patterns have been selected and mapped to existing controls; human recognition, discoverability, completion speed and comfort remain unmeasured. **Next decision:** retain or revise the compositions after automated correctness evidence, then compare representative human tasks before changing their Unvalidated status. Record failed attempts and recovery alongside successful outcomes, following the existing [interface foundations](interface-foundations.md) and [agent engineering standard](agent-engineering.md).
+
+Use the [before/after task record](../templates/task-comparison.md) to connect a complete composition to these checks and the existing evaluation protocol. The [article review plan](../examples/article-review-evidence.md) distinguishes the implemented local layout/review fixture from proposed article integration and unmeasured human outcomes. Reuse the existing application layout and agent task/tool state when composing the whole job.

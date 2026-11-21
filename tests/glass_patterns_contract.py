@@ -1,6 +1,7 @@
 """Accepted state, focus and responsive checks for established SDK compositions."""
 
 from pathlib import Path
+from urllib.parse import urljoin
 
 from glass_developer_contract import _choices, _named_controls, _page_fits, _select
 from glass_optics_contract import SCREENSHOT_TIMEOUT_MS, _act, _call, _entry, browser_stage
@@ -51,6 +52,11 @@ async def verify_patterns_contract(page, expect, *, base_url, output_dir):
         await trigger.focus()
         await trigger.press("Enter")
         await expect(palette).to_be_visible()
+        description = palette.locator('[data-slot="dialog-description"]')
+        await expect(description).to_have_text("Jump to a view or restore the local sample.")
+        description_id = await description.get_attribute("id")
+        assert description_id and description_id in (await palette.get_attribute("aria-describedby") or "").split(), \
+            "The supplied command description is not associated with its dialog"
         palette_search = palette.get_by_role("combobox", name="Find a library command", exact=True)
         await expect(palette_search).to_be_focused()
         await palette_search.fill("Show draft work")
@@ -194,10 +200,36 @@ async def verify_patterns_contract(page, expect, *, base_url, output_dir):
         forced_mobile = await _page_fits(page)
         await page.get_by_role("dialog", name="Coastal study details", exact=True).get_by_role("button", name="Done", exact=True).click()
         await expect(page.locator('.qgp-detail-sheet:visible')).to_have_count(0)
+
+        browser_stage("patterns: title-only recipe palette preserves its name, action and focus")
+        example = await page.context.new_page()
+        try:
+            await example.goto(urljoin(base_url, "?embed=1&example=work-patterns"), wait_until="networkidle")
+            preview = example.locator('[data-example-document="work-patterns"]')
+            example_trigger = preview.get_by_role("button", name="Open project commands", exact=True)
+            await example_trigger.focus()
+            await example_trigger.press("Enter")
+            title_only_palette = example.get_by_role("dialog", name="Project commands", exact=True)
+            await expect(title_only_palette).to_be_visible()
+            await expect(title_only_palette.locator('[data-slot="dialog-description"]')).to_have_count(0)
+            assert not await title_only_palette.get_attribute("aria-describedby"), \
+                "A title-only palette retains an empty description reference"
+            example_search = title_only_palette.get_by_role("combobox", name="Find project action", exact=True)
+            await expect(example_search).to_be_focused()
+            await example_search.fill("Show ready projects")
+            await example_search.press("Enter")
+            await expect(title_only_palette).not_to_be_visible()
+            await expect(preview.locator("section > ul > li")).to_have_count(1)
+            await expect(preview.locator("section > ul > li")).to_contain_text("Design review")
+            await expect(example_trigger).to_be_focused()
+        finally:
+            await example.close()
         completed = True
         return {"namedControls": named, "command": command, "disabledCommand": refusal, "cancelledQuery": cancelled,
                 "disabledSelectionAction": publish_refusal, "bulkArchiveOperations": 1,
                 "inactiveShortcutDialogOpen": returned_dialog["open"], "activeShortcutRebound": True,
+                "optionalDescription": {"suppliedRelationship": True, "omittedElement": True,
+                                        "titleOnlyAcceptedCommand": True, "titleOnlyFocusReturn": True},
                 "mobile": mobile, "forcedColoursMobile": forced_mobile, "screenshots": screenshots,
                 "validation": "unvalidated"}
     finally:

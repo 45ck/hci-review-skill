@@ -1,7 +1,7 @@
 import html2canvas from "html2canvas-pro";
 import { LiquidRenderer } from "./renderer";
 import { collectSurfaces, SURFACE_SELECTOR } from "./surfaces";
-import type { Box, LiquidSurface } from "./surfaces";
+import type { Box, LiquidSurface, ReadingFallbackReason } from "./surfaces";
 import { createLiquidMotion, withoutMotionStyles } from "./motion";
 import type { LiquidGlassMotion } from "./motion";
 
@@ -43,6 +43,7 @@ export function createLiquidGlassEngine(config: EngineOptions) {
   let ratio = 1;
   let capturedBox: Box = { x: 0, y: 0, width: 1, height: 1 };
   const marked = new Set<HTMLElement>();
+  const materialFallbacks = new Set<HTMLElement>();
   const popups = new Map<HTMLElement, HTMLCanvasElement>();
   const html = document.documentElement;
   const debugAttributes = ["data-liquid-motion-work", "data-liquid-last-invalidation"];
@@ -161,6 +162,8 @@ export function createLiquidGlassEngine(config: EngineOptions) {
       if (element.dataset.slot === "drawer-content") delete element.dataset.liquidRenderRect;
     }
     marked.clear();
+    for (const element of materialFallbacks) delete element.dataset.liquidMaterialFallback;
+    materialFallbacks.clear();
     renderer?.destroy();
     renderer = undefined;
     for (const canvas of popups.values()) canvas.remove();
@@ -211,7 +214,17 @@ export function createLiquidGlassEngine(config: EngineOptions) {
     try {
       if (geometryDirty || geometryEffects || nativeAnimations.size || motion.isTravelling()) {
         const discoverAnimations = geometryDirty || popupEntries.size > 0;
-        surfaces = collectSurfaces(config.root, config.backdrop);
+        const fallbacks = new Map<HTMLElement, ReadingFallbackReason>();
+        surfaces = collectSurfaces(config.root, config.backdrop, fallbacks);
+        for (const element of materialFallbacks)
+          if (!fallbacks.has(element)) {
+            delete element.dataset.liquidMaterialFallback;
+            materialFallbacks.delete(element);
+          }
+        for (const [element, reason] of fallbacks) {
+          if (element.dataset.liquidMaterialFallback !== reason) element.dataset.liquidMaterialFallback = reason;
+          materialFallbacks.add(element);
+        }
         surfaceMap = new Map(surfaces.map((surface) => [surface.element, surface]));
         const previousGroups = groups;
         groups = new Map();
@@ -599,6 +612,9 @@ export function createLiquidGlassEngine(config: EngineOptions) {
       "aria-selected",
       "aria-expanded",
       "data-liquid-glass",
+      "data-liquid-intent",
+      "data-liquid-kind",
+      "data-liquid-layout",
     ],
   });
   const backdropObserver = new MutationObserver(queueCapture);
@@ -714,6 +730,8 @@ export function createLiquidGlassEngine(config: EngineOptions) {
         if (element.dataset.slot === "drawer-content") delete element.dataset.liquidRenderRect;
       }
       marked.clear();
+      for (const element of materialFallbacks) delete element.dataset.liquidMaterialFallback;
+      materialFallbacks.clear();
       renderer?.destroy();
       for (const canvas of popups.values()) canvas.remove();
       popups.clear();

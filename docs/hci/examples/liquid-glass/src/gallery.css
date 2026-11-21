@@ -31,7 +31,8 @@ p {
   left: 20px;
   z-index: 100;
   padding: 12px 20px;
-  background: white;
+  background: var(--liquid-reading, white);
+  color: var(--liquid-ink);
   border-radius: 12px;
 }
 .skip-link:focus {
@@ -39,7 +40,7 @@ p {
 }
 .kit-shell {
   min-height: 100dvh;
-  color: #142d42;
+  color: var(--liquid-ink, #142d42);
 }
 .kit-header {
   display: flex;
@@ -83,7 +84,7 @@ p {
 }
 .kit-renderer-status {
   font-size: 12px;
-  color: #24475c;
+  color: var(--liquid-muted, #24475c);
   white-space: nowrap;
 }
 .kit-layout {
@@ -110,7 +111,7 @@ p {
   left: 12px;
   z-index: 2;
   pointer-events: none;
-  color: #37566a;
+  color: var(--liquid-muted, #37566a);
 }
 .kit-search [data-slot="input"] {
   width: 100%;
@@ -126,7 +127,7 @@ p {
   flex: 1;
   padding: 4px;
   border: 0;
-  background: rgb(245 251 255 / 0.75);
+  background: var(--liquid-navigation, rgb(245 251 255 / 0.75));
   box-shadow: none;
   border-radius: 14px;
   scrollbar-width: thin;
@@ -145,9 +146,9 @@ p {
   margin-block: 2px;
 }
 .kit-sidebar .kit-catalogue [data-selected] {
-  color: #102e46;
+  color: var(--liquid-ink, #102e46);
   font-weight: 650;
-  background: #ffffff66;
+  background: var(--liquid-selection, #ffffff66);
   border-color: #ffffffa6;
   box-shadow:
     inset 0 1px #ffffffa6,
@@ -169,7 +170,7 @@ p {
 }
 .kit-catalogue-group > p {
   font-size: 12px;
-  color: #35556a;
+  color: var(--liquid-muted, #35556a);
   font-weight: 600;
   margin: 0 11px 8px;
 }
@@ -177,7 +178,7 @@ p {
   font-size: 12px;
   margin: 0;
   padding: 0 11px 8px;
-  color: #35556a;
+  color: var(--liquid-muted, #35556a);
 }
 .kit-custom-collection {
   padding-bottom: 14px;
@@ -196,8 +197,8 @@ p {
   margin-top: 28px;
   padding: 18px 20px;
   border-radius: 16px;
-  background: rgb(250 253 255 / 0.88);
-  color: #304c5e;
+  background: var(--liquid-reading, rgb(250 253 255 / 0.88));
+  color: var(--liquid-muted, #304c5e);
   font-size: 13px;
   line-height: 1.65;
 }
@@ -225,7 +226,7 @@ p {
   overflow: hidden;
   border: 1px solid #ffffffc0;
   border-radius: 24px;
-  background: #f7fbffe6;
+  background: var(--liquid-reading, #f7fbffe6);
 }
 .kit-new-art { position: relative; min-height: 170px; overflow: hidden; }
 .kit-new-art img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
@@ -234,8 +235,8 @@ p {
 .kit-new-art path { fill: #f7fbffef; stroke: #174359; stroke-width: 1.5; }
 .kit-new-copy { padding: 24px; align-self: center; }
 .kit-new-copy h2 { font-size: clamp(1.25rem, 2.5vw, 1.8rem); margin: 0 0 6px; letter-spacing: -.045em; }
-.kit-new-copy p { font-size: 1rem; margin-bottom: 16px; color: #3e596a; }
-.kit-recipe-panel { margin-top: 30px; padding: 20px; border: 1px solid #ffffffa6; border-radius: 18px; background: #f8fcfff0; min-width: 0; }
+.kit-new-copy p { font-size: 1rem; margin-bottom: 16px; color: var(--liquid-muted, #3e596a); }
+.kit-recipe-panel { margin-top: 30px; padding: 20px; border: 1px solid #ffffffa6; border-radius: 18px; background: var(--liquid-reading, #f8fcfff0); min-width: 0; }
 .kit-recipe-panel h2 { font-size: 1.25rem; margin-bottom: 8px; }
 .kit-recipe-panel p { font-size: 1rem; line-height: 1.6; max-width: 70ch; }
 .kit-recipe-panel [data-slot="collapsible-trigger"] { width: 100%; justify-content: space-between; }
@@ -280,7 +281,7 @@ p {
 .kit-preview-description p {
   font-size: 15px;
   line-height: 1.6;
-  color: #35576b;
+  color: var(--liquid-muted, #35576b);
   margin-bottom: 18px;
 }
 .kit-preview-model {
@@ -336,7 +337,7 @@ p {
 }
 .kit-eyebrow {
   font-size: 13px;
-  color: #35576b;
+  color: var(--liquid-muted, #35576b);
   margin: 0 0 8px;
 }
 .kit-title-row h1 {
@@ -349,7 +350,7 @@ p {
 .kit-intro {
   max-width: 42ch;
   margin: 13px 0 0;
-  color: #35576b;
+  color: var(--liquid-muted, #35576b);
   font-size: 15px;
   line-height: 1.6;
 }
@@ -360,7 +361,7 @@ p {
 .kit-motion-setting p {
   margin: 9px 0 0;
   max-width: 34ch;
-  color: #35576b;
+  color: var(--liquid-muted, #35576b);
   font-size: 13px;
   line-height: 1.5;
 }
@@ -407,7 +408,7 @@ p {
   min-height: 0;
   font-size: 13px;
   font-weight: 500;
-  color: #16465a;
+  color: var(--liquid-ink, #16465a);
 }
 .kit-result:empty {
   display: none;
@@ -428,7 +429,7 @@ p {
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  color: #294f65;
+  color: var(--liquid-ink, #294f65);
 }
 .kit-key {
   border: 1px solid #375b7540;
@@ -495,11 +496,11 @@ p {
 .kit-navigation-content > div > span:last-child:not(:nth-child(2)) {
   margin-left: auto;
   font-size: 12px;
-  color: #36566a;
+  color: var(--liquid-muted, #36566a);
 }
 .kit-panel-divider {
   height: 1px;
-  background: #ffffff73;
+  background: var(--liquid-reading, #ffffff73);
 }
 .kit-create-dialog {
   width: min(440px, calc(100vw - 40px));
@@ -521,6 +522,8 @@ p {
 }
 .kit-material-popover {
   width: min(380px, calc(100vw - 32px));
+  max-height: min(var(--available-height, 90dvh), 90dvh);
+  overflow-y: auto;
 }
 .kit-material-controls {
   display: flex;
@@ -588,7 +591,7 @@ p {
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  color: #2f5267;
+  color: var(--liquid-muted, #2f5267);
   flex-wrap: wrap;
   font-size: 14px;
 }
@@ -805,3 +808,5 @@ p {
     color: CanvasText;
   }
 }
+
+:root[data-liquid-theme="dark"] .qg-liquid-backdrop::after { content: ""; position: absolute; inset: 0; background: rgb(5 15 30 / .72); pointer-events: none; }

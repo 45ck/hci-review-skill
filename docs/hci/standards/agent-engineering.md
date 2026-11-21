@@ -18,7 +18,7 @@ Choose an existing primitive or composition before adding a new one. Put reusabl
 
 ## Keep the contract current
 
-Add or update the registry in the same change as a public export. Record purpose, `useWhen`, inputs, state, actual runtime discovery and actions, restrictions, documentation and scoped evidence. Classify aliases, utilities, providers and passive presentation honestly. An evidence path identifies a check; it is not a claim that the check was executed or that it covers every scenario.
+Add or update the registry in the same change as a public export. Record purpose, `useWhen`, inputs, state, actual runtime discovery and actions, restrictions, documentation and scoped evidence. Classify aliases, utilities, providers and passive presentation honestly. Node-only build publishers use `build-tool`: no live UI discovery, no UI actions, and interface validation `not-applicable`. An evidence path identifies a check; it is not a claim that the check was executed or that it covers every scenario.
 
 Custom primitives also publish positional action input schemas and valid/invalid examples in `packages/liquid-glass/agent-action-inputs.json`. Keep those shapes aligned with the shared runtime validators. Structural preflight never replaces current revision, identity, permission or host acceptance checks. When a controlled host is asynchronous, expose pending state and cancellation, accept equivalent document values, prevent stale callbacks from settling newer requests, and distinguish a failed callback after application from an unapplied proposal.
 

@@ -12,6 +12,8 @@ Use this protocol to evaluate a specific change against the version people use t
 
 ## Collection plan for the 20 models
 
+Capture the decision, matched variants, attempt log and separate guardrails in the [before/after task record](../templates/task-comparison.md). The [article review plan](../examples/article-review-evidence.md) is an example with no invented participant results. Keep dimension-level review judgements in the [HCI scorecard](../templates/hci-scorecard.md); they are not a summed quantitative readiness scale.
+
 The primary metric below is an example endpoint. Choose it only if it answers your task. Thresholds tied to product tokens, approved designs or baseline measurements need a recorded source and unit.
 
 | Model | Matched unit and collection | Example comparison | Evidence to review alongside it |

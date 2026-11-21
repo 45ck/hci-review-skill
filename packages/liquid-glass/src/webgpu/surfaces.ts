@@ -1,3 +1,5 @@
+import { readLiquidTint } from "./policy";
+
 export const LIQUID_SURFACE_SLOTS = [
   "button",
   "toggle",
@@ -76,7 +78,20 @@ export type LiquidSurface = {
   clip: Box;
   radius: number;
   popup: HTMLElement | null;
+  tint: [number, number, number, number];
+  reflection: number;
 };
+export type ReadingFallbackReason = "reading-surface" | "reading-plane";
+
+export function getReadingFallbackReason(element: HTMLElement, plane: HTMLElement): ReadingFallbackReason | null {
+  const reading = (node: HTMLElement) => node.dataset.liquidIntent === "reading" || node.dataset.liquidKind === "content";
+  if (reading(element)) return "reading-surface";
+  if (element === plane) return null;
+  // A plane's own background paints below its canvas; opaque descendants paint above it.
+  for (let ancestor = element.parentElement; ancestor && ancestor !== plane; ancestor = ancestor.parentElement)
+    if (reading(ancestor)) return "reading-plane";
+  return null;
+}
 
 function intersection(a: Box, b: Box): Box {
   const x = Math.max(a.x, b.x);
@@ -92,6 +107,7 @@ function intersection(a: Box, b: Box): Box {
 export function collectSurfaces(
   root: HTMLElement,
   backdrop: HTMLElement,
+  fallbacks?: Map<HTMLElement, ReadingFallbackReason>,
 ): LiquidSurface[] {
   const viewport = {
     x: 0,
@@ -119,6 +135,11 @@ export function collectSurfaces(
       /* Older browsers have no top-layer selectors. */
     }
     if (!root.contains(element) && !popup) continue;
+    const fallbackReason = getReadingFallbackReason(element, popup ?? root);
+    if (fallbackReason) {
+      fallbacks?.set(element, fallbackReason);
+      continue;
+    }
     if (
       element.dataset.slot === "input" &&
       element.parentElement?.closest(
@@ -173,12 +194,15 @@ export function collectSurfaces(
     const radius = corner.endsWith("%")
       ? (Math.min(rect.width, rect.height) * parseFloat(corner)) / 100
       : parseFloat(corner) || 0;
+    const reflection = Number(style.getPropertyValue("--liquid-optic-reflection") || 1);
     result.push({
       element,
       rect,
       clip,
       radius: Math.min(radius, rect.width / 2, rect.height / 2),
       popup,
+      tint: readLiquidTint(style.getPropertyValue("--liquid-optic-rgb"), style.getPropertyValue("--liquid-optic-opacity")),
+      reflection: Number.isFinite(reflection) ? Math.max(0, Math.min(1, reflection)) : 1,
     });
   }
   return result;

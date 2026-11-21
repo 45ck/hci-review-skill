@@ -109,9 +109,24 @@ function collectPublicApi(root = defaultRoot) {
     return result;
   };
   const modules = new Map();
-  for (const [subpath, target] of Object.entries(pkg.exports)) {
+  for (const [subpath, definition] of Object.entries(pkg.exports)) {
+    let target = definition;
     if (target === null) continue;
-    if (typeof target !== "string") throw new Error(`Conditional or array public exports need explicit inventory support: ${subpath}`);
+    if (typeof target !== "string") {
+      const stylesheet = target && !Array.isArray(target) && Object.keys(target).length === 2 &&
+        typeof target["quantive-source"] === "string" && target["quantive-source"].endsWith(".css") &&
+        typeof target.default === "string" && target.default.endsWith(".css");
+      if (!stylesheet && (!target || Array.isArray(target) || Object.keys(target).some(key => !["quantive-source", "types", "import", "default"].includes(key)) ||
+        typeof target["quantive-source"] !== "string" || typeof target.types !== "string" || typeof target.import !== "string" ||
+        !/\.d\.[cm]?ts$/.test(target.types) || !/\.[cm]?js$/.test(target.import) ||
+        (target.default !== undefined && target.default !== target.import))) {
+        throw new Error(`Conditional or array public exports require an explicit quantive-source, declarations and ESM target: ${subpath}`);
+      }
+      for (const path of Object.values(target)) {
+        if (!path.startsWith("./") || path.includes("\\") || path.split("/").includes("..")) throw new Error(`Unsafe public export target ${subpath}: ${path}`);
+      }
+      target = target["quantive-source"];
+    }
     if (/\.(?:css|json|md|txt)$/.test(target)) {
       if (!subpath.includes("*") && (!existsSync(join(root, packagePath, target)) || !statSync(join(root, packagePath, target)).isFile())) throw new Error(`Unresolved public metadata ${subpath}: ${target}`);
       continue;
@@ -211,7 +226,8 @@ function validateAgentContracts({ root = defaultRoot, manifest = readJson(join(r
         if (entry.runtime.actions.length) fail(entry.id, "SDK aliases must discover inherited actions instead of copying an action catalogue");
       } else if (item.symbols.includes("*")) fail(entry.id, "custom public symbols must be explicit");
     }
-    if (["presentation", "decoration", "provider", "pure-utility", "host-hook"].includes(entry.kind) && (entry.runtime.actions.length || !["dom", "none"].includes(entry.runtime.discovery))) fail(entry.id, "passive and host-only APIs cannot claim SDK actions or discovery");
+    if (["presentation", "decoration", "provider", "pure-utility", "host-hook", "build-tool"].includes(entry.kind) && (entry.runtime.actions.length || !["dom", "none"].includes(entry.runtime.discovery))) fail(entry.id, "passive and host-only APIs cannot claim SDK actions or discovery");
+    if (entry.kind === "build-tool" && (entry.runtime.discovery !== "none" || entry.validation !== "not-applicable")) fail(entry.id, "build tooling has no live UI discovery or human interface validation status");
     if (entry.kind === "composition" && (entry.runtime.discovery !== "sdk-children" || !entry.runtime.controls?.length)) fail(entry.id, "compositions must name their actual SDK child-control route");
     if (entry.kind === "composition" && entry.runtime.actions.length) fail(entry.id, "compositions discover child actions and cannot claim their own root actions");
     if (entry.kind !== "primitive" && (entry.runtime.primitive || entry.runtime.actionParameters || entry.runtime.actionSchema)) fail(entry.id, "only custom primitives can declare a primitive binding or action parameters/schema");

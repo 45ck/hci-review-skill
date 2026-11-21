@@ -66,7 +66,8 @@
               "decoration",
               "provider",
               "pure-utility",
-              "host-hook"
+              "host-hook",
+              "build-tool"
             ]
           },
           "exports": {

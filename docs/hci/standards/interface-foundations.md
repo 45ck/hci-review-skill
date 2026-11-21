@@ -19,6 +19,8 @@ Use these views together. A small feature can express them in one short document
 
 Keep task, object and action names consistent in visible copy, accessible names and agent snapshots. For example, **Collection** names the object, **New collection** starts creation, and **Create collection** submits it. A change of icon or typeface must not change the action's meaning or agent identity.
 
+Follow the [content composition standard](content-composition.md) for optional supporting copy, action labels and state/recovery messages. A heading does not require a subtitle; add context only when it helps someone understand a constraint, consequence or next step.
+
 ## Give each visual layer a job
 
 ### Glass establishes surfaces and depth
@@ -88,6 +90,8 @@ Add the following to the feature's existing issue, PR or model document:
 3. **Evidence:** exact commit, scenario, content, viewport/device, input mode, preferences and measurement boundary.
 4. **Result:** task correctness, relevant raw measurements, failed attempts and any unmeasured hypothesis.
 5. **Next decision:** retain, revise, compare with users, or defer—with the reason.
+
+Use the [before/after task record](../templates/task-comparison.md) when a change needs a comparison, and the [HCI scorecard](../templates/hci-scorecard.md) for observations and task-specific guardrails. The [article review example](../examples/article-review-evidence.md) shows how to plan this without fabricating participant data. Keep implementation checks, measured task outcomes and human review as separate evidence; do not convert subjective dimension ratings into a readiness total.
 
 Choose a primary human outcome and a worthwhile difference before a study. Keep correctness, accessibility and recovery requirements visible even if the primary measure improves. Use fixed browser matrices as descriptive coverage; frames and rerenders from one session are not independent users. For human comparisons, counterbalance order, retain failed attempts, and follow the existing protocol's sampling and uncertainty guidance.
 

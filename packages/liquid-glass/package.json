@@ -1,6 +1,6 @@
 {
   "name": "@quantitative-hci/liquid-glass",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "type": "module",
   "sideEffects": [
@@ -11,49 +11,230 @@
     "./agent-contracts.schema.json": "./agent-contracts.schema.json",
     "./docs/llms.txt": "./docs/llms.txt",
     "./docs/agent-engineering.md": "./docs/agent-engineering.md",
-    ".": "./src/index.ts",
-    "./material": "./src/material.tsx",
-    "./webgpu": "./src/webgpu.tsx",
-    "./appearance": "./src/appearance.tsx",
-    "./icons": "./src/icons.tsx",
-    "./validation": "./src/validation.tsx",
-    "./developer": "./src/developer/index.ts",
-    "./developer.css": "./src/developer/diagrams.css",
-    "./standards": "./src/standards/index.ts",
-    "./standards.css": "./src/standards/standards.css",
-    "./viewport": "./src/developer/viewport.tsx",
-    "./viewport.css": "./src/developer/viewport.css",
-    "./graphics": "./src/graphics/index.ts",
-    "./graphics.css": "./src/graphics/graphics.css",
-    "./media": "./src/media/index.ts",
-    "./media.css": "./src/media/media.css",
-    "./modeling": "./src/modeling/index.ts",
-    "./agents": "./src/agents/index.ts",
-    "./agents.css": "./src/agents/agents.css",
-    "./interactions": "./src/interactions/index.ts",
-    "./interactions.css": "./src/interactions/interactions.css",
-    "./sections": "./src/sections/index.ts",
-    "./sections.css": "./src/sections/sections.css",
-    "./recipes": "./src/recipes.ts",
-    "./kit.css": "./src/kit.css",
-    "./fonts.css": "./src/fonts.css",
-    "./styles.css": "./src/styles.css",
-    "./tokens.css": "./src/tokens.css",
-    "./patterns": "./src/patterns/index.ts",
-    "./patterns.css": "./src/patterns/patterns.css",
-    "./assistant": "./src/assistant/index.ts",
-    "./assistant.css": "./src/assistant/assistant.css",
-    "./*": "./src/components/*.ts",
+    ".": {
+      "quantive-source": "./src/index.ts",
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js",
+      "default": "./dist/src/index.js"
+    },
+    "./material": {
+      "quantive-source": "./src/material.tsx",
+      "types": "./dist/src/material.d.ts",
+      "import": "./dist/src/material.js",
+      "default": "./dist/src/material.js"
+    },
+    "./webgpu": {
+      "quantive-source": "./src/webgpu.tsx",
+      "types": "./dist/src/webgpu.d.ts",
+      "import": "./dist/src/webgpu.js",
+      "default": "./dist/src/webgpu.js"
+    },
+    "./appearance": {
+      "quantive-source": "./src/appearance.tsx",
+      "types": "./dist/src/appearance.d.ts",
+      "import": "./dist/src/appearance.js",
+      "default": "./dist/src/appearance.js"
+    },
+    "./icons": {
+      "quantive-source": "./src/icons.tsx",
+      "types": "./dist/src/icons.d.ts",
+      "import": "./dist/src/icons.js",
+      "default": "./dist/src/icons.js"
+    },
+    "./validation": {
+      "quantive-source": "./src/validation.tsx",
+      "types": "./dist/src/validation.d.ts",
+      "import": "./dist/src/validation.js",
+      "default": "./dist/src/validation.js"
+    },
+    "./developer": {
+      "quantive-source": "./src/developer/index.ts",
+      "types": "./dist/src/developer/index.d.ts",
+      "import": "./dist/src/developer/index.js",
+      "default": "./dist/src/developer/index.js"
+    },
+    "./developer.css": {
+      "quantive-source": "./src/developer/diagrams.css",
+      "default": "./dist/src/developer/diagrams.css"
+    },
+    "./standards": {
+      "quantive-source": "./src/standards/index.ts",
+      "types": "./dist/src/standards/index.d.ts",
+      "import": "./dist/src/standards/index.js",
+      "default": "./dist/src/standards/index.js"
+    },
+    "./standards.css": {
+      "quantive-source": "./src/standards/standards.css",
+      "default": "./dist/src/standards/standards.css"
+    },
+    "./viewport": {
+      "quantive-source": "./src/developer/viewport.tsx",
+      "types": "./dist/src/developer/viewport.d.ts",
+      "import": "./dist/src/developer/viewport.js",
+      "default": "./dist/src/developer/viewport.js"
+    },
+    "./viewport.css": {
+      "quantive-source": "./src/developer/viewport.css",
+      "default": "./dist/src/developer/viewport.css"
+    },
+    "./graphics": {
+      "quantive-source": "./src/graphics/index.ts",
+      "types": "./dist/src/graphics/index.d.ts",
+      "import": "./dist/src/graphics/index.js",
+      "default": "./dist/src/graphics/index.js"
+    },
+    "./graphics.css": {
+      "quantive-source": "./src/graphics/graphics.css",
+      "default": "./dist/src/graphics/graphics.css"
+    },
+    "./media": {
+      "quantive-source": "./src/media/index.ts",
+      "types": "./dist/src/media/index.d.ts",
+      "import": "./dist/src/media/index.js",
+      "default": "./dist/src/media/index.js"
+    },
+    "./media.css": {
+      "quantive-source": "./src/media/media.css",
+      "default": "./dist/src/media/media.css"
+    },
+    "./modeling": {
+      "quantive-source": "./src/modeling/index.ts",
+      "types": "./dist/src/modeling/index.d.ts",
+      "import": "./dist/src/modeling/index.js",
+      "default": "./dist/src/modeling/index.js"
+    },
+    "./agents": {
+      "quantive-source": "./src/agents/index.ts",
+      "types": "./dist/src/agents/index.d.ts",
+      "import": "./dist/src/agents/index.js",
+      "default": "./dist/src/agents/index.js"
+    },
+    "./agents.css": {
+      "quantive-source": "./src/agents/agents.css",
+      "default": "./dist/src/agents/agents.css"
+    },
+    "./interactions": {
+      "quantive-source": "./src/interactions/index.ts",
+      "types": "./dist/src/interactions/index.d.ts",
+      "import": "./dist/src/interactions/index.js",
+      "default": "./dist/src/interactions/index.js"
+    },
+    "./interactions.css": {
+      "quantive-source": "./src/interactions/interactions.css",
+      "default": "./dist/src/interactions/interactions.css"
+    },
+    "./sections": {
+      "quantive-source": "./src/sections/index.ts",
+      "types": "./dist/src/sections/index.d.ts",
+      "import": "./dist/src/sections/index.js",
+      "default": "./dist/src/sections/index.js"
+    },
+    "./sections.css": {
+      "quantive-source": "./src/sections/sections.css",
+      "default": "./dist/src/sections/sections.css"
+    },
+    "./recipes": {
+      "quantive-source": "./src/recipes.ts",
+      "types": "./dist/src/recipes.d.ts",
+      "import": "./dist/src/recipes.js",
+      "default": "./dist/src/recipes.js"
+    },
+    "./kit.css": {
+      "quantive-source": "./src/kit.css",
+      "default": "./dist/src/kit.css"
+    },
+    "./fonts.css": {
+      "quantive-source": "./src/fonts.css",
+      "default": "./dist/src/fonts.css"
+    },
+    "./styles.css": {
+      "quantive-source": "./src/styles.css",
+      "default": "./dist/src/styles.css"
+    },
+    "./tokens.css": {
+      "quantive-source": "./src/tokens.css",
+      "default": "./dist/src/tokens.css"
+    },
+    "./patterns": {
+      "quantive-source": "./src/patterns/index.ts",
+      "types": "./dist/src/patterns/index.d.ts",
+      "import": "./dist/src/patterns/index.js",
+      "default": "./dist/src/patterns/index.js"
+    },
+    "./patterns.css": {
+      "quantive-source": "./src/patterns/patterns.css",
+      "default": "./dist/src/patterns/patterns.css"
+    },
+    "./assistant": {
+      "quantive-source": "./src/assistant/index.ts",
+      "types": "./dist/src/assistant/index.d.ts",
+      "import": "./dist/src/assistant/index.js",
+      "default": "./dist/src/assistant/index.js"
+    },
+    "./assistant.css": {
+      "quantive-source": "./src/assistant/assistant.css",
+      "default": "./dist/src/assistant/assistant.css"
+    },
+    "./*": {
+      "quantive-source": "./src/components/*.ts",
+      "types": "./dist/src/components/*.d.ts",
+      "import": "./dist/src/components/*.js",
+      "default": "./dist/src/components/*.js"
+    },
     "./agent-action-inputs.json": "./agent-action-inputs.json",
     "./agent-index.schema.json": "./agent-index.schema.json",
     "./agent-contract.schema.json": "./agent-contract.schema.json",
     "./agent-release.schema.json": "./agent-release.schema.json",
-    "./chat": "./src/chat/index.ts",
-    "./chat.css": "./src/chat/chat.css",
-    "./chat/ai-sdk": "./src/chat/adapters/ai-sdk.ts",
-    "./chat/ag-ui": "./src/chat/adapters/ag-ui.ts",
-    "./chat/openai": "./src/chat/adapters/openai.ts",
-    "./chat/anthropic": "./src/chat/adapters/anthropic.ts"
+    "./chat": {
+      "quantive-source": "./src/chat/index.ts",
+      "types": "./dist/src/chat/index.d.ts",
+      "import": "./dist/src/chat/index.js",
+      "default": "./dist/src/chat/index.js"
+    },
+    "./chat.css": {
+      "quantive-source": "./src/chat/chat.css",
+      "default": "./dist/src/chat/chat.css"
+    },
+    "./chat/ai-sdk": {
+      "quantive-source": "./src/chat/adapters/ai-sdk.ts",
+      "types": "./dist/src/chat/adapters/ai-sdk.d.ts",
+      "import": "./dist/src/chat/adapters/ai-sdk.js",
+      "default": "./dist/src/chat/adapters/ai-sdk.js"
+    },
+    "./chat/ag-ui": {
+      "quantive-source": "./src/chat/adapters/ag-ui.ts",
+      "types": "./dist/src/chat/adapters/ag-ui.d.ts",
+      "import": "./dist/src/chat/adapters/ag-ui.js",
+      "default": "./dist/src/chat/adapters/ag-ui.js"
+    },
+    "./chat/openai": {
+      "quantive-source": "./src/chat/adapters/openai.ts",
+      "types": "./dist/src/chat/adapters/openai.d.ts",
+      "import": "./dist/src/chat/adapters/openai.js",
+      "default": "./dist/src/chat/adapters/openai.js"
+    },
+    "./chat/anthropic": {
+      "quantive-source": "./src/chat/adapters/anthropic.ts",
+      "types": "./dist/src/chat/adapters/anthropic.d.ts",
+      "import": "./dist/src/chat/adapters/anthropic.js",
+      "default": "./dist/src/chat/adapters/anthropic.js"
+    },
+    "./layouts": {
+      "quantive-source": "./src/layouts/index.ts",
+      "types": "./dist/src/layouts/index.d.ts",
+      "import": "./dist/src/layouts/index.js",
+      "default": "./dist/src/layouts/index.js"
+    },
+    "./layouts.css": {
+      "quantive-source": "./src/layouts/layouts.css",
+      "default": "./dist/src/layouts/layouts.css"
+    },
+    "./agent-documents": {
+      "quantive-source": "./tools/agent-documents.mjs",
+      "types": "./tools/agent-documents.d.mts",
+      "import": "./tools/agent-documents.mjs",
+      "default": "./tools/agent-documents.mjs"
+    }
   },
   "dependencies": {
     "@ui-sdk/core": "0.1.0-beta.13",
@@ -82,5 +263,26 @@
     "@anthropic-ai/sdk": {
       "optional": true
     }
+  },
+  "files": [
+    "dist",
+    "tools",
+    "docs",
+    "LICENSES",
+    "assets",
+    "*.json",
+    "README.md",
+    "AGENTS.md",
+    "src/**/*.md"
+  ],
+  "bin": {
+    "quantive-agent-documents": "./tools/agent-documents-cli.mjs"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "node ../../scripts/build-liquid-glass.mjs",
+    "prepack": "node ../../scripts/build-liquid-glass.mjs"
   }
 }

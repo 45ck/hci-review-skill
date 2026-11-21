@@ -160,8 +160,8 @@ For each critical journey, step through the interface and answer:
 
 Log breakdowns with exact step references.
 
-### 10) Score
-Create `hci-scorecard.md` rating the prototype 1-5 on each dimension:
+### 10) Record task evidence
+Create `hci-scorecard.md` using the current Quantitative HCI template. Record observations, evidence, severity and the next decision for each dimension:
 1. Clarity of purpose
 2. Navigation clarity
 3. Terminology consistency
@@ -171,13 +171,15 @@ Create `hci-scorecard.md` rating the prototype 1-5 on each dimension:
 7. Cross-screen consistency
 8. Failure path coverage
 
-Include total score out of 40, top 3 strengths, top 3 weaknesses, and priority fixes.
+Include the most consequential strengths, weaknesses and priority fixes. Keep critical task requirements and failed guardrails visible; do not sum subjective ratings or infer readiness from a numerical band.
+
+For a before/after comparison, use `docs/hci/templates/task-comparison.md` and the existing evaluation protocol. Record the task, variants, primary outcome, sampling unit, failures and conditions. Separate automated implementation checks, agent outcomes, human observations and reviewer judgement. Mark missing measurements explicitly; early designs can still be evaluated.
 
 For relevant interface patterns, use the Quantitative HCI catalogue at
 `docs/hci/models/interface-design-models.md` in the Quantitative HCI repository.
 Record the model ID, baseline, observed value, unit, sample size, test context,
 and evidence. If a measurement is missing, record how to collect it. Keep
-measurements alongside the scorecard's judgement scores.
+measurements alongside the review observations, without combining them into a readiness score.
 
 ### 11) Synthesize
 Create `hci-summary.md` with:

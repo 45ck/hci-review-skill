@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "package": "@quantitative-hci/liquid-glass",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "distribution": "Private workspace package. Use the repository workspace; this is not an npm registry release.",
   "foundation": {
     "package": "@ui-sdk/react",
@@ -233,6 +233,43 @@
         "https://ai-sdk.dev/docs/ai-sdk-ui/overview",
         "https://docs.copilotkit.ai/custom-look-and-feel/headless-ui",
         "https://docs.ag-ui.com/sdk/js/client/abstract-agent"
+      ]
+    },
+    {
+      "id": "application-shell",
+      "collection": "layouts",
+      "title": "Task-first application layout",
+      "purpose": "Compose responsive app regions and real SDK menus/navigation for one user job; personal account and organisation remain distinct.",
+      "components": [
+        "LiquidAppShell",
+        "LiquidAppRail",
+        "LiquidAppWorkarea",
+        "LiquidAppHeader",
+        "LiquidAppContent",
+        "LiquidAppDock",
+        "LiquidAppNavigation",
+        "LiquidWorkspaceSwitcher"
+      ],
+      "importPath": "@quantitative-hci/liquid-glass/layouts",
+      "stylesheet": "@quantitative-hci/liquid-glass/layouts.css",
+      "example": "docs/hci/examples/liquid-glass/src/recipes/application-shell.tsx",
+      "sdkPrimitives": [
+        "Button",
+        "Menu",
+        "MenuItem",
+        "MenuTrigger"
+      ],
+      "constraints": [
+        "Use the existing LiquidGlassProvider, appearance settings and one host UI SDK agent bridge.",
+        "Supply approved workspace memberships; never infer authorisation from client-side role badges.",
+        "Keep the primary task and consequential action directly visible, especially in the mobile detail.",
+        "Preserve loading, denied, no-result, failure, stale, pending and recovery behaviour.",
+        "Do not add ornamental subtitles or fake status/analytics cards; describe only observable states."
+      ],
+      "sources": [
+        "https://github.com/vercel-labs/ui",
+        "https://ui.shadcn.com/blocks/sidebar",
+        "https://developer.apple.com/design/human-interface-guidelines/materials"
       ]
     }
   ],

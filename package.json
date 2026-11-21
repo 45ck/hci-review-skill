@@ -1,6 +1,6 @@
 {
   "name": "quantitative-hci",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "type": "module",
   "workspaces": [
@@ -13,11 +13,15 @@
   "scripts": {
     "glass:dev": "npm run dev -w @quantitative-hci/glass-gallery",
     "glass:build": "npm run build -w @quantitative-hci/glass-gallery && npm run glass:docs-check",
-    "glass:agent-check": "node scripts/check-agent-contracts.mjs && node --test tests/test_agent_contracts.mjs tests/test_graphics_controlled.mjs tests/test_model_controlled.mjs tests/test_agent_documents.mjs tests/test_agent_action_inputs.mjs tests/test_chat_adapters.mjs",
+    "glass:agent-check": "node scripts/check-agent-contracts.mjs && node --test tests/test_agent_contracts.mjs tests/test_graphics_controlled.mjs tests/test_model_controlled.mjs tests/test_agent_documents.mjs tests/test_agent_action_inputs.mjs tests/test_chat_adapters.mjs tests/test_app_layout_state.mjs tests/test_liquid_glass_distribution.mjs tests/test_material_policy.mjs",
     "glass:contract": "node scripts/agent-contract.mjs",
     "glass:check": "npm run glass:agent-check && node scripts/check-glass-standard.mjs && node scripts/check-standards-models.mjs && node scripts/check-modelling-profiles.mjs && node packages/liquid-glass/src/modeling/check-document.mjs && node scripts/check-agent-tasks.mjs",
-    "glass:verify": "npm run glass:check && npm run glass:build",
-    "glass:docs-check": "node scripts/agent-documents.mjs"
+    "glass:verify": "npm run glass:check && npm run glass:package && npm run glass:build",
+    "glass:docs-check": "node scripts/agent-documents.mjs",
+    "glass:package": "node scripts/build-liquid-glass.mjs",
+    "glass:pack": "npm run glass:package && node scripts/pack-liquid-glass.mjs",
+    "glass:consumer": "node scripts/check-liquid-glass-consumer.mjs",
+    "glass:consumer:browser": "python3 tests/test_liquid_glass_consumer.py"
   },
   "devDependencies": {
     "@ag-ui/client": "1.0.5",

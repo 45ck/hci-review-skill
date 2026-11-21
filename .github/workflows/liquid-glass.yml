@@ -19,6 +19,14 @@ on:
       - 'scripts/agent-contract.mjs'
       - 'scripts/agent-action-validation.mjs'
       - 'scripts/agent-documents.mjs'
+      - 'scripts/build-liquid-glass.mjs'
+      - 'scripts/pack-liquid-glass.mjs'
+      - 'scripts/check-liquid-glass-consumer.mjs'
+      - 'tests/fixtures/liquid-glass-consumer/**'
+      - 'tests/test_liquid_glass_distribution.mjs'
+      - 'tests/test_liquid_glass_consumer.py'
+      - 'tests/test_material_policy.mjs'
+      - 'tests/glass_material_policy_contract.py'
       - 'tests/test_model_controlled.mjs'
       - 'tests/test_agent_documents.mjs'
       - 'tests/test_agent_action_inputs.mjs'
@@ -37,6 +45,9 @@ on:
       - 'tests/glass_graphics_contract.py'
       - 'tests/glass_interaction_contract.py'
       - 'tests/glass_sections_contract.py'
+      - 'tests/glass_layouts_contract.py'
+      - 'tests/test_app_layout_state.mjs'
+      - 'docs/hci/standards/app-layout-system.md'
       - 'tests/glass_patterns_contract.py'
       - 'tests/glass_assistant_contract.py'
       - 'tests/glass_catalogue_navigation.py'
@@ -93,6 +104,11 @@ jobs:
         run: |
           python -m pip install playwright==1.65.2
           python -m playwright install --with-deps chromium
+      - name: Verify an installed external consumer and bridge lifecycle
+        if: github.event_name != 'workflow_dispatch' || inputs.browser_check == ''
+        run: |
+          npm run glass:consumer -- --online
+          python -B tests/test_liquid_glass_consumer.py
       - name: Verify real controls and GPU pixels
         shell: bash
         env:

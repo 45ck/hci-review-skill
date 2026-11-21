@@ -2,9 +2,11 @@
 
 > Agent-first behaviours, visual components and design tools built on Vercel UI SDK. React rendering; @ui-sdk/core and @ui-sdk/react pinned to 0.1.0-beta.13. Custom work remains Unvalidated by a human UI/UX team.
 
-This is a private React workspace package, not a published npm release. Use the checked-out workspace and locked dependencies. Preserve existing application state and the shared material.
+This is a private React package, not a published npm release. Use the checked-out workspace for development or its compiled private tarball for an external application. Preserve existing application state and the shared material.
 
 ## Start here
+
+- [Private installation and documentation publication](https://github.com/45ck/hci-review-skill/blob/main/packages/liquid-glass/docs/distribution.md): compiled ESM/types, optional chat peers, the Node publisher, prefix-aware Vite/CLI integration and independent consumer checks.
 
 - [Engineering guide](agent-engineering.md): choose, compose, extend, operate and verify.
 - [Package guide](https://github.com/45ck/hci-review-skill/blob/main/packages/liquid-glass/README.md): provider, material and component recipes.
@@ -19,6 +21,7 @@ This is a private React workspace package, not a published npm release. Use the 
 
 ## Choose a component
 
+- [Application layouts](https://github.com/45ck/hci-review-skill/blob/main/docs/hci/standards/app-layout-system.md): responsive shell regions, controlled navigation and workspace switching; host integration and the review-task model.
 - [Patterns and Assistant](https://github.com/45ck/hci-review-skill/blob/main/docs/hci/standards/library-patterns.md): established command, filter, selection, detail, empty-state and assistant compositions on genuine SDK controls.
 - [Patterns API](https://github.com/45ck/hci-review-skill/blob/main/packages/liquid-glass/src/patterns/README.md) and [Assistant API](https://github.com/45ck/hci-review-skill/blob/main/packages/liquid-glass/src/assistant/README.md): exact props, callback and host-state contracts.
 - [Interactions and Sections](https://github.com/45ck/hci-review-skill/blob/main/docs/hci/standards/interaction-sections.md): scoped effects, real context menus, semantic sections and cancellable chapter selection.
@@ -51,6 +54,16 @@ For model edits, distinguish `requested`, `applied`, `rejected`, `unchanged` and
 2. Mount the existing LiquidGlassProvider from @quantitative-hci/liquid-glass/webgpu and kit.css at the app boundary. Reuse the provider when the app already has one. Supply the decorative backdrop deliberately: glass does not capture arbitrary application content.
 3. Add @quantitative-hci/liquid-glass/interactions with interactions.css around the intended region. Add @quantitative-hci/liquid-glass/sections with sections.css around meaningful page content.
 4. Keep one createAgent bridge from @ui-sdk/react/agent, with the host application's authorization policy. Use the SDK's snapshot, query, act and subscribe; discover fresh refs and current choices before acting. Observe the rendered state after an action, including a cancelled change.
+
+## Application layouts
+
+Import LiquidAppShell, LiquidAppRail, LiquidAppWorkarea, LiquidAppHeader, LiquidAppContent, LiquidAppInspector, LiquidAppDock, LiquidAppNavigation and LiquidWorkspaceSwitcher from @quantitative-hci/liquid-glass/layouts; load layouts.css after kit.css. Compose them under the existing LiquidGlassProvider and single agent bridge. The contracts are /contracts/liquid-app-shell-regions.json and /contracts/liquid-app-navigation.json.
+
+- The seven passive regions accept children, className and HTML attributes. LiquidAppContent renders main by default; use as="section" with an accessible label inside an existing main. The shell owns positioning, not routing or permissions. An inspector's data-open="true" controls compact CSS visibility; the host owns dismissal, focus and preventing input into covered content. Use LiquidDetailSheet for SDK drawer behaviour.
+- LiquidAppNavigation takes items {id,label,icon?,count?,disabled?}, activeId and onNavigate(id,ButtonActionDetails), plus optional label/className. Each destination is an actual SDK Button. The callback receives source and can return its asynchronous work; observe the host's accepted activeId.
+- LiquidWorkspaceSwitcher takes approved items {id,name,role?,shortLabel?}, value and onValueChange(id,MenuActionDetails), plus optional disabled/className. Items have stable Menu values. Return the callback's Promise for SDK pending/error behaviour; MenuActionDetails exposes event, not Button source or change cancellation. The host owns permission checks and the accepted workspace value. A role label is presentation only.
+
+The gallery's ?collection=layouts review task keeps workspace data separate, resets task context on a switch, refuses Viewer review actions and supports undo. Its account edits and review decisions use fictional in-memory data. Authentication, server authorization, persistence, revocation and audit belong to the consuming application. The standalone compiled recipe is docs/hci/examples/liquid-glass/src/recipes/application-shell.tsx; reuse its inner composition when a provider already exists. Custom layouts remain Unvalidated.
 
 ## Interactions
 

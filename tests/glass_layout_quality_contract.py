@@ -461,6 +461,22 @@ async def verify_layout_quality_contract(page, expect, *, base_url, output_dir):
                 filename = "layout-quality-detected-overlap.png"
                 await page.screenshot(path=str(output / filename), animations="allow", timeout=SCREENSHOT_TIMEOUT_MS)
                 evidence["screenshots"].append(filename)
+            # A human choosing a fixture Select closes the menu. Its defect must
+            # survive the SDK's fresh positioning calculation on the next open.
+            await page.keyboard.press("Escape")
+            await expect(page.locator(POPUP)).not_to_be_visible()
+            await expect(page.locator(ANCHOR)).to_be_focused()
+            await page.locator(ANCHOR).press("Enter")
+            reopened = await _settled_boxes(page, expect, popup=True)
+            _assert_stationary(before, reopened, case)
+            await expect(page.locator(POPUP)).to_have_attribute("data-fault", fault)
+            reopened_report = await audit(via_menu=True)
+            current.update({"reopened": reopened, "reopenedReport": reopened_report})
+            save()
+            assert not reopened_report["pass"] and expected_code in [
+                finding["code"] for finding in reopened_report["findings"]
+            ], {"reason": "Intentional fault disappeared after reopening the menu", "case": case,
+                "expectedCode": expected_code, "report": reopened_report}
             current["passed"] = True
             await press("Reset quality fixture")
             await expect(page.locator(FIXTURE)).to_have_attribute("data-quality-baseline", "ready", timeout=3000)

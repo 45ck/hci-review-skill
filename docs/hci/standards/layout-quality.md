@@ -84,6 +84,8 @@ The component displays **Unvalidated**, status messages and selectable JSON. Cli
 
 The private `?collection=layouts&quality=1` gallery lab is an opt-in fixture. **Open placement lab** opens the SDK dialog **Layout quality fixtures**. Real SDK selects choose direction, corner, content length and deliberate faults. `anchor-offset`, `overflow` and `overlap` are test-only faults; they must never become normal application options.
 
+Fault checks cover both an already-open popup and Escape/reopen. The fixture uses independent translation to retain deliberate displacement after SDK positioning, and overlap margins to exercise native layout-shift entries while open. A selected fault must remain detectable after reopening; reset restores the healthy layout.
+
 ## Repeatable evidence
 
 From the repository root:

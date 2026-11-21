@@ -320,7 +320,7 @@ export function LiquidSharedIndicator({ label, value, items, onValueChange, disa
       if (next !== null && !items.some(item => item.id === next && !item.disabled)) { details.cancel(); return; }
       onValueChange(next, details);
     }}>
-    <SegmentedControlIndicator className="qgm-shared-indicator" />
+    <span className="qgm-shared-indicator-viewport" aria-hidden="true"><SegmentedControlIndicator className="qgm-shared-indicator" /></span>
     {items.map(item => <SegmentedControlItem key={item.id} value={item.id} disabled={item.disabled}>{item.label}</SegmentedControlItem>)}
   </SegmentedControl>;
 }

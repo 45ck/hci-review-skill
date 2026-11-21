@@ -64,6 +64,10 @@ function MotionPolicyNote() {
   </span>;
 }
 
+function MotionSelectionIndicator() {
+  return <span className="mg-selection-viewport" aria-hidden="true"><SegmentedControlIndicator /></span>;
+}
+
 function MotionCard({ title, children, className = "", description }: {
   title: string; children: ReactNode; className?: string; description?: string;
 }) {
@@ -284,7 +288,7 @@ function AgentWorkStudy({ active, stateExample }: { active: boolean; stateExampl
     <MotionCard title="Choose the outcome." className="mg-work-settings">
       <SegmentedControl aria-label="Local sample outcome" value={outcome} disabled={phase === "pending"} onValueChange={(next, details) => {
         if (next !== "success" && next !== "error") { details.cancel(); return; } setOutcome(next);
-      }}><SegmentedControlIndicator /><SegmentedControlItem value="success">Success</SegmentedControlItem><SegmentedControlItem value="error">Error</SegmentedControlItem></SegmentedControl>
+      }}><MotionSelectionIndicator /><SegmentedControlItem value="success">Success</SegmentedControlItem><SegmentedControlItem value="error">Error</SegmentedControlItem></SegmentedControl>
       <dl className="mg-work-rules"><div><dt>Started</dt><dd>Show pending while work is running.</dd></div><div><dt>Accepted</dt><dd>Show success after the result arrives.</dd></div><div><dt>Interrupted</dt><dd>Cancel stale work and preserve the latest state.</dd></div></dl>
       <p className="mg-caption">Every action uses the page’s existing SDK bridge.</p>
     </MotionCard>
@@ -382,7 +386,7 @@ export function MotionShowcase({ active = true, stateExample }: { active?: boole
       <div className="mg-toolbar">
         <SegmentedControl className="mg-section-nav" aria-label="Motion study category" value={section} onValueChange={(next, details) => {
           if (!sections.some(item => item.id === next)) { details.cancel(); return; } setSection(next as GallerySection);
-        }}><SegmentedControlIndicator />{sections.map(item => <SegmentedControlItem key={item.id} value={item.id}>{item.label}</SegmentedControlItem>)}</SegmentedControl>
+        }}><MotionSelectionIndicator />{sections.map(item => <SegmentedControlItem key={item.id} value={item.id}>{item.label}</SegmentedControlItem>)}</SegmentedControl>
         <div className="mg-toolbar-settings"><MotionChoice label="Motion character" value={preset} options={[{ value: "calm", label: "Calm" }, { value: "responsive", label: "Responsive" }, { value: "expressive", label: "Expressive" }]} onChange={value => setPreset(value as MotionPreset)} />
           <MotionChoice label="Motion preference" value={mode} options={[{ value: "system", label: "Follow device" }, { value: "reduced", label: "Reduced" }, { value: "off", label: "Off" }]} onChange={value => setMode(value as MotionMode)} /></div>
       </div>

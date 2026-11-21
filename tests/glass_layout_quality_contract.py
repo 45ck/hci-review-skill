@@ -319,8 +319,10 @@ async def verify_layout_quality_contract(page, expect, *, base_url, output_dir):
         return await _act(page, await _entry(page, "button", label), "press", [])
 
     async def open_menu():
+        await expect(page.locator(POPUP)).not_to_be_visible()
         control = await _entry(page, "menu", "Quality actions")
-        return await _act(page, control, "setOpen", [True])
+        assert "press" in control.get("actions", []), control
+        return await _act(page, control, "press", [])
 
     async def read_report():
         text = await page.locator(REPORT).text_content()
@@ -371,8 +373,28 @@ async def verify_layout_quality_contract(page, expect, *, base_url, output_dir):
         evidence["diagnostics"] = await _verify_diagnostics(page, expect)
         save()
         await _act(page, await _entry(page, "dialog", "Open placement lab"), "setOpen", [True])
-        await expect(page.get_by_role("dialog", name="Layout quality fixtures")).to_be_visible()
+        fixture_dialog = page.get_by_role("dialog", name="Layout quality fixtures", exact=True)
+        await expect(fixture_dialog).to_be_visible()
         await expect(page.locator(FIXTURE)).to_have_attribute("data-quality-baseline", "ready", timeout=3000)
+
+        # SDK controller-opened popups return to prior focus; trigger-opened ones return to the trigger.
+        browser_stage("layout quality: imperative popup focus restoration")
+        dialog_close = fixture_dialog.get_by_role("button", name="Close placement lab", exact=True)
+        await expect(dialog_close).to_be_focused()
+        control = await _entry(page, "menu", "Quality actions")
+        assert "setOpen" in control.get("actions", []), control
+        imperative_open = await _act(page, control, "setOpen", [True])
+        await expect(page.locator(POPUP)).to_be_visible()
+        await expect(page.locator(POPUP).get_by_role("menuitem", name="Check placement", exact=True)).to_be_focused()
+        await page.keyboard.press("Escape")
+        await expect(page.locator(POPUP)).not_to_be_visible()
+        await expect(fixture_dialog).to_be_visible()
+        await expect(dialog_close).to_be_focused()
+        evidence["imperativeFocus"] = {
+            "openAction": imperative_open, "priorFocus": "Close placement lab",
+            "returnedFocus": "Close placement lab", "dialogRetained": True, "passed": True,
+        }
+        save()
         assert await _start_shift_observer(page), "This Chromium contract requires Layout Instability observations"
 
         for index, case in enumerate(_cases()):
@@ -383,7 +405,14 @@ async def verify_layout_quality_contract(page, expect, *, base_url, output_dir):
             save()
             current["configuredChoices"] = await configure(case)
             before = await _settled_boxes(page, expect)
-            current["openAction"] = await open_menu()
+            if index == 0:
+                # Establish the input target before a genuine keyboard activation, never after dismissal.
+                await page.locator(ANCHOR).focus()
+                await page.locator(ANCHOR).press("Enter")
+                current["openRoute"] = "keyboard"
+            else:
+                current["openAction"] = await open_menu()
+                current["openRoute"] = "agent-trigger-press"
             opened = await _settled_boxes(page, expect, popup=True)
             _assert_stationary(before, opened, case)
             _assert_popup_geometry(opened, case)
@@ -397,6 +426,7 @@ async def verify_layout_quality_contract(page, expect, *, base_url, output_dir):
                 evidence["screenshots"].append(filename)
             await page.keyboard.press("Escape")
             await expect(page.locator(POPUP)).not_to_be_visible()
+            await expect(fixture_dialog).to_be_visible()
             await expect(page.locator(ANCHOR)).to_be_focused()
             closed = await _settled_boxes(page, expect)
             _assert_stationary(before, closed, case)
@@ -461,6 +491,23 @@ async def verify_layout_quality_contract(page, expect, *, base_url, output_dir):
                 filename = "layout-quality-detected-overlap.png"
                 await page.screenshot(path=str(output / filename), animations="allow", timeout=SCREENSHOT_TIMEOUT_MS)
                 evidence["screenshots"].append(filename)
+            # A human choosing a fixture Select closes the menu. Its defect must
+            # survive the SDK's fresh positioning calculation on the next open.
+            await page.keyboard.press("Escape")
+            await expect(page.locator(POPUP)).not_to_be_visible()
+            await expect(fixture_dialog).to_be_visible()
+            await expect(page.locator(ANCHOR)).to_be_focused()
+            await page.locator(ANCHOR).press("Enter")
+            reopened = await _settled_boxes(page, expect, popup=True)
+            _assert_stationary(before, reopened, case)
+            await expect(page.locator(POPUP)).to_have_attribute("data-fault", fault)
+            reopened_report = await audit(via_menu=True)
+            current.update({"reopened": reopened, "reopenedReport": reopened_report})
+            save()
+            assert not reopened_report["pass"] and expected_code in [
+                finding["code"] for finding in reopened_report["findings"]
+            ], {"reason": "Intentional fault disappeared after reopening the menu", "case": case,
+                "expectedCode": expected_code, "report": reopened_report}
             current["passed"] = True
             await press("Reset quality fixture")
             await expect(page.locator(FIXTURE)).to_have_attribute("data-quality-baseline", "ready", timeout=3000)
@@ -482,6 +529,8 @@ async def verify_layout_quality_contract(page, expect, *, base_url, output_dir):
         assert len(evidence["cases"]) == 12, evidence
         await page.keyboard.press("Escape")
         await expect(page.locator(POPUP)).not_to_be_visible()
+        await expect(fixture_dialog).to_be_visible()
+        await expect(page.locator(ANCHOR)).to_be_focused()
         refusal = await audit()
         assert not refusal["pass"] and "missing-popup" in [finding["code"] for finding in refusal["findings"]], refusal
         evidence["closedPopupRefusal"] = refusal

@@ -9,6 +9,8 @@
 .mg-choice [data-slot="select-label"] { display: block; margin-bottom: 6px; color: #415f73; font-size: .75rem; }
 .mg-choice [data-slot="select-trigger"] { min-width: 135px; min-height: 40px; font-size: .875rem; }
 .mg-section-nav [data-slot="segmented-control-item"] { min-height: 43px; padding-inline: 19px; font-size: .875rem; }
+/* Resize interpolation stays inside the decoration layer; controls and focus rings stay outside it. */
+.mg-selection-viewport { position: absolute; inset: 0; z-index: 0; overflow: clip; border-radius: inherit; pointer-events: none; }
 .mg-overview-line { display: flex; gap: 12px; justify-content: space-between; flex-wrap: wrap; align-items: center; font-size: .75rem; color: #49677b; }
 .mg-policy { display: inline-flex; gap: 7px; align-items: center; }
 .mg-policy > span { width: 6px; height: 6px; border-radius: 50%; background: #168375; }

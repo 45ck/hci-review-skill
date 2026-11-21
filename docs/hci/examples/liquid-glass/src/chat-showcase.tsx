@@ -117,7 +117,7 @@ export function ChatShowcase({ active = true }: { active?: boolean }) {
         }
         length = Math.min(text.length, length + 28);
         const complete = length === text.length;
-        updateThread(threadId, current => ({ ...current, status: complete ? "ready" : "streaming", notice: complete ? "Local response complete. No model was called." : "", draft: complete ? "" : current.draft,
+        updateThread(threadId, current => ({ ...current, status: complete ? "ready" : "streaming", notice: complete ? "Local response complete. No model was called." : "", draft: complete && current.draft === request.text ? "" : current.draft,
           messages: current.messages.map(message => message.id === assistantId ? { ...message, parts: [{ type: "text", text: text.slice(0, length) }, ...(complete ? [reference] : [])] } : message),
         }));
         if (complete) { pending.current = null; finish(); }

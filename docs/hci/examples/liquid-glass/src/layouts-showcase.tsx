@@ -105,7 +105,6 @@ export function LayoutsShowcase() {
   const space = spaces.find((item) => item.id === spaceId)!;
   const canReview = space.role === "Owner";
   const records = reviewsBySpace[spaceId];
-  const selected = records.find((item) => item.id === selectedId) ?? null;
   const totalOpen = records.filter((item) => !reviewed[spaceId].includes(item.id)).length;
   const matching = useMemo(() => records.filter((record) => {
     if (projectFilter && record.project !== projectFilter) return false;
@@ -114,6 +113,7 @@ export function LayoutsShowcase() {
     const terms = (record.title + " " + record.id + " " + record.project + " " + record.summary).toLocaleLowerCase();
     return terms.includes(query.trim().toLocaleLowerCase());
   }), [spaceId, records, reviewed, filter, query, projectFilter]);
+  const selected = matching.find((item) => item.id === selectedId) ?? null;
   const projectNames = [...new Set(records.map((record) => record.project))];
   useEffect(() => {
     if (detailOpen && device === "phone") detailHeading.current?.focus();

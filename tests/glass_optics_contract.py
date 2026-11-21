@@ -180,48 +180,54 @@ async def motion_diagnostics(page):
 
 async def settled_motion(page, *, check_idle=True):
     browser_stage("material: wait for idle", checkStableIdle=check_idle)
-    if await page.evaluate("document.visibilityState") != "visible":
-        await page.bring_to_front()
-    settled = await asyncio.wait_for(page.evaluate("""({timeoutMs, stableMs}) => new Promise(resolve => {
-        const deadline = performance.now() + timeoutMs;
-        let candidate = null;
-        let candidateSince = 0;
-        let polls = 0;
-        const poll = () => {
-            const now = performance.now();
-            const data = document.documentElement.dataset;
-            const state = {
-                policy: data.liquidMotion, state: data.liquidMotionState,
-                visibility: document.visibilityState,
-                effects: Number(data.liquidActiveEffects), motion: Number(data.liquidMotionRevision),
-                render: Number(data.liquidRenderRevision), capture: Number(data.liquidCaptureRevision)
-            };
-            polls++;
-            if (state.visibility === 'visible' && state.state === 'idle' && state.effects === 0) {
-                const signature = JSON.stringify(state);
-                if (candidate !== signature) { candidate = signature; candidateSince = now; }
-                if (now - candidateSince >= stableMs) { resolve({ok: true, state, polls}); return; }
-            } else { candidate = null; candidateSince = 0; }
-            if (now >= deadline) { resolve({ok: false, state, polls}); return; }
-            setTimeout(poll, 25);
-        };
-        setTimeout(poll, 0);
-    })""", {"timeoutMs": MOTION_SETTLE_TIMEOUT_MS, "stableMs": MOTION_IDLE_SAMPLE_MS}), timeout=MOTION_SETTLE_TIMEOUT_MS / 1000 + 1)
-    assert settled["ok"], f"Material did not reach qualified idle within {MOTION_SETTLE_TIMEOUT_MS} ms: {settled}"
-    before = settled["state"]
+    started = perf_counter()
+    deadline = started + MOTION_SETTLE_TIMEOUT_MS / 1000
+    candidate, candidate_since, before = None, None, None
+    polls, snapshots, longest_round_trip = 0, [], 0
+    while perf_counter() < deadline:
+        poll_started = perf_counter()
+        try:
+            state = await asyncio.wait_for(motion_diagnostics(page), timeout=min(1, max(0.001, deadline - poll_started)))
+        except TimeoutError:
+            candidate, candidate_since = None, None
+            snapshots.append({"atMs": round((perf_counter() - started) * 1000, 1), "snapshotTimeout": True})
+        else:
+            now = perf_counter()
+            polls += 1
+            longest_round_trip = max(longest_round_trip, now - poll_started)
+            snapshots.append({"atMs": round((now - started) * 1000, 1), "roundTripMs": round((now - poll_started) * 1000, 1), "state": state})
+            if state["visibility"] != "visible":
+                await asyncio.wait_for(page.bring_to_front(), timeout=min(1, max(0.001, deadline - now)))
+                candidate, candidate_since = None, None
+            elif state["state"] == "idle" and state["effects"] == 0:
+                if candidate != state:
+                    candidate, candidate_since = state, now
+                if now - candidate_since >= MOTION_IDLE_SAMPLE_MS / 1000:
+                    before = state
+                    break
+            else:
+                candidate, candidate_since = None, None
+        snapshots = snapshots[-12:]
+        await asyncio.sleep(min(0.025, max(0, deadline - perf_counter())))
+    if before is None:
+        evidence = {"deadlineMs": MOTION_SETTLE_TIMEOUT_MS, "completedSnapshots": polls,
+            "longestRoundTripMs": round(longest_round_trip * 1000, 1), "recentSnapshots": snapshots[-12:]}
+        browser_stage("material: host-polled idle failed", evidence=evidence)
+        raise AssertionError(f"Material did not reach qualified idle within {MOTION_SETTLE_TIMEOUT_MS} ms: {evidence}")
     if check_idle:
-        browser_stage("material: observe stable idle", baseline=before, observationMs=MOTION_IDLE_SAMPLE_MS)
-        await page.wait_for_timeout(MOTION_IDLE_SAMPLE_MS)
-        after = await motion_diagnostics(page)
+        browser_stage("material: observe stable idle", baseline=before, observationMs=MOTION_IDLE_SAMPLE_MS,
+            completedSnapshots=polls, longestRoundTripMs=round(longest_round_trip * 1000, 1))
+        await asyncio.sleep(MOTION_IDLE_SAMPLE_MS / 1000)
+        after = await asyncio.wait_for(motion_diagnostics(page), timeout=1)
         assert after == before, f"Settled material kept scheduling work: {before} -> {after}"
     return before
 
 
-async def _arm_motion_frames(page, box, *, indicator=False):
-    browser_stage("motion: arm three GPU frame snapshots", indicator=indicator)
+async def _arm_motion_frames(page, box, *, indicator=False, target_x=None, kind="pointer"):
+    browser_stage("motion: arm response GPU frame snapshots", indicator=indicator, interaction=kind, targetX=target_x)
     # Snapshot before presentation; CPU decoding happens after the observer detaches
     # so software GPU readback cannot block every observed render callback.
-    await page.evaluate("""({box, indicator}) => {
+    await page.evaluate("""({box, indicator, targetX, kind}) => {
         window.__glassMotionFrames?.cancel();
         const root = document.documentElement;
         const source = document.querySelector('canvas[data-liquid-canvas="viewport"]');
@@ -237,7 +243,28 @@ async def _arm_motion_frames(page, box, *, indicator=False):
         const frames = [];
         const snapshots = [];
         const bitmaps = new Set();
-        const probe = {phase: 'armed', frameCount: 0, requiredFrames: 3, decodedCount: 0,
+        const marker = indicator
+            ? document.querySelector('[aria-label="Workspace view"] [data-slot="segmented-control-indicator"]')
+            : null;
+        const effectElement = document.querySelector('[data-optics-probe="button"]');
+        const indicatorGeometry = () => {
+            if (!marker) return null;
+            const rect = marker.getBoundingClientRect();
+            const style = getComputedStyle(marker);
+            return {x: rect.x, y: rect.y, width: rect.width, height: rect.height,
+                left: style.left, transitionProperty: style.transitionProperty,
+                transitionDuration: style.transitionDuration,
+                direction: marker.getAttribute('data-activation-direction')};
+        };
+        const indicatorStart = indicatorGeometry();
+        const initialX = indicator ? indicatorStart.x
+            : parseFloat(effectElement?.style.getPropertyValue('--liquid-fx-x') || '0');
+        let responseStarted = false;
+        let middleCaptured = false;
+        let lateCaptured = false;
+        let peakOpacity = 0;
+        const probe = {phase: 'armed', frameCount: 0, requiredFrames: 3, maxSnapshots: 5, decodedCount: 0,
+            interaction: indicator ? 'selection' : kind, initialX, targetX, indicatorStart,
             observedRenders: 0, activeRenders: 0, frameDeadlineMs: 4000, startedAt: performance.now()};
         const baseline = Number(root.dataset.liquidMotionRevision);
         const capture = Number(root.dataset.liquidCaptureRevision);
@@ -297,11 +324,33 @@ async def _arm_motion_frames(page, box, *, indicator=False):
             const state = root.dataset;
             probe.observedRenders++;
             probe.lastRender = Number(state.liquidRenderRevision);
-            if (Number(state.liquidMotionRevision) <= baseline ||
-                state.liquidMotionState !== 'running' ||
-                Number(state.liquidActiveEffects) < 1) return;
-            probe.activeRenders++;
+            if (Number(state.liquidMotionRevision) <= baseline) return;
+            const active = Number(state.liquidActiveEffects) > 0;
+            if (active) probe.activeRenders++;
             if (Number(state.liquidRenderRevision) === previous) return;
+            const geometry = indicatorGeometry();
+            let progress;
+            let responding;
+            if (indicator || kind === 'pointer') {
+                const x = indicator ? geometry.x
+                    : parseFloat(effectElement?.style.getPropertyValue('--liquid-fx-x') || '0');
+                progress = Math.min(1, Math.abs(x - initialX) / Math.max(0.5, Math.abs(targetX - initialX)));
+                responding = Math.abs(x - initialX) > (indicator ? 0.5 : 0.1);
+            } else {
+                const opacity = parseFloat(effectElement?.style.getPropertyValue('--liquid-fx-ripple-opacity') || '0');
+                peakOpacity = Math.max(peakOpacity, opacity);
+                progress = peakOpacity ? Math.min(1, Math.max(0, 1 - opacity / peakOpacity)) : 0;
+                responding = effectElement?.hasAttribute('data-liquid-ripple');
+            }
+            if (!responseStarted && !responding) { probe.phase = 'waiting for actual response'; return; }
+            responseStarted = true;
+            const settled = state.liquidMotionState === 'idle' && !active;
+            const reason = settled ? 'settled response'
+                : frames.length < 2 ? 'early response'
+                : !middleCaptured && progress >= 0.5 ? 'middle response'
+                : !lateCaptured && progress >= 0.85 ? 'late response' : null;
+            probe.lastProgress = progress;
+            if (!reason) return;
             try {
                 probe.phase = `snapshot ${frames.length + 1}`;
                 const snapshot = createImageBitmap(source,
@@ -314,27 +363,25 @@ async def _arm_motion_frames(page, box, *, indicator=False):
                 });
                 snapshot.catch(error => finish(String(error)));
                 snapshots.push(snapshot);
-                const marker = indicator
-                    ? document.querySelector('[aria-label="Workspace view"] [data-slot="segmented-control-indicator"]')
-                    : null;
-                const rect = marker?.getBoundingClientRect();
                 frames.push({
                     at: now, motion: Number(state.liquidMotionRevision),
                     render: Number(state.liquidRenderRevision),
                     capture: Number(state.liquidCaptureRevision),
                     activeEffects: Number(state.liquidActiveEffects),
-                    indicator: rect ? {x: rect.x, y: rect.y, width: rect.width, height: rect.height} : null
+                    phase: reason, progress, indicator: geometry
                 });
+                if (progress >= 0.5) middleCaptured = true;
+                if (progress >= 0.85) lateCaptured = true;
                 probe.frameCount = frames.length;
                 probe.phase = 'waiting for next render';
                 previous = Number(state.liquidRenderRevision);
-                if (frames.length === 3) finish(null);
+                if (settled) finish(null);
             } catch (error) { finish(String(error)); }
         });
         observer.observe(root, {attributes: true, attributeFilter: ['data-liquid-render-revision']});
-        timer = setTimeout(() => finish('Fewer than three active GPU frames were observed'), 4000);
+        timer = setTimeout(() => finish('Response did not produce bounded initial-to-settled GPU evidence'), 4000);
         window.__glassMotionFrames = {done, probe, cancel};
-    }""", {"box": box, "indicator": indicator})
+    }""", {"box": box, "indicator": indicator, "targetX": target_x, "kind": kind})
 
 
 async def _motion_frames(page, output, label):
@@ -359,7 +406,8 @@ async def _motion_frames(page, output, label):
         browser_stage("motion: frame capture failed", evidence=evidence)
         raise AssertionError(f"{label}: {sampled['error']}; sampler={sampled['probe']}")
     frames = sampled["frames"]
-    assert len(frames) == 3, f"Missing motion frames in {label}: {len(frames)}"
+    assert 3 <= len(frames) <= 5, f"Expected 3–5 response frames in {label}; got {len(frames)}: {sampled['probe']}"
+    assert frames[-1]["phase"] == "settled response", f"{label} omitted the settled response frame"
     pngs = []
     for index, frame in enumerate(frames):
         encoded = frame.pop("png")
@@ -372,10 +420,11 @@ async def _motion_frames(page, output, label):
         frame["screenshot"] = path.name
         pngs.append(data)
     differences = [_difference(left, right) for left, right in zip(pngs, pngs[1:])]
-    assert any(item["changedFraction"] > 0.001 and item["meanChannelDifference"] > 0.03 for item in differences), f"{label} changed diagnostics but not rendered pixels: {differences}"
-    assert len({frame["render"] for frame in frames}) == 3, f"{label} repeated a GPU frame"
+    full_response = _difference(pngs[0], pngs[-1])
+    assert any(item["changedFraction"] > 0.001 and item["meanChannelDifference"] > 0.03 for item in [*differences, full_response]), f"{label} did not reach the pixel-change threshold over its sampled response: {differences}; full response={full_response}"
+    assert len({frame["render"] for frame in frames}) == len(frames), f"{label} repeated a GPU frame"
     assert frames[-1]["motion"] > frames[0]["motion"], f"{label} did not advance its motion clock"
-    return {"frames": frames, "differences": differences, "elapsedMs": round(frames[-1]["at"] - frames[0]["at"], 1), "sampler": sampled["probe"]}
+    return {"frames": frames, "differences": differences, "fullResponseDifference": full_response, "elapsedMs": round(frames[-1]["at"] - frames[0]["at"], 1), "sampler": sampled["probe"]}
 
 
 async def _settings(page):
@@ -552,7 +601,7 @@ async def verify_pointer_motion(page, expect, *, output_dir="test-results", labe
     y = box["y"] + box["height"] * 0.5
     await page.mouse.move(box["x"] + box["width"] * 0.2, y)
     await settled_motion(page)
-    await _arm_motion_frames(page, box)
+    await _arm_motion_frames(page, box, target_x=box["width"] * 0.8)
     await page.mouse.move(box["x"] + box["width"] * 0.8, y)
     result = await _motion_frames(page, output, label)
     await settled_motion(page)
@@ -578,7 +627,7 @@ async def verify_motion_contract(page, expect, *, output_dir="test-results", req
     assert box, "Missing live button bounds"
     pointer = await verify_pointer_motion(page, expect, output_dir=output)
 
-    await _arm_motion_frames(page, box)
+    await _arm_motion_frames(page, box, kind="ripple")
     await page.mouse.down()
     try:
         await expect(button).to_have_attribute("data-liquid-pressed", re.compile(r".*"))
@@ -614,7 +663,9 @@ async def verify_motion_contract(page, expect, *, output_dir="test-results", req
             start = await indicator.bounding_box()
             group_box = await workspace.bounding_box()
             assert start and group_box, "Selection surface has no measurable bounds"
-            await _arm_motion_frames(page, group_box, indicator=True)
+            target = await workspace.get_by_role("radio", name=label, exact=True).bounding_box()
+            assert target, f"Workspace choice {label} has no bounds"
+            await _arm_motion_frames(page, group_box, indicator=True, target_x=target["x"])
             if source == "keyboard":
                 await files.press("ArrowRight")
                 await expect(activity).to_be_checked()
@@ -627,7 +678,7 @@ async def verify_motion_contract(page, expect, *, output_dir="test-results", req
             end = await indicator.bounding_box()
             assert end and abs(end["x"] - start["x"]) > 5, f"{source} selection did not relocate the indicator: {start}, {end}"
             minimum, maximum = sorted([start["x"], end["x"]])
-            assert any(frame["indicator"] and minimum + 0.5 < frame["indicator"]["x"] < maximum - 0.5 for frame in evidence["frames"]), f"{source} selection jumped without observed travel: {evidence}"
+            assert any(frame["indicator"] and minimum + 0.5 < frame["indicator"]["x"] < maximum - 0.5 for frame in evidence["frames"]), f"{source} selection response lacked an observed intermediate position between {start} and {end}: {evidence}"
             selections[source] = {"choice": label, "start": start, "end": end, **evidence}
         events = await page.evaluate("window.__glassSelectionEvidence.events")
         for source in ["keyboard", "agent"]:

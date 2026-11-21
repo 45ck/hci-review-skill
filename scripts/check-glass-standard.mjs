@@ -110,6 +110,7 @@ for (const method of ["snapshot", "query", "act", "subscribe"]) {
 const browser = read(join(root, "tests/test_glass_browser.py"));
 const agentTests = read(join(root, "tests/glass_agent_contract.py"));
 const opticsTests = read(join(root, "tests/glass_optics_contract.py"));
+const browserDiagnostics = read(join(root, "tests/glass_browser_diagnostics.py"));
 check(["data-catalogue-id", "data-component-id", "data-kit-view", "software_gpu"].every((term) => browser.includes(term)), "Browser checks must cover the kit overview, every family and the reviewed GPU path.");
 check(["quantitativeHciAgent", "snapshot", "query", "act", "subscribe", "[redacted]"].every((term) => agentTests.includes(term)), "Verify real SDK reads/actions, subscriptions and secret redaction.");
 check(["data-optics-probe", "data-liquid-canvas", "data-liquid-capture-revision", "Refraction strength", "Backdrop"].every((term) => opticsTests.includes(term)), "Verify actual control rectangles, GPU contribution, strength changes and backdrop capture.");
@@ -118,6 +119,8 @@ check(["verify_drawer_motion_contract", "data-liquid-render-rect", "nativeAnimat
 check(["visible_pointer_ripple_selection_and_idle", "system_preferences_explicit_opt_in_and_forced_colours", "unavailable_gpu_css_motion_and_popup", "short_overview_motion_video", "record_video_dir", 'animations="allow"'].every((term) => browser.includes(term)), "Run motion, explicit preference override and unavailable-GPU checks; retain a short real-motion video.");
 check(["traceback", "lastStage", "failureEvidence", "runningAnimations"].every((term) => browser.includes(term)) && ["createImageBitmap", "frameDeadlineMs", "observedRenders", "activeRenders", "Capture cancelled"].every((term) => opticsTests.includes(term)), "Keep bounded, cancellable frame probes and actionable stage/stack/render-state evidence on browser failure.");
 check(![browser, opticsTests].some((source) => source.includes('animations="disabled"')), "Capture the live kit after settlement without fast-forwarding SDK-owned animations.");
+check(["settled response", "fullResponseDifference", "initialX", "targetX", "completedSnapshots", "longestRoundTripMs"].every((term) => opticsTests.includes(term)), "Sample actual response progress through settlement and distinguish idle-state changes from slow DOM replies.");
+check(browser.includes("start_browser_profile") && browserDiagnostics.includes("Profiler.stop") && browserDiagnostics.includes("longtask"), "Keep bounded CPU and long-task evidence around the observed popup/fallback stalls.");
 const notice = read(join(packageDir, "src/webgpu/NOTICE.md"));
 check(notice.includes("arya3d/liquid-glass-webgpu") && notice.includes("90cb73931bbaf38bd54b3263cd3fda1daef1869c"), "Document the exact reference shader and its local adaptations.");
 for (const path of ["packages/liquid-glass/LICENSES/arya3d-MIT.txt", "docs/hci/examples/liquid-glass/public/licenses/arya3d-liquid-glass-MIT.txt", "THIRD_PARTY_NOTICES.md", "docs/hci/standards/liquid-glass.md"]) {

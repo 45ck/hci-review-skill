@@ -17,6 +17,7 @@ from time import perf_counter
 from urllib.parse import urlparse
 
 from glass_agent_contract import verify_agent_contract
+from glass_browser_diagnostics import start_browser_profile
 from glass_optics_contract import (
     SCREENSHOT_TIMEOUT_MS,
     _difference,
@@ -87,6 +88,12 @@ async def run(args):
         assert response and response.ok, "Production preview did not return successfully"
         current_check = "initialization"
         failure_artifacts = {}
+        check_profiles = []
+
+        async def finish_profile(profile):
+            metadata = await profile.finish()
+            check_profiles.append({key: metadata[key] for key in
+                ["name", "status", "profile", "metadata", "wallDurationSeconds", "errors"] if key in metadata})
 
         async def failure_evidence(target):
             evidence = {"pageClosed": target.is_closed()}
@@ -156,9 +163,10 @@ async def run(args):
             await page.evaluate("window.scrollTo(0, 0)")
 
         async def record(name, operation, *, reset=True, timeout=20):
-            nonlocal current_check, failure_artifacts
+            nonlocal current_check, failure_artifacts, check_profiles
             current_check = name
             failure_artifacts = {}
+            check_profiles = []
             begin_browser_check(name)
             check_started = perf_counter()
             try:
@@ -186,6 +194,8 @@ async def run(args):
                 except Exception:
                     pass
             result["durationSeconds"] = round(perf_counter() - check_started, 3)
+            if check_profiles:
+                result["profiles"] = check_profiles
             report["checks"].append(result)
             output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
             print(f"{'PASS' if result['passed'] else 'FAIL'} {name} ({result['durationSeconds']}s)", flush=True)
@@ -265,6 +275,7 @@ async def run(args):
             await collection.press("Enter")
             dialog = page.get_by_role("dialog", name="Create a collection", exact=True)
             await expect(dialog).to_be_visible()
+            await settled_motion(page)
             assert await dialog.evaluate("node => node.contains(document.activeElement)"), "Focus did not enter the collection dialog"
             gpu = await root.get_attribute("data-liquid-status") == "ready"
             popup_evidence = {"gpuExpected": gpu}
@@ -284,7 +295,6 @@ async def run(args):
                 const hit = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
                 return hit === node || node.contains(hit);
             }"""), "The popup renderer covers its live input"
-            await settled_motion(page)
             await page.screenshot(path=str(output.parent / "dialog-desktop.png"), animations="allow", timeout=SCREENSHOT_TIMEOUT_MS)
             await page.keyboard.press("Escape")
             await expect(dialog).not_to_be_visible()
@@ -297,7 +307,14 @@ async def run(args):
             await expect(page.get_by_label("Collection result", exact=True)).to_have_text("Created Keyboard collection")
             return {"searchAndEmptyState": True, "sliderBefore": before, "sliderAfter": after, "selectKeyboard": True, "dialogEscapeAndFocus": True, "keyboardCreate": True, "popup": popup_evidence, "screenshot": "dialog-desktop.png"}
 
-        await record("keyboard_selection_and_real_popup", keyboard_and_popup, timeout=25)
+        async def profiled_keyboard_popup():
+            profile = await start_browser_profile(page, output_dir=output.parent, name="keyboard-popup")
+            try:
+                return await keyboard_and_popup()
+            finally:
+                await finish_profile(profile)
+
+        await record("keyboard_selection_and_real_popup", profiled_keyboard_popup, timeout=25)
 
         async def mobile():
             await page.set_viewport_size({"width": 390, "height": 844})
@@ -395,8 +412,10 @@ async def run(args):
             await fallback_context.add_init_script("Object.defineProperty(navigator, 'gpu', {configurable: true, get: () => undefined})")
             fallback = await fallback_context.new_page()
             await observe_errors(fallback)
+            profile = None
             try:
                 await fallback.goto(args.base_url, wait_until="networkidle")
+                profile = await start_browser_profile(fallback, output_dir=output.parent, name="unavailable-fallback")
                 fallback_root = fallback.locator("html")
                 await expect(fallback_root).to_have_attribute("data-liquid-status", "unavailable")
                 await expect(fallback_root).to_have_attribute("data-liquid-motion", "enabled")
@@ -438,6 +457,8 @@ async def run(args):
                 await failure_evidence(fallback)
                 raise
             finally:
+                if profile is not None:
+                    await finish_profile(profile)
                 await fallback_context.close()
 
         await record("unavailable_gpu_css_motion_and_popup", unavailable_fallback, reset=False, timeout=35)

@@ -10,7 +10,7 @@ from pathlib import Path
 from time import perf_counter
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
-from glass_developer_contract import _select
+from glass_developer_contract import _choices, _select
 from glass_optics_contract import _act, _call, _entry, browser_stage, SCREENSHOT_TIMEOUT_MS
 
 
@@ -277,6 +277,7 @@ async def _start_shift_observer(page):
                     evidence.entries.push({
                         value: entry.value, startTime: entry.startTime,
                         hadRecentInput: entry.hadRecentInput,
+                        lastInputTime: Number.isFinite(entry.lastInputTime) ? entry.lastInputTime : null,
                         sources: (entry.sources ?? []).map(source => {
                             const node = source.node?.nodeType === 1 ? source.node : source.node?.parentElement;
                             return {
@@ -358,7 +359,7 @@ async def verify_layout_quality_contract(page, expect, *, base_url, output_dir):
         for label, key in [("Fixture direction", "direction"), ("Fixture anchor", "anchor"), ("Fixture content", "content")]:
             choices.append({"control": label, "choice": await _select(page, "select", label, value=case[key])})
         await press("Reset quality fixture")
-        await expect(page.locator(FIXTURE)).to_have_attribute("data-quality-baseline", "ready", timeout=3000)
+        await expect(page.locator(FIXTURE)).to_have_attribute("data-quality-baseline", "ready", timeout=6000)
         await expect(page.locator(FIXTURE)).to_have_attribute("dir", case["direction"])
         for choice in choices:
             accepted = await _entry(page, "select", choice["control"])
@@ -377,7 +378,7 @@ async def verify_layout_quality_contract(page, expect, *, base_url, output_dir):
         save()
         await _act(page, await _entry(page, "dialog", "Open placement lab"), "setOpen", [True])
         await expect(page.get_by_role("dialog", name="Layout quality fixtures")).to_be_visible()
-        await expect(page.locator(FIXTURE)).to_have_attribute("data-quality-baseline", "ready", timeout=3000)
+        await expect(page.locator(FIXTURE)).to_have_attribute("data-quality-baseline", "ready", timeout=6000)
         assert await _start_shift_observer(page), "This Chromium contract requires Layout Instability observations"
 
         for index, case in enumerate(_cases()):
@@ -431,10 +432,34 @@ async def verify_layout_quality_contract(page, expect, *, base_url, output_dir):
             healthy = await _settled_boxes(page, expect, popup=True)
             _assert_stationary(before, healthy, case)
             _assert_popup_geometry(healthy, case)
+            # Discover the public choice before trusted input: bridge queries
+            # must not consume the browser's recent-input window.
+            fault_control = await _entry(page, "select", "Fixture fault")
+            fault_choices = await _choices(page, fault_control)
+            matches = [item for item in fault_choices if item.get("value") == fault]
+            assert len(matches) == 1, f"Fault choice is not discoverable: {fault}; {fault_choices}"
+            choice = matches[0]
+            start = await page.evaluate("""captureInput => {
+                const evidence = window.__layoutQualityTestEvidence;
+                if (captureInput) {
+                    evidence.trustedInput = null;
+                    evidence.captureInput = event => {
+                        evidence.trustedInput = {
+                            type: event.type, key: event.key, isTrusted: event.isTrusted,
+                            timeStamp: event.timeStamp, observedAt: performance.now(),
+                            inPopup: !!event.target?.closest?.('[data-quality-popup]'),
+                        };
+                    };
+                    window.addEventListener('keydown', evidence.captureInput, {capture: true, once: true});
+                }
+                return performance.now();
+            }""", fault == "overlap")
             if fault == "overlap":
                 await page.keyboard.press("ArrowDown")
-            start = await page.evaluate("performance.now()")
-            choice = await _select(page, "select", "Fixture fault", value=fault)
+            await _act(page, fault_control, "setValue", [choice["value"]])
+            if fault == "overlap":
+                current["trustedInput"] = await page.evaluate("() => window.__layoutQualityTestEvidence.trustedInput")
+            await expect(page.locator(POPUP)).to_have_attribute("data-fault", fault)
             broken = await _settled_boxes(page, expect, popup=True)
             shifts = await _shift_entries(page, start)
             report = await audit()
@@ -447,10 +472,15 @@ async def verify_layout_quality_contract(page, expect, *, base_url, output_dir):
                 "seed": SEED, "case": case, "expectedCode": expected_code, "report": report,
             }
             if fault == "overlap":
+                trusted_input = current["trustedInput"]
+                assert trusted_input and trusted_input["isTrusted"] and trusted_input["key"] == "ArrowDown" and trusted_input["inPopup"], {
+                    "reason": "Recent-input precondition did not receive a trusted menu key", "input": trusted_input,
+                }
                 recent = [entry for entry in shifts if entry["hadRecentInput"] and entry["value"] > 0 and
                           any(source.get("target") == "popup" for source in entry["sources"])]
                 assert recent, {
                     "reason": "Recent-input layout movement was not observed", "case": case, "shifts": shifts,
+                    "trustedInput": trusted_input,
                 }
                 observed = report["shifts"]
                 assert observed["supported"] and observed["scoreComplete"], observed
@@ -484,7 +514,7 @@ async def verify_layout_quality_contract(page, expect, *, base_url, output_dir):
                 "expectedCode": expected_code, "report": reopened_report}
             current["passed"] = True
             await press("Reset quality fixture")
-            await expect(page.locator(FIXTURE)).to_have_attribute("data-quality-baseline", "ready", timeout=3000)
+            await expect(page.locator(FIXTURE)).to_have_attribute("data-quality-baseline", "ready", timeout=6000)
             await expect(page.locator(POPUP)).not_to_be_visible()
             save()
 
@@ -511,8 +541,19 @@ async def verify_layout_quality_contract(page, expect, *, base_url, output_dir):
         return {**evidence, "evidence": evidence_path.name}
     finally:
         evidence["durationSeconds"] = round(perf_counter() - started, 3)
+        if not page.is_closed():
+            try:
+                preparation = await page.evaluate("selector => document.querySelector(selector)?.getAttribute('data-quality-settle')", FIXTURE)
+                if preparation:
+                    evidence["baselinePreparation"] = json.loads(preparation)
+            except Exception as error:
+                evidence["baselinePreparationReadError"] = type(error).__name__
         save()
         if not page.is_closed():
-            await page.evaluate("() => window.__layoutQualityTestEvidence?.observer?.disconnect()")
+            await page.evaluate("""() => {
+                const evidence = window.__layoutQualityTestEvidence;
+                evidence?.observer?.disconnect();
+                if (evidence?.captureInput) window.removeEventListener('keydown', evidence.captureInput, true);
+            }""")
         if original_viewport and not page.is_closed():
             await page.set_viewport_size(original_viewport)

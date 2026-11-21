@@ -245,6 +245,8 @@ async def _verify_viewport_contract(page, expect, viewer, *, output_dir):
         await viewer.locator('[data-diagram-node="project"]').click()
         assert await viewer.locator("[data-diagram-selection]").get_attribute("data-diagram-selection") == selected_before_hand, "Hand tool activated an element"
         await _act(page, await _entry(page, "toggle", "Pan diagram tool"), "setPressed", [False])
+        await settled_motion(page)
+        await expect(viewer.get_by_role("combobox", name="Diagram element", exact=True)).to_have_attribute("aria-expanded", "false")
         await _select(page, "select", "Diagram element", value="image-asset", record_settlement=True)
     finally:
         selection_diagnostics = await _save_selection_diagnostics(page, profile, output_dir)

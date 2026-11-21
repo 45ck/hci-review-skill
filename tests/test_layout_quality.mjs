@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { getEventListeners } from "node:events";
 import { readFileSync } from "node:fs";
 import { stripTypeScriptTypes } from "node:module";
 import { test } from "node:test";
@@ -27,8 +28,12 @@ test("fixture settling samples stable geometry when paints are sparse without ac
   const declaration = parsed.program.body.find(node => node.type === "FunctionDeclaration" && node.id?.name === "settle");
   assert.ok(declaration, "Exercise the fixture's actual settling implementation");
   const executable = stripTypeScriptTypes(source.slice(declaration.start, declaration.end));
+  const budgetDeclarations = parsed.program.body.filter(node => node.type === "VariableDeclaration" && node.declarations.some(item => ["BASELINE_SETTLE_MS", "AUDIT_SETTLE_MS"].includes(item.id?.name)));
+  assert.equal(budgetDeclarations.length, 2, "Exercise both source-defined preparation and audit budgets");
+  const budgets = runInNewContext(`${budgetDeclarations.map(node => source.slice(node.start, node.end)).join("\n")}; [BASELINE_SETTLE_MS, AUDIT_SETTLE_MS]`);
+  assert.deepEqual([...budgets], [5000, 1500]);
 
-  for (const mode of ["sparse", "frames", "raced", "moving", "animation", "hidden", "aborted"]) {
+  for (const budgetMs of budgets) for (const mode of ["sparse", "frames", "raced", "moving", "animation", "hidden", "aborted"]) {
     let clock = 0, sequence = 0, measurements = 0;
     const timers = new Map();
     const frames = new Set();
@@ -46,33 +51,62 @@ test("fixture settling samples stable geometry when paints are sparse without ac
     const cancelFrame = id => { frames.delete(id); timers.delete(id); };
     const settle = runInNewContext(`${executable}; settle`, {
       window: { setTimeout: setTimer, clearTimeout: clearTimer },
-      document: { hidden: mode === "hidden" },
+      document: { hidden: mode === "hidden", visibilityState: mode === "hidden" ? "hidden" : "visible" },
+      performance: { now: () => clock },
       requestAnimationFrame: requestFrame, cancelAnimationFrame: cancelFrame, clearTimeout: clearTimer,
     });
     const target = {
       isConnected: true,
+      getAttribute: name => name === "data-layout-probe" ? "test-target" : null,
+      textContent: "excluded fixture text", value: "excluded field value",
       getBoundingClientRect: () => { measurements++; return rect(mode === "moving" ? clock : 0, 0, 80, 44); },
       getAnimations: () => mode === "animation" ? [{
         playState: "running", effect: { getKeyframes: () => [{ translate: "0 0" }, { translate: "10px 0" }] },
       }] : [],
     };
     const controller = new AbortController();
-    const result = settle(() => [target], controller.signal);
+    const result = settle(() => [target], controller.signal, budgetMs);
     if (mode === "aborted") controller.abort();
     while (timers.size) {
       clock = Math.min(...[...timers.values()].map(timer => timer.at));
-      assert.ok(clock <= 1500, `${mode}: settling remains bounded`);
+      assert.ok(clock <= budgetMs, `${mode}: settling remains within its ${budgetMs}ms budget`);
       const due = [...timers].filter(([, timer]) => timer.at === clock);
       for (const [id] of due) timers.delete(id);
+      // Both callbacks may already be queued; alternate the winner without dropping the loser.
+      if (mode === "raced" && clock % 100 === 0) due.reverse();
       for (const [, timer] of due) timer.callback();
     }
     const expected = mode === "sparse" || mode === "frames" || mode === "raced";
-    assert.equal(await result, expected, mode);
-    if (expected) assert.ok(measurements >= 4, `${mode}: retain three unchanged comparisons`);
-    if (mode === "raced") { assert.equal(measurements, 4); assert.equal(clock, 200); }
-    if (mode === "moving" || mode === "animation") assert.equal(clock, 1500, mode);
+    const evidence = JSON.parse(JSON.stringify(await result));
+    assert.equal(evidence.settled, expected, mode);
+    assert.equal(evidence.reason, expected ? "stable" : mode === "hidden" ? "document-hidden" : mode === "aborted" ? "aborted" : "time-limit", mode);
+    assert.equal(evidence.blocker, mode === "moving" ? "geometry-changing" : mode === "animation" ? "geometry-animation" : null, mode);
+    assert.equal(evidence.budgetMs, budgetMs, mode);
+    assert.equal(evidence.elapsedMs, clock, mode);
+    assert.equal(evidence.sampleCount, measurements, `${mode}: report only actual geometry observations`);
+    assert.equal(evidence.animationFrameSamples + evidence.timerSamples, evidence.sampleCount, mode);
+    assert.equal(evidence.requiredStableSamples, 3);
+    assert.equal(evidence.stableSamples, expected ? 3 : 0, mode);
+    assert.equal(evidence.visibility, mode === "hidden" ? "hidden" : "visible", mode);
+    assert.equal(evidence.sampleLimit, 8);
+    assert.equal(evidence.samples.length, Math.min(measurements, 8), `${mode}: bound retained geometry evidence`);
+    assert.equal(JSON.stringify(evidence).includes("excluded"), false, "Never retain text or field values");
+    if (expected) {
+      assert.equal(measurements, 4, `${mode}: retain three unchanged comparisons`);
+      assert.equal(clock, mode === "frames" ? 64 : 200, `${mode}: settle without waiting out the deadline`);
+    }
+    if (mode === "raced") {
+      assert.equal(evidence.animationFrameSamples, 2);
+      assert.equal(evidence.timerSamples, 2);
+      assert.deepEqual(evidence.samples.map(sample => sample.origin), ["animation-frame", "timer", "animation-frame", "timer"]);
+    } else {
+      assert.equal(evidence.animationFrameSamples, mode === "frames" ? measurements : 0, mode);
+      assert.ok(evidence.samples.every(sample => sample.origin === (mode === "frames" ? "animation-frame" : "timer")), mode);
+    }
+    if (mode === "moving" || mode === "animation") assert.equal(clock, budgetMs, `${mode}: the default budget must expire without a pass`);
     assert.equal(frames.size, 0, `${mode}: cancel pending animation frames`);
     assert.equal(timers.size, 0, `${mode}: cancel pending timers`);
+    assert.equal(getEventListeners(controller.signal, "abort").length, 0, `${mode}: remove abort listener`);
   }
 });
 

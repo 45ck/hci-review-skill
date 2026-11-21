@@ -14,11 +14,36 @@ import "./layout-quality-lab.css";
 
 type Anchor = "top-start" | "top-end" | "bottom-start" | "bottom-end";
 type Fault = "none" | "anchor-offset" | "overflow" | "overlap";
+type SettleSample = Readonly<{
+  origin: "animation-frame" | "timer";
+  elapsedMs: number;
+  changed: boolean;
+  targets: readonly Readonly<{ id: string; rect: readonly number[] }>[];
+  animations: readonly Readonly<{ id: string; properties: readonly string[] }>[];
+}>;
+type SettleEvidence = Readonly<{
+  settled: boolean;
+  reason: "stable" | "time-limit" | "document-hidden" | "aborted";
+  blocker: "no-samples" | "no-targets" | "geometry-animation" | "insufficient-samples" | "geometry-changing" | "incomplete-stable-window" | null;
+  budgetMs: number;
+  elapsedMs: number;
+  sampleCount: number;
+  animationFrameSamples: number;
+  timerSamples: number;
+  stableSamples: number;
+  requiredStableSamples: 3;
+  visibility: DocumentVisibilityState;
+  sampleLimit: 8;
+  samples: readonly SettleSample[];
+}>;
 type Report = Readonly<{
   revision: number; pass: boolean; findings: readonly QualityFinding[];
   placement: PopupPlacementReport | null; comparison: LayoutComparison | null;
   shifts: LayoutShiftReport | null;
+  settling?: SettleEvidence;
 }>;
+const BASELINE_SETTLE_MS = 5000;
+const AUDIT_SETTLE_MS = 1500;
 const directionOptions = [{ value: "ltr", label: "Left to right" }, { value: "rtl", label: "Right to left" }];
 const anchorOptions = [
   { value: "top-start", label: "Top · start" }, { value: "top-end", label: "Top · end" },
@@ -39,50 +64,82 @@ function Choice({ label, value, items, onChange }: { label: string; value: strin
 }
 
 /** Finite, passive settling: no CSS animation suppression or control mutations. */
-function settle(elements: () => (Element | null)[], signal: AbortSignal): Promise<boolean> {
+function settle(elements: () => (Element | null)[], signal: AbortSignal, budgetMs: number): Promise<SettleEvidence> {
   return new Promise(resolve => {
-    let frame = 0, wake = 0, stable = 0, previous = "", finished = false;
-    const finish = (value: boolean) => {
+    let frame = 0, wake = 0, sampleCount = 0, animationFrameSamples = 0, timerSamples = 0;
+    let stable = 0, previous = "", finished = false;
+    const startedAt = performance.now();
+    const samples: SettleSample[] = [];
+    const elapsed = () => Math.round((performance.now() - startedAt) * 100) / 100;
+    const finish = (reason: SettleEvidence["reason"]) => {
       if (finished) return;
-      finished = true; cancelAnimationFrame(frame); window.clearTimeout(wake); clearTimeout(timer); signal.removeEventListener("abort", aborted); resolve(value);
+      finished = true; cancelAnimationFrame(frame); window.clearTimeout(wake); clearTimeout(timer); signal.removeEventListener("abort", aborted);
+      const last = samples.at(-1);
+      const blocker: SettleEvidence["blocker"] = reason !== "time-limit" ? null
+        : !sampleCount ? "no-samples"
+        : !last?.targets.length ? "no-targets"
+        : last.animations.length ? "geometry-animation"
+        : sampleCount < 4 ? "insufficient-samples"
+        : last.changed ? "geometry-changing" : "incomplete-stable-window";
+      resolve({
+        settled: reason === "stable", reason, blocker, budgetMs, elapsedMs: elapsed(),
+        sampleCount, animationFrameSamples, timerSamples, stableSamples: stable, requiredStableSamples: 3,
+        visibility: document.visibilityState, sampleLimit: 8, samples,
+      });
     };
-    const aborted = () => finish(false);
-    const timer = window.setTimeout(() => finish(false), 1500);
+    const aborted = () => finish("aborted");
+    const timer = window.setTimeout(() => finish(document.hidden ? "document-hidden" : "time-limit"), budgetMs);
     const schedule = () => {
       let sampled = false;
-      const sample = () => {
+      const sample = (origin: SettleSample["origin"]) => {
         if (finished || sampled) return;
         sampled = true;
         cancelAnimationFrame(frame); window.clearTimeout(wake);
-        tick();
+        tick(origin);
       };
-      frame = requestAnimationFrame(sample);
+      frame = requestAnimationFrame(() => sample("animation-frame"));
       // Software rendering can delay paint callbacks while geometry is already stable.
-      wake = window.setTimeout(sample, 50);
+      wake = window.setTimeout(() => sample("timer"), 50);
     };
-    const tick = () => {
-      if (signal.aborted || document.hidden) { finish(false); return; }
-      const nodes = elements().filter((node): node is Element => Boolean(node?.isConnected));
-      const geometry = JSON.stringify(nodes.map(node => {
+    const tick = (origin: SettleSample["origin"]) => {
+      if (signal.aborted) { finish("aborted"); return; }
+      if (document.hidden) { finish("document-hidden"); return; }
+      if (performance.now() - startedAt >= budgetMs) { finish("time-limit"); return; }
+      sampleCount += 1;
+      if (origin === "animation-frame") animationFrameSamples += 1; else timerSamples += 1;
+      const nodes = elements().filter((node): node is Element => Boolean(node?.isConnected)).slice(0, 8);
+      const targetId = (node: Element) => node.getAttribute("data-layout-probe") ?? node.getAttribute("data-layout-scope") ?? "fixture-region";
+      const targets = nodes.map(node => {
         const r = node.getBoundingClientRect();
-        return [r.x, r.y, r.width, r.height].map(value => Math.round(value * 100) / 100);
-      }));
-      const animating = nodes.some(node => node.getAnimations().some(animation => {
-        if (animation.playState !== "running") return false;
-        const effect = animation.effect;
-        if (!effect || !("getKeyframes" in effect)) return true;
-        // Material color, shadow, and filter animations do not move a hit region.
-        return (effect as KeyframeEffect).getKeyframes().some(keyframe => Object.keys(keyframe).some(property =>
-          /^(transform|translate|scale|rotate|top|right|bottom|left|inset.*|(?:min|max)?(?:width|height)|margin.*|padding.*|border.*width|font.*|lineheight|letterspacing|wordspacing|gap|rowgap|columngap|grid.*|flex.*|offset(?:anchor|distance|path|position|rotate)|zoom)$/.test(property.replaceAll("-", "").toLowerCase()),
-        ));
-      }));
-      stable = nodes.length && geometry === previous && !animating ? stable + 1 : 0;
+        return { id: targetId(node), rect: [r.x, r.y, r.width, r.height].map(value => Math.round(value * 100) / 100) };
+      });
+      const geometry = JSON.stringify(targets.map(target => target.rect));
+      const animations: { id: string; properties: string[] }[] = [];
+      for (const node of nodes) {
+        const properties = new Set<string>();
+        for (const animation of node.getAnimations()) {
+          if (animation.playState !== "running") continue;
+          const effect = animation.effect;
+          if (!effect || !("getKeyframes" in effect)) { properties.add("unavailable"); continue; }
+          // Material color, shadow, and filter animations do not move a hit region.
+          for (const keyframe of (effect as KeyframeEffect).getKeyframes()) {
+            for (const property of Object.keys(keyframe)) {
+              if (/^(transform|translate|scale|rotate|top|right|bottom|left|inset.*|(?:min|max)?(?:width|height)|margin.*|padding.*|border.*width|font.*|lineheight|letterspacing|wordspacing|gap|rowgap|columngap|grid.*|flex.*|offset(?:anchor|distance|path|position|rotate)|zoom)$/.test(property.replaceAll("-", "").toLowerCase())) properties.add(property);
+            }
+          }
+        }
+        if (properties.size) animations.push({ id: targetId(node), properties: [...properties].slice(0, 16) });
+      }
+      const changed = geometry !== previous;
+      stable = nodes.length && !changed && !animations.length ? stable + 1 : 0;
       previous = geometry;
-      if (stable >= 3) finish(true);
+      if (samples.length === 8) samples.shift();
+      samples.push({ origin, elapsedMs: elapsed(), changed, targets, animations });
+      if (stable >= 3) finish("stable");
       else schedule();
     };
     signal.addEventListener("abort", aborted, { once: true });
-    if (signal.aborted) finish(false); else schedule();
+    if (signal.aborted) finish("aborted"); else schedule();
   });
 }
 
@@ -90,6 +147,7 @@ export function LayoutQualityLab({ active = true }: { active?: boolean }) {
   const [open, setOpen] = useState(false);
   const [dialogReady, setDialogReady] = useState(false);
   const [baselineState, setBaselineState] = useState<"preparing" | "ready" | "unavailable">("preparing");
+  const [baselineEvidence, setBaselineEvidence] = useState<SettleEvidence | null>(null);
   const [direction, setDirection] = useState<"ltr" | "rtl">("ltr");
   const [anchor, setAnchor] = useState<Anchor>("top-start");
   const [content, setContent] = useState("short");
@@ -125,15 +183,19 @@ export function LayoutQualityLab({ active = true }: { active?: boolean }) {
     const controller = new AbortController(); pending.current = controller;
     baseline.current = null;
     setBaselineState("preparing");
+    setBaselineEvidence(null);
     setNotice("Preparing the healthy baseline. Waiting for stable control positions.");
     recorder.current?.stop(); recorder.current = null;
     const task = (async () => {
       // Closing content remains mounted until its SDK exit animation finishes.
-      const settled = await settle(() => [root.current, trigger.current, peer.current, popup.current], controller.signal);
+      const settling = await settle(() => [root.current, trigger.current, peer.current, popup.current], controller.signal, BASELINE_SETTLE_MS);
       if (!live.current || controller.signal.aborted || currentGeneration !== generation.current) return;
-      if (!settled) {
+      setBaselineEvidence(settling);
+      if (!settling.settled) {
         setBaselineState("unavailable");
-        setNotice("Baseline not ready: the fixture did not settle within 1.5 seconds. Keep this tab visible, then reset the fixture.");
+        setNotice(settling.reason === "document-hidden"
+          ? "Baseline not ready: this tab became hidden. Return to the visible fixture, then reset it."
+          : `Baseline not ready after 5 seconds: ${settling.blocker ?? settling.reason} (${settling.sampleCount} observations, ${settling.stableSamples}/3 stable). Inspect the preparation evidence below, then reset the fixture.`);
         return;
       }
       baseline.current = captureLayoutSnapshot(root.current, { scopeId: "placement-lab", maxTargets: 8 });
@@ -161,6 +223,7 @@ export function LayoutQualityLab({ active = true }: { active?: boolean }) {
     else {
       baseline.current = null;
       setBaselineState("preparing");
+      setBaselineEvidence(null);
       setNotice("Preparing the fixture. Waiting for the dialog to finish opening.");
     }
     return () => { live.current = false; stopWork(); };
@@ -177,14 +240,18 @@ export function LayoutQualityLab({ active = true }: { active?: boolean }) {
     if (!live.current || currentGeneration !== generation.current) return;
     pending.current?.abort();
     const controller = new AbortController(); pending.current = controller;
-    const settled = await settle(() => [trigger.current, peer.current, popup.current], controller.signal);
+    const settling = await settle(() => [trigger.current, peer.current, popup.current], controller.signal, AUDIT_SETTLE_MS);
     if (!live.current || controller.signal.aborted || currentGeneration !== generation.current) return;
     if (pending.current === controller) pending.current = null;
     const findings: QualityFinding[] = [];
     const issue = (code: string, message: string): QualityFinding => ({ code, message, severity: "error", targetId: "quality-popup" });
     let placement: PopupPlacementReport | null = null;
     let comparison: LayoutComparison | null = null;
-    if (!settled) findings.push(issue("layout-unsettled", "Geometry did not settle within the bounded check window."));
+    if (!settling.settled) findings.push({ ...issue("layout-unsettled", "Geometry did not settle within the bounded check window."), values: {
+      reason: settling.reason, blocker: settling.blocker, sampleCount: settling.sampleCount,
+      animationFrameSamples: settling.animationFrameSamples, timerSamples: settling.timerSamples,
+      stableSamples: settling.stableSamples, elapsedMs: settling.elapsedMs, budgetMs: settling.budgetMs,
+    } });
     if (!baseline.current) findings.push(issue("missing-baseline", "Reset the fixture to capture a healthy baseline."));
     else {
       comparison = compareLayoutSnapshots(baseline.current, captureLayoutSnapshot(root.current, { scopeId: "placement-lab", maxTargets: 8 }), {
@@ -207,7 +274,9 @@ export function LayoutQualityLab({ active = true }: { active?: boolean }) {
       });
       findings.push(...placement.findings);
     }
-    const next = { revision: ++revision.current, pass: settled && comparison?.passed === true && placement?.passed === true, findings, placement, comparison, shifts: recorder.current?.snapshot() ?? null };
+    const next = { revision: ++revision.current, pass: settling.settled && comparison?.passed === true && placement?.passed === true, findings, placement, comparison, shifts: recorder.current?.snapshot() ?? null,
+      ...(!settling.settled ? { settling } : {}),
+    };
     setReport(next);
     setNotice(next.pass ? "Placement and stable hit regions passed this check." : `Detected ${findings.length} finding${findings.length === 1 ? "" : "s"}. Inspect the report below.`);
   }
@@ -222,7 +291,7 @@ export function LayoutQualityLab({ active = true }: { active?: boolean }) {
       <div><strong>Placement lab</strong><p>Exercise real SDK menus at the viewport edges. Inject a fault to check that the detector catches it.</p></div>
       <DialogTrigger disabled={!active}>Open placement lab</DialogTrigger>
     </div>
-    <DialogContent ref={root} className="qg-quality-fixture" data-layout-quality-fixture="" data-layout-scope="placement-lab" data-quality-baseline={baselineState} dir={direction}>
+    <DialogContent ref={root} className="qg-quality-fixture" data-layout-quality-fixture="" data-layout-scope="placement-lab" data-quality-baseline={baselineState} data-quality-settle={baselineEvidence ? JSON.stringify(baselineEvidence) : undefined} dir={direction}>
       <div className="qg-quality-lab-panel" dir="ltr">
         <div className="qg-quality-lab-heading"><div><DialogTitle>Layout quality fixtures</DialogTitle><span>Unvalidated · local test fixtures</span></div><DialogClose aria-label="Close placement lab">Close</DialogClose></div>
         <DialogDescription>Leading actions align to the logical start; trailing actions align to the end. This lab prefers below and lets the SDK flip above when space runs out.</DialogDescription>
@@ -234,7 +303,11 @@ export function LayoutQualityLab({ active = true }: { active?: boolean }) {
         </div>
         <div className="qg-quality-lab-actions"><Button onClick={audit} disabled={baselineState !== "ready"}>Run layout check</Button><Button onClick={reset}>Reset quality fixture</Button></div>
         <p className="qg-quality-lab-notice" role="status">{notice}</p>
-        <pre className="qg-quality-lab-report" data-layout-quality-report="" aria-label="Placement check report" tabIndex={0}>{JSON.stringify(report ?? { revision: revision.current, pass: false, findings: [], placement: null, shifts: null, status: "not-checked" }, null, 2)}</pre>
+        <pre className="qg-quality-lab-report" data-layout-quality-report="" aria-label="Placement check report" tabIndex={0}>{JSON.stringify(report ?? {
+          revision: revision.current, pass: false, findings: [], placement: null, shifts: null,
+          status: baselineState === "unavailable" ? "baseline-unavailable" : "not-checked",
+          ...(baselineState === "unavailable" ? { baselinePreparation: baselineEvidence } : {}),
+        }, null, 2)}</pre>
       </div>
       <div className="qg-quality-pair" data-quality-pair="" data-anchor={anchor}>
         <Button ref={peer} data-quality-peer="" data-layout-probe="quality-peer" onClick={() => setNotice("Primary action accepted. The action group remains in place.")}>Primary action</Button>

@@ -80,6 +80,7 @@ import { createModelDocument } from "@quantitative-hci/liquid-glass/modeling";
 import { AgentsShowcase } from "./agents-showcase";
 import { InteractionsShowcase } from "./interactions-showcase";
 import { SectionsShowcase } from "./sections-showcase";
+import { LayoutsShowcase } from "./layouts-showcase";
 import { RecipePanel } from "./recipe-panel";
 import { GraphicsShowcase, initialGraphicDocument, initialGraphicAssets } from "./graphics-showcase";
 import type { GraphicAsset } from "@quantitative-hci/liquid-glass/graphics";
@@ -95,6 +96,7 @@ import "./gallery.css";
 const demos: Record<string, ComponentType> = { ...inputDemos, ...surfaceDemos };
 const groups = [...new Set(manifest.components.map((item) => item.category))];
 const collections = [
+  { id: "layouts", name: "App layouts", keywords: "application app shell workspace account organisation multitenancy menu dashboard navigation review queue phone mobile settings projects people states" },
   { id: "interactions", name: "Interactions", keywords: "cursor pointer mouse click ripple feedback magnetic right click context menu gestures" },
   { id: "sections", name: "Sections", keywords: "hero story scroll chapter sticky reveal contour transition landing editorial composition" },
   { id: "visual", name: "Graphics", keywords: "image layers design canvas ai agent media gallery carousel card comparison photo showcase" },
@@ -911,6 +913,9 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
           </div>}
           {(active === "sections" || visitedCollections.includes("sections")) && <div hidden={active !== "sections"}>
             <SpecimenBoundary key="sections" name="Sections"><SectionsShowcase /></SpecimenBoundary>
+          </div>}
+          {(active === "layouts" || visitedCollections.includes("layouts")) && <div hidden={active !== "layouts"}>
+            <SpecimenBoundary key="layouts" name="App layouts"><LayoutsShowcase /></SpecimenBoundary>
           </div>}
           {(active === "interactions" || active === "sections") && <RecipePanel collection={active} />}
           {active === "overview" ? (

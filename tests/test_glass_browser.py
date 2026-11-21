@@ -61,11 +61,15 @@ async def run(args):
         launch = {"headless": True}
         if args.executable:
             launch["executable_path"] = args.executable
+        else:
+            # Use regular Chromium's headless mode, matching the live Chrome path.
+            launch["channel"] = "chromium"
         if args.software_gpu:
             assert urlparse(args.base_url).hostname in {"127.0.0.1", "localhost", "::1"}, "Software GPU verification requires the reviewed loopback build"
             launch["args"] = ["--enable-unsafe-webgpu", "--enable-unsafe-swiftshader", "--use-angle=swiftshader", "--use-vulkan=swiftshader", "--enable-features=Vulkan"]
         browser = await playwright.chromium.launch(**launch)
         report["browser"] = browser.version
+        report["browserChannel"] = launch.get("channel", "explicit-executable")
         report["softwareGpuRequested"] = args.software_gpu
         async def new_context(**options):
             result = await browser.new_context(**options)

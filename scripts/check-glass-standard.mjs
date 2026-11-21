@@ -67,6 +67,7 @@ const main = read(join(galleryDir, "src/main.tsx"));
 const bridge = read(join(galleryDir, "src/agent-bridge.ts"));
 const provider = read(join(packageDir, "src/webgpu.tsx"));
 const engine = read(join(packageDir, "src/webgpu/engine.ts"));
+const motion = read(join(packageDir, "src/webgpu/motion.ts"));
 const renderer = read(join(packageDir, "src/webgpu/renderer.ts"));
 const surfaces = read(join(packageDir, "src/webgpu/surfaces.ts"));
 const shader = read(join(packageDir, "src/webgpu/shader.ts"));
@@ -82,17 +83,24 @@ check(!/AgentInspector|ReferenceLens|agent-inspector|reference-lens/.test(main),
 check(!existsSync(join(galleryDir, "public/refraction-lab.html")), "Remove the separate public refraction lab from the hosted build.");
 check(!existsSync(join(galleryDir, "src/agent-inspector.tsx")), "Remove the unused diagnostic inspector and command console.");
 check(provider.includes("LiquidGlassProvider") && provider.includes("useLiquidGlass"), "Export the shared provider and its status/refresh hook.");
-for (const attribute of ["data-liquid-glass-kit", "data-liquid-status", "data-liquid-surface-count", "data-liquid-render-revision", "data-liquid-capture-revision"]) {
+for (const attribute of ["data-liquid-glass-kit", "data-liquid-status", "data-liquid-surface-count", "data-liquid-render-revision", "data-liquid-capture-revision", "data-liquid-motion", "data-liquid-motion-state", "data-liquid-motion-revision", "data-liquid-active-effects", "data-liquid-transparency", "data-liquid-reduced-reason"]) {
   check((provider + engine).includes(attribute), `Missing renderer evidence contract: ${attribute}.`);
 }
 check((provider + engine).includes("data-liquid-canvas") && surfaces.includes("data-liquid-glass"), "Use actual registered surfaces and identifiable GPU canvases.");
 check(engine.includes("requestAdapter") && /createRenderPipeline/.test(renderer) && shader.includes("@fragment"), "Use an actual WebGPU pipeline, not a CSS-only substitute.");
 check(engine.includes("html2canvas") && engine.includes("config.backdrop"), "Keep capture bounded to the supplied backdrop.");
+check(engine.includes("createLiquidMotion") && engine.includes("withoutMotionStyles"), "Share bounded interaction motion and exclude its own CSS writes from geometry invalidation.");
+check(["pointerdown", "pointermove", "keydown", "data-checked", "aria-selected", "disabled", "destroy()"].every((term) => motion.includes(term)), "Track real pointer, keyboard and SDK state changes; retain disabled guards and cleanup.");
+check(["ripple", "displacement", "fresnel"].every((term) => shader.includes(term)) && renderer.includes("SurfaceMotion"), "Connect contact-wave and bevel optics to the actual GPU surface data.");
+check(["segmented-control-indicator", "tabs-indicator"].every((term) => surfaces.includes(term)), "Register the real SDK selection indicators as optical surfaces.");
+check(main.includes("SegmentedControlIndicator") && demos.includes("TabsIndicator"), "Mount SDK indicators for visible keyboard and agent selection travel.");
+check(["Animate glass", "Appearance", "qg-kit-motion", "qg-kit-transparency"].every((term) => main.includes(term)), "Expose and persist truthful per-kit motion and transparency choices.");
 check(kit.includes('data-liquid-glass-kit="true"'), "Scope the kit theme to an active provider.");
 for (const preference of ["prefers-reduced-motion", "prefers-reduced-transparency", "forced-colors", "prefers-contrast"]) {
   check((kit + provider + engine).includes(preference), `Preserve the ${preference} policy.`);
 }
 check(kit.includes(":focus-visible") && kit.includes("data-invalid") && kit.includes('data-variant="destructive"'), "Retain focus, invalid and destructive semantics in the kit theme.");
+check(["data-liquid-pressed", "data-liquid-ripple", "data-liquid-travelling", "data-liquid-motion"].every((term) => kit.includes(term)), "Keep the shared CSS press, ripple and selection fallback under the resolved motion policy.");
 check(bridge.includes("@ui-sdk/react/agent") && /\bcreateAgent\s*\(/.test(bridge) && /\bregisterTools\s*\(/.test(bridge) && /allow\s*:/.test(bridge), "Keep the official SDK bridge with an explicit action policy.");
 check(bridge.includes("quantitativeHciAgent"), "Retain the private browser verification facade.");
 for (const method of ["snapshot", "query", "act", "subscribe"]) {
@@ -104,6 +112,8 @@ const opticsTests = read(join(root, "tests/glass_optics_contract.py"));
 check(["data-catalogue-id", "data-component-id", "data-kit-view", "software_gpu"].every((term) => browser.includes(term)), "Browser checks must cover the kit overview, every family and the reviewed GPU path.");
 check(["quantitativeHciAgent", "snapshot", "query", "act", "subscribe", "[redacted]"].every((term) => agentTests.includes(term)), "Verify real SDK reads/actions, subscriptions and secret redaction.");
 check(["data-optics-probe", "data-liquid-canvas", "data-liquid-capture-revision", "Refraction strength", "Backdrop"].every((term) => opticsTests.includes(term)), "Verify actual control rectangles, GPU contribution, strength changes and backdrop capture.");
+check(["verify_motion_contract", "paintedFraction", "changedFraction", "captureRevisionUnchanged", "idlePixels", "selectionSources", "verify_suppressed_motion", "MOTION_IDLE_SAMPLE_MS"].every((term) => opticsTests.includes(term)), "Verify actual motion pixels, keyboard/agent indicator travel, settled idle work, texture reuse and suppressed effects.");
+check(["visible_pointer_ripple_selection_and_idle", "system_preferences_explicit_opt_in_and_forced_colours", "unavailable_gpu_css_motion_and_popup", "short_overview_motion_video", "record_video_dir", 'animations="allow"'].every((term) => browser.includes(term)), "Run motion, explicit preference override and unavailable-GPU checks; retain a short real-motion video.");
 const notice = read(join(packageDir, "src/webgpu/NOTICE.md"));
 check(notice.includes("arya3d/liquid-glass-webgpu") && notice.includes("90cb73931bbaf38bd54b3263cd3fda1daef1869c"), "Document the exact reference shader and its local adaptations.");
 for (const path of ["packages/liquid-glass/LICENSES/arya3d-MIT.txt", "docs/hci/examples/liquid-glass/public/licenses/arya3d-liquid-glass-MIT.txt", "THIRD_PARTY_NOTICES.md", "docs/hci/standards/liquid-glass.md"]) {
@@ -114,5 +124,5 @@ if (errors.length) {
   process.stderr.write(`Liquid Glass kit source contract failed (${errors.length}):\n${errors.map((error) => `- ${error}`).join("\n")}\n`);
   process.exitCode = 1;
 } else {
-  process.stdout.write(`Liquid Glass kit source contract passed: ${expected.length} families, pinned SDK behaviour, shared WebGPU material, private agent bridge and source attribution. Rendering requires the browser pixel checks.\n`);
+  process.stdout.write(`Liquid Glass kit source contract passed: ${expected.length} families, pinned SDK behaviour, shared WebGPU material and bounded motion, private agent bridge and source attribution. Rendering requires the browser pixel checks.\n`);
 }

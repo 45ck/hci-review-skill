@@ -16,7 +16,17 @@ from time import perf_counter
 from urllib.parse import urlparse
 
 from glass_agent_contract import verify_agent_contract
-from glass_optics_contract import SCREENSHOT_TIMEOUT_MS, verify_optics_contract
+from glass_optics_contract import (
+    SCREENSHOT_TIMEOUT_MS,
+    _difference,
+    configure_material,
+    motion_diagnostics,
+    settled_motion,
+    verify_motion_contract,
+    verify_optics_contract,
+    verify_pointer_motion,
+    verify_suppressed_motion,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "packages/liquid-glass/component-manifest.json"
@@ -51,14 +61,21 @@ async def run(args):
         browser = await playwright.chromium.launch(**launch)
         report["browser"] = browser.version
         report["softwareGpuRequested"] = args.software_gpu
-        context = await browser.new_context(viewport={"width": 1440, "height": 1000})
-        if args.software_gpu:
-            origin = urlparse(args.base_url).netloc
-            await context.route("**/*", lambda route: route.continue_() if urlparse(route.request.url).netloc == origin else route.abort())
+        async def new_context(**options):
+            result = await browser.new_context(**options)
+            if args.software_gpu:
+                origin = urlparse(args.base_url).netloc
+                await result.route("**/*", lambda route: route.continue_() if urlparse(route.request.url).netloc == origin else route.abort())
+            return result
+
+        def observe_errors(target):
+            target.on("pageerror", lambda error: page_errors.append(str(error)))
+            target.on("console", lambda message: console_errors.append(message.text) if message.type == "error" else None)
+            target.set_default_timeout(5000)
+
+        context = await new_context(viewport={"width": 1440, "height": 1000})
         page = await context.new_page()
-        page.on("pageerror", lambda error: page_errors.append(str(error)))
-        page.on("console", lambda message: console_errors.append(message.text) if message.type == "error" else None)
-        page.set_default_timeout(5000)
+        observe_errors(page)
         root = page.locator("html")
         response = await page.goto(args.base_url, wait_until="networkidle")
         assert response and response.ok, "Production preview did not return successfully"
@@ -111,7 +128,8 @@ async def run(args):
             return {"catalogueChoices": 56, "families": 55, "default": "Liquid Glass overview", "rendererStatus": status, "screenshot": "overview-desktop.png", "viewport": {"width": 1440, "height": 1000}}
 
         await record("default_glass_kit_overview", initial, reset=False, timeout=45)
-        await record("gpu_on_actual_controls_strength_and_backdrop", lambda: verify_optics_contract(page, expect, output_dir=output.parent, require_gpu=args.software_gpu), reset=False, timeout=45)
+        await record("gpu_on_actual_controls_strength_and_backdrop", lambda: verify_optics_contract(page, expect, output_dir=output.parent, require_gpu=args.software_gpu), reset=False, timeout=60)
+        await record("visible_pointer_ripple_selection_and_idle", lambda: verify_motion_contract(page, expect, output_dir=output.parent, require_gpu=args.software_gpu), timeout=60)
         await record("real_sdk_agent_contract", lambda: verify_agent_contract(page, expect), timeout=20)
 
         async def all_components():
@@ -215,27 +233,164 @@ async def run(args):
         await record("mobile_overview_fits_and_remains_usable", mobile, timeout=20)
 
         async def preferences():
-            status_before = await root.get_attribute("data-liquid-status")
-            await page.emulate_media(reduced_motion="reduce", forced_colors="none")
-            await page.evaluate("() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))")
-            status_motion = await root.get_attribute("data-liquid-status")
-            if status_before == "ready":
-                assert status_motion == "ready", "Reduced motion should retain static refraction"
-            await page.emulate_media(reduced_motion="reduce", forced_colors="active")
-            await expect(root).to_have_attribute("data-liquid-status", "reduced", timeout=5000)
-            await expect(page.locator("canvas[data-liquid-canvas='viewport']")).not_to_be_visible()
-            button = page.get_by_role("button", name="Create project", exact=True)
-            await button.focus()
-            await page.keyboard.press("Tab")
-            await page.keyboard.press("Shift+Tab")
-            await expect(button).to_be_focused()
-            style = await button.evaluate("node => ({filter: getComputedStyle(node).backdropFilter, outline: getComputedStyle(node).outlineStyle, focusVisible: node.matches(':focus-visible')})")
-            assert style["filter"] in ("none", "blur(0px)") and style["outline"] != "none" and style["focusVisible"], style
-            await button.press("Enter")
-            await expect(page.get_by_label("Project result", exact=True)).to_have_text("Created Coastal studio")
-            return {"reducedMotionStatus": status_motion, "forcedColoursStatus": "reduced", "gpuHidden": True, "keyboardActionPreserved": True, "focus": style}
+            preference_context = await new_context(viewport={"width": 1440, "height": 1000})
+            preference_page = await preference_context.new_page()
+            observe_errors(preference_page)
+            session = await preference_context.new_cdp_session(preference_page)
+            features = [
+                {"name": "prefers-reduced-motion", "value": "reduce"},
+                {"name": "prefers-reduced-transparency", "value": "reduce"},
+                {"name": "forced-colors", "value": "none"},
+            ]
+            await session.send("Emulation.setEmulatedMedia", {"features": features})
+            try:
+                await preference_page.goto(args.base_url, wait_until="networkidle")
+                media = await preference_page.evaluate("({motion: matchMedia('(prefers-reduced-motion: reduce)').matches, transparency: matchMedia('(prefers-reduced-transparency: reduce)').matches})")
+                assert media == {"motion": True, "transparency": True}, f"Chromium did not apply the requested media emulation: {media}"
+                preference_root = preference_page.locator("html")
+                await expect(preference_root).to_have_attribute("data-liquid-transparency", "system")
+                await expect(preference_root).to_have_attribute("data-liquid-status", "reduced")
+                await expect(preference_root).to_have_attribute("data-liquid-motion", "reduced")
+                await expect(preference_page.locator("canvas[data-liquid-canvas='viewport']")).not_to_be_visible()
+                system_reason = await preference_root.get_attribute("data-liquid-reduced-reason")
+                await configure_material(preference_page, appearance="Glass")
+                await expect(preference_root).to_have_attribute("data-liquid-status", re.compile(r"^(ready|unavailable)$"), timeout=25000)
+                glass_status = await preference_root.get_attribute("data-liquid-status")
+                if args.software_gpu:
+                    assert glass_status == "ready", f"Explicit Glass did not restore WebGPU: {glass_status}"
+                reduced = await verify_suppressed_motion(preference_page, expect, policy="reduced")
+                if glass_status == "ready":
+                    await expect(preference_page.locator("canvas[data-liquid-canvas='viewport']")).to_be_visible()
+                await configure_material(preference_page, motion=False)
+                off = await verify_suppressed_motion(preference_page, expect, policy="off")
+                await configure_material(preference_page, motion=True)
+                await expect(preference_root).to_have_attribute("data-liquid-motion", "enabled")
+                override = await verify_pointer_motion(preference_page, expect, output_dir=output.parent, label="explicit-opt-in") if glass_status == "ready" else {"gpuPixelsUnavailable": True}
+                stored = await preference_page.evaluate("({motion: localStorage.getItem('qg-kit-motion'), transparency: localStorage.getItem('qg-kit-transparency')})")
+                assert json.loads(stored["motion"]) is True and stored["transparency"] == "glass", stored
+                await preference_page.reload(wait_until="networkidle")
+                await expect(preference_root).to_have_attribute("data-liquid-motion", "enabled")
+                await expect(preference_root).to_have_attribute("data-liquid-transparency", "glass")
+                await expect(preference_root).to_have_attribute("data-liquid-status", glass_status, timeout=25000)
+                await configure_material(preference_page, appearance="Solid")
+                await expect(preference_root).to_have_attribute("data-liquid-status", "reduced")
+                solid_reason = await preference_root.get_attribute("data-liquid-reduced-reason")
+                await configure_material(preference_page, appearance="Glass")
+                features[-1]["value"] = "active"
+                await session.send("Emulation.setEmulatedMedia", {"features": features})
+                await expect(preference_root).to_have_attribute("data-liquid-status", "reduced")
+                forced_reason = await preference_root.get_attribute("data-liquid-reduced-reason")
+                await expect(preference_page.locator("canvas[data-liquid-canvas='viewport']")).not_to_be_visible()
+                button = preference_page.get_by_role("button", name="Create project", exact=True)
+                await button.focus()
+                await preference_page.keyboard.press("Tab")
+                await preference_page.keyboard.press("Shift+Tab")
+                await expect(button).to_be_focused()
+                style = await button.evaluate("node => ({filter: getComputedStyle(node).backdropFilter, outline: getComputedStyle(node).outlineStyle, focusVisible: node.matches(':focus-visible')})")
+                assert style["filter"] in ("none", "blur(0px)") and style["outline"] != "none" and style["focusVisible"], style
+                await button.press("Enter")
+                await expect(preference_page.get_by_label("Project result", exact=True)).to_have_text("Created Coastal studio")
+                return {"emulatedSystemPreferences": media, "systemReducedReason": system_reason, "explicitGlassStatus": glass_status, "systemReducedMotion": reduced, "userMotionOff": off, "explicitMotionOptIn": override, "persisted": stored, "solidReason": solid_reason, "forcedColoursReason": forced_reason, "forcedColoursOverrideGlass": True, "keyboardActionPreserved": True, "focus": style}
+            finally:
+                await preference_context.close()
 
-        await record("static_reduced_motion_and_forced_colour_fallback", preferences, timeout=8)
+        await record("system_preferences_explicit_opt_in_and_forced_colours", preferences, reset=False, timeout=60)
+
+        async def unavailable_fallback():
+            fallback_context = await new_context(viewport={"width": 1440, "height": 1000}, reduced_motion="no-preference")
+            await fallback_context.add_init_script("Object.defineProperty(navigator, 'gpu', {configurable: true, get: () => undefined})")
+            fallback = await fallback_context.new_page()
+            observe_errors(fallback)
+            try:
+                await fallback.goto(args.base_url, wait_until="networkidle")
+                fallback_root = fallback.locator("html")
+                await expect(fallback_root).to_have_attribute("data-liquid-status", "unavailable")
+                await expect(fallback_root).to_have_attribute("data-liquid-motion", "enabled")
+                await expect(fallback.locator("canvas[data-liquid-canvas='viewport']")).not_to_be_visible()
+                button = fallback.get_by_role("button", name="Create project", exact=True)
+                await button.hover()
+                await settled_motion(fallback)
+                box = await button.bounding_box()
+                assert box, "Fallback button has no bounds"
+                before = await fallback.screenshot(path=str(output.parent / "fallback-rest.png"), clip=box, animations="allow", timeout=SCREENSHOT_TIMEOUT_MS)
+                diagnostics_before = await motion_diagnostics(fallback)
+                await fallback.mouse.down()
+                try:
+                    await expect(button).to_have_attribute("data-liquid-pressed", re.compile(r".*"))
+                    await expect(button).to_have_attribute("data-liquid-ripple", re.compile(r"^[ab]$"))
+                    await fallback.wait_for_timeout(120)
+                    pressed = await fallback.screenshot(path=str(output.parent / "fallback-press.png"), clip=box, animations="allow", timeout=SCREENSHOT_TIMEOUT_MS)
+                    pixel_change = _difference(before, pressed)
+                    assert pixel_change["changedFraction"] > 0.001, f"Fallback press did not change actual control pixels: {pixel_change}"
+                finally:
+                    await fallback.mouse.up()
+                await expect(fallback.get_by_label("Project result", exact=True)).to_have_text("Created Coastal studio")
+                trigger = fallback.get_by_role("button", name="New collection", exact=True)
+                await trigger.focus()
+                await trigger.press("Enter")
+                dialog = fallback.get_by_role("dialog", name="Create a collection", exact=True)
+                await expect(dialog).to_be_visible()
+                assert await dialog.evaluate("node => node.contains(document.activeElement)"), "Fallback popup did not receive focus"
+                await fallback.screenshot(path=str(output.parent / "fallback-dialog.png"), animations="allow", timeout=SCREENSHOT_TIMEOUT_MS)
+                await fallback.keyboard.press("Escape")
+                await expect(dialog).not_to_be_visible()
+                await expect(trigger).to_be_focused()
+                await fallback.mouse.move(1, 1)
+                diagnostics_after = await settled_motion(fallback)
+                assert diagnostics_after["motion"] > diagnostics_before["motion"], "Fallback did not animate its feedback"
+                assert diagnostics_after["capture"] == diagnostics_before["capture"] == 0, "Unavailable GPU captured a backdrop"
+                return {"simulatedCondition": "navigator.gpu unavailable", "rendererStatus": "unavailable", "pressPixels": pixel_change, "keyboardAction": True, "popupFocusRestored": True, "idle": diagnostics_after, "screenshots": ["fallback-rest.png", "fallback-press.png", "fallback-dialog.png"]}
+            finally:
+                await fallback_context.close()
+
+        await record("unavailable_gpu_css_motion_and_popup", unavailable_fallback, reset=False, timeout=35)
+
+        async def record_motion_demo():
+            video_context = await new_context(
+                viewport={"width": 1440, "height": 1000}, reduced_motion="no-preference",
+                record_video_dir=str(output.parent / "motion-recording"),
+                record_video_size={"width": 1440, "height": 1000},
+            )
+            demo = await video_context.new_page()
+            observe_errors(demo)
+            clip_started = perf_counter()
+            try:
+                await demo.goto(args.base_url, wait_until="networkidle")
+                await expect(demo.locator("html")).to_have_attribute("data-liquid-status", re.compile(r"^(ready|unavailable)$"), timeout=25000)
+                await settled_motion(demo)
+                button = demo.get_by_role("button", name="Create project", exact=True)
+                box = await button.bounding_box()
+                assert box, "Motion video target has no bounds"
+                await demo.mouse.move(box["x"] + 12, box["y"] + box["height"] / 2)
+                await demo.wait_for_timeout(250)
+                await demo.mouse.move(box["x"] + box["width"] - 12, box["y"] + box["height"] / 2, steps=12)
+                await demo.mouse.down()
+                await demo.wait_for_timeout(220)
+                await demo.mouse.up()
+                await demo.wait_for_timeout(700)
+                workspace = demo.get_by_role("radiogroup", name="Workspace view", exact=True)
+                await workspace.get_by_role("radio", name="Files", exact=True).press("ArrowRight")
+                await demo.wait_for_timeout(500)
+                await workspace.get_by_role("radio", name="Settings", exact=True).click()
+                await demo.wait_for_timeout(500)
+                await demo.get_by_role("switch", name="Notifications", exact=True).click()
+                await demo.wait_for_timeout(450)
+                await demo.get_by_role("button", name="New collection", exact=True).click()
+                await expect(demo.get_by_role("dialog", name="Create a collection", exact=True)).to_be_visible()
+                await demo.wait_for_timeout(700)
+                await demo.keyboard.press("Escape")
+                await demo.mouse.move(1, 1)
+                await settled_motion(demo)
+                await demo.screenshot(path=str(output.parent / "motion-demo-overview.png"), animations="allow", timeout=SCREENSHOT_TIMEOUT_MS)
+            finally:
+                await video_context.close()
+            video = Path(await demo.video.path())
+            destination = output.parent / "motion-demo.webm"
+            video.replace(destination)
+            assert destination.stat().st_size > 0, "Motion demo video is empty"
+            return {"video": destination.name, "durationSeconds": round(perf_counter() - clip_started, 2), "viewport": {"width": 1440, "height": 1000}, "interactions": ["pointer highlight", "press and ripple", "keyboard and pointer selection", "switch", "dialog and Escape"], "animationsDisabled": False}
+
+        await record("short_overview_motion_video", record_motion_demo, reset=False, timeout=45)
         report["checks"].append({"name": "uncaught_page_errors", "passed": not page_errors, "errors": page_errors})
         report["checks"].append({"name": "console_errors", "passed": not console_errors, "errors": console_errors})
         await context.close()

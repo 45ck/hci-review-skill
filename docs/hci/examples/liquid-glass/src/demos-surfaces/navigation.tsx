@@ -52,6 +52,7 @@ import {
 } from "@ui-sdk/react/pagination";
 import {
   Tabs,
+  TabsIndicator,
   TabsList,
   TabsPanel,
   TabsTab,
@@ -203,6 +204,7 @@ export function TabsDemo() {
   return (
     <Tabs defaultValue="design" aria-label="Specimen details">
       <TabsList aria-label="Specimen details">
+        <TabsIndicator />
         <TabsTab value="design">Design</TabsTab>
         <TabsTab value="build">Build</TabsTab>
         <TabsTab value="measure">Measure</TabsTab>

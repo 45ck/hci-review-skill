@@ -16,12 +16,14 @@ export default function LiquidGlassTemplate() {
             width: "100%",
             height: "100%",
             background:
-              "repeating-linear-gradient(125deg, #c2dfee 0px, #8db7cc 100px, #e7cfb6 210px, #dcebf2 320px)",
+              "radial-gradient(ellipse at 80% 20%, #92c8df 0%, transparent 55%), linear-gradient(145deg, #e3f0f8 10%, #bad9e7 55%, #eed9c6 100%)",
           }}
         />
       }
       refraction={0.3}
       dispersion={0.008}
+      motion="system"
+      transparency="system"
     >
       <main style={{ maxWidth: 540, margin: "10vh auto", padding: 24 }}>
         <section

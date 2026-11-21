@@ -37,6 +37,10 @@ The capture boundary is the supplied decorative backdrop. Changing it must refre
 
 Share work across controls, bound resolution, draw when material or geometry changes, and release GPU resources and observers on teardown. Do not create an independent continuously running GPU loop for every control.
 
+Keep broad faces clear and concentrate refraction near the bevel. Directional upper and lower reflections, a thin inner rim and separate contact/ambient shadows establish thickness. Avoid broad centre-contraction artifacts and uniform bright outlines. Pointer light, damped activation ripples and short selection springs belong to the shared material. Use `TabsIndicator` and `SegmentedControlIndicator` so selection motion follows the SDK's actual state, including keyboard and agent changes. Text and hit targets stay stable.
+
+Motion is enabled under normal device preferences. A single bounded animation loop follows active light, ripple and geometry responses, then stops; it pauses for hidden documents and never recaptures the backdrop every frame. Disabled/read-only controls must not imply a successful action through a press response.
+
 ## Readability and fallbacks
 
 Use glass principally for controls, navigation and compact surfaces. Keep long text and dense data readable. Test final composited contrast against the supported scenes; a token value alone is insufficient. Apple's [materials guidance](https://developer.apple.com/design/human-interface-guidelines/materials) is a design reference.
@@ -45,12 +49,15 @@ Use glass principally for controls, navigation and compact surfaces. Keep long t
 | --- | --- |
 | WebGPU available | Registered controls and panels receive the GPU material by default. |
 | Unsupported adapter or renderer failure | Preserve the DOM interface and fallback surfaces; report the actual renderer state. |
-| Reduced transparency or forced colours | Suppress the GPU effect and use solid/system-colour surfaces. |
-| Reduced motion | Keep static refraction, remove decorative animation, and retain requested control/layout updates. |
+| Reduced transparency | Follow it by default; an explicit per-app Glass choice may opt back into transparency. |
+| Forced colours | Always suppress the GPU effect and use system-colour surfaces. |
+| Reduced motion | Follow it by default: keep static refraction and remove decoration. An explicit per-app animation choice may opt in. |
 | Keyboard input | Keep visible focus, arrows, selection, Escape dismissal and focus restoration. |
 | Narrow viewport | Fit the overview and selected specimens without page-level horizontal overflow. |
 
 Fallbacks retain the same actions and state. They are not a separate demo mode that replaces the default kit.
+
+Expose the effective state in controls. An animation switch must be unchecked when the device preference actually suppresses animation. A material selector offers Follow device, Glass and Solid; the kit remembers explicit choices for that demo only. Do not alter operating-system or browser preferences to enable a visual treatment.
 
 ## Agent semantics beneath the UI
 
@@ -88,6 +95,9 @@ Required checks:
 5. Refraction strength changes rendered pixels. Backdrop changes advance capture evidence and change rendered output.
 6. A real top-layer dialog renders its local GPU surface and retains visible, operable controls.
 7. The mobile overview fits; accessibility preferences preserve controls and keyboard focus.
+8. Actual shader pixels change during hover/activation while capture revisions stay constant. Effects settle and rendering stops at idle.
+9. The native selection indicator travels for pointer, keyboard and agent selection. Disabled controls produce no accepted-activation ripple.
+10. System motion/transparency preferences and explicit per-app choices behave distinctly. A missing adapter retains useful CSS feedback and truthful status.
 
 Save desktop overview, desktop popup, mobile overview and GPU comparison screenshots. Report actual browser/version, viewport, status, pixel differences, timing and failures. These checks establish the observed integration; they do not establish optical equivalence, full WCAG conformance or improved human usability.
 

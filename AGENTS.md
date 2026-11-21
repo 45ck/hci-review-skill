@@ -14,7 +14,9 @@ Do not replace the kit with a component workbench, diagnostic inspector, standal
 
 Put shared colours, radii, optical parameters, focus and fallback rules in the package. Keep text and dense content readable over the supported backdrops. Preserve primary, destructive, invalid, disabled, selected and pending states.
 
-Reduced transparency and forced colours suppress the GPU material and retain usable solid controls. Reduced motion keeps static refraction and removes decorative animation. Keyboard actions, Escape dismissal, focus restoration and pointer hit targets must work with or without WebGPU. A shader must not replace a control with a painted imitation.
+Follow reduced transparency and reduced motion by default. Offer explicit per-app Glass and Animate glass choices when the user wants to preview the full material; never change device settings. Forced colours always suppress the GPU material and retain system-colour controls. Report the effective motion/material state accurately. Keyboard actions, Escape dismissal, focus restoration and pointer hit targets must work with or without WebGPU. A shader must not replace a control with a painted imitation.
+
+Enable the shared pointer light, bounded activation ripple, native selection-indicator travel, switch motion and popup response under normal preferences. Stop work after the response settles and while the document is hidden. Reuse the captured backdrop during animation; do not recapture it every frame. Keep labels and hit targets steady.
 
 The renderer samples the supplied decorative backdrop. Do not claim that it automatically refracts arbitrary live application content. Retain the source attribution and MIT notice for `arya3d/liquid-glass-webgpu` at `90cb73931bbaf38bd54b3263cd3fda1daef1869c`, and identify local adaptations. This is a web implementation inspired by the reference, not Apple's native renderer.
 
@@ -28,6 +30,6 @@ Keep `snapshot`, `query`, `act` and subscriptions as the actual SDK APIs. The pr
 
 Run `npm run glass:verify` for kit changes and `python3 tests/test_glass_browser.py` against the production preview for interaction, agent, rendering, preference or layout changes. CI uses the documented software-WebGPU flags only for the reviewed loopback build and blocks outside requests.
 
-Verify GPU contribution on actual button, input and panel rectangles, optical-strength changes, backdrop recapture, top-layer popup visibility and focus, all 55 catalogue specimens, and the narrow overview layout. Save screenshots of the overview, desktop popup, mobile overview and GPU comparisons. A `ready` attribute by itself is insufficient rendering evidence.
+Verify GPU contribution on actual button, input and panel rectangles, optical-strength changes, backdrop recapture, top-layer popup visibility and focus, all 55 catalogue specimens, and the narrow overview layout. Verify changing motion pixels, constant capture revisions during interaction, eventual idle, and both system and explicit app preferences. Save screenshots of the overview, desktop popup, mobile overview and GPU comparisons. A `ready` attribute by itself is insufficient rendering evidence.
 
 Report actual commands, exit codes, browser, viewports, pixel checks and any unavailable path. Automated checks do not establish optical equivalence, WCAG conformance or improved human usability. Preserve original HCI calculators, protocols and recorded pilot results as independent research; the old workbench and pilot are not part of the hosted kit. Keep internal access private unless the user instructs otherwise.

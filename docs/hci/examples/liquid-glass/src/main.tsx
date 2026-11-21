@@ -1,5 +1,6 @@
 import {
   Component,
+  useEffect,
   useMemo,
   useState,
   type ComponentType,
@@ -50,6 +51,7 @@ import { Switch, SwitchThumb } from "@ui-sdk/react/switch";
 import { Toggle } from "@ui-sdk/react/toggle";
 import {
   SegmentedControl,
+  SegmentedControlIndicator,
   SegmentedControlItem,
 } from "@ui-sdk/react/segmented-control";
 import {
@@ -96,6 +98,33 @@ const backdropOptions = [
   { value: "dawn", label: "Dawn" },
   { value: "grid", label: "Grid" },
 ];
+const appearanceOptions = [
+  { value: "system", label: "Follow device" },
+  { value: "glass", label: "Glass" },
+  { value: "solid", label: "Solid" },
+];
+type MotionPreference = boolean | "system";
+type TransparencyPreference = "system" | "glass" | "solid";
+
+function readMotionPreference(): MotionPreference {
+  try {
+    const value: unknown = JSON.parse(
+      localStorage.getItem("qg-kit-motion") ?? '"system"',
+    );
+    return typeof value === "boolean" ? value : "system";
+  } catch {
+    return "system";
+  }
+}
+
+function readTransparencyPreference(): TransparencyPreference {
+  try {
+    const value = localStorage.getItem("qg-kit-transparency");
+    return value === "glass" || value === "solid" ? value : "system";
+  } catch {
+    return "system";
+  }
+}
 
 class SpecimenBoundary extends Component<
   { children: ReactNode; name: string },
@@ -321,6 +350,7 @@ function Overview() {
             if (typeof value === "string") setWorkspace(value);
           }}
         >
+          <SegmentedControlIndicator />
           <SegmentedControlItem value="files">Files</SegmentedControlItem>
           <SegmentedControlItem value="activity">Activity</SegmentedControlItem>
           <SegmentedControlItem value="settings">Settings</SegmentedControlItem>
@@ -448,6 +478,9 @@ function MaterialSettings({
   setDispersion,
   backdrop,
   setBackdrop,
+  setMotion,
+  transparency,
+  setTransparency,
 }: {
   refraction: number;
   setRefraction: (v: number) => void;
@@ -455,8 +488,11 @@ function MaterialSettings({
   setDispersion: (v: number) => void;
   backdrop: BackdropName;
   setBackdrop: (v: BackdropName) => void;
+  setMotion: (v: MotionPreference) => void;
+  transparency: TransparencyPreference;
+  setTransparency: (v: TransparencyPreference) => void;
 }) {
-  const { status, refresh } = useLiquidGlass();
+  const { status, refresh, motion: resolvedMotion } = useLiquidGlass();
   return (
     <Popover>
       <PopoverTrigger aria-label="Material settings">
@@ -470,6 +506,32 @@ function MaterialSettings({
       >
         <PopoverTitle>Glass material</PopoverTitle>
         <div className="kit-material-controls">
+          <Choice
+            label="Appearance"
+            value={transparency}
+            options={appearanceOptions}
+            onChange={(value) => setTransparency(value as TransparencyPreference)}
+          />
+          <div className="kit-motion-setting">
+            <div className="kit-setting-row">
+              <span>Animate glass</span>
+              <Switch
+                aria-label="Animate glass"
+                checked={resolvedMotion === "enabled"}
+                onCheckedChange={setMotion}
+                aria-describedby="kit-motion-description"
+              >
+                <SwitchThumb />
+              </Switch>
+            </div>
+            <p id="kit-motion-description">
+              {resolvedMotion === "reduced"
+                ? "Your device reduces motion. Turn this on to preview animations in this kit."
+                : resolvedMotion === "off"
+                  ? "Animations paused. Glass keeps its static reflections."
+                  : "Moving highlights, ripples and selection."}
+            </p>
+          </div>
           <Range
             label="Refraction strength"
             value={refraction}
@@ -496,6 +558,8 @@ function MaterialSettings({
               setRefraction(30);
               setDispersion(8);
               setBackdrop("coast");
+              setMotion("system");
+              setTransparency("system");
             }}
           >
             Reset material
@@ -512,7 +576,9 @@ function MaterialSettings({
             {status === "loading"
               ? "Preparing WebGPU…"
               : status === "reduced"
-                ? "Solid surfaces follow your accessibility preferences."
+                ? transparency === "solid"
+                  ? "Solid material is selected."
+                  : "A device preference is using solid surfaces. Choose Glass to preview transparency; forced colours remain solid."
                 : "This browser is showing the compatibility material. WebGPU is unavailable."}
           </p>
         )}
@@ -526,7 +592,7 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
   const [selected, setSelected] = useState("overview");
   const [restart, setRestart] = useState(0);
   const [copied, setCopied] = useState("");
-  const { status } = useLiquidGlass();
+  const { status, motion: effectiveMotion } = useLiquidGlass();
   const matches = manifest.components.filter((item) =>
     (item.name + " " + item.category)
       .toLowerCase()
@@ -661,6 +727,15 @@ function KitShell(props: Parameters<typeof MaterialSettings>[0]) {
                   ? "Liquid Glass"
                   : (component?.name ?? "No matching components")}
               </h1>
+              {active === "overview" && (
+                <p className="kit-intro">
+                  {status === "reduced"
+                    ? "Open Material settings to choose glass or follow your device preferences."
+                    : effectiveMotion !== "enabled"
+                      ? "Turn on Animate glass in Material settings to explore light and motion."
+                      : "Light follows your pointer. Press a control or change a selection."}
+                </p>
+              )}
             </div>
             <MaterialSettings {...props} />
           </div>
@@ -720,6 +795,18 @@ function App() {
   const [refraction, setRefraction] = useState(30);
   const [dispersion, setDispersion] = useState(8);
   const [backdrop, setBackdrop] = useState<BackdropName>("coast");
+  const [motion, setMotion] = useState<MotionPreference>(readMotionPreference);
+  const [transparency, setTransparency] = useState<TransparencyPreference>(
+    readTransparencyPreference,
+  );
+  useEffect(() => {
+    try {
+      localStorage.setItem("qg-kit-motion", JSON.stringify(motion));
+      localStorage.setItem("qg-kit-transparency", transparency);
+    } catch {
+      // Storage can be unavailable in embedded or private browser contexts.
+    }
+  }, [motion, transparency]);
   const backdropNode = useMemo(
     () => <KitBackdrop variant={backdrop} />,
     [backdrop],
@@ -729,6 +816,8 @@ function App() {
       backdrop={backdropNode}
       refraction={refraction / 100}
       dispersion={dispersion / 1000}
+      motion={motion}
+      transparency={transparency}
     >
       <KitShell
         refraction={refraction}
@@ -737,6 +826,9 @@ function App() {
         setDispersion={setDispersion}
         backdrop={backdrop}
         setBackdrop={setBackdrop}
+        setMotion={setMotion}
+        transparency={transparency}
+        setTransparency={setTransparency}
       />
     </LiquidGlassProvider>
   );

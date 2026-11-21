@@ -230,11 +230,11 @@ async def verify_motion_collection_contract(page, expect, *, base_url, output_di
         await expect(artifact_link).to_have_count(0)
 
         async def start_sample():
-            button = await _entry(page, "button", "Run local sample")
-            assert "press" in button["actions"], button
-            await page.evaluate("""ref => {
-                window.__motionRequest = window.quantitativeHciAgent.act({steps: [{ref, action: 'press', args: []}]});
-            }""", button["ref"])
+            # The SDK serializes query/act and awaits a button's returned promise.
+            # Start with real keyboard input so a subsequent agent action can inspect
+            # and cancel this pending run, rather than queue behind its completion.
+            await run_button.focus()
+            await run_button.press("Enter")
             await expect(status).to_have_attribute("data-sample-phase", "pending")
             await expect(run_button).to_have_attribute("aria-busy", "true")
             await expect(artifact_link).to_have_count(0)
@@ -242,15 +242,15 @@ async def verify_motion_collection_contract(page, expect, *, base_url, output_di
         await start_sample()
         first_id = await stage.locator('.mg-work-events [data-motion-item]').first.get_attribute("data-motion-item")
         duplicate = await refused(await _entry(page, "button", "Run local sample"), "press", [])
+        assert not duplicate.get("ok"), f"The pending SDK button accepted a duplicate press: {duplicate}"
         await expect(status).to_have_attribute("data-sample-phase", "pending")
         assert await stage.locator('.mg-work-events [data-motion-item]').first.get_attribute("data-motion-item") == first_id, duplicate
         outcome_refusal = await refused(await _entry(page, "segmented-control", "Local sample outcome"), "setValue", ["error"])
         assert (await _entry(page, "segmented-control", "Local sample outcome"))["value"] == "success", outcome_refusal
-        await press("Cancel local sample")
+        cancelled_run = await press("Cancel local sample")
         await expect(status).to_have_attribute("data-sample-phase", "cancelled")
         await expect(run_button).not_to_have_attribute("aria-busy", "true")
         await expect(artifact_link).to_have_count(0)
-        cancelled_run = await page.evaluate("window.__motionRequest")
         assert cancelled_run.get("ok"), cancelled_run
         cancelled_events = await stage.locator(".mg-work-events").inner_text()
         await page.wait_for_timeout(1950)
@@ -373,7 +373,8 @@ async def verify_motion_collection_contract(page, expect, *, base_url, output_di
             "collection": {"reversedIds": order, "survivingDomIdentity": identity, "removedImmediately": "coast"},
             "presence": {"boundedRemoval": True, "restored": True},
             "number": {"accessibleFinalValue": 160}, "dialog": {"keyboardFocusReturned": True},
-            "async": {"cancelled": cancelled_run, "duplicate": duplicate, "noLateCompletion": True,
+            "async": {"pendingStartSource": "keyboard", "cancellationSource": "agent",
+                      "cancelled": cancelled_run, "duplicate": duplicate, "noLateCompletion": True,
                       "failure": failed_run, "retry": retry, "acceptedPhase": "success", "artifact": artifact_evidence},
             "workflow": {"initialEvents": events, "acceptedStart": started_workflow, "staleDispatch": stale,
                          "cancelledDispatch": denied, "visibleAcceptance": acceptance, "keyboardResume": True},
@@ -387,7 +388,6 @@ async def verify_motion_collection_contract(page, expect, *, base_url, output_di
             window.__motionMorphProbe?.observer.disconnect();
             delete window.__motionMorphProbe;
             delete window.__motionRows;
-            delete window.__motionRequest;
         }""")
         if completed:
             await page.emulate_media(reduced_motion="no-preference", forced_colors="none")

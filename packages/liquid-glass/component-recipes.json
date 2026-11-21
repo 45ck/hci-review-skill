@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "package": "@quantitative-hci/liquid-glass",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "distribution": "Private workspace package. Use the repository workspace; this is not an npm registry release.",
   "foundation": {
     "package": "@ui-sdk/react",
@@ -203,6 +203,39 @@
       ]
     },
     {
+      "id": "chat-workspace",
+      "collection": "chat",
+      "title": "Chat workspace",
+      "purpose": "Compose threads, prompt templates and streamed messages around your existing runtime.",
+      "components": [
+        "LiquidChat",
+        "LiquidConversationList",
+        "LiquidPromptTemplatePicker"
+      ],
+      "importPath": "@quantitative-hci/liquid-glass/chat",
+      "stylesheet": "@quantitative-hci/liquid-glass/chat.css",
+      "example": "docs/hci/examples/liquid-glass/src/recipes/chat-workspace.tsx",
+      "sdkPrimitives": [
+        "Textarea",
+        "Select",
+        "Button",
+        "Listbox",
+        "Collapsible",
+        "Menu"
+      ],
+      "constraints": [
+        "The runtime or host owns accepted messages, drafts, threads and execution.",
+        "Use stable message, thread and tool-call identities; cancel an active run before changing its context.",
+        "The local example does not call a model or upload files. Provider credentials and tool authorization belong on the server.",
+        "Compose the host provider and existing SDK bridge; each embedded example has its own document boundary."
+      ],
+      "sources": [
+        "https://ai-sdk.dev/docs/ai-sdk-ui/overview",
+        "https://docs.copilotkit.ai/custom-look-and-feel/headless-ui",
+        "https://docs.ag-ui.com/sdk/js/client/abstract-agent"
+      ]
+    },
+    {
       "id": "application-shell",
       "collection": "layouts",
       "title": "Task-first application layout",
@@ -243,20 +276,13 @@
       "id": "motion-system",
       "collection": "motion",
       "title": "Native motion",
-      "purpose": "Compose accepted icon state, selection, presence and list continuity with one shared motion policy.",
+      "purpose": "Compose accepted icon state, selection, text changes and list continuity with one shared motion policy.",
       "components": [
         "LiquidMotionProvider",
         "LiquidMorphIcon",
-        "LiquidAnimatedIcon",
-        "LiquidPresence",
         "LiquidMotionList",
-        "LiquidMotionNumber",
         "LiquidTextTransition",
-        "LiquidSharedIndicator",
-        "LiquidMotionFeedback",
-        "LiquidDepth",
-        "LiquidMotionState",
-        "LiquidMotionScene"
+        "LiquidSharedIndicator"
       ],
       "importPath": "@quantitative-hci/liquid-glass/motion",
       "stylesheet": "@quantitative-hci/liquid-glass/motion.css",
@@ -270,7 +296,7 @@
         "Reuse the existing LiquidGlassProvider and one SDK agent bridge.",
         "Animate only accepted meaningful state changes; completion of animation is presentation only.",
         "Read /motion-recipes.json for intent, requirements and avoidWhen; respect effective preferences.",
-        "A named graph uses send(event, expectedState); inspect the resulting accepted state and handle cancellation."
+        "Keep list IDs stable and preserve SDK selection acceptance and cancellation."
       ],
       "sources": [
         "https://useanimations.com/documentation",
@@ -279,6 +305,57 @@
         "https://auto-animate.formkit.com",
         "https://rive.app/docs/runtimes/react/data-binding"
       ]
+    }
+  ],
+  "integrations": [
+    {
+      "id": "vercel",
+      "title": "Vercel AI SDK",
+      "kind": "chat-runtime",
+      "example": "docs/hci/examples/liquid-glass/src/integrations/vercel-chat.tsx",
+      "evidence": "Typechecked against pinned development dependencies; no live provider request is claimed."
+    },
+    {
+      "id": "providers",
+      "title": "OpenAI, Anthropic and OpenRouter through AI SDK",
+      "kind": "server-provider",
+      "example": "docs/hci/examples/liquid-glass/src/integrations/provider.server.ts",
+      "evidence": "Typechecked against pinned development dependencies; no live provider request is claimed."
+    },
+    {
+      "id": "copilotkit",
+      "title": "CopilotKit headless",
+      "kind": "agent-runtime",
+      "example": "docs/hci/examples/liquid-glass/src/integrations/copilotkit-chat.tsx",
+      "evidence": "Typechecked against pinned development dependencies; no live provider request is claimed."
+    },
+    {
+      "id": "ag-ui",
+      "title": "AG-UI client",
+      "kind": "agent-runtime",
+      "example": "docs/hci/examples/liquid-glass/src/integrations/ag-ui-chat.tsx",
+      "evidence": "Typechecked against pinned development dependencies; no live provider request is claimed."
+    },
+    {
+      "id": "custom",
+      "title": "Application-owned runtime",
+      "kind": "controlled-interface",
+      "example": "docs/hci/examples/liquid-glass/src/integrations/custom-chat.tsx",
+      "evidence": "Typechecked against pinned development dependencies; no live provider request is claimed."
+    },
+    {
+      "id": "openai",
+      "title": "OpenAI Responses SDK",
+      "kind": "server-client",
+      "example": "docs/hci/examples/liquid-glass/src/integrations/openai.server.ts",
+      "evidence": "Typechecked against pinned development dependencies; no live provider request is claimed."
+    },
+    {
+      "id": "anthropic",
+      "title": "Claude Messages SDK",
+      "kind": "server-client",
+      "example": "docs/hci/examples/liquid-glass/src/integrations/anthropic.server.ts",
+      "evidence": "Typechecked against pinned development dependencies; no live provider request is claimed."
     }
   ]
 }

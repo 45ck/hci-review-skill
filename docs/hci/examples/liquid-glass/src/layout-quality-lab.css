@@ -1,0 +1,32 @@
+.qg-quality-entry { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; border-block-start: 1px solid var(--qg-border, #9297a833); padding-block-start: 16px; }
+.qg-quality-entry p { max-width: 65ch; margin: 6px 0 0; font-size: 13px; line-height: 1.5; }
+[data-slot="dialog-content"].qg-quality-fixture { position: fixed; inset: 0; transform: none; translate: none; width: 100vw; height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; border-radius: 0; background: var(--liquid-popup-fallback, #f9fdff); background-color: rgb(from var(--liquid-panel-fallback, #f4f9ff) r g b / 1); overflow: hidden; isolation: isolate; }
+.qg-quality-lab-panel { position: absolute; inset-block: 84px; inset-inline: 16px; max-width: 650px; margin-inline: auto; min-width: 0; overflow: auto; padding: 18px; border: 1px solid var(--qg-border, #9297a833); border-radius: 16px; background: var(--liquid-popup-fallback, #f9fdff); display: flex; flex-direction: column; gap: 12px; }
+.qg-quality-lab-heading { display: flex; align-items: start; justify-content: space-between; gap: 12px; }
+.qg-quality-lab-heading [data-slot="dialog-title"] { margin: 0; font-size: clamp(18px, 3vw, 24px); }
+.qg-quality-lab-heading span { display: block; margin-block-start: 5px; font-size: 11px; opacity: .7; }
+.qg-quality-lab-panel [data-slot="dialog-description"] { margin: 0; font-size: 13px; line-height: 1.5; }
+.qg-quality-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.qg-quality-choices [data-slot="select"] { min-width: 0; display: grid; gap: 5px; }
+.qg-quality-choices [data-slot="select-trigger"] { min-width: 0; min-height: 44px; width: 100%; }
+.qg-quality-choices [data-slot="select-label"] { font-size: 14px; }
+.qg-quality-lab-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.qg-quality-lab-actions > * { min-height: 44px; }
+.qg-quality-lab-notice { margin: 0; min-height: 40px; font-size: 12px; line-height: 1.5; }
+.qg-quality-lab-report { min-height: 80px; flex: 1 0 100px; overflow: auto; font-size: 10px; line-height: 1.5; border: 1px solid var(--qg-border, #9297a833); border-radius: 8px; padding: 10px; margin: 0; }
+.qg-quality-pair { position: absolute; display: flex; align-items: center; gap: 8px; max-width: calc(100vw - 32px); }
+.qg-quality-pair[data-anchor^="top"] { inset-block-start: 16px; }
+.qg-quality-pair[data-anchor^="bottom"] { inset-block-end: 16px; }
+.qg-quality-pair[data-anchor$="start"] { inset-inline-start: 16px; flex-direction: row-reverse; }
+.qg-quality-pair[data-anchor$="end"] { inset-inline-end: 16px; }
+.qg-quality-pair > [data-slot="button"], .qg-quality-pair [data-slot="menu-trigger"] { min-height: 44px; white-space: nowrap; font-size: 14px; padding-inline: 12px; }
+[data-slot="menu-content"].qg-quality-popup { width: 260px; min-width: 0; max-width: min(320px, calc(100vw - 16px), var(--available-width)); max-height: var(--available-height); overflow: auto; }
+.qg-quality-popup [data-slot="menu-item"] { min-height: 44px; white-space: normal; overflow-wrap: anywhere; line-height: 1.4; }
+/* Deliberate, isolated faults exercise the detectors; never applied to product menus. */
+[data-slot="menu-content"].qg-quality-popup[data-fault="anchor-offset"] { margin-inline-start: 28px; margin-inline-end: -28px; }
+[data-slot="menu-content"].qg-quality-popup[data-fault="overflow"] { width: calc(100vw + 64px); max-width: none; }
+/* Opposite margins displace the box whether the SDK positions from top or bottom. */
+[data-slot="menu-content"].qg-quality-popup[data-fault="overlap"][data-side="bottom"] { margin-top: -40px; margin-bottom: 40px; }
+[data-slot="menu-content"].qg-quality-popup[data-fault="overlap"][data-side="top"] { margin-top: 40px; margin-bottom: -40px; }
+@media (max-width: 420px) { .qg-quality-lab-panel { padding: 12px; } .qg-quality-choices { gap: 10px; } .qg-quality-lab-heading [data-slot="dialog-title"] { font-size: 18px; } }
+@media (forced-colors: active) { .qg-quality-lab-panel, .qg-quality-lab-report { border-color: CanvasText; } }

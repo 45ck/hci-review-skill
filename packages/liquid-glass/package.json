@@ -1,6 +1,6 @@
 {
   "name": "@quantitative-hci/liquid-glass",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
   "sideEffects": [
@@ -48,8 +48,16 @@
     "./agent-index.schema.json": "./agent-index.schema.json",
     "./agent-contract.schema.json": "./agent-contract.schema.json",
     "./agent-release.schema.json": "./agent-release.schema.json",
+    "./chat": "./src/chat/index.ts",
+    "./chat.css": "./src/chat/chat.css",
+    "./chat/ai-sdk": "./src/chat/adapters/ai-sdk.ts",
+    "./chat/ag-ui": "./src/chat/adapters/ag-ui.ts",
+    "./chat/openai": "./src/chat/adapters/openai.ts",
+    "./chat/anthropic": "./src/chat/adapters/anthropic.ts",
     "./layouts": "./src/layouts/index.ts",
     "./layouts.css": "./src/layouts/layouts.css",
+    "./quality": "./src/quality/index.ts",
+    "./quality.css": "./src/quality/quality.css",
     "./motion": "./src/motion/index.ts",
     "./motion.css": "./src/motion/motion.css",
     "./motion-recipes.json": "./motion-recipes.json",
@@ -64,6 +72,24 @@
   },
   "peerDependencies": {
     "react": ">=19",
-    "react-dom": ">=19"
+    "react-dom": ">=19",
+    "ai": "^7.0.179",
+    "@ag-ui/core": "^1.0.5",
+    "openai": "^7.62.0",
+    "@anthropic-ai/sdk": "^1.12.0"
+  },
+  "peerDependenciesMeta": {
+    "ai": {
+      "optional": true
+    },
+    "@ag-ui/core": {
+      "optional": true
+    },
+    "openai": {
+      "optional": true
+    },
+    "@anthropic-ai/sdk": {
+      "optional": true
+    }
   }
 }

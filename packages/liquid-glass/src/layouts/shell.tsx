@@ -111,7 +111,7 @@ export function LiquidWorkspaceSwitcher({
       <span className="qg-app-space-label">{title}</span>
       <LiquidIcon name="more" size={14} />
     </MenuTrigger>
-    <MenuContent>
+    <MenuContent side="bottom" align="start" sideOffset={8} collisionPadding={8}>
       {items.map((item) => <MenuItem
         key={item.id}
         value={item.id}

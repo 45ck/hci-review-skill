@@ -39,6 +39,9 @@ on:
       - 'tests/glass_sections_contract.py'
       - 'tests/glass_layouts_contract.py'
       - 'tests/test_app_layout_state.mjs'
+      - 'tests/test_layout_quality.mjs'
+      - 'tests/glass_layout_quality_contract.py'
+      - 'docs/hci/standards/layout-quality.md'
       - 'docs/hci/standards/app-layout-system.md'
       - 'tests/glass_patterns_contract.py'
       - 'tests/glass_assistant_contract.py'
@@ -47,6 +50,11 @@ on:
       - 'tests/test_motion_state.mjs'
       - 'tests/test_motion_recipes.mjs'
       - 'docs/hci/standards/motion-sources.md'
+      - 'tests/glass_catalogue_navigation.py'
+      - 'tests/glass_chat_contract.py'
+      - 'tests/glass_integrations_contract.py'
+      - 'tests/test_chat_adapters.mjs'
+      - 'docs/hci/standards/chat-integrations.md'
       - 'docs/hci/standards/library-patterns.md'
       - 'docs/hci/standards/interaction-sections.md'
       - 'docs/hci/standards/standards-components.md'
@@ -74,7 +82,7 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

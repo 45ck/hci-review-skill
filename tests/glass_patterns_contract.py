@@ -51,7 +51,7 @@ async def verify_patterns_contract(page, expect, *, base_url, output_dir):
         await trigger.focus()
         await trigger.press("Enter")
         await expect(palette).to_be_visible()
-        palette_search = palette.get_by_label("Find a library command", exact=True)
+        palette_search = palette.get_by_role("combobox", name="Find a library command", exact=True)
         await expect(palette_search).to_be_focused()
         await palette_search.fill("Show draft work")
         await palette_search.press("Enter")

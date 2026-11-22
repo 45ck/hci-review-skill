@@ -1,0 +1,7 @@
+interface:
+  display_name: "Zeigarnik Progress Review"
+  short_description: "Review honest progress and reliable task resumption"
+  default_prompt: "Use $zeigarnik-progress-review to review this interface and return evidence, fixes, and verification steps."
+
+policy:
+  allow_implicit_invocation: true

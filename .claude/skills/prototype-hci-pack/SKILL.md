@@ -177,6 +177,22 @@ Create `hci-summary.md` with:
 - top 5 implementation priorities
 - open assumptions and unknowns
 
+## Focused design-principle checks
+
+When the evidence raises a specific question, invoke the relevant focused skill and fold its findings into the existing heuristic evaluation or summary. Do not run all seven or create seven extra reports by default.
+
+| Review question | Skill |
+| --- | --- |
+| Does a familiar control produce its expected outcome? | `jakobs-law-review` |
+| Which choices compete at this particular decision? | `hicks-law-review` |
+| Are color roles and contrast supporting the task? | `color-balance-review` |
+| Is the right item distinct within its peer group? | `von-restorff-review` |
+| Is visual polish being confused with actual usability? | `aesthetic-usability-review` |
+| Does the journey end with truthful, useful closure? | `peak-end-review` |
+| Is progress honest and interrupted work resumable? | `zeigarnik-progress-review` |
+
+Use the existing design system, custom icons, and global theme/motion settings when proposing fixes. Separate observation, agent inference, and human evidence. Treat any review score as a reviewer rubric, not a validated usability measurement. Record unavailable runtime checks rather than inferring behavior from screenshots.
+
 ## Quality bar
 - Be concrete, not generic.
 - Refer to actual files, screens, components, routes, or flows where possible.

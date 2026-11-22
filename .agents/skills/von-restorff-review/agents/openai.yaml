@@ -1,0 +1,7 @@
+interface:
+  display_name: "Von Restorff Review"
+  short_description: "Make task priorities distinct without misleading users"
+  default_prompt: "Use $von-restorff-review to review this interface and return evidence, fixes, and verification steps."
+
+policy:
+  allow_implicit_invocation: true

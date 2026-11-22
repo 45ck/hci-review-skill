@@ -1,0 +1,7 @@
+interface:
+  display_name: "Color Balance Review"
+  short_description: "Review color roles, hierarchy, and accessible contrast"
+  default_prompt: "Use $color-balance-review to review this interface and return evidence, fixes, and verification steps."
+
+policy:
+  allow_implicit_invocation: true

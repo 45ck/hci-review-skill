@@ -10,8 +10,8 @@
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License" /></a>
-  <img src="https://img.shields.io/badge/skills-34-6366f1" alt="34 skills" />
-  <img src="https://img.shields.io/badge/core-24-8b5cf6" alt="24 core skills" />
+  <img src="https://img.shields.io/badge/skills-41-6366f1" alt="41 skills" />
+  <img src="https://img.shields.io/badge/core-31-8b5cf6" alt="31 core skills" />
   <img src="https://img.shields.io/badge/beads-10-a78bfa" alt="10 beads variants" />
 </p>
 
@@ -66,6 +66,24 @@ This repository maintains the specialist HCI review skills, research-planning wo
 - `heuristic-eval-beads`
 - `cognitive-walkthrough-beads`
 
+### Design principle reviews
+
+Seven focused skills turn familiar design principles into concrete checks against screenshots, code, interaction traces, and user evidence. They reuse the current design system, custom icons, and global theme/motion settings. Each produces findings, a proposed change, verification steps, and evidence limits.
+
+| Skill | What it checks |
+| --- | --- |
+| [jakobs-law-review](.agents/skills/jakobs-law-review/SKILL.md) | Whether a familiar control's actual behavior matches its apparent meaning |
+| [hicks-law-review](.agents/skills/hicks-law-review/SKILL.md) | Competing choices at a specific decision, without hiding essential actions |
+| [color-balance-review](.agents/skills/color-balance-review/SKILL.md) | Color roles, competing accents, themes, and independently measured contrast |
+| [von-restorff-review](.agents/skills/von-restorff-review/SKILL.md) | Meaningful emphasis within a peer group, including truthful recommendations |
+| [aesthetic-usability-review](.agents/skills/aesthetic-usability-review/SKILL.md) | Visual coherence and actual task usability as separate questions |
+| [peak-end-review](.agents/skills/peak-end-review/SKILL.md) | Demanding moments, accurate completion, recovery, and useful endings |
+| [zeigarnik-progress-review](.agents/skills/zeigarnik-progress-review/SKILL.md) | Honest progress, optional steps, saved work, and reliable resumption |
+
+The skills are self-contained after installation. They do not require a private runtime, a paid model, or a scoring framework. Their descriptions support task-based discovery; Codex metadata enables implicit invocation for these seven skills where the host supports it. The full review pack routes to the relevant skill when a specific question arises, without requiring seven additional reports.
+
+Read the [source mapping and evidence limits](docs/hci/design-principle-skills.md) and [validation record](docs/hci/design-principles-validation.md).
+
 ## Features
 
 - Reviews real interfaces as systems, not isolated screens
@@ -89,6 +107,8 @@ This installs every packaged skill into both:
 
 - `~/.claude/skills/`
 - `~/.agents/skills/`
+
+The installer and uninstaller share the inventory in `skills.txt`. To use an isolated target without changing your home directory, set an absolute `HCI_SKILLS_HOME` path for either command.
 
 ### Option B: Copy into a project
 
@@ -123,6 +143,13 @@ bash uninstall.sh
 /low-fidelity-prototype-planner early concept for scheduling flow
 /wireframe-critic checkout wireframes
 /usability-test-planner prototype validation session
+/jakobs-law-review report editor controls
+/hicks-law-review dashboard primary actions
+/color-balance-review light and dark themes
+/von-restorff-review pricing comparison priorities
+/aesthetic-usability-review account settings
+/peak-end-review report submission and retry
+/zeigarnik-progress-review onboarding checklist and resume flow
 
 /heuristic-eval-beads approval dashboard
 /prototype-hci-pack-beads onboarding flow
@@ -134,10 +161,21 @@ bash uninstall.sh
 .claude/skills/<skill>/SKILL.md      packaged skill format
 .agents/skills/<skill>/SKILL.md      mirrored packaged skill format
 docs/hci/                            templates and generated review artifacts
+skills.txt                           shared install/uninstall inventory
+scripts/verify_skill_pack.py         dependency-free package and installation checks
 install.sh                           global installer
 uninstall.sh                         global uninstaller
 LICENSE                              MIT
 ```
+
+## Verify changes
+
+```bash
+bash -n install.sh uninstall.sh scripts/skill_inventory.sh
+python3 scripts/verify_skill_pack.py
+```
+
+The required `verify` CI job checks inventories, skill metadata, core mirrors, descriptors, local links, and installation/removal in a temporary target. It preserves the existing Beads variants and does not install into the contributor's home directory. Package checks and agent review exercises do not establish human usability outcomes.
 
 ## Related workflow agents
 

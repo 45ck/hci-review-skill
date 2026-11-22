@@ -1,0 +1,7 @@
+interface:
+  display_name: "Hick's Law Review"
+  short_description: "Reduce competing choices without hiding useful actions"
+  default_prompt: "Use $hicks-law-review to review this interface and return evidence, fixes, and verification steps."
+
+policy:
+  allow_implicit_invocation: true

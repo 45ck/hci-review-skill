@@ -1,0 +1,7 @@
+interface:
+  display_name: "Aesthetic Usability Review"
+  short_description: "Separate visual polish from proven task usability"
+  default_prompt: "Use $aesthetic-usability-review to review this interface and return evidence, fixes, and verification steps."
+
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,7 @@
+interface:
+  display_name: "Jakob's Law Review"
+  short_description: "Check familiar controls against observed behavior"
+  default_prompt: "Use $jakobs-law-review to review this interface and return evidence, fixes, and verification steps."
+
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,7 @@
+interface:
+  display_name: "Peak-End Review"
+  short_description: "Improve task endings, recovery, and clear confirmation"
+  default_prompt: "Use $peak-end-review to review this interface and return evidence, fixes, and verification steps."
+
+policy:
+  allow_implicit_invocation: true

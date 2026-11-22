@@ -68,7 +68,7 @@ jobs:
           start=time.monotonic()
           try:
               token=os.environ.get("HF_TOKEN") or None
-              client=Client("microsoft/OmniParser-v2",hf_token=token)
+              client=Client("microsoft/OmniParser-v2")
               print("Space connected, submitting screenshot to actual OmniParser V2...",flush=True)
               job=client.submit(handle_file(str(path)),0.05,0.1,False,640,api_name="/process")
               response=job.result(timeout=300)

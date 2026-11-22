@@ -18,7 +18,7 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install lightweight Gradio client
-        run: python -m pip install --disable-pip-version-check "gradio_client>=1.10,<3" pillow
+        run: python -m pip install --disable-pip-version-check requests pillow
       - name: Create synthetic test interface and invoke Microsoft's real V2 Space
         shell: bash
         env:
@@ -29,7 +29,7 @@ jobs:
           import os, time, traceback, json, shutil
           from pathlib import Path
           from PIL import Image, ImageDraw, ImageFont
-          from gradio_client import Client, handle_file
+          import requests
           out = Path("results")
           im = Image.new("RGB",(1200,760),"#f4f6f9")
           d = ImageDraw.Draw(im)
@@ -67,19 +67,50 @@ jobs:
           (out/"report.json").write_text(json.dumps(result,indent=2))
           start=time.monotonic()
           try:
-              token=os.environ.get("HF_TOKEN") or None
-              client=Client("microsoft/OmniParser-v2")
-              print("Space connected, submitting screenshot to actual OmniParser V2...",flush=True)
-              job=client.submit(handle_file(str(path)),0.05,0.1,False,640,api_name="/process")
-              response=job.result(timeout=300)
-              print("Response types:",[type(x).__name__ for x in response])
-              img,text=response
+              base="https://microsoft-omniparser-v2.hf.space"
+              config=requests.get(base+"/config",timeout=30)
+              print("Config HTTP",config.status_code,flush=True)
+              config.raise_for_status()
+              cfg=config.json()
+              print("API endpoint metadata",[(v.get("api_name"),v.get("id")) for v in cfg.get("dependencies",[])],flush=True)
+              with open(path,"rb") as image_stream:
+                  uploaded=requests.post(base+"/gradio_api/upload",files={"files":(path.name,image_stream,"image/png")},timeout=30)
+              print("Upload HTTP",uploaded.status_code,uploaded.text[:600],flush=True)
+              uploaded.raise_for_status()
+              remote_path=uploaded.json()[0]
+              if isinstance(remote_path,dict):
+                  remote_path=remote_path.get("path")
+              filedata={"path":remote_path,"orig_name":path.name,"size":path.stat().st_size,"mime_type":"image/png","meta":{"_type":"gradio.FileData"}}
+              payload={"data":[filedata,0.05,0.1,False,640]}
+              resp=requests.post(base+"/gradio_api/call/process",json=payload,timeout=30)
+              print("Submit HTTP",resp.status_code,resp.text[:1200],flush=True)
+              resp.raise_for_status()
+              event_id=resp.json()["event_id"]
+              stream=requests.get(base+"/gradio_api/call/process/"+event_id,stream=True,timeout=(20,270))
+              print("Stream HTTP",stream.status_code,flush=True)
+              stream.raise_for_status()
+              response=None
+              for event in stream.iter_lines(decode_unicode=True):
+                  if not event:continue
+                  print("SSE",str(event)[:500],flush=True)
+                  if event.startswith("data: "):
+                      try:
+                          data=json.loads(event[6:])
+                          if isinstance(data,list) and len(data)>=2:
+                              response=data
+                      except ValueError: pass
+                  if event.startswith("event: error"):
+                      raise RuntimeError("Gradio backend emitted inference error; inspect preceding stream lines")
+              if not response:
+                  raise RuntimeError("No inference result data returned")
+              img,text=response[:2]
               if isinstance(img,dict):
-                  img=img.get("path") or img.get("url") or img.get("name")
+                  img=img.get("url") or img.get("path")
               if isinstance(img,str):
-                  src=Path(img)
-                  if src.exists():
-                      shutil.copy(src,out/"omniparser_annotated.png")
+                  if img.startswith("http"):
+                      q=requests.get(img,timeout=30);q.raise_for_status();(out/"omniparser_annotated.png").write_bytes(q.content)
+                  else:
+                      q=requests.get(base+"/gradio_api/file="+img,timeout=30);q.raise_for_status();(out/"omniparser_annotated.png").write_bytes(q.content)
               (out/"parsed_elements.txt").write_text(str(text))
               result.update({"actual_model_inference":True,"elapsed_seconds":round(time.monotonic()-start,2),"elements_lines":len(str(text).splitlines()),"output_image_exists":(out/"omniparser_annotated.png").exists()})
               print("SUCCESS:",json.dumps(result),flush=True)

@@ -1,8 +1,5 @@
 name: OmniParser V2 free ZeroGPU smoke test
 on:
-  push:
-    branches:
-      - experiment/omniparser-v2-zero-cost
   workflow_dispatch:
 permissions:
   contents: read

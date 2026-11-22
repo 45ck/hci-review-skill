@@ -1,0 +1,100 @@
+name: OmniParser V2 free ZeroGPU smoke test
+on:
+  push:
+    branches:
+      - experiment/omniparser-v2-zero-cost
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: omniparser-v2-smoke
+  cancel-in-progress: true
+jobs:
+  smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install lightweight Gradio client
+        run: python -m pip install --disable-pip-version-check "gradio_client>=1.10,<3" pillow
+      - name: Create synthetic test interface and invoke Microsoft's real V2 Space
+        shell: bash
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          mkdir -p results
+          python - <<'PY'
+          import os, time, traceback, json, shutil
+          from pathlib import Path
+          from PIL import Image, ImageDraw, ImageFont
+          from gradio_client import Client, handle_file
+          out = Path("results")
+          im = Image.new("RGB",(1200,760),"#f4f6f9")
+          d = ImageDraw.Draw(im)
+          try:
+              f = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",19)
+              h = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",29)
+          except OSError:
+              f=ImageFont.load_default()
+              h=f
+          d.rounded_rectangle((20,20,270,730),radius=18,fill="#172338")
+          d.text((46,54),"Quantitative HCI",font=h,fill="#ffffff")
+          for i,t in enumerate(["Overview","Activity","Reports","Settings"]):
+              yy=155+i*66
+              d.rounded_rectangle((42,yy,247,yy+45),radius=10,fill="#314966" if i==2 else "#172338")
+              d.text((60,yy+10),t,font=f,fill="#ffffff")
+          d.text((323,54),"Interaction audit",font=h,fill="#172338")
+          d.text((323,104),"Select an audit, adjust options or export the results.",font=f,fill="#64748b")
+          d.rounded_rectangle((324,160,560,219),radius=9,fill="#1663af")
+          d.text((359,177),"New analysis",font=f,fill="#ffffff")
+          d.rounded_rectangle((584,160,830,219),radius=9,fill="#ffffff",outline="#98a3b5",width=2)
+          d.text((614,178),"Filter results  v",font=f,fill="#172338")
+          d.rounded_rectangle((852,160,1134,219),radius=9,fill="#eeeeee",outline="#b0b6be",width=2)
+          d.text((883,178),"Export (disabled)",font=f,fill="#999999")
+          d.rounded_rectangle((324,263,1134,402),radius=13,fill="#ffffff",outline="#d7dce4",width=2)
+          d.text((352,284),"Potential mismatches",font=h,fill="#152035")
+          d.text((352,333),"9 issues found  /  Open report  >",font=f,fill="#245890")
+          d.rounded_rectangle((325,444,700,541),radius=12,fill="#ffffff",outline="#d1d9e3",width=2)
+          d.text((350,467),"View details  >",font=f,fill="#1f65ac")
+          d.text((350,498),"Looks clickable but is static.",font=f,fill="#64748b")
+          d.rounded_rectangle((733,444,1134,541),radius=12,fill="#ffffff",outline="#d1d9e3",width=2)
+          d.text((759,468),"Advanced filters  >",font=f,fill="#172338")
+          d.text((759,497),"Discoverability  /  Keyboard",font=f,fill="#64748b")
+          path=out/"fixture.png";im.save(path)
+          result={"source":"microsoft/OmniParser-v2","screenshot":"fixture.png","actual_model_inference":False}
+          (out/"report.json").write_text(json.dumps(result,indent=2))
+          start=time.monotonic()
+          try:
+              token=os.environ.get("HF_TOKEN") or None
+              client=Client("microsoft/OmniParser-v2",hf_token=token)
+              print("Space connected, submitting screenshot to actual OmniParser V2...",flush=True)
+              job=client.submit(handle_file(str(path)),0.05,0.1,False,640,api_name="/process")
+              response=job.result(timeout=300)
+              print("Response types:",[type(x).__name__ for x in response])
+              img,text=response
+              if isinstance(img,dict):
+                  img=img.get("path") or img.get("url") or img.get("name")
+              if isinstance(img,str):
+                  src=Path(img)
+                  if src.exists():
+                      shutil.copy(src,out/"omniparser_annotated.png")
+              (out/"parsed_elements.txt").write_text(str(text))
+              result.update({"actual_model_inference":True,"elapsed_seconds":round(time.monotonic()-start,2),"elements_lines":len(str(text).splitlines()),"output_image_exists":(out/"omniparser_annotated.png").exists()})
+              print("SUCCESS:",json.dumps(result),flush=True)
+          except Exception as e:
+              result.update({"error":f"{type(e).__name__}: {e}","elapsed_seconds":round(time.monotonic()-start,2)})
+              traceback.print_exc()
+              print("INFERENCE BLOCKED:",json.dumps(result),flush=True)
+              raise
+          finally:
+              (out/"report.json").write_text(json.dumps(result,indent=2))
+          PY
+      - name: Keep actual output for inspection
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: omniparser-v2-output
+          path: results/
+          retention-days: 2
